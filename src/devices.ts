@@ -16,8 +16,8 @@ export class DeviceManager {
 		this.devices2 = new Map()
 
 		usbDetect.startMonitoring()
-		usbDetect.on('add:4057:96', (dev) => this.foundDevice(dev))
-		usbDetect.on('remove:4057:96', (dev) => this.removeDevice(dev))
+		usbDetect.on('add:4057', (dev) => this.foundDevice(dev))
+		usbDetect.on('remove:4057', (dev) => this.removeDevice(dev))
 
 		client.on('connected', () => {
 			console.log('connected')
@@ -57,8 +57,9 @@ export class DeviceManager {
 					if (dev2) {
 						console.log('fill', d.deviceId, d.keyIndex)
 						// TODO - scale if needed
-						if (d.keyIndex < dev2.NUM_KEYS) {
-							dev2.fillImage(d.keyIndex, d.image)
+						const key = toDeviceKey(dev2.NUM_KEYS, dev2.KEY_COLUMNS, d.keyIndex)
+						if (key !== null) {
+							dev2.fillImage(key, d.image)
 						}
 					} else {
 						console.log(`Unknown device: ${d.deviceId}`)
@@ -81,12 +82,12 @@ export class DeviceManager {
 					if (dev) {
 						this.devices2.set(d.deviceId, serial2)
 						dev.on('down', (key) => {
-							// TODO deviceId
-							this.client.keyDown(1, key)
+							const key2 = toGlobalKey(dev.NUM_KEYS, dev.KEY_COLUMNS, key)
+							this.client.keyDown(d.deviceId, key2)
 						})
 						dev.on('up', (key) => {
-							// TODO deviceId
-							this.client.keyUp(1, key)
+							const key2 = toGlobalKey(dev.NUM_KEYS, dev.KEY_COLUMNS, key)
+							this.client.keyUp(d.deviceId, key2)
 						})
 					} else {
 						console.log(`Device missing: ${d.serialNumber}`)
@@ -150,4 +151,38 @@ export class DeviceManager {
 	private showOffline(): void {
 		// TODO
 	}
+}
+
+const MAX_BUTTONS = 32
+const MAX_BUTTONS_PER_ROW = 8
+
+// From Global key number 0->31, to Device key f.ex 0->14
+// 0-4 would be 0-4, but 5-7 would be -1
+// and 8-12 would be 5-9
+function toDeviceKey(keysTotal: number, keysPerRow: number, key: number): number | null {
+	if (keysTotal === MAX_BUTTONS) return key
+
+	if (key >= MAX_BUTTONS || key < 0) {
+		return null
+	}
+
+	const row = Math.floor(key / MAX_BUTTONS_PER_ROW)
+	const col = key % MAX_BUTTONS_PER_ROW
+
+	if (row >= keysTotal / keysPerRow || col >= keysPerRow) {
+		return null
+	}
+
+	return row * keysPerRow + col
+}
+
+// From device key number to global key number
+// Reverse of toDeviceKey
+function toGlobalKey(keysTotal: number, keysPerRow: number, key: number): number {
+	if (keysTotal === MAX_BUTTONS) return key
+
+	const rows = Math.floor(key / keysPerRow)
+	const col = key % keysPerRow
+
+	return rows * MAX_BUTTONS_PER_ROW + col
 }

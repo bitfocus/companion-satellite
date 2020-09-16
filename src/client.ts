@@ -112,7 +112,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		return new Promise((resolve, reject) => {
 			try {
-				// await this.sendCommand(new QuitCommand())
 				this.socket.end()
 				return resolve()
 			} catch (e) {
@@ -164,73 +163,51 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		const packet = this.receiveBuffer.slice(5, 5 + header.length)
 
 		switch (header.command) {
-			// case Protocol.SCMD_PING:
-			// 	Protocol.sendPacket(this.socket, Protocol.SCMD_PONG, undefined)
-			// 	break
 			case Protocol.SCMD_PONG:
-				console.log('Got pong')
+				// console.log('Got pong')
 				// TODO - track and timeouts etc
 				break
 
-			case Protocol.SCMD_VERSION:
-				this.handleVersion(packet)
+			case Protocol.SCMD_VERSION: {
+				const obj = Protocol.SCMD_VERSION_PARSER.parse(packet)
+				console.log('Confirmed version', obj)
 				break
+			}
 
-			case Protocol.SCMD_ADDDEVICE:
-				this.newDevice(packet)
-				break
+			case Protocol.SCMD_ADDDEVICE: {
+				const obj = Protocol.SCMD_ADDDEVICE_PARSER.parse(packet)
+				console.log('Confirmed device', obj)
 
-			case Protocol.SCMD_DRAW7272:
-				this.draw(packet)
+				this.emit('newDevice', obj)
 				break
+			}
 
-			case Protocol.SCMD_BRIGHTNESS:
-				this.brightness(packet)
+			case Protocol.SCMD_REMOVEDEVICE: {
+				// TODO?
+				// const obj = Protocol.SCMD_ADDDEVICE_PARSER.parse(packet)
+				// console.log('Confirmed device', obj)
+
+				// this.emit('newDevice', obj)
 				break
+			}
+
+			case Protocol.SCMD_DRAW7272: {
+				const obj = Protocol.SCMD_DRAW7272_PARSER.parse(packet)
+				// console.log('Got draw', obj)
+				this.emit('draw', obj)
+				break
+			}
+
+			case Protocol.SCMD_BRIGHTNESS: {
+				const obj = Protocol.SCMD_BRIGHTNESS_PARSER.parse(packet)
+				console.log('Got brightness', obj)
+				this.emit('brightness', obj)
+				break
+			}
 
 			default:
 				console.debug('Unknown command in packet: ' + header.command)
 		}
-	}
-
-	private handleVersion(packet: Buffer): void {
-		const obj = Protocol.SCMD_VERSION_PARSER.parse(packet)
-		console.log('Confirmed version', obj)
-
-		// Next step
-
-		// const addDev = Protocol.SCMD_ADDDEVICE_PARSER.serialize({
-		// 	serialNumber: 'abcdef',
-		// 	deviceId: 0, // Specified by remote
-		// })
-		// Protocol.sendPacket(this.socket, Protocol.SCMD_ADDDEVICE, addDev)
-	}
-
-	private newDevice(packet: Buffer): void {
-		const obj = Protocol.SCMD_ADDDEVICE_PARSER.parse(packet)
-		console.log('Confirmed device', obj)
-
-		this.emit('newDevice', obj)
-
-		// Next step
-
-		// const addDev = Protocol.SCMD_ADDDEVICE_PARSER.serialize({
-		// 	serialNumber: 'abcdef',
-		// 	deviceId: 1234,
-		// })
-		// Protocol.sendPacket(this.socket, Protocol.SCMD_ADDDEVICE, addDev)
-	}
-
-	private draw(packet: Buffer): void {
-		const obj = Protocol.SCMD_DRAW7272_PARSER.parse(packet)
-		// console.log('Got draw', obj)
-		this.emit('draw', obj)
-	}
-
-	private brightness(packet: Buffer): void {
-		const obj = Protocol.SCMD_BRIGHTNESS_PARSER.parse(packet)
-		console.log('Got brightness', obj)
-		this.emit('brightness', obj)
 	}
 
 	public keyDown(deviceId: number, keyIndex: number): void {
@@ -248,5 +225,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			deviceId: 0, // Specified by remote
 		})
 		Protocol.sendPacket(this.socket, Protocol.SCMD_ADDDEVICE, addDev)
+	}
+
+	public removeDevice(deviceId: number): void {
+		const o = Protocol.SCMD_REMOVEDEVICE_PARSER.serialize({ deviceId })
+		Protocol.sendPacket(this.socket, Protocol.SCMD_REMOVEDEVICE, o)
 	}
 }
