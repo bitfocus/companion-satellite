@@ -55,6 +55,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 			if (!this._retryConnectTimeout) {
 				this._retryConnectTimeout = setTimeout(() => {
+					this._retryConnectTimeout = undefined
 					this.emit('log', 'Trying reconnect')
 					this.socket.connect(SERVER_PORT, this._host)
 				}, 1000)
@@ -86,7 +87,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private sendPing(): void {
-		Protocol.sendPacket(this.socket, Protocol.SCMD_PING, undefined)
+		if (this._connected) {
+			Protocol.sendPacket(this.socket, Protocol.SCMD_PING, undefined)
+		}
 	}
 
 	public connect(host: string): void {
@@ -174,8 +177,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				break
 			}
 
-			case Protocol.SCMD_ADDDEVICE: {
-				const obj = Protocol.SCMD_ADDDEVICE_PARSER.parse(packet)
+			case Protocol.SCMD_ADDDEVICE2: {
+				const obj = Protocol.SCMD_ADDDEVICE2_PARSER.parse(packet)
 				console.log('Confirmed device', obj)
 
 				this.emit('newDevice', obj)
@@ -211,24 +214,34 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	public keyDown(deviceId: number, keyIndex: number): void {
-		const b = Protocol.SCMD_BUTTON_PARSER.serialize({ deviceId, keyIndex, state: 1 })
-		Protocol.sendPacket(this.socket, Protocol.SCMD_BUTTON, b)
+		if (this._connected) {
+			const b = Protocol.SCMD_BUTTON_PARSER.serialize({ deviceId, keyIndex, state: 1 })
+			Protocol.sendPacket(this.socket, Protocol.SCMD_BUTTON, b)
+		}
 	}
 	public keyUp(deviceId: number, keyIndex: number): void {
-		const b = Protocol.SCMD_BUTTON_PARSER.serialize({ deviceId, keyIndex, state: 0 })
-		Protocol.sendPacket(this.socket, Protocol.SCMD_BUTTON, b)
+		if (this._connected) {
+			const b = Protocol.SCMD_BUTTON_PARSER.serialize({ deviceId, keyIndex, state: 0 })
+			Protocol.sendPacket(this.socket, Protocol.SCMD_BUTTON, b)
+		}
 	}
 
-	public addDevice(serial: string): void {
-		const addDev = Protocol.SCMD_ADDDEVICE_PARSER.serialize({
-			serialNumber: serial,
-			deviceId: 0, // Specified by remote
-		})
-		Protocol.sendPacket(this.socket, Protocol.SCMD_ADDDEVICE, addDev)
+	public addDevice(serial: string, keysTotal: number, keysPerRow: number): void {
+		if (this._connected) {
+			const addDev = Protocol.SCMD_ADDDEVICE2_PARSER.serialize({
+				serialNumber: serial.padEnd(20, '\u0000'),
+				deviceId: 0, // Specified by remote
+				keysTotal,
+				keysPerRow,
+			})
+			Protocol.sendPacket(this.socket, Protocol.SCMD_ADDDEVICE2, addDev)
+		}
 	}
 
 	public removeDevice(deviceId: number): void {
-		const o = Protocol.SCMD_REMOVEDEVICE_PARSER.serialize({ deviceId })
-		Protocol.sendPacket(this.socket, Protocol.SCMD_REMOVEDEVICE, o)
+		if (this._connected) {
+			const o = Protocol.SCMD_REMOVEDEVICE_PARSER.serialize({ deviceId })
+			Protocol.sendPacket(this.socket, Protocol.SCMD_REMOVEDEVICE, o)
+		}
 	}
 }

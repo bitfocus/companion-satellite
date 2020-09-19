@@ -9,5 +9,5 @@ const devices = new DeviceManager(client)
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
 
-client.connect('10.42.13.186')
+client.connect('127.0.0.1')
 devices

@@ -74,7 +74,7 @@ export interface ProtocolHeader {
 
 export class Protocol {
 	public static readonly SUPPORTED_MAJOR = 1
-	public static readonly SUPPORTED_MINIOR = 0
+	public static readonly SUPPORTED_MINIOR = 1
 
 	public static readonly SA_HEADER_PARSER = new Parser()
 		.endianess('big')
@@ -86,6 +86,13 @@ export class Protocol {
 		.endianess('big')
 		.string('serialNumber', { length: 20 })
 		.uint16('deviceId')
+
+	public static readonly SCMD_ADDDEVICE2_PARSER = new Parser()
+		.endianess('big')
+		.string('serialNumber', { length: 20 })
+		.uint16('deviceId')
+		.uint8('keysTotal')
+		.uint8('keysPerRow')
 
 	public static readonly SCMD_REMOVEDEVICE_PARSER = new Parser().endianess('big').uint16('deviceId')
 
@@ -113,6 +120,7 @@ export class Protocol {
 	public static readonly SCMD_VERSION = 0x03
 	public static readonly SCMD_ADDDEVICE = 0x10
 	public static readonly SCMD_REMOVEDEVICE = 0x11
+	public static readonly SCMD_ADDDEVICE2 = 0x12
 	public static readonly SCMD_BUTTON = 0x20
 	public static readonly SCMD_DRAW7272 = 0x30
 	public static readonly SCMD_BRIGHTNESS = 0x31
