@@ -1,12 +1,19 @@
 import { CompanionSatelliteClient } from './client'
 import { listStreamDecks, openStreamDeck, StreamDeck } from 'elgato-stream-deck'
 import * as usbDetect from 'usb-detection'
+import { ImageWriteQueue } from './writeQueue'
+import sharp = require('sharp')
 
 type SerialNumber = string
 type DeviceId = number
 
+interface StreamDeckExt {
+	deck: StreamDeck
+	queue: ImageWriteQueue | undefined
+}
+
 export class DeviceManager {
-	private readonly devices: Map<SerialNumber, StreamDeck>
+	private readonly devices: Map<SerialNumber, StreamDeckExt>
 	private readonly deviceIdMap: Map<DeviceId, SerialNumber>
 	private readonly client: CompanionSatelliteClient
 
@@ -34,7 +41,7 @@ export class DeviceManager {
 		client.on('brightness', (d) => {
 			try {
 				const dev = this.getDeviceInfo(d.deviceId)[1]
-				dev.setBrightness(d.percent)
+				dev.deck.setBrightness(d.percent)
 			} catch (e) {
 				console.error(`Set brightness: ${e}`)
 			}
@@ -42,7 +49,11 @@ export class DeviceManager {
 		client.on('draw', (d) => {
 			try {
 				const dev = this.getDeviceInfo(d.deviceId)[1]
-				dev.fillImage(d.keyIndex, d.image)
+				if (dev.queue) {
+					dev.queue.queue(d.keyIndex, d.image)
+				} else {
+					dev.deck.fillImage(d.keyIndex, d.image)
+				}
 			} catch (e) {
 				console.error(`Draw: ${e}`)
 			}
@@ -58,8 +69,8 @@ export class DeviceManager {
 					if (dev) {
 						this.deviceIdMap.set(d.deviceId, serial2)
 						console.log('Registering key evenrs for ' + d.deviceId)
-						dev.on('down', (key) => this.client.keyDown(d.deviceId, key))
-						dev.on('up', (key) => this.client.keyUp(d.deviceId, key))
+						dev.deck.on('down', (key) => this.client.keyDown(d.deviceId, key))
+						dev.deck.on('up', (key) => this.client.keyUp(d.deviceId, key))
 					} else {
 						throw new Error(`Device missing: ${d.serialNumber}`)
 					}
@@ -73,16 +84,17 @@ export class DeviceManager {
 	}
 
 	private clearIdMap(): void {
+		console.log('clear id map')
 		for (const dev of this.devices.values()) {
 			// @ts-expect-error
-			dev.removeAllListeners('down')
+			dev.deck.removeAllListeners('down')
 			// @ts-expect-error
-			dev.removeAllListeners('up')
+			dev.deck.removeAllListeners('up')
 		}
 		this.deviceIdMap.clear()
 	}
 
-	private getDeviceInfo(deviceId: number): [string, StreamDeck] {
+	private getDeviceInfo(deviceId: number): [string, StreamDeckExt] {
 		const serial = this.deviceIdMap.get(deviceId)
 		if (!serial) throw new Error(`Unknown deviceId: ${deviceId}`)
 
@@ -103,9 +115,17 @@ export class DeviceManager {
 			// cleanup
 			this.devices.delete(dev.serialNumber)
 			const k = Array.from(this.deviceIdMap.entries()).find((e) => e[1] === dev.serialNumber)
-			if (k) this.deviceIdMap.delete(k[0])
+			if (k) {
+				this.deviceIdMap.delete(k[0])
+				this.client.removeDevice(k[0])
+			}
 
-			dev2.close()
+			dev2.queue?.abort()
+			try {
+				dev2.deck.close()
+			} catch (e) {
+				// Ignore
+			}
 		}
 	}
 
@@ -115,12 +135,12 @@ export class DeviceManager {
 			// If it is already in the process of initialising, core will give us back the same id twice, so we dont need to track it
 			if (!devices2.find((d) => d[1] === serial)) {
 				// Re-init device
-				this.client.addDevice(serial, device.NUM_KEYS, device.KEY_COLUMNS)
+				this.client.addDevice(serial, device.deck.NUM_KEYS, device.deck.KEY_COLUMNS)
 
 				// Indicate on device
 				// TODO
-				device.clearAllKeys()
-				device.fillColor(0, 0, 255, 0)
+				device.deck.clearAllKeys()
+				device.deck.fillColor(0, 0, 255, 0)
 			}
 		}
 
@@ -137,7 +157,33 @@ export class DeviceManager {
 			try {
 				const sd = openStreamDeck(path, { resetToLogoOnExit: true })
 				const serial = sd.getSerialNumber()
-				this.devices.set(serial, sd)
+
+				const queue =
+					sd.ICON_SIZE !== 72
+						? new ImageWriteQueue(async (key: number, buffer: Buffer) => {
+								let newbuffer: Buffer | null = null
+								try {
+									newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
+										.resize(96, 96)
+										.raw()
+										.toBuffer()
+								} catch (e) {
+									console.error(`device(${serial}): scale image failed: ${e}`)
+									return
+								}
+
+								try {
+									sd.fillImage(key, newbuffer)
+								} catch (e_1) {
+									console.error(`device(${serial}): fillImage failed: ${e_1}`)
+								}
+						  })
+						: undefined
+
+				this.devices.set(serial, {
+					deck: sd,
+					queue,
+				})
 				this.client.addDevice(serial, sd.NUM_KEYS, sd.KEY_COLUMNS)
 
 				sd.on('error', (e) => {
@@ -152,8 +198,8 @@ export class DeviceManager {
 	private showOffline(): void {
 		// TODO
 		for (const dev of this.devices.values()) {
-			dev.clearAllKeys()
-			dev.fillColor(0, 255, 0, 0)
+			dev.deck.clearAllKeys()
+			dev.deck.fillColor(0, 255, 0, 0)
 		}
 	}
 }
