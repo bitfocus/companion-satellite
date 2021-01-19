@@ -4,6 +4,7 @@ import * as path from 'path'
 import { init } from './app'
 import * as electronStore from 'electron-store'
 import * as prompt from 'electron-prompt'
+import openAboutWindow from 'electron-about-window'
 
 const store = new electronStore<RemoteConfig>()
 
@@ -33,22 +34,16 @@ app.whenReady().then(function () {
 	// }
 
 	const menu = new Menu()
-	// menu.append(
-	// 	new electron.MenuItem({
-	// 		label: 'Show/Hide window',
-	// 		click: toggleWindow,
-	// 	})
-	// )
-	// menu.append(
-	// 	new electron.MenuItem({
-	// 		label: 'Launch GUI',
-	// 		click: launchUI,
-	// 	})
-	// )
 	menu.append(
 		new MenuItem({
 			label: 'Change Host',
 			click: changeHost,
+		})
+	)
+	menu.append(
+		new MenuItem({
+			label: 'About',
+			click: trayAbout,
 		})
 	)
 	menu.append(
@@ -96,4 +91,16 @@ function trayQuit() {
 		})
 }
 
-client
+function trayAbout() {
+	console.log('about click')
+	openAboutWindow({
+		icon_path: path.join(__dirname, '../assets', 'icon.png'),
+		product_name: 'Companion Remote',
+		description: 'Remote Streamdeck connector for Bitfocus Companion 2.1',
+		adjust_window_size: false,
+		bug_report_url: 'https://github.com/julusian/companion-remote/issues',
+		copyright: '2021 Julian Waller',
+		homepage: 'https://github.com/julusian/companion-remote',
+		license: 'MIT',
+	})
+}

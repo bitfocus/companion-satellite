@@ -1217,6 +1217,11 @@ ejs@^3.1.5:
   dependencies:
     jake "^10.6.1"
 
+electron-about-window@^1.13.4:
+  version "1.13.4"
+  resolved "https://registry.yarnpkg.com/electron-about-window/-/electron-about-window-1.13.4.tgz#9f7d5a9da3404eb8a821169e3917e3e950d17bd9"
+  integrity sha512-EJe/Ws6rmT5q3NhaR5qLZ4C4aC1Eah0b1vlAdcwPh9jZnT55idfTu2GFgM2F4Bc1DEZun4GbM4D2wYXLTHnfWA==
+
 electron-builder@^22.9.1:
   version "22.9.1"
   resolved "https://registry.yarnpkg.com/electron-builder/-/electron-builder-22.9.1.tgz#a2962db6f2757bc01d02489f38fafe0809f68f60"
