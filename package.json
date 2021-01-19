@@ -1,5 +1,5 @@
 {
-  "name": "factorio-listing",
+  "name": "companion-remote",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
@@ -11,34 +11,33 @@
     "dev": "yarn ts-node src/index.ts"
   },
   "devDependencies": {
-    "@types/jest": "^25.2.2",
-    "@types/node": "^14.0.1",
+    "@types/jest": "^26.0.20",
+    "@types/node": "^14.14.21",
     "@types/object-path": "^0.11.0",
-    "@types/pouchdb": "^6.4.0",
-    "@types/sharp": "^0.26.0",
-    "@types/underscore": "^1.10.0",
-    "@typescript-eslint/eslint-plugin": "^3.0.0",
-    "@typescript-eslint/parser": "^3.0.0",
+    "@types/sharp": "^0.27.1",
+    "@types/underscore": "^1.10.24",
+    "@typescript-eslint/eslint-plugin": "^4.14.0",
+    "@typescript-eslint/parser": "^4.14.0",
     "del-cli": "^3.0.1",
-    "eslint": "^7.0.0",
-    "eslint-config-prettier": "^6.11.0",
+    "eslint": "^7.18.0",
+    "eslint-config-prettier": "^7.2.0",
     "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-prettier": "^3.1.3",
-    "husky": "^4.2.5",
-    "lint-staged": "^10.2.2",
-    "prettier": "^2.0.5",
-    "ts-node": "^8.10.1",
-    "typescript": "^3.9.2"
+    "eslint-plugin-prettier": "^3.3.1",
+    "husky": "^4.3.8",
+    "lint-staged": "^10.5.3",
+    "prettier": "^2.2.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
   },
   "engines": {
-    "node": "^12.16"
+    "node": "^12.16 || 14"
   },
   "dependencies": {
-    "@julusian/jpeg-turbo": "^0.5.4",
+    "@julusian/jpeg-turbo": "^1.0.1",
     "binopsy": "^0.0.0",
-    "elgato-stream-deck": "^3.3.2",
+    "elgato-stream-deck": "^4.0.1",
     "eventemitter3": "^4.0.7",
-    "sharp": "^0.26.0",
+    "sharp": "^0.27.0",
     "usb-detection": "^4.10.0"
   },
   "husky": {
