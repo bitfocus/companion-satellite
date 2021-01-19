@@ -12,4 +12,4 @@ Each device will appear in companion as its own 'satellite' device, and so can b
 
 Note: This connects over the satellite device api which uses port TCP 37133.
 
-Companion 2.1.0 and newer are supported
+Companion 2.1.2 and newer are supported
