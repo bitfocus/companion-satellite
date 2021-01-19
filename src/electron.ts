@@ -12,6 +12,7 @@ interface RemoteConfig {
 }
 
 const client = init()
+let tray: Tray | undefined
 
 app.whenReady().then(function () {
 	console.log('App ready')
@@ -21,7 +22,7 @@ app.whenReady().then(function () {
 		client.connect(ip)
 	}
 
-	const tray = new Tray(
+	tray = new Tray(
 		process.platform == 'darwin'
 			? path.join(__dirname, '../assets', 'trayTemplate.png')
 			: path.join(__dirname, '../assets', 'icon.png')
