@@ -1,5 +1,11 @@
 {
   "name": "companion-remote",
+  "description": "Remote Streamdeck connector for Bitfocus Companion",
+  "author": {
+    "name": "Julian Waller",
+    "email": "git@julusian.co.uk",
+    "url": "https://github.com/julusian"
+  },
   "version": "1.0.0",
   "main": "dist/electron.js",
   "license": "MIT",
@@ -18,7 +24,7 @@
     "@types/electron-prompt": "^1.6.0",
     "@types/node": "^14.14.21",
     "@types/sharp": "^0.27.1",
-    "electron": "~10",
+    "electron": "~9",
     "electron-builder": "^22.9.1",
     "rimraf": "^3.0.2",
     "ts-node": "^9.1.1",
@@ -53,9 +59,35 @@
     ]
   },
   "build": {
+		"productName": "Companion Remote",
+		"appId": "remote.companion.julusian.dev",
     "directories": {
       "buildResources": "assets/",
       "output": "electron-output/"
-    }
+    },
+		"mac": {
+			"category": "dev.julusian.companion.remote",
+			"extendInfo": {
+				"LSBackgroundOnly": 1,
+				"LSUIElement": 1
+      }
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "artifactName": "companion-remote-win64.exe",
+			"createStartMenuShortcut": true,
+			"perMachine": true,
+			"oneClick": false,
+			"allowElevation": true
+    },
+		"linux": {
+      "target": "dir"
+    },
+    "files": [
+      "**/*",
+      "assets/*"
+    ]
   }
 }

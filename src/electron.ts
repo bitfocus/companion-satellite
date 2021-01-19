@@ -56,6 +56,7 @@ app.whenReady().then(function () {
 			click: trayQuit,
 		})
 	)
+	console.log('set tray')
 	tray.setContextMenu(menu)
 })
 
