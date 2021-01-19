@@ -1,35 +1,7 @@
 {
+	"extends": "./tsconfig.build.json",
+	"exclude": ["node_modules/**"],
 	"compilerOptions": {
-		"module": "commonjs",
-		"target": "es2018",
-		"moduleResolution": "node",
-		"sourceMap": true,
-		"outDir": "dist",
-		"baseUrl": "./",
-		"paths": {
-			"*": ["node_modules/*"]
-		},
-		"declaration": true,
-		"importHelpers": true,
-		"listFiles": false,
-		"traceResolution": false,
-		"pretty": true,
-		"lib": ["es6"],
-		"types": ["node", "jest"],
-		"skipLibCheck": true,
-		"strict": true,
-		"alwaysStrict": false,
-		"strictPropertyInitialization": true,
-		"strictFunctionTypes": true,
-		"forceConsistentCasingInFileNames": true,
-		"noFallthroughCasesInSwitch": true,
-		"noImplicitAny": true,
-		"noImplicitReturns": true,
-		"noImplicitThis": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true
-	},
-	"include": ["src/**/*.ts"],
-	"compileOnSave": false,
-	"exclude": ["node_modules/**"]
+		"types": ["jest", "node"]
+	}
 }
