@@ -59,17 +59,17 @@
     ]
   },
   "build": {
-		"productName": "Companion Remote",
-		"appId": "remote.companion.julusian.dev",
+    "productName": "Companion Remote",
+    "appId": "remote.companion.julusian.dev",
     "directories": {
       "buildResources": "assets/",
       "output": "electron-output/"
     },
-		"mac": {
-			"category": "dev.julusian.companion.remote",
-			"extendInfo": {
-				"LSBackgroundOnly": 1,
-				"LSUIElement": 1
+    "mac": {
+      "category": "dev.julusian.companion.remote",
+      "extendInfo": {
+        "LSBackgroundOnly": 1,
+        "LSUIElement": 1
       }
     },
     "win": {
@@ -77,12 +77,12 @@
     },
     "nsis": {
       "artifactName": "companion-remote-win64.exe",
-			"createStartMenuShortcut": true,
-			"perMachine": true,
-			"oneClick": false,
-			"allowElevation": true
+      "createStartMenuShortcut": true,
+      "perMachine": true,
+      "oneClick": false,
+      "allowElevation": true
     },
-		"linux": {
+    "linux": {
       "target": "dir"
     },
     "files": [
