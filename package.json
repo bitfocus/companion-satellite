@@ -29,6 +29,7 @@
     "binopsy": "^0.0.0",
     "elgato-stream-deck": "^4.0.1",
     "eventemitter3": "^4.0.7",
+    "meow": "^9.0.0",
     "sharp": "^0.27.0",
     "usb-detection": "^4.10.0"
   },
