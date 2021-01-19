@@ -15,7 +15,7 @@
  *
  */
 
-// @ts-ignore
+/// <reference types="./binopsy" />
 import Parser = require('binopsy')
 import { Socket } from 'net'
 

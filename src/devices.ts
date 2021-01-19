@@ -3,6 +3,7 @@ import { listStreamDecks, openStreamDeck, StreamDeck } from 'elgato-stream-deck'
 import * as usbDetect from 'usb-detection'
 import { ImageWriteQueue } from './writeQueue'
 import sharp = require('sharp')
+import EventEmitter = require('events')
 
 type SerialNumber = string
 type DeviceId = number
@@ -86,10 +87,9 @@ export class DeviceManager {
 	private clearIdMap(): void {
 		console.log('clear id map')
 		for (const dev of this.devices.values()) {
-			// @ts-expect-error
-			dev.deck.removeAllListeners('down')
-			// @ts-expect-error
-			dev.deck.removeAllListeners('up')
+			const deck = (dev.deck as unknown) as EventEmitter
+			deck.removeAllListeners('down')
+			deck.removeAllListeners('up')
 		}
 		this.deviceIdMap.clear()
 	}

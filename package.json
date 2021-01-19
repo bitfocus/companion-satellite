@@ -43,7 +43,7 @@
       "prettier --write"
     ],
     "*.{ts,tsx,js,jsx}": [
-      "yarn lint-fix"
+      "yarn lint --fix"
     ]
   }
 }
