@@ -1,5 +1,6 @@
 {
   "name": "companion-remote",
+  "version": "0.1.0",
   "description": "Remote Streamdeck connector for Bitfocus Companion",
   "author": {
     "name": "Julian Waller",
@@ -14,7 +15,6 @@
     "url": "https://github.com/julusian/companion-remote/issues"
   },
   "homepage": "https://github.com/julusian/companion-remote#readme",
-  "version": "1.0.0",
   "main": "dist/electron.js",
   "license": "MIT",
   "private": true,
