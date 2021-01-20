@@ -72,6 +72,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this._connected = true
 
 			if (!this._pingInterval) {
+				console.trace('start ping')
 				this._pingInterval = setInterval(() => this.sendPing(), 100)
 			}
 
@@ -92,9 +93,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
-	public connect(host: string): void {
+	public async connect(host: string): Promise<void> {
 		if (this._connected || this._connectionActive) {
-			return
+			await this.disconnect()
 		}
 		this._connectionActive = true
 
@@ -107,6 +108,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._retryConnectTimeout) {
 			clearTimeout(this._retryConnectTimeout)
 			delete this._retryConnectTimeout
+		}
+
+		if (this._pingInterval) {
+			clearInterval(this._pingInterval)
+			delete this._pingInterval
 		}
 
 		if (!this._connected) {
