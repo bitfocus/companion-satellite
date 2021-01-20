@@ -1,5 +1,6 @@
 import * as meow from 'meow'
-import { init } from './app'
+import { CompanionSatelliteClient } from './client'
+import { DeviceManager } from './devices'
 
 const cli = meow(
 	`
@@ -16,5 +17,14 @@ if (cli.input.length === 0) {
 	cli.showHelp(0)
 }
 
-const client = init()
+console.log('Starting')
+
+const client = new CompanionSatelliteClient({ debug: true })
+const devices = new DeviceManager(client)
+
+client.on('log', (l) => console.log(l))
+client.on('error', (e) => console.error(e))
+
 client.connect(cli.input[0])
+
+devices
