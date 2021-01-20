@@ -241,7 +241,7 @@ export class DeviceManager {
 		dev.deck.clearAllKeys()
 
 		this.cardGenerator
-			.generateBasicCard(dev.deck, 'aaa', this.statusString)
+			.generateBasicCard(dev.deck, this.client.host, this.statusString)
 			.then((buffer) => {
 				if (outputId === dev.queueOutputId) {
 					// still valid

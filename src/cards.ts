@@ -1,13 +1,18 @@
 import * as path from 'path'
 import { createCanvas, Image, loadImage } from 'canvas'
 import { StreamDeck } from 'elgato-stream-deck'
+import { promisify } from 'util'
+import { readFile } from 'fs'
+
+const readFileP = promisify(readFile)
 
 export class CardGenerator {
 	private iconImage: Image | undefined
 
 	async loadIcon(): Promise<Image> {
 		if (!this.iconImage) {
-			this.iconImage = await loadImage(path.join(__dirname, '../assets/icon.png'))
+			const rawData = await readFileP(path.join(__dirname, '../assets/icon.png'))
+			this.iconImage = await loadImage(rawData)
 		}
 
 		return this.iconImage
