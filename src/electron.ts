@@ -8,6 +8,10 @@ import openAboutWindow from 'electron-about-window'
 
 const store = new electronStore<RemoteConfig>()
 
+app.on('window-all-closed', () => {
+	// Block default behaviour of exit on close
+})
+
 interface RemoteConfig {
 	remoteIp: string
 }
@@ -64,15 +68,19 @@ function changeHost() {
 		value: current ?? '127.0.0.1',
 		inputAttrs: {},
 		type: 'input',
-	}).then((r) => {
-		if (r === null) {
-			console.log('user cancelled')
-		} else {
-			console.log('result', r)
-			store.set('remoteIp', r)
-			client.connect(r)
-		}
 	})
+		.then((r) => {
+			if (r === null) {
+				console.log('user cancelled')
+			} else {
+				console.log('new ip', r)
+				store.set('remoteIp', r)
+				client.connect(r)
+			}
+		})
+		.catch((e) => {
+			console.error('Failed to change host', e)
+		})
 }
 
 function trayQuit() {
@@ -89,6 +97,9 @@ function trayQuit() {
 				app.quit()
 			}
 		})
+		.catch((e) => {
+			console.error('Failed to do quit', e)
+		})
 }
 
 function trayAbout() {
@@ -96,8 +107,11 @@ function trayAbout() {
 	openAboutWindow({
 		icon_path: path.join(__dirname, '../assets', 'icon.png'),
 		product_name: 'Companion Remote',
-		description: 'Remote Streamdeck connector for Bitfocus Companion 2.1.2 and newer',
+		description: 'Remote Streamdeck connector for Bitfocus Companion <br />Supports 2.1.2 and newer',
 		adjust_window_size: false,
+		win_options: {
+			resizable: false,
+		},
 		bug_report_url: 'https://github.com/julusian/companion-remote/issues',
 		copyright: '2021 Julian Waller',
 		homepage: 'https://github.com/julusian/companion-remote',

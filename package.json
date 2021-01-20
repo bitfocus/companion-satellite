@@ -1,6 +1,6 @@
 {
   "name": "companion-remote",
-  "version": "0.1.0",
+  "version": "0.1.1-0",
   "description": "Remote Streamdeck connector for Bitfocus Companion",
   "author": {
     "name": "Julian Waller",
@@ -45,7 +45,7 @@
     "@julusian/jpeg-turbo": "^1.0.1",
     "binopsy": "^0.0.0",
     "electron-about-window": "^1.13.4",
-    "electron-prompt": "^1.6.0",
+    "electron-prompt": "https://github.com/Julusian/electron-prompt.git#fix/cancel-exits-app",
     "electron-store": "^6.0.1",
     "elgato-stream-deck": "^4.0.1",
     "eventemitter3": "^4.0.7",

@@ -1242,10 +1242,9 @@ electron-builder@^22.9.1:
     update-notifier "^4.1.1"
     yargs "^16.0.3"
 
-electron-prompt@^1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/electron-prompt/-/electron-prompt-1.6.0.tgz#9ed8fa372c331c589f2cb5d3a6abf29d4965be31"
-  integrity sha512-CJaSo7o84JJygBGCHIY1zySn+j2ejsKZZFAmfIrOw8wgriufzl4RchTf9I2HNFvlOiekGj4WAznOaA6gFm5ddQ==
+"electron-prompt@https://github.com/Julusian/electron-prompt.git#fix/cancel-exits-app":
+  version "0.0.0-dev"
+  resolved "https://github.com/Julusian/electron-prompt.git#1694b4bbf9ac9659c50a5fb61af3b47ed0407595"
   dependencies:
     doc-ready "^1.0.4"
 
