@@ -40,10 +40,6 @@ app.whenReady().then(function () {
 			? path.join(__dirname, '../assets', 'trayTemplate.png')
 			: path.join(__dirname, '../assets', 'icon.png')
 	)
-	// tray.setIgnoreDoubleClickEvents(true)
-	// if (process.platform !== 'darwin') {
-	// 	tray.on('click', toggleWindow)
-	// }
 
 	const menu = new Menu()
 	menu.append(
@@ -102,6 +98,7 @@ function trayQuit() {
 		.then((v) => {
 			console.log('quit: ', v.response)
 			if (v.response === 0) {
+				client.disconnect()
 				app.quit()
 			}
 		})
