@@ -13,6 +13,7 @@ export type CompanionSatelliteClientEvents = {
 	log: [string]
 	connected: []
 	disconnected: []
+	ipChange: [string]
 
 	draw: [{ deviceId: number; keyIndex: number; image: Buffer }]
 	brightness: [{ deviceId: number; percent: number }]
@@ -30,6 +31,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _connectionActive = false // True when connected/connecting/reconnecting
 	private _retryConnectTimeout: NodeJS.Timer | undefined = undefined
 	private _host = ''
+
+	public get host(): string {
+		return this._host
+	}
 
 	constructor(options: CompanionSatelliteClientOptions = {}) {
 		super()
@@ -98,6 +103,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			await this.disconnect()
 		}
 		this._connectionActive = true
+
+		setImmediate(() => {
+			this.emit('ipChange', host)
+		})
 
 		this._host = host
 		this.socket.connect(SERVER_PORT, this._host)

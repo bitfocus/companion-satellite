@@ -4,12 +4,14 @@ import * as usbDetect from 'usb-detection'
 import { ImageWriteQueue } from './writeQueue'
 import sharp = require('sharp')
 import EventEmitter = require('events')
+import { CardGenerator } from './cards'
 
 type SerialNumber = string
 type DeviceId = number
 
 interface StreamDeckExt {
 	deck: StreamDeck
+	queueOutputId: number
 	queue: ImageWriteQueue | undefined
 }
 
@@ -17,15 +19,21 @@ export class DeviceManager {
 	private readonly devices: Map<SerialNumber, StreamDeckExt>
 	private readonly deviceIdMap: Map<DeviceId, SerialNumber>
 	private readonly client: CompanionSatelliteClient
+	private readonly cardGenerator: CardGenerator
+
+	private statusString: string
 
 	constructor(client: CompanionSatelliteClient) {
 		this.client = client
 		this.devices = new Map()
 		this.deviceIdMap = new Map()
+		this.cardGenerator = new CardGenerator()
 
 		usbDetect.startMonitoring()
 		usbDetect.on('add:4057', (dev) => this.foundDevice(dev))
 		usbDetect.on('remove:4057', (dev) => this.removeDevice(dev))
+
+		this.statusString = 'Connecting'
 
 		this.scanDevices()
 
@@ -33,12 +41,18 @@ export class DeviceManager {
 			console.log('connected')
 			this.clearIdMap()
 
+			this.showStatusCard('Connected')
+
 			this.registerAll()
 		})
 		client.on('disconnected', () => {
 			console.log('disconnected')
 			this.clearIdMap()
-			this.showOffline()
+
+			this.showStatusCard('Disconnected')
+		})
+		client.on('ipChange', () => {
+			this.showStatusCard()
 		})
 
 		client.on('brightness', (d) => {
@@ -140,9 +154,7 @@ export class DeviceManager {
 				this.client.addDevice(serial, device.deck.NUM_KEYS, device.deck.KEY_COLUMNS)
 
 				// Indicate on device
-				// TODO
-				device.deck.clearAllKeys()
-				device.deck.fillColor(0, 0, 255, 0)
+				this.deckDrawStatus(device, this.statusString)
 			}
 		}
 
@@ -164,11 +176,18 @@ export class DeviceManager {
 				const sd = openStreamDeck(path, { resetToLogoOnExit: true })
 				const serial = sd.getSerialNumber()
 
-				this.showNewDevice(sd)
+				const devInfo: StreamDeckExt = {
+					deck: sd,
+					queueOutputId: 0,
+					queue: undefined,
+				}
 
-				const queue =
+				this.showNewDevice(devInfo)
+
+				devInfo.queue =
 					sd.ICON_SIZE !== 72
 						? new ImageWriteQueue(async (key: number, buffer: Buffer) => {
+								const outputId = devInfo.queueOutputId
 								let newbuffer: Buffer | null = null
 								try {
 									newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
@@ -180,18 +199,18 @@ export class DeviceManager {
 									return
 								}
 
-								try {
-									sd.fillImage(key, newbuffer)
-								} catch (e_1) {
-									console.error(`device(${serial}): fillImage failed: ${e_1}`)
+								// Check if generated image is still valid
+								if (devInfo.queueOutputId === outputId) {
+									try {
+										sd.fillImage(key, newbuffer)
+									} catch (e_1) {
+										console.error(`device(${serial}): fillImage failed: ${e_1}`)
+									}
 								}
 						  })
 						: undefined
 
-				this.devices.set(serial, {
-					deck: sd,
-					queue,
-				})
+				this.devices.set(serial, devInfo)
 				this.client.addDevice(serial, sd.NUM_KEYS, sd.KEY_COLUMNS)
 
 				sd.on('error', (e) => {
@@ -203,16 +222,51 @@ export class DeviceManager {
 		}
 	}
 
-	private showNewDevice(deck: StreamDeck): void {
-		deck.clearAllKeys()
-		deck.fillColor(0, 255, 0, 255)
+	private showNewDevice(dev: StreamDeckExt): void {
+		const outputId = dev.queueOutputId
+
+		// Start with blanking it
+		dev.deck.clearAllKeys()
+
+		this.cardGenerator
+			.generateBasicCard(dev.deck, 'aaa', this.statusString)
+			.then((buffer) => {
+				if (outputId === dev.queueOutputId) {
+					// still valid
+					dev.deck.fillPanel(buffer, { format: 'bgra' })
+				}
+			})
+			.catch((e) => {
+				console.error(`Failed to fill new device`, e)
+			})
 	}
 
-	private showOffline(): void {
-		// TODO
+	private deckDrawStatus(dev: StreamDeckExt, status: string): void {
+		// abort and discard current operations
+		dev.queue?.abort()
+		dev.queueOutputId++
+
+		const outputId = dev.queueOutputId
+		this.cardGenerator
+			.generateBasicCard(dev.deck, this.client.host, status)
+			.then((buffer) => {
+				if (outputId === dev.queueOutputId) {
+					// still valid
+					dev.deck.fillPanel(buffer, { format: 'bgra' })
+				}
+			})
+			.catch((e) => {
+				console.error(`Failed to fill new device`, e)
+			})
+	}
+
+	private showStatusCard(status?: string): void {
+		if (status !== undefined) {
+			this.statusString = status
+		}
+
 		for (const dev of this.devices.values()) {
-			dev.deck.clearAllKeys()
-			dev.deck.fillColor(0, 255, 0, 0)
+			this.deckDrawStatus(dev, this.statusString)
 		}
 	}
 }
