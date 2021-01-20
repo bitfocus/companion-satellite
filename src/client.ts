@@ -27,6 +27,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private receiveBuffer: Buffer = Buffer.alloc(0)
 
 	private _pingInterval: NodeJS.Timer | undefined
+	private _pingAcked = false
 	private _connected = false
 	private _connectionActive = false // True when connected/connecting/reconnecting
 	private _retryConnectTimeout: NodeJS.Timer | undefined = undefined
@@ -79,6 +80,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			}
 
 			this._connected = true
+			this._pingAcked = true
 
 			if (!this._pingInterval) {
 				this._pingInterval = setInterval(() => this.sendPing(), 100)
@@ -105,6 +107,17 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private sendPing(): void {
 		if (this._connected && this.socket) {
+			if (!this._pingAcked) {
+				// Ping was never acked, so it looks like a timeout
+				try {
+					this.socket.destroy()
+				} catch (e) {
+					// ignore
+				}
+				return
+			}
+
+			this._pingAcked = false
 			Protocol.sendPacket(this.socket, Protocol.SCMD_PING, undefined)
 		}
 	}
@@ -198,6 +211,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case Protocol.SCMD_PONG:
 				// console.log('Got pong')
 				// TODO - track and timeouts etc
+				this._pingAcked = true
 				break
 
 			case Protocol.SCMD_VERSION: {
