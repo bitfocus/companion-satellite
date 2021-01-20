@@ -22,7 +22,6 @@ console.log('Starting')
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
-devices // ensure referenced
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
@@ -99,6 +98,7 @@ function trayQuit() {
 			console.log('quit: ', v.response)
 			if (v.response === 0) {
 				client.disconnect()
+				devices.close()
 				app.quit()
 			}
 		})

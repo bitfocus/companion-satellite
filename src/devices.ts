@@ -100,6 +100,18 @@ export class DeviceManager {
 		})
 	}
 
+	public close(): void {
+		usbDetect.stopMonitoring()
+
+		for (const dev of this.devices.values()) {
+			try {
+				dev.deck.close()
+			} catch (e) {
+				// ignore
+			}
+		}
+	}
+
 	private clearIdMap(): void {
 		console.log('clear id map')
 		for (const dev of this.devices.values()) {

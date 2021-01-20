@@ -81,9 +81,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this._connected = true
 
 			if (!this._pingInterval) {
-				console.trace('start ping')
 				this._pingInterval = setInterval(() => this.sendPing(), 100)
-				// this._pingInterval = setTimeout(() => this.sendPing(), 100)
 			}
 
 			if (!this.socket) {
