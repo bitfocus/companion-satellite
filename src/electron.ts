@@ -115,6 +115,7 @@ function trayAbout() {
 	openAboutWindow({
 		icon_path: path.join(__dirname, '../assets', 'icon.png'),
 		product_name: 'Companion Remote',
+		use_inner_html: true,
 		description: 'Remote Streamdeck connector for Bitfocus Companion <br />Supports 2.1.2 and newer',
 		adjust_window_size: false,
 		win_options: {
@@ -124,5 +125,6 @@ function trayAbout() {
 		copyright: '2021 Julian Waller',
 		homepage: 'https://github.com/julusian/companion-remote',
 		license: 'MIT',
+		use_version_info: true,
 	})
 }
