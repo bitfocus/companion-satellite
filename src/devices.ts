@@ -27,6 +27,8 @@ export class DeviceManager {
 		usbDetect.on('add:4057', (dev) => this.foundDevice(dev))
 		usbDetect.on('remove:4057', (dev) => this.removeDevice(dev))
 
+		this.scanDevices()
+
 		client.on('connected', () => {
 			console.log('connected')
 			this.clearIdMap()
@@ -144,6 +146,10 @@ export class DeviceManager {
 			}
 		}
 
+		this.scanDevices()
+	}
+
+	public scanDevices(): void {
 		for (const device of listStreamDecks()) {
 			this.tryAddDevice(device.path, device.serialNumber ?? '')
 		}
@@ -157,6 +163,8 @@ export class DeviceManager {
 			try {
 				const sd = openStreamDeck(path, { resetToLogoOnExit: true })
 				const serial = sd.getSerialNumber()
+
+				this.showNewDevice(sd)
 
 				const queue =
 					sd.ICON_SIZE !== 72
@@ -193,6 +201,11 @@ export class DeviceManager {
 				console.log(`Open "${path}" failed: ${e}`)
 			}
 		}
+	}
+
+	private showNewDevice(deck: StreamDeck): void {
+		deck.clearAllKeys()
+		deck.fillColor(0, 255, 0, 255)
 	}
 
 	private showOffline(): void {
