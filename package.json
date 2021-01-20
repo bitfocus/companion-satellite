@@ -76,7 +76,8 @@
       "output": "electron-output/"
     },
     "mac": {
-      "category": "dev.julusian.companion.remote",
+	  "category": "dev.julusian.companion.remote",
+	  "target": "dmg",
       "extendInfo": {
         "LSBackgroundOnly": 1,
         "LSUIElement": 1
@@ -86,7 +87,6 @@
       "target": "nsis"
     },
     "nsis": {
-      "artifactName": "companion-remote-win64.exe",
       "createStartMenuShortcut": true,
       "perMachine": true,
       "oneClick": false,
