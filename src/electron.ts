@@ -49,6 +49,12 @@ app.whenReady().then(function () {
 	)
 	menu.append(
 		new MenuItem({
+			label: 'Scan devices',
+			click: trayScanDevices,
+		})
+	)
+	menu.append(
+		new MenuItem({
 			label: 'About',
 			click: trayAbout,
 		})
@@ -105,6 +111,11 @@ function trayQuit() {
 		.catch((e) => {
 			console.error('Failed to do quit', e)
 		})
+}
+
+function trayScanDevices() {
+	console.log('do scan')
+	devices.scanDevices()
 }
 
 function trayAbout() {
