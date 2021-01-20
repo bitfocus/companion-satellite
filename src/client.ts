@@ -22,7 +22,7 @@ export type CompanionSatelliteClientEvents = {
 
 export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> {
 	private readonly debug: boolean
-	private readonly socket: Socket
+	private socket: Socket | undefined
 
 	private receiveBuffer: Buffer = Buffer.alloc(0)
 
@@ -41,6 +41,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		this.debug = !!options.debug
 
+		this.initSocket()
+	}
+
+	private initSocket(): void {
 		this.socket = new Socket()
 		this.socket.on('error', (e) => this.emit('error', e))
 		this.socket.on('close', () => {
@@ -62,7 +66,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._retryConnectTimeout = setTimeout(() => {
 					this._retryConnectTimeout = undefined
 					this.emit('log', 'Trying reconnect')
-					this.socket.connect(SERVER_PORT, this._host)
+					this.initSocket()
 				}, 1000)
 			}
 		})
@@ -79,6 +83,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			if (!this._pingInterval) {
 				console.trace('start ping')
 				this._pingInterval = setInterval(() => this.sendPing(), 100)
+				// this._pingInterval = setTimeout(() => this.sendPing(), 100)
+			}
+
+			if (!this.socket) {
+				// should never hit, but just in case
+				this.disconnect()
+				return
 			}
 
 			this.emit('log', 'sending version')
@@ -90,10 +101,12 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 			this.emit('connected')
 		})
+
+		this.socket.connect(SERVER_PORT, this._host)
 	}
 
 	private sendPing(): void {
-		if (this._connected) {
+		if (this._connected && this.socket) {
 			Protocol.sendPacket(this.socket, Protocol.SCMD_PING, undefined)
 		}
 	}
@@ -109,7 +122,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		})
 
 		this._host = host
-		this.socket.connect(SERVER_PORT, this._host)
+
+		this.initSocket()
 	}
 
 	public disconnect(): Promise<void> {
@@ -130,9 +144,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		return new Promise((resolve, reject) => {
 			try {
-				this.socket.end()
+				this.socket?.end()
+				this.socket = undefined
 				return resolve()
 			} catch (e) {
+				this.socket = undefined
 				return reject(e)
 			}
 		})
@@ -229,20 +245,20 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	public keyDown(deviceId: number, keyIndex: number): void {
-		if (this._connected) {
+		if (this._connected && this.socket) {
 			const b = Protocol.SCMD_BUTTON_PARSER.serialize({ deviceId, keyIndex, state: 1 })
 			Protocol.sendPacket(this.socket, Protocol.SCMD_BUTTON, b)
 		}
 	}
 	public keyUp(deviceId: number, keyIndex: number): void {
-		if (this._connected) {
+		if (this._connected && this.socket) {
 			const b = Protocol.SCMD_BUTTON_PARSER.serialize({ deviceId, keyIndex, state: 0 })
 			Protocol.sendPacket(this.socket, Protocol.SCMD_BUTTON, b)
 		}
 	}
 
 	public addDevice(serial: string, keysTotal: number, keysPerRow: number): void {
-		if (this._connected) {
+		if (this._connected && this.socket) {
 			const addDev = Protocol.SCMD_ADDDEVICE2_PARSER.serialize({
 				serialNumber: serial.padEnd(20, '\u0000'),
 				deviceId: 0, // Specified by remote
@@ -254,7 +270,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	public removeDevice(deviceId: number): void {
-		if (this._connected) {
+		if (this._connected && this.socket) {
 			const o = Protocol.SCMD_REMOVEDEVICE_PARSER.serialize({ deviceId })
 			Protocol.sendPacket(this.socket, Protocol.SCMD_REMOVEDEVICE, o)
 		}
