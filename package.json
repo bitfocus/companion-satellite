@@ -1,6 +1,6 @@
 {
   "name": "companion-remote",
-  "version": "0.1.1-0",
+  "version": "0.2.0",
   "description": "Remote Streamdeck connector for Bitfocus Companion",
   "author": {
     "name": "Julian Waller",
@@ -95,15 +95,15 @@
     },
     "linux": {
       "target": "dir",
-	  "extraFiles": [
-		  {
-			  "from": "./node_modules/sharp/vendor/8.10.5/lib",
-			  "to": ".",
-			  "filter": [
-				  "libvips*.so.*"
-			  ]
-		  }
-	  ]
+      "extraFiles": [
+        {
+          "from": "./node_modules/sharp/vendor/8.10.5/lib",
+          "to": ".",
+          "filter": [
+            "libvips*.so.*"
+          ]
+        }
+      ]
     },
     "files": [
       "**/*",

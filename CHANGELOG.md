@@ -1,0 +1,25 @@
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+## [0.2.0](https://github.com/julusian/companion-remote/compare/v0.1.0...v0.2.0) (2021-01-20)
+
+
+### Features
+
+* add scan option to tray menu ([cbbd6dd](https://github.com/julusian/companion-remote/commit/cbbd6dd36f60dc1cf76e67bb7eb7d666d86106cf))
+* basic status card on streamdecks ([2ae218c](https://github.com/julusian/companion-remote/commit/2ae218cf4244084df695cfa10490434d26ec2929))
+* electron 10 ([95d126e](https://github.com/julusian/companion-remote/commit/95d126ed83bc8033f5c94474d9a1dead1978c6ad))
+* naive ping tracking, to quickly detect timeouts ([98c11f9](https://github.com/julusian/companion-remote/commit/98c11f98b078a6e63d0fa6856f13b526117fa91c))
+
+
+### Bug Fixes
+
+* allow changing connection while connceted ([01039b4](https://github.com/julusian/companion-remote/commit/01039b4a7f688db03b0f5fbdd1d0f16f3c470f89))
+* allow html in description ([6b78224](https://github.com/julusian/companion-remote/commit/6b7822483ee25d924cf5dc88cf7e787a251ee60b))
+* changing ip doesnt error so much ([31fb0a7](https://github.com/julusian/companion-remote/commit/31fb0a76f775eedb73a7b51283f2714f80b1fbfa))
+* electron freezing after closing dialog, or exiting after the ip prompt ([7b0bad2](https://github.com/julusian/companion-remote/commit/7b0bad243a1cf5d9b6a030e20608b586ef47c200))
+* ensure connection is cleaned up on exit ([53edebf](https://github.com/julusian/companion-remote/commit/53edebfd734ffa07c4dcca822fb5cbb5ec567629))
+* load icon image manually, as canvas can't read from asar ([f047da4](https://github.com/julusian/companion-remote/commit/f047da4a8cac3ee9d38d37a6a61217e34f02a708))
+* not quitting ([cc6e061](https://github.com/julusian/companion-remote/commit/cc6e0619284504e0446c69ced766a36a7f85186f))
+* scan for devices at startup while no companion connection. show key status on devices before they are fully initialised ([cee053f](https://github.com/julusian/companion-remote/commit/cee053f89ea2d23dc447e57d37f7fd9917daa917))
