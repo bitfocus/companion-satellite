@@ -84,6 +84,7 @@ export class DeviceManager {
 					console.log(`${serial2}=${serial2.length}`)
 					const dev = this.devices.get(serial2)
 					if (dev) {
+						dev.queueOutputId++
 						this.deviceIdMap.set(d.deviceId, serial2)
 						console.log('Registering key evenrs for ' + d.deviceId)
 						dev.deck.on('down', (key) => this.client.keyDown(d.deviceId, key))
@@ -245,7 +246,7 @@ export class DeviceManager {
 			.then((buffer) => {
 				if (outputId === dev.queueOutputId) {
 					// still valid
-					dev.deck.fillPanel(buffer, { format: 'bgra' })
+					dev.deck.fillPanel(buffer, { format: 'rgba' })
 				}
 			})
 			.catch((e) => {
@@ -264,7 +265,7 @@ export class DeviceManager {
 			.then((buffer) => {
 				if (outputId === dev.queueOutputId) {
 					// still valid
-					dev.deck.fillPanel(buffer, { format: 'bgra' })
+					dev.deck.fillPanel(buffer, { format: 'rgba' })
 				}
 			})
 			.catch((e) => {
