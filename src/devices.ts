@@ -134,7 +134,11 @@ export class DeviceManager {
 
 	private foundDevice(dev: usbDetect.Device): void {
 		console.log('Found a device', dev)
-		this.registerAll()
+
+		// most of the time it is available now
+		this.scanDevices()
+		// sometimes it ends up delayed
+		setTimeout(() => this.scanDevices(), 1000)
 	}
 
 	private removeDevice(dev: usbDetect.Device): void {
