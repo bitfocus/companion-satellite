@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.1](https://github.com/julusian/companion-remote/compare/v0.2.0...v0.2.1) (2021-01-21)
+
+
+### Bug Fixes
+
+* replace canvas with sharp for  card generation. ensure queue is discarded when device is registered and ready for images ([7639666](https://github.com/julusian/companion-remote/commit/76396664101ac80462f4884f999ccd3d97c41707))
+
 ## [0.2.0](https://github.com/julusian/companion-remote/compare/v0.1.0...v0.2.0) (2021-01-20)
 
 
