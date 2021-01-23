@@ -23,7 +23,9 @@ export class CardGenerator {
 		const h = deck.ICON_SIZE * deck.KEY_ROWS
 
 		const size = Math.round(Math.min(w, h) * 0.6)
-		const icon = await sharp(await this.loadIcon()).resize(size).toBuffer()
+		const icon = await sharp(await this.loadIcon())
+			.resize(size)
+			.toBuffer()
 
 		return sharp({
 			create: {
