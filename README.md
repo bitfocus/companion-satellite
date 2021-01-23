@@ -1,7 +1,7 @@
 ## Companion Remote
 
 [![License](https://img.shields.io/github/license/julusian/companion-remote)](https://github.com/Julusian/companion-remote/blob/master/LICENSE.md)
-![Version](https://img.shields.io/github/v/release/julusian/companion-remote)
+[![Version](https://img.shields.io/github/v/release/julusian/companion-remote)](https://github.com/Julusian/companion-remote/releases)
 
 A small application to allow for connecting a streamdeck to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
 

@@ -19,7 +19,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "yarn ts-node src/index.ts",
+    "dev": "yarn ts-node src/main.ts",
     "dev-electron": "yarn build:main && electron dist/electron.js",
     "build": "rimraf dist && yarn build:main",
     "build:main": "tsc -p tsconfig.build.json",
@@ -30,7 +30,7 @@
   "devDependencies": {
     "@sofie-automation/code-standard-preset": "^0.2.2",
     "@types/electron-prompt": "^1.6.0",
-    "@types/node": "^14.14.21",
+    "@types/node": "^14.14.22",
     "@types/sharp": "^0.27.1",
     "electron": "~10",
     "electron-builder": "^22.9.1",
@@ -46,7 +46,7 @@
     "@julusian/jpeg-turbo": "^1.0.1",
     "binopsy": "^0.0.0",
     "electron-about-window": "^1.13.4",
-    "electron-prompt": "https://github.com/Julusian/electron-prompt.git#fix/cancel-exits-app",
+    "electron-prompt": "^1.6.1",
     "electron-store": "^6.0.1",
     "elgato-stream-deck": "^4.0.1",
     "eventemitter3": "^4.0.7",
