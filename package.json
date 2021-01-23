@@ -50,6 +50,7 @@
     "electron-store": "^6.0.1",
     "elgato-stream-deck": "^4.0.1",
     "eventemitter3": "^4.0.7",
+    "exit-hook": "^2.2.0",
     "meow": "^9.0.0",
     "sharp": "^0.27.0",
     "usb-detection": "^4.10.0"
@@ -76,8 +77,8 @@
       "output": "electron-output/"
     },
     "mac": {
-	  "category": "dev.julusian.companion.remote",
-	  "target": "dmg",
+      "category": "dev.julusian.companion.remote",
+      "target": "dmg",
       "extendInfo": {
         "LSBackgroundOnly": 1,
         "LSUIElement": 1
