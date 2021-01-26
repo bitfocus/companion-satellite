@@ -3,6 +3,9 @@ import { Socket } from 'net'
 import { Protocol, ProtocolHeader } from './protocol'
 
 const SERVER_PORT = 37133
+const PING_UNACKED_LIMIT = 5 // Arbitrary number
+const PING_INTERVAL = 100
+const RECONNECT_DELAY = 1000
 
 export interface CompanionSatelliteClientOptions {
 	debug?: boolean
@@ -27,7 +30,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private receiveBuffer: Buffer = Buffer.alloc(0)
 
 	private _pingInterval: NodeJS.Timer | undefined
-	private _pingAcked = false
+	private _pingUnackedCount = 0
 	private _connected = false
 	private _connectionActive = false // True when connected/connecting/reconnecting
 	private _retryConnectTimeout: NodeJS.Timer | undefined = undefined
@@ -68,7 +71,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					this._retryConnectTimeout = undefined
 					this.emit('log', 'Trying reconnect')
 					this.initSocket()
-				}, 1000)
+				}, RECONNECT_DELAY)
 			}
 		})
 
@@ -80,10 +83,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			}
 
 			this._connected = true
-			this._pingAcked = true
+			this._pingUnackedCount = 0
 
 			if (!this._pingInterval) {
-				this._pingInterval = setInterval(() => this.sendPing(), 100)
+				this._pingInterval = setInterval(() => this.sendPing(), PING_INTERVAL)
 			}
 
 			if (!this.socket) {
@@ -107,7 +110,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private sendPing(): void {
 		if (this._connected && this.socket) {
-			if (!this._pingAcked) {
+			if (this._pingUnackedCount > PING_UNACKED_LIMIT) {
 				// Ping was never acked, so it looks like a timeout
 				try {
 					this.socket.destroy()
@@ -117,7 +120,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				return
 			}
 
-			this._pingAcked = false
+			this._pingUnackedCount++
 			Protocol.sendPacket(this.socket, Protocol.SCMD_PING, undefined)
 		}
 	}
@@ -210,8 +213,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		switch (header.command) {
 			case Protocol.SCMD_PONG:
 				// console.log('Got pong')
-				// TODO - track and timeouts etc
-				this._pingAcked = true
+				this._pingUnackedCount = 0
 				break
 
 			case Protocol.SCMD_VERSION: {

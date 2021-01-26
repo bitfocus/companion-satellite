@@ -1,18 +1,18 @@
 import * as path from 'path'
-import { createCanvas, Image, loadImage } from 'canvas'
 import { StreamDeck } from 'elgato-stream-deck'
 import { promisify } from 'util'
 import { readFile } from 'fs'
+import * as sharp from 'sharp'
 
 const readFileP = promisify(readFile)
 
 export class CardGenerator {
-	private iconImage: Image | undefined
+	private iconImage: Buffer | undefined
 
-	async loadIcon(): Promise<Image> {
+	async loadIcon(): Promise<Buffer> {
 		if (!this.iconImage) {
 			const rawData = await readFileP(path.join(__dirname, '../assets/icon.png'))
-			this.iconImage = await loadImage(rawData)
+			this.iconImage = rawData
 		}
 
 		return this.iconImage
@@ -22,24 +22,34 @@ export class CardGenerator {
 		const w = deck.ICON_SIZE * deck.KEY_COLUMNS
 		const h = deck.ICON_SIZE * deck.KEY_ROWS
 
-		const icon = await this.loadIcon()
+		const size = Math.round(Math.min(w, h) * 0.6)
+		const icon = await sharp(await this.loadIcon())
+			.resize(size)
+			.toBuffer()
 
-		const canvas = createCanvas(w, h)
-		const ctx = canvas.getContext('2d')
-
-		// TODO this looks bad because we don't compensate for bezel
-		const bottomPad = 30
-		const size = Math.min(w, h) * 0.6
-		ctx.drawImage(icon, (w - size) / 2, (h - size - bottomPad) / 2, size, size)
-
-		ctx.fillStyle = 'rgb(255,255,255)'
-		ctx.font = '12px Helvetica'
-		ctx.fillText(`Remote: ${remoteIp}`, 10, h - 10)
-
-		if (status) {
-			ctx.fillText(`Status: ${status}`, 10, h - 10 - 16)
-		}
-
-		return canvas.toBuffer('raw')
+		return sharp({
+			create: {
+				width: w,
+				height: h,
+				channels: 3,
+				background: { r: 0, g: 0, b: 0 },
+			},
+		})
+			.composite([
+				{
+					input: icon,
+				},
+				{
+					input: Buffer.from(
+						`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w - 20} 40" version="1.1">
+						<text font-family="'sans-serif'" font-size="12px" x="10" y="32" fill="#fff" text-anchor="left">Remote: ${remoteIp}</text>
+						<text font-family="'sans-serif'" font-size="12px" x="10" y="12" fill="#fff" text-anchor="left">Status: ${status}</text>
+						</svg>`
+					),
+					top: h - 20,
+					left: 10,
+				},
+			])
+			.toBuffer()
 	}
 }

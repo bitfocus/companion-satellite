@@ -84,6 +84,7 @@ export class DeviceManager {
 					console.log(`${serial2}=${serial2.length}`)
 					const dev = this.devices.get(serial2)
 					if (dev) {
+						dev.queueOutputId++
 						this.deviceIdMap.set(d.deviceId, serial2)
 						console.log('Registering key evenrs for ' + d.deviceId)
 						dev.deck.on('down', (key) => this.client.keyDown(d.deviceId, key))
@@ -133,7 +134,11 @@ export class DeviceManager {
 
 	private foundDevice(dev: usbDetect.Device): void {
 		console.log('Found a device', dev)
-		this.registerAll()
+
+		// most of the time it is available now
+		this.scanDevices()
+		// sometimes it ends up delayed
+		setTimeout(() => this.scanDevices(), 1000)
 	}
 
 	private removeDevice(dev: usbDetect.Device): void {
@@ -245,7 +250,7 @@ export class DeviceManager {
 			.then((buffer) => {
 				if (outputId === dev.queueOutputId) {
 					// still valid
-					dev.deck.fillPanel(buffer, { format: 'bgra' })
+					dev.deck.fillPanel(buffer, { format: 'rgba' })
 				}
 			})
 			.catch((e) => {
@@ -264,7 +269,7 @@ export class DeviceManager {
 			.then((buffer) => {
 				if (outputId === dev.queueOutputId) {
 					// still valid
-					dev.deck.fillPanel(buffer, { format: 'bgra' })
+					dev.deck.fillPanel(buffer, { format: 'rgba' })
 				}
 			})
 			.catch((e) => {
