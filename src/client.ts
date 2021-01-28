@@ -170,33 +170,32 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private _handleReceivedData(data: Buffer): void {
 		this.receiveBuffer = Buffer.concat([this.receiveBuffer, data])
-		this.findPackets()
-	}
+		
+		while (this.receiveBuffer.length > 0) {
+			const header = Protocol.readHeader(this.receiveBuffer)
 
-	private findPackets(): void {
-		const header = Protocol.readHeader(this.receiveBuffer)
+			// not enough data
+			if (header === false) {
+				break
+			}
 
-		// not enough data
-		if (header === false) {
-			return
-		}
+			// out of sync
+			if (header === -1) {
+				console.debug('Out of sync, trying to find next valid packet')
+				// Try to find next start of packet
+				this.receiveBuffer = this.receiveBuffer.slice(1)
 
-		// out of sync
-		if (header === -1) {
-			console.debug('Out of sync, trying to find next valid packet')
-			// Try to find next start of packet
-			this.receiveBuffer = this.receiveBuffer.slice(1)
+				// Loop until it is found or we are out of buffer-data
+				continue
+			}
 
-			// Loop until it is found or we are out of buffer-data
-			this.findPackets()
-			return
-		}
+			if (this.receiveBuffer.length < header.length + 6) {
+				// not enough data yet
+				break
+			}
 
-		if (header.length + 6 <= this.receiveBuffer.length) {
 			this.parsePacket(header)
 			this.receiveBuffer = this.receiveBuffer.slice(header.length + 6)
-
-			this.findPackets()
 		}
 	}
 
