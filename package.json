@@ -21,6 +21,7 @@
   "scripts": {
     "dev": "yarn ts-node src/main.ts",
     "dev-electron": "yarn build:main && electron dist/electron.js",
+    "electron-rebuild": "yarn electron-builder install-app-deps",
     "build": "rimraf dist && yarn build:main",
     "build:main": "tsc -p tsconfig.build.json",
     "lint": "eslint . --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
