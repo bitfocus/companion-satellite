@@ -50,7 +50,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private initSocket(): void {
 		this.socket = new Socket()
-		this.socket.on('error', (e) => this.emit('error', e))
+		this.socket.on('error', (e) => {
+			this.emit('error', e)
+		})
 		this.socket.on('close', () => {
 			if (this.debug) {
 				this.emit('log', 'Connection closed')
@@ -105,13 +107,17 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this.emit('connected')
 		})
 
-		this.socket.connect(SERVER_PORT, this._host)
+		if (this._host) {
+			this.emit('log', `Connecting to ${this._host}:${SERVER_PORT}`)
+			this.socket.connect(SERVER_PORT, this._host)
+		}
 	}
 
 	private sendPing(): void {
 		if (this._connected && this.socket) {
 			if (this._pingUnackedCount > PING_UNACKED_LIMIT) {
 				// Ping was never acked, so it looks like a timeout
+				this.emit('log', 'ping timeout')
 				try {
 					this.socket.destroy()
 				} catch (e) {
@@ -170,6 +176,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private _handleReceivedData(data: Buffer): void {
 		this.receiveBuffer = Buffer.concat([this.receiveBuffer, data])
+
+		let ignoredBytes = 0
 		
 		while (this.receiveBuffer.length > 0) {
 			const header = Protocol.readHeader(this.receiveBuffer)
@@ -181,12 +189,17 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 			// out of sync
 			if (header === -1) {
-				console.debug('Out of sync, trying to find next valid packet')
+				ignoredBytes++
 				// Try to find next start of packet
 				this.receiveBuffer = this.receiveBuffer.slice(1)
 
 				// Loop until it is found or we are out of buffer-data
 				continue
+			}
+
+			if (ignoredBytes > 0) {
+				console.debug(`Out of sync, skipped ${ignoredBytes} bytes of data`)
+				ignoredBytes = 0
 			}
 
 			if (this.receiveBuffer.length < header.length + 6) {
