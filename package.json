@@ -55,6 +55,9 @@
     "sharp": "^0.27.0",
     "usb-detection": "^4.10.0"
   },
+  "resolutions": {
+    "electron-builder/**/app-builder-bin": "npm:@julusian/test-lib@3.5.11-app-builder-bin"
+  },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
   "husky": {
     "hooks": {
