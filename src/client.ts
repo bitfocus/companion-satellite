@@ -49,7 +49,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private initSocket(): void {
-		this.socket = new Socket()
+		const socket = this.socket = new Socket()
 		this.socket.on('error', (e) => {
 			this.emit('error', e)
 		})
@@ -68,7 +68,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._pingInterval = undefined
 			}
 
-			if (!this._retryConnectTimeout) {
+			if (!this._retryConnectTimeout && this.socket === socket) {
 				this._retryConnectTimeout = setTimeout(() => {
 					this._retryConnectTimeout = undefined
 					this.emit('log', 'Trying reconnect')
