@@ -49,8 +49,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private initSocket(): void {
-		this.socket = new Socket()
-		this.socket.on('error', (e) => this.emit('error', e))
+		const socket = this.socket = new Socket()
+		this.socket.on('error', (e) => {
+			this.emit('error', e)
+		})
 		this.socket.on('close', () => {
 			if (this.debug) {
 				this.emit('log', 'Connection closed')
@@ -66,7 +68,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._pingInterval = undefined
 			}
 
-			if (!this._retryConnectTimeout) {
+			if (!this._retryConnectTimeout && this.socket === socket) {
 				this._retryConnectTimeout = setTimeout(() => {
 					this._retryConnectTimeout = undefined
 					this.emit('log', 'Trying reconnect')
@@ -105,13 +107,17 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this.emit('connected')
 		})
 
-		this.socket.connect(SERVER_PORT, this._host)
+		if (this._host) {
+			this.emit('log', `Connecting to ${this._host}:${SERVER_PORT}`)
+			this.socket.connect(SERVER_PORT, this._host)
+		}
 	}
 
 	private sendPing(): void {
 		if (this._connected && this.socket) {
 			if (this._pingUnackedCount > PING_UNACKED_LIMIT) {
 				// Ping was never acked, so it looks like a timeout
+				this.emit('log', 'ping timeout')
 				try {
 					this.socket.destroy()
 				} catch (e) {
@@ -170,33 +176,39 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private _handleReceivedData(data: Buffer): void {
 		this.receiveBuffer = Buffer.concat([this.receiveBuffer, data])
-		this.findPackets()
-	}
 
-	private findPackets(): void {
-		const header = Protocol.readHeader(this.receiveBuffer)
+		let ignoredBytes = 0
+		
+		while (this.receiveBuffer.length > 0) {
+			const header = Protocol.readHeader(this.receiveBuffer)
 
-		// not enough data
-		if (header === false) {
-			return
-		}
+			// not enough data
+			if (header === false) {
+				break
+			}
 
-		// out of sync
-		if (header === -1) {
-			console.debug('Out of sync, trying to find next valid packet')
-			// Try to find next start of packet
-			this.receiveBuffer = this.receiveBuffer.slice(1)
+			// out of sync
+			if (header === -1) {
+				ignoredBytes++
+				// Try to find next start of packet
+				this.receiveBuffer = this.receiveBuffer.slice(1)
 
-			// Loop until it is found or we are out of buffer-data
-			this.findPackets()
-			return
-		}
+				// Loop until it is found or we are out of buffer-data
+				continue
+			}
 
-		if (header.length + 6 <= this.receiveBuffer.length) {
+			if (ignoredBytes > 0) {
+				console.debug(`Out of sync, skipped ${ignoredBytes} bytes of data`)
+				ignoredBytes = 0
+			}
+
+			if (this.receiveBuffer.length < header.length + 6) {
+				// not enough data yet
+				break
+			}
+
 			this.parsePacket(header)
 			this.receiveBuffer = this.receiveBuffer.slice(header.length + 6)
-
-			this.findPackets()
 		}
 	}
 

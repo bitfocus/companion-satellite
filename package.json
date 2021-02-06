@@ -1,6 +1,6 @@
 {
   "name": "companion-remote",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Remote Streamdeck connector for Bitfocus Companion",
   "author": {
     "name": "Julian Waller",
@@ -21,6 +21,7 @@
   "scripts": {
     "dev": "yarn ts-node src/main.ts",
     "dev-electron": "yarn build:main && electron dist/electron.js",
+    "electron-rebuild": "yarn electron-builder install-app-deps",
     "build": "rimraf dist && yarn build:main",
     "build:main": "tsc -p tsconfig.build.json",
     "lint": "eslint . --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
@@ -32,7 +33,7 @@
     "@types/electron-prompt": "^1.6.0",
     "@types/node": "^14.14.22",
     "@types/sharp": "^0.27.1",
-    "electron": "~10",
+    "electron": "^10.3.1",
     "electron-builder": "^22.9.1",
     "rimraf": "^3.0.2",
     "standard-version": "^9.1.0",
@@ -44,6 +45,7 @@
   },
   "dependencies": {
     "@julusian/jpeg-turbo": "^1.0.1",
+    "app-builder-bin": "npm:@julusian/test-lib@3.5.11-app-builder-bin",
     "binopsy": "^0.0.0",
     "electron-about-window": "^1.13.4",
     "electron-prompt": "^1.6.1",
@@ -52,8 +54,11 @@
     "eventemitter3": "^4.0.7",
     "exit-hook": "^2.2.0",
     "meow": "^9.0.0",
-    "sharp": "^0.27.0",
+    "sharp": "^0.27.1",
     "usb-detection": "^4.10.0"
+  },
+  "resolutions": {
+    "electron-builder/**/app-builder-bin": "npm:@julusian/test-lib@3.5.11-app-builder-bin"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
   "husky": {

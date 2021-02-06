@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/julusian/companion-remote/compare/v0.2.1...v0.2.2) (2021-02-01)
+
+
+### Bug Fixes
+
+* allow a few unacked pings before restarting connection ([7c880a2](https://github.com/julusian/companion-remote/commit/7c880a288c08245e42b2844068e233e8e5d3a4d6))
+* handle reconnect better ([be5ad79](https://github.com/julusian/companion-remote/commit/be5ad798a57a1f58e4f8462fc7faddeec90151f7))
+* headless process not exiting ([3821983](https://github.com/julusian/companion-remote/commit/3821983765fdb9292c6cdcd4ea84bd93debc40e5))
+* on device detect scan now and after a short delay. often on mac the delay is needed to find the device when scanning ([375d5d4](https://github.com/julusian/companion-remote/commit/375d5d4038b56c998004ee20cb540a3e7c746c4f))
+* opening connection to localhost before target at starutp ([118d149](https://github.com/julusian/companion-remote/commit/118d149f2e29330d350dabffdfd8b6794ec56125))
+* replace packet parsing recursion with a loop to avoid max call stack issues ([bb46f5a](https://github.com/julusian/companion-remote/commit/bb46f5a211cc7e76f1479b98f85e7b07e708a297))
+
 ### [0.2.1](https://github.com/julusian/companion-remote/compare/v0.2.0...v0.2.1) (2021-01-21)
 
 

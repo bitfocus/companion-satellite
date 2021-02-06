@@ -56,3 +56,21 @@ TimeoutStopSec=60
 [Install]
 WantedBy=multi-user.target
 ```
+
+## Development
+
+NodeJS 12.16.3 and 14 are supported
+
+### Electron
+
+1. Install the dependencies `yarn install`
+1. Ensure the electron dependencies are installed `yarn electron-rebuild`
+1. Run it `yarn dev-electron`
+
+You can package for electron with `yarn dist`.  
+Building for another platform has not been tested.
+
+### Headless
+
+1. If you are running this after either running in electron, or packaging for electron, it is best to remove the node_modules folder and rerun `yarn install`
+1. Run it `yarn dev 127.0.0.1` substituting in your companion instance ip address
