@@ -49,7 +49,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private initSocket(): void {
-		const socket = this.socket = new Socket()
+		const socket = (this.socket = new Socket())
 		this.socket.on('error', (e) => {
 			this.emit('error', e)
 		})
@@ -178,7 +178,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.receiveBuffer = Buffer.concat([this.receiveBuffer, data])
 
 		let ignoredBytes = 0
-		
+
 		while (this.receiveBuffer.length > 0) {
 			const header = Protocol.readHeader(this.receiveBuffer)
 

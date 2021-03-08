@@ -208,7 +208,7 @@ export class DeviceManager {
 								let newbuffer: Buffer | null = null
 								try {
 									newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
-										.resize(96, 96)
+										.resize(sd.ICON_SIZE, sd.ICON_SIZE)
 										.raw()
 										.toBuffer()
 								} catch (e) {
