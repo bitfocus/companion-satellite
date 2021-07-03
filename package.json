@@ -1,7 +1,7 @@
 {
-  "name": "companion-remote",
+  "name": "companion-satellite",
   "version": "0.2.2",
-  "description": "Remote Streamdeck connector for Bitfocus Companion",
+  "description": "Satellite Streamdeck connector for Bitfocus Companion",
   "author": {
     "name": "Julian Waller",
     "email": "git@julusian.co.uk",
@@ -9,12 +9,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/julusian/companion-remote.git"
+    "url": "git+https://github.com/bitfocus/companion-satellite.git"
   },
   "bugs": {
-    "url": "https://github.com/julusian/companion-remote/issues"
+    "url": "https://github.com/bitfocus/companion-satellite/issues"
   },
-  "homepage": "https://github.com/julusian/companion-remote#readme",
+  "homepage": "https://github.com/bitfocus/companion-satellite#readme",
   "main": "dist/electron.js",
   "license": "MIT",
   "private": true,
@@ -76,18 +76,23 @@
   },
   "build": {
     "productName": "Companion Remote",
-    "appId": "remote.companion.julusian.dev",
+    "appId": "remote.companion.bitfocus.no",
+    "remoteBuild": false,
     "directories": {
       "buildResources": "assets/",
       "output": "electron-output/"
     },
     "mac": {
-      "category": "dev.julusian.companion.remote",
+      "category": "no.bitfocus.companion.remote",
       "target": "dmg",
       "extendInfo": {
         "LSBackgroundOnly": 1,
         "LSUIElement": 1
       }
+    },
+    "dmg": {
+      "artifactName": "companion-satellite-${arch}.dmg",
+      "sign": true
     },
     "win": {
       "target": "nsis"

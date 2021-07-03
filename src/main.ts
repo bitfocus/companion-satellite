@@ -6,10 +6,10 @@ import { DeviceManager } from './devices'
 const cli = meow(
 	`
 	Usage
-	  $ companion-remote hostname
+	  $ companion-satellite hostname
 
 	Examples
-	  $ companion-remote 192.168.1.100
+	  $ companion-satellite 192.168.1.100
 `,
 	{}
 )

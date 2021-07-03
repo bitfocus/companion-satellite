@@ -1,13 +1,13 @@
-## Companion Remote
+## Companion Satellite
 
-[![License](https://img.shields.io/github/license/julusian/companion-remote)](https://github.com/Julusian/companion-remote/blob/master/LICENSE.md)
-[![Version](https://img.shields.io/github/v/release/julusian/companion-remote)](https://github.com/Julusian/companion-remote/releases)
+[![License](https://img.shields.io/github/license/bitfocus/companion-satellite)](https://github.com/Julusian/companion-satellite/blob/master/LICENSE.md)
+[![Version](https://img.shields.io/github/v/release/bitfocus/companion-satellite)](https://github.com/Julusian/companion-satellite/releases)
 
 A small application to allow for connecting a streamdeck to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
 
 Companion 2.1.2 and newer are supported
 
-Each device will appear in companion as its own 'satellite' device, and so can be configured as if they are local.
+Each device will appear in companion as its own 'satellite' device, and can be configured as if they are local.
 
 Note: This connects over the satellite device api which uses port TCP 37133.
 
@@ -40,15 +40,15 @@ An example systemd unit (make sure to update the paths and companion ip as appro
 
 ```
 [Unit]
-Description=Bitfocus Companion Remote
+Description=Bitfocus Companion Satellite
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/companion-remote
-ExecStart=node /home/pi/companion-remote/dist/main.js 192.168.0.1
+WorkingDirectory=/home/pi/companion-satellite
+ExecStart=node /home/pi/companion-satellite/dist/main.js 192.168.0.1
 Restart=on-failure
 KillSignal=SIGINT
 TimeoutStopSec=60

@@ -7,14 +7,14 @@ import openAboutWindow from 'electron-about-window'
 import { DeviceManager } from './devices'
 import { CompanionSatelliteClient } from './client'
 
-const store = new electronStore<RemoteConfig>()
+const store = new electronStore<SatelliteConfig>()
 let tray: Tray | undefined
 
 app.on('window-all-closed', () => {
 	// Block default behaviour of exit on close
 })
 
-interface RemoteConfig {
+interface SatelliteConfig {
 	remoteIp: string
 }
 
@@ -96,8 +96,8 @@ function trayQuit() {
 	console.log('quit click')
 	dialog
 		.showMessageBox({
-			title: 'Companion Remote',
-			message: 'Are you sure you want to quit Companion Remote?',
+			title: 'Companion Satellite',
+			message: 'Are you sure you want to quit Companion Satellite?',
 			buttons: ['Quit', 'Cancel'],
 		})
 		.then((v) => {
@@ -122,16 +122,16 @@ function trayAbout() {
 	console.log('about click')
 	openAboutWindow({
 		icon_path: path.join(__dirname, '../assets', 'icon.png'),
-		product_name: 'Companion Remote',
+		product_name: 'Companion Satellite',
 		use_inner_html: true,
-		description: 'Remote Streamdeck connector for Bitfocus Companion <br />Supports 2.1.2 and newer',
+		description: 'Satellite Streamdeck connector for Bitfocus Companion <br />Supports 2.1.2 and newer',
 		adjust_window_size: false,
 		win_options: {
 			resizable: false,
 		},
-		bug_report_url: 'https://github.com/julusian/companion-remote/issues',
+		bug_report_url: 'https://github.com/bitfocus/companion-satellite/issues',
 		copyright: '2021 Julian Waller',
-		homepage: 'https://github.com/julusian/companion-remote',
+		homepage: 'https://github.com/bitfocus/companion-satellite',
 		license: 'MIT',
 		use_version_info: true,
 	})
