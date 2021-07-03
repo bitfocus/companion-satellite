@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/bitfocus/companion-satellite/compare/v0.2.2...v0.3.0) (2021-07-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* rename to Companion Satellite and move to bitfocus org
+
+### Features
+
+* rename to Companion Satellite and move to bitfocus org ([31b723a](https://github.com/bitfocus/companion-satellite/commit/31b723aa26befd783b462261f5c4af0a311d4c22))
+
+
+### Bug Fixes
+
+* image resizing for streamdeck mini ([71a5165](https://github.com/bitfocus/companion-satellite/commit/71a5165a00e2ce6cf476b48e6231013dcf4653d9))
+
 ### [0.2.2](https://github.com/bitfocus/companion-satellite/compare/v0.2.1...v0.2.2) (2021-02-01)
 
 
