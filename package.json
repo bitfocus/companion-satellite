@@ -29,36 +29,35 @@
     "dist": "yarn build && yarn electron-builder"
   },
   "devDependencies": {
-    "@sofie-automation/code-standard-preset": "^0.2.2",
-    "@types/electron-prompt": "^1.6.0",
-    "@types/node": "^14.14.22",
-    "@types/sharp": "^0.27.1",
-    "electron": "^10.3.1",
-    "electron-builder": "^22.9.1",
+    "@sofie-automation/code-standard-preset": "^0.4.2",
+    "@types/electron-prompt": "^1.6.1",
+    "@types/node": "^14.17.9",
+    "@types/sharp": "^0.28.5",
+    "electron": "^10.4.7",
+    "electron-builder": "22.9.1",
     "rimraf": "^3.0.2",
-    "standard-version": "^9.1.0",
+    "standard-version": "^9.3.1",
     "ts-node": "^9.1.1",
-    "typescript": "^4.1.3"
+    "typescript": "~4.2"
   },
   "engines": {
     "node": "^12.16 || 14"
   },
   "dependencies": {
-    "@julusian/jpeg-turbo": "^1.0.1",
-    "app-builder-bin": "npm:@julusian/test-lib@3.5.11-app-builder-bin",
+    "@julusian/jpeg-turbo": "^1.1.1",
     "binopsy": "^0.0.0",
-    "electron-about-window": "^1.13.4",
-    "electron-prompt": "^1.6.1",
+    "electron-about-window": "^1.14.0",
+    "electron-prompt": "^1.6.2",
     "electron-store": "^6.0.1",
-    "elgato-stream-deck": "^4.0.1",
+    "elgato-stream-deck": "^4.1.0",
     "eventemitter3": "^4.0.7",
-    "exit-hook": "^2.2.0",
+    "exit-hook": "^2.2.1",
     "meow": "^9.0.0",
-    "sharp": "^0.27.1",
+    "sharp": "^0.28.3",
     "usb-detection": "^4.10.0"
   },
   "resolutions": {
-    "electron-builder/**/app-builder-bin": "npm:@julusian/test-lib@3.5.11-app-builder-bin"
+    "electron-builder/**/app-builder-bin": "3.5.13"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
   "husky": {
@@ -107,7 +106,7 @@
       "target": "dir",
       "extraFiles": [
         {
-          "from": "./node_modules/sharp/vendor/8.10.5/lib",
+          "from": "./node_modules/sharp/vendor/8.10.6/lib",
           "to": ".",
           "filter": [
             "libvips*.so.*"
