@@ -11,7 +11,9 @@ Each device will appear in companion as its own 'satellite' device, and can be c
 
 Note: This connects over the satellite device api which uses port TCP 37133.
 
-## Running
+## Getting started
+
+You can find prebuilt installers on the [releases](https://github.com/bitfocus/companion-satellite/releases) page
 
 ### Electron
 
@@ -27,7 +29,7 @@ To manually build the latest version for your machine:
 - `yarn dist`
 - Locate the output under `electron-output/`
 
-### Headless
+### Headless / Raspbrry pi
 
 It can be built and run as a systemd service on a pi or other linux machine
 
@@ -59,7 +61,7 @@ WantedBy=multi-user.target
 
 ## Development
 
-NodeJS 12.16.3 and 14 are supported
+NodeJS 14 is supported
 
 ### Electron
 
