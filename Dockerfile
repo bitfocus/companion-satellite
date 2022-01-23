@@ -33,9 +33,5 @@ FROM node:16-bullseye-slim
 WORKDIR /app
 COPY --from=0 /app/	/app/
 
-RUN apt-get update && apt-get install -y \
-	libusb-1.0 \
-	&& rm -rf /var/lib/apt/lists/*
-
 USER node
 ENTRYPOINT ["node", "/app/dist/main.js"]
