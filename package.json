@@ -19,17 +19,19 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "prepare": "husky install",
     "dev": "yarn ts-node src/main.ts",
     "dev-electron": "yarn build:main && electron dist/electron.js",
     "electron-rebuild": "yarn electron-builder install-app-deps",
     "build": "rimraf dist && yarn build:main",
     "build:main": "tsc -p tsconfig.build.json",
-    "lint": "eslint . --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
+    "lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
+    "lint": "yarn lint:raw .",
     "license-validate": "yarn sofie-licensecheck",
     "dist": "yarn build && yarn electron-builder"
   },
   "devDependencies": {
-    "@sofie-automation/code-standard-preset": "^0.4.2",
+    "@sofie-automation/code-standard-preset": "^1.0.0",
     "@types/electron-prompt": "^1.6.1",
     "@types/node": "^16.11.7",
     "@types/sharp": "^0.28.5",
@@ -41,7 +43,7 @@
     "rimraf": "^3.0.2",
     "standard-version": "^9.3.2",
     "ts-node": "^9.1.1",
-    "typescript": "~4.2"
+    "typescript": "~4.5"
   },
   "engines": {
     "node": "14 || 16"
@@ -57,11 +59,6 @@
     "usb": "^2.0.3"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
   "lint-staged": {
     "*.{css,json,md,scss}": [
       "prettier --write"
