@@ -54,7 +54,7 @@
     "exit-hook": "^2.2.1",
     "meow": "^9.0.0",
     "sharp": "^0.28.3",
-    "usb-detection": "^4.10.0"
+    "usb": "^2.0.3"
   },
   "resolutions": {
     "electron-builder/**/app-builder-bin": "3.5.13"

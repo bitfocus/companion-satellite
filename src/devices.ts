@@ -1,6 +1,6 @@
 import { CompanionSatelliteClient } from './client'
 import { listStreamDecks, openStreamDeck, StreamDeck } from 'elgato-stream-deck'
-import * as usbDetect from 'usb-detection'
+import { usb } from 'usb'
 import { ImageWriteQueue } from './writeQueue'
 import sharp = require('sharp')
 import EventEmitter = require('events')
@@ -29,9 +29,18 @@ export class DeviceManager {
 		this.deviceIdMap = new Map()
 		this.cardGenerator = new CardGenerator()
 
-		usbDetect.startMonitoring()
-		usbDetect.on('add:4057', (dev) => this.foundDevice(dev))
-		usbDetect.on('remove:4057', (dev) => this.removeDevice(dev))
+		usb.on('attach', (dev) => {
+			if (dev.deviceDescriptor.idVendor === 0x0fd9) {
+				this.foundDevice(dev)
+			}
+		})
+		usb.on('detach', (dev) => {
+			if (dev.deviceDescriptor.idVendor === 0x0fd9) {
+				this.removeDevice(dev)
+			}
+		})
+		// Don't block process exit with the watching
+		usb.unrefHotplugEvents()
 
 		this.statusString = 'Connecting'
 
@@ -102,7 +111,7 @@ export class DeviceManager {
 	}
 
 	public close(): void {
-		usbDetect.stopMonitoring()
+		// usbDetect.stopMonitoring()
 
 		for (const dev of this.devices.values()) {
 			try {
@@ -116,7 +125,7 @@ export class DeviceManager {
 	private clearIdMap(): void {
 		console.log('clear id map')
 		for (const dev of this.devices.values()) {
-			const deck = (dev.deck as unknown) as EventEmitter
+			const deck = dev.deck as unknown as EventEmitter
 			deck.removeAllListeners('down')
 			deck.removeAllListeners('up')
 		}
@@ -132,8 +141,8 @@ export class DeviceManager {
 		return [serial, sd]
 	}
 
-	private foundDevice(dev: usbDetect.Device): void {
-		console.log('Found a device', dev)
+	private foundDevice(dev: usb.Device): void {
+		console.log('Found a device', dev.deviceDescriptor)
 
 		// most of the time it is available now
 		this.scanDevices()
@@ -141,18 +150,22 @@ export class DeviceManager {
 		setTimeout(() => this.scanDevices(), 1000)
 	}
 
-	private removeDevice(dev: usbDetect.Device): void {
-		console.log('Lost a device', dev)
-		const dev2 = this.devices.get(dev.serialNumber)
+	private removeDevice(_dev: usb.Device): void {
+		// Rescan after a short timeout
+		// setTimeout(() => this.scanDevices(), 100)
+		// console.log('Lost a device', dev.deviceDescriptor)
+		// this.cleanupDeviceById(dev.serialNumber)
+	}
+	private cleanupDeviceById(id: string): void {
+		const dev2 = this.devices.get(id)
 		if (dev2) {
 			// cleanup
-			this.devices.delete(dev.serialNumber)
-			const k = Array.from(this.deviceIdMap.entries()).find((e) => e[1] === dev.serialNumber)
+			this.devices.delete(id)
+			const k = Array.from(this.deviceIdMap.entries()).find((e) => e[1] === id)
 			if (k) {
 				this.deviceIdMap.delete(k[0])
 				this.client.removeDevice(k[0])
 			}
-
 			dev2.queue?.abort()
 			try {
 				dev2.deck.close()
@@ -232,6 +245,7 @@ export class DeviceManager {
 
 				sd.on('error', (e) => {
 					console.error('device error', e)
+					this.cleanupDeviceById(serial)
 				})
 			} catch (e) {
 				console.log(`Open "${path}" failed: ${e}`)
