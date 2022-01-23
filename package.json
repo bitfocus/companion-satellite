@@ -34,21 +34,21 @@
     "@types/node": "^14.17.9",
     "@types/sharp": "^0.28.5",
     "electron": "^10.4.7",
+    "electron-about-window": "^1.14.0",
     "electron-builder": "22.9.1",
+    "electron-prompt": "^1.6.2",
+    "electron-store": "^6.0.1",
     "rimraf": "^3.0.2",
     "standard-version": "^9.3.1",
     "ts-node": "^9.1.1",
     "typescript": "~4.2"
   },
   "engines": {
-    "node": "^12.16 || 14"
+    "node": "14"
   },
   "dependencies": {
     "@julusian/jpeg-turbo": "^1.1.1",
     "binopsy": "^0.0.0",
-    "electron-about-window": "^1.14.0",
-    "electron-prompt": "^1.6.2",
-    "electron-store": "^6.0.1",
     "elgato-stream-deck": "^4.1.0",
     "eventemitter3": "^4.0.7",
     "exit-hook": "^2.2.1",
