@@ -22,11 +22,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
-      - name: Build image
-        run: docker buildx build --load --tag $IMAGE_NAME --platform linux/arm/v7 --platform linux/arm64 --platform linux/amd64  .
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login docker.pkg.github.com -u ${{ github.actor }} --password-stdin
-      - name: Push image
+      - name: Build & Push image
         run: |
           IMAGE_ID=docker.pkg.github.com/${{ github.repository }}/$IMAGE_NAME
 
@@ -45,5 +43,10 @@ jobs:
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
 
-          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
-          docker push $IMAGE_ID:$VERSION
+          docker buildx build \
+            --push \
+            --tag $IMAGE_ID:$VERSION \
+            --platform linux/arm/v7 \
+            --platform linux/arm64 \
+            --platform linux/amd64  \
+            .
