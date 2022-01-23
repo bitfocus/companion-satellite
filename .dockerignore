@@ -1,0 +1,12 @@
+.github
+assets
+docs
+dist
+node_modules
+
+Dockerfile
+.editorconfig
+.eslintrc.js
+.gitattributes
+.gitignore
+.prettierignore
