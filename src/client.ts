@@ -1,11 +1,40 @@
 import { EventEmitter } from 'eventemitter3'
 import { Socket } from 'net'
-import { Protocol, ProtocolHeader } from './protocol'
+import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
 
-const SERVER_PORT = 37133
+const SERVER_PORT = 16622
 const PING_UNACKED_LIMIT = 5 // Arbitrary number
 const PING_INTERVAL = 100
 const RECONNECT_DELAY = 1000
+
+function parseLineParameters(line: string): Record<string, string | boolean> {
+	// https://newbedev.com/javascript-split-string-by-space-but-ignore-space-in-quotes-notice-not-to-split-by-the-colon-too
+	const match = line.match(/\\?.|^$/g)
+	const fragments = match
+		? match.reduce(
+				(p, c) => {
+					if (c === '"') {
+						p.quote ^= 1
+					} else if (!p.quote && c === ' ') {
+						p.a.push('')
+					} else {
+						p.a[p.a.length - 1] += c.replace(/\\(.)/, '$1')
+					}
+					return p
+				},
+				{ a: [''], quote: 0 }
+		  ).a
+		: []
+
+	const res: Record<string, string | boolean> = {}
+
+	for (const fragment of fragments) {
+		const [key, value] = fragment.split('=')
+		res[key] = value === undefined ? true : value
+	}
+
+	return res
+}
 
 export interface CompanionSatelliteClientOptions {
 	debug?: boolean
@@ -18,16 +47,17 @@ export type CompanionSatelliteClientEvents = {
 	disconnected: []
 	ipChange: [string]
 
-	draw: [{ deviceId: number; keyIndex: number; image: Buffer }]
-	brightness: [{ deviceId: number; percent: number }]
-	newDevice: [{ serialNumber: string; deviceId: number }]
+	draw: [DeviceDrawProps]
+	brightness: [{ deviceId: string; percent: number }]
+	newDevice: [{ deviceId: string }]
+	clearDeck: [{ deviceId: string }]
 }
 
 export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> {
 	private readonly debug: boolean
 	private socket: Socket | undefined
 
-	private receiveBuffer: Buffer = Buffer.alloc(0)
+	private receiveBuffer = ''
 
 	private _pingInterval: NodeJS.Timer | undefined
 	private _pingUnackedCount = 0
@@ -97,13 +127,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				return
 			}
 
-			this.emit('log', 'sending version')
-			const versionPkt = Protocol.SCMD_VERSION_PARSER.serialize({
-				versionMajor: Protocol.SUPPORTED_MAJOR,
-				versionMinior: Protocol.SUPPORTED_MINIOR,
-			})
-			Protocol.sendPacket(this.socket, Protocol.SCMD_VERSION, versionPkt)
-
 			this.emit('connected')
 		})
 
@@ -127,7 +150,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			}
 
 			this._pingUnackedCount++
-			Protocol.sendPacket(this.socket, Protocol.SCMD_PING, undefined)
+			this.socket.write('PING\n')
 		}
 	}
 
@@ -175,130 +198,137 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private _handleReceivedData(data: Buffer): void {
-		this.receiveBuffer = Buffer.concat([this.receiveBuffer, data])
+		this.receiveBuffer += data.toString()
 
-		let ignoredBytes = 0
-
-		while (this.receiveBuffer.length > 0) {
-			const header = Protocol.readHeader(this.receiveBuffer)
-
-			// not enough data
-			if (header === false) {
-				break
-			}
-
-			// out of sync
-			if (header === -1) {
-				ignoredBytes++
-				// Try to find next start of packet
-				this.receiveBuffer = this.receiveBuffer.slice(1)
-
-				// Loop until it is found or we are out of buffer-data
-				continue
-			}
-
-			if (ignoredBytes > 0) {
-				console.debug(`Out of sync, skipped ${ignoredBytes} bytes of data`)
-				ignoredBytes = 0
-			}
-
-			if (this.receiveBuffer.length < header.length + 6) {
-				// not enough data yet
-				break
-			}
-
-			this.parsePacket(header)
-			this.receiveBuffer = this.receiveBuffer.slice(header.length + 6)
+		let i = -1
+		let offset = 0
+		while ((i = this.receiveBuffer.indexOf('\n', offset)) !== -1) {
+			const line = this.receiveBuffer.substr(offset, i - offset)
+			offset = i + 1
+			this.handleCommand(line.toString().replace(/\r/, ''))
 		}
+		this.receiveBuffer = this.receiveBuffer.substr(offset)
 	}
 
-	private parsePacket(header: ProtocolHeader): void {
-		const crc = Protocol.calcCRC(this.receiveBuffer.slice(5, 5 + header.length))
+	private handleCommand(line: string): void {
+		const i = line.indexOf(' ')
+		const cmd = i === -1 ? line : line.slice(0, i)
+		const body = i === -1 ? '' : line.slice(i + 1)
+		const params = parseLineParameters(body)
 
-		if (crc != this.receiveBuffer[5 + header.length]) {
-			console.debug('CRC Error in received packet')
-			return
-		}
-
-		const packet = this.receiveBuffer.slice(5, 5 + header.length)
-
-		switch (header.command) {
-			case Protocol.SCMD_PONG:
+		switch (cmd.toUpperCase()) {
+			case 'PING':
+				this.socket?.write(`PONG ${body}\n`)
+				break
+			case 'PONG':
 				// console.log('Got pong')
 				this._pingUnackedCount = 0
 				break
-
-			case Protocol.SCMD_VERSION: {
-				const obj = Protocol.SCMD_VERSION_PARSER.parse(packet)
-				console.log('Confirmed version', obj)
+			case 'KEY-STATE':
+				this.handleState(params)
 				break
-			}
-
-			case Protocol.SCMD_ADDDEVICE2: {
-				const obj = Protocol.SCMD_ADDDEVICE2_PARSER.parse(packet)
-				console.log('Confirmed device', obj)
-
-				this.emit('newDevice', obj)
+			case 'KEYS-CLEAR':
+				this.handleClear(params)
 				break
-			}
-
-			case Protocol.SCMD_REMOVEDEVICE: {
-				// TODO?
-				// const obj = Protocol.SCMD_ADDDEVICE_PARSER.parse(packet)
-				// console.log('Confirmed device', obj)
-
-				// this.emit('newDevice', obj)
+			case 'BRIGHTNESS':
+				this.handleBrightness(params)
 				break
-			}
-
-			case Protocol.SCMD_DRAW7272: {
-				const obj = Protocol.SCMD_DRAW7272_PARSER.parse(packet)
-				// console.log('Got draw', obj)
-				this.emit('draw', obj)
+			case 'ADD-DEVICE':
+				this.handleAddedDevice(params)
 				break
-			}
-
-			case Protocol.SCMD_BRIGHTNESS: {
-				const obj = Protocol.SCMD_BRIGHTNESS_PARSER.parse(packet)
-				console.log('Got brightness', obj)
-				this.emit('brightness', obj)
-				break
-			}
-
 			default:
-				console.debug('Unknown command in packet: ' + header.command)
+				console.log(`Received unhandled command: ${cmd} ${body}`)
+				break
 		}
 	}
 
-	public keyDown(deviceId: number, keyIndex: number): void {
+	private handleState(params: Record<string, string | boolean>): void {
+		if (typeof params.DEVICEID !== 'string') {
+			console.log('Mising DEVICEID in KEY-DRAW response')
+			return
+		}
+		if (typeof params.KEY !== 'string') {
+			console.log('Mising KEY in KEY-DRAW response')
+			return
+		}
+
+		const keyIndex = parseInt(params.KEY)
+		if (isNaN(keyIndex)) {
+			console.log('Bad KEY in KEY-DRAW response')
+			return
+		}
+
+		const image = typeof params.BITMAP === 'string' ? Buffer.from(params.BITMAP, 'base64') : undefined
+		const text = typeof params.TEXT === 'string' ? Buffer.from(params.TEXT, 'base64').toString() : undefined
+		const color = typeof params.COLOR === 'string' ? params.COLOR : undefined
+
+		this.emit('draw', { deviceId: params.DEVICEID, keyIndex, image, text, color })
+	}
+	private handleClear(params: Record<string, string | boolean>): void {
+		if (typeof params.DEVICEID !== 'string') {
+			console.log('Mising DEVICEID in KEYS-CLEAR response')
+			return
+		}
+
+		this.emit('clearDeck', { deviceId: params.DEVICEID })
+	}
+
+	private handleBrightness(params: Record<string, string | boolean>): void {
+		if (typeof params.DEVICEID !== 'string') {
+			console.log('Mising DEVICEID in BRIGHTNESS response')
+			return
+		}
+		if (typeof params.VALUE !== 'string') {
+			console.log('Mising VALUE in BRIGHTNESS response')
+			return
+		}
+		const percent = parseInt(params.VALUE)
+		if (isNaN(percent)) {
+			console.log('Bad VALUE in BRIGHTNESS response')
+			return
+		}
+		this.emit('brightness', { deviceId: params.DEVICEID, percent })
+	}
+
+	private handleAddedDevice(params: Record<string, string | boolean>): void {
+		if (!params.OK || params.ERROR) {
+			console.log(`Add device failed: ${JSON.stringify(params)}`)
+			return
+		}
+		if (typeof params.DEVICEID !== 'string') {
+			console.log('Mising DEVICEID in ADD-DEVICE response')
+			return
+		}
+
+		this.emit('newDevice', { deviceId: params.DEVICEID })
+	}
+
+	public keyDown(deviceId: string, keyIndex: number): void {
 		if (this._connected && this.socket) {
-			const b = Protocol.SCMD_BUTTON_PARSER.serialize({ deviceId, keyIndex, state: 1 })
-			Protocol.sendPacket(this.socket, Protocol.SCMD_BUTTON, b)
+			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${keyIndex} PRESSED=1\n`)
 		}
 	}
-	public keyUp(deviceId: number, keyIndex: number): void {
+	public keyUp(deviceId: string, keyIndex: number): void {
 		if (this._connected && this.socket) {
-			const b = Protocol.SCMD_BUTTON_PARSER.serialize({ deviceId, keyIndex, state: 0 })
-			Protocol.sendPacket(this.socket, Protocol.SCMD_BUTTON, b)
+			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${keyIndex} PRESSED=0\n`)
 		}
 	}
 
-	public addDevice(serial: string, keysTotal: number, keysPerRow: number): void {
+	public addDevice(deviceId: string, productName: string, props: DeviceRegisterProps): void {
 		if (this._connected && this.socket) {
-			const addDev = Protocol.SCMD_ADDDEVICE2_PARSER.serialize({
-				serialNumber: serial.padEnd(20, '\u0000'),
-				deviceId: 0, // Specified by remote
-				keysTotal,
-				keysPerRow,
-			})
-			Protocol.sendPacket(this.socket, Protocol.SCMD_ADDDEVICE2, addDev)
+			this.socket.write(
+				`ADD-DEVICE DEVICEID=${deviceId} PRODUCT_NAME="${productName}" KEYS_TOTAL=${
+					props.keysTotal
+				} KEYS_PER_ROW=${props.keysPerRow} BITMAPS=${props.bitmaps ? 1 : 0} COLORS=${
+					props.colours ? 1 : 0
+				} TEXT=${props.text ? 1 : 0}\n`
+			)
 		}
 	}
 
-	public removeDevice(deviceId: number): void {
+	public removeDevice(deviceId: string): void {
 		if (this._connected && this.socket) {
-			const o = Protocol.SCMD_REMOVEDEVICE_PARSER.serialize({ deviceId })
-			Protocol.sendPacket(this.socket, Protocol.SCMD_REMOVEDEVICE, o)
+			this.socket.write(`REMOVE-DEVICE DEVICEID=${deviceId}\n`)
 		}
 	}
 }

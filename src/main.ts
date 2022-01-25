@@ -33,5 +33,3 @@ exitHook(() => {
 })
 
 client.connect(cli.input[0])
-
-devices

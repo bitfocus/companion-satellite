@@ -1,5 +1,5 @@
 import * as path from 'path'
-import { StreamDeck } from 'elgato-stream-deck'
+import { StreamDeck } from '@elgato-stream-deck/node'
 import { promisify } from 'util'
 import { readFile } from 'fs'
 import * as sharp from 'sharp'

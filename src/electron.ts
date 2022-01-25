@@ -103,11 +103,14 @@ function trayQuit() {
 			message: 'Are you sure you want to quit Companion Satellite?',
 			buttons: ['Quit', 'Cancel'],
 		})
-		.then((v) => {
+		.then(async (v) => {
 			console.log('quit: ', v.response)
 			if (v.response === 0) {
-				client.disconnect()
-				devices.close()
+				await Promise.allSettled([
+					// cleanup
+					client.disconnect(),
+					devices.close(),
+				])
 				app.quit()
 			}
 		})

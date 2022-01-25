@@ -1,23 +1,14 @@
 import { CompanionSatelliteClient } from './client'
-import { listStreamDecks, openStreamDeck, StreamDeck } from 'elgato-stream-deck'
+import { listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
 import { usb } from 'usb'
-import { ImageWriteQueue } from './writeQueue'
-import sharp = require('sharp')
-import EventEmitter = require('events')
 import { CardGenerator } from './cards'
-
-type SerialNumber = string
-type DeviceId = number
-
-interface StreamDeckExt {
-	deck: StreamDeck
-	queueOutputId: number
-	queue: ImageWriteQueue | undefined
-}
+import { XencelabsQuickKeysManagerInstance, XencelabsQuickKeys } from '@xencelabs-quick-keys/node'
+import { DeviceId, WrappedDevice } from './device-types/api'
+import { StreamDeckWrapper } from './device-types/streamdeck'
+import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys'
 
 export class DeviceManager {
-	private readonly devices: Map<SerialNumber, StreamDeckExt>
-	private readonly deviceIdMap: Map<DeviceId, SerialNumber>
+	private readonly devices: Map<DeviceId, WrappedDevice>
 	private readonly client: CompanionSatelliteClient
 	private readonly cardGenerator: CardGenerator
 
@@ -26,12 +17,15 @@ export class DeviceManager {
 	constructor(client: CompanionSatelliteClient) {
 		this.client = client
 		this.devices = new Map()
-		this.deviceIdMap = new Map()
 		this.cardGenerator = new CardGenerator()
 
 		usb.on('attach', (dev) => {
 			if (dev.deviceDescriptor.idVendor === 0x0fd9) {
 				this.foundDevice(dev)
+			} else if (dev.deviceDescriptor.idVendor === 0x28bd) {
+				XencelabsQuickKeysManagerInstance.scanDevices().catch((e) => {
+					console.error(`Quickey scan failed: ${e}`)
+				})
 			}
 		})
 		usb.on('detach', (dev) => {
@@ -42,13 +36,21 @@ export class DeviceManager {
 		// Don't block process exit with the watching
 		usb.unrefHotplugEvents()
 
+		XencelabsQuickKeysManagerInstance.on('connect', (dev) => {
+			this.tryAddQuickKeys(dev)
+		})
+		XencelabsQuickKeysManagerInstance.on('disconnect', (dev) => {
+			if (dev.deviceId) {
+				this.cleanupDeviceById(dev.deviceId)
+			}
+		})
+
 		this.statusString = 'Connecting'
 
 		this.scanDevices()
 
 		client.on('connected', () => {
 			console.log('connected')
-			this.clearIdMap()
 
 			this.showStatusCard('Connected')
 
@@ -56,7 +58,6 @@ export class DeviceManager {
 		})
 		client.on('disconnected', () => {
 			console.log('disconnected')
-			this.clearIdMap()
 
 			this.showStatusCard('Disconnected')
 		})
@@ -64,45 +65,37 @@ export class DeviceManager {
 			this.showStatusCard()
 		})
 
-		client.on('brightness', (d) => {
+		client.on('brightness', async (d) => {
 			try {
-				const dev = this.getDeviceInfo(d.deviceId)[1]
-				dev.deck.setBrightness(d.percent)
+				const dev = this.getDeviceInfo(d.deviceId)
+				await dev.setBrightness(d.percent)
 			} catch (e) {
 				console.error(`Set brightness: ${e}`)
 			}
 		})
-		client.on('draw', (d) => {
+		client.on('clearDeck', async (d) => {
 			try {
-				const dev = this.getDeviceInfo(d.deviceId)[1]
-				if (dev.queue) {
-					dev.queue.queue(d.keyIndex, d.image)
-				} else {
-					dev.deck.fillImage(d.keyIndex, d.image)
-				}
+				const dev = this.getDeviceInfo(d.deviceId)
+				await dev.blankDevice()
+			} catch (e) {
+				console.error(`Set brightness: ${e}`)
+			}
+		})
+		client.on('draw', async (d) => {
+			try {
+				const dev = this.getDeviceInfo(d.deviceId)
+				await dev.draw(d)
 			} catch (e) {
 				console.error(`Draw: ${e}`)
 			}
 		})
-		client.on('newDevice', (d) => {
+		client.on('newDevice', async (d) => {
 			try {
-				if (!this.deviceIdMap.has(d.deviceId)) {
-					const ind = d.serialNumber.indexOf('\u0000')
-					const serial2 = ind >= 0 ? d.serialNumber.substring(0, ind) : d.serialNumber
-					console.log(`${d.serialNumber}=${d.serialNumber.length}`)
-					console.log(`${serial2}=${serial2.length}`)
-					const dev = this.devices.get(serial2)
-					if (dev) {
-						dev.queueOutputId++
-						this.deviceIdMap.set(d.deviceId, serial2)
-						console.log('Registering key evenrs for ' + d.deviceId)
-						dev.deck.on('down', (key) => this.client.keyDown(d.deviceId, key))
-						dev.deck.on('up', (key) => this.client.keyUp(d.deviceId, key))
-					} else {
-						throw new Error(`Device missing: ${d.serialNumber}`)
-					}
+				const dev = this.devices.get(d.deviceId)
+				if (dev) {
+					await dev.deviceAdded()
 				} else {
-					throw new Error(`Device already mapped: ${d.deviceId}`)
+					throw new Error(`Device missing: ${d.deviceId}`)
 				}
 			} catch (e) {
 				console.error(`Setup device: ${e}`)
@@ -110,35 +103,17 @@ export class DeviceManager {
 		})
 	}
 
-	public close(): void {
+	public async close(): Promise<void> {
 		// usbDetect.stopMonitoring()
 
-		for (const dev of this.devices.values()) {
-			try {
-				dev.deck.close()
-			} catch (e) {
-				// ignore
-			}
-		}
+		// Close all the devices
+		await Promise.allSettled(Array.from(this.devices.values()).map((d) => d.close()))
 	}
 
-	private clearIdMap(): void {
-		console.log('clear id map')
-		for (const dev of this.devices.values()) {
-			const deck = dev.deck as unknown as EventEmitter
-			deck.removeAllListeners('down')
-			deck.removeAllListeners('up')
-		}
-		this.deviceIdMap.clear()
-	}
-
-	private getDeviceInfo(deviceId: number): [string, StreamDeckExt] {
-		const serial = this.deviceIdMap.get(deviceId)
-		if (!serial) throw new Error(`Unknown deviceId: ${deviceId}`)
-
-		const sd = this.devices.get(serial)
-		if (!sd) throw new Error(`Missing device for serial: "${serial}"`)
-		return [serial, sd]
+	private getDeviceInfo(deviceId: string): WrappedDevice {
+		const dev = this.devices.get(deviceId)
+		if (!dev) throw new Error(`Missing device for serial: "${deviceId}"`)
+		return dev
 	}
 
 	private foundDevice(dev: usb.Device): void {
@@ -161,14 +136,11 @@ export class DeviceManager {
 		if (dev2) {
 			// cleanup
 			this.devices.delete(id)
-			const k = Array.from(this.deviceIdMap.entries()).find((e) => e[1] === id)
-			if (k) {
-				this.deviceIdMap.delete(k[0])
-				this.client.removeDevice(k[0])
-			}
-			dev2.queue?.abort()
+			this.client.removeDevice(id)
 			try {
-				dev2.deck.close()
+				dev2.close().catch(() => {
+					// Ignore
+				})
 			} catch (e) {
 				// Ignore
 			}
@@ -176,16 +148,18 @@ export class DeviceManager {
 	}
 
 	public registerAll(): void {
-		const devices2 = Array.from(this.deviceIdMap.entries())
-		for (const [serial, device] of this.devices.entries()) {
+		console.log('registerAll', Array.from(this.devices.keys()))
+		for (const [_, device] of this.devices.entries()) {
 			// If it is already in the process of initialising, core will give us back the same id twice, so we dont need to track it
-			if (!devices2.find((d) => d[1] === serial)) {
-				// Re-init device
-				this.client.addDevice(serial, device.deck.NUM_KEYS, device.deck.KEY_COLUMNS)
+			// if (!devices2.find((d) => d[1] === serial)) { // TODO - do something here?
 
-				// Indicate on device
-				this.deckDrawStatus(device, this.statusString)
-			}
+			// Indicate on device
+			device.showStatus(this.client.host, this.statusString)
+
+			// Re-init device
+			this.client.addDevice(device.deviceId, device.productName, device.getRegisterProps())
+
+			// }
 		}
 
 		this.scanDevices()
@@ -193,102 +167,85 @@ export class DeviceManager {
 
 	public scanDevices(): void {
 		for (const device of listStreamDecks()) {
-			this.tryAddDevice(device.path, device.serialNumber ?? '')
+			if (device.serialNumber) {
+				this.tryAddStreamdeck(device.path, device.serialNumber)
+			}
 		}
+
+		XencelabsQuickKeysManagerInstance.scanDevices().catch((e) => {
+			console.error(`Quick keys scan failed: ${e}`)
+		})
 	}
 
-	private tryAddDevice(path: string, serial: string) {
-		if (!this.devices.has(serial)) {
-			console.log(`adding new device: ${path}`)
-			console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
+	private async tryAddStreamdeck(path: string, serial: string) {
+		let sd: StreamDeck | undefined
+		try {
+			if (!this.devices.has(serial)) {
+				console.log(`adding new device: ${path}`)
+				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
-			try {
-				const sd = openStreamDeck(path, { resetToLogoOnExit: true })
-				const serial = sd.getSerialNumber()
-
-				const devInfo: StreamDeckExt = {
-					deck: sd,
-					queueOutputId: 0,
-					queue: undefined,
-				}
-
-				this.showNewDevice(devInfo)
-
-				devInfo.queue =
-					sd.ICON_SIZE !== 72
-						? new ImageWriteQueue(async (key: number, buffer: Buffer) => {
-								const outputId = devInfo.queueOutputId
-								let newbuffer: Buffer | null = null
-								try {
-									newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
-										.resize(sd.ICON_SIZE, sd.ICON_SIZE)
-										.raw()
-										.toBuffer()
-								} catch (e) {
-									console.error(`device(${serial}): scale image failed: ${e}`)
-									return
-								}
-
-								// Check if generated image is still valid
-								if (devInfo.queueOutputId === outputId) {
-									try {
-										sd.fillImage(key, newbuffer)
-									} catch (e_1) {
-										console.error(`device(${serial}): fillImage failed: ${e_1}`)
-									}
-								}
-						  })
-						: undefined
-
-				this.devices.set(serial, devInfo)
-				this.client.addDevice(serial, sd.NUM_KEYS, sd.KEY_COLUMNS)
-
+				sd = openStreamDeck(path)
 				sd.on('error', (e) => {
 					console.error('device error', e)
 					this.cleanupDeviceById(serial)
 				})
-			} catch (e) {
-				console.log(`Open "${path}" failed: ${e}`)
+
+				const devInfo = new StreamDeckWrapper(serial, sd, this.cardGenerator)
+				await this.tryAddDeviceInner(serial, devInfo)
 			}
+		} catch (e) {
+			console.log(`Open "${path}" failed: ${e}`)
+			if (sd) sd.close() //.catch((e) => null)
 		}
 	}
 
-	private showNewDevice(dev: StreamDeckExt): void {
-		const outputId = dev.queueOutputId
+	// private getAutoId(path: string, prefix: string): string {
+	// 	const val = autoIdMap.get(path)
+	// 	if (val) return val
 
-		// Start with blanking it
-		dev.deck.clearAllKeys()
+	// 	const nextId = autoIdMap.size + 1
+	// 	const val2 = `${prefix}-${nextId.toString().padStart(3, '0')}`
+	// 	autoIdMap.set(path, val2)
+	// 	return val2
+	// }
 
-		this.cardGenerator
-			.generateBasicCard(dev.deck, this.client.host, this.statusString)
-			.then((buffer) => {
-				if (outputId === dev.queueOutputId) {
-					// still valid
-					dev.deck.fillPanel(buffer, { format: 'rgba' })
-				}
-			})
-			.catch((e) => {
-				console.error(`Failed to fill new device`, e)
-			})
+	private async tryAddQuickKeys(surface: XencelabsQuickKeys) {
+		// TODO - support no deviceId for wired devices
+		if (!surface.deviceId) return
+
+		try {
+			const deviceId = surface.deviceId
+			if (!this.devices.has(deviceId)) {
+				console.log(`adding new device: ${deviceId}`)
+				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
+
+				// TODO - this is race prone..
+				surface.on('error', (e) => {
+					console.error('device error', e)
+					this.cleanupDeviceById(deviceId)
+				})
+
+				const devInfo = new QuickKeysWrapper(deviceId, surface)
+				await this.tryAddDeviceInner(deviceId, devInfo)
+			}
+		} catch (e) {
+			console.log(`Open "${surface.deviceId}" failed: ${e}`)
+		}
 	}
 
-	private deckDrawStatus(dev: StreamDeckExt, status: string): void {
-		// abort and discard current operations
-		dev.queue?.abort()
-		dev.queueOutputId++
+	private async tryAddDeviceInner(deviceId: string, devInfo: WrappedDevice): Promise<void> {
+		this.devices.set(deviceId, devInfo)
 
-		const outputId = dev.queueOutputId
-		this.cardGenerator
-			.generateBasicCard(dev.deck, this.client.host, status)
-			.then((buffer) => {
-				if (outputId === dev.queueOutputId) {
-					// still valid
-					dev.deck.fillPanel(buffer, { format: 'rgba' })
-				}
-			})
-			.catch((e) => {
-				console.error(`Failed to fill new device`, e)
-			})
+		try {
+			await devInfo.initDevice(this.client, this.statusString)
+
+			this.client.addDevice(deviceId, devInfo.productName, devInfo.getRegisterProps())
+		} catch (e) {
+			// Remove the failed device
+			this.devices.delete(deviceId)
+
+			throw e
+		}
 	}
 
 	private showStatusCard(status?: string): void {
@@ -297,7 +254,7 @@ export class DeviceManager {
 		}
 
 		for (const dev of this.devices.values()) {
-			this.deckDrawStatus(dev, this.statusString)
+			dev.showStatus(this.client.host, this.statusString)
 		}
 	}
 }
