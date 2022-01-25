@@ -50,12 +50,12 @@
     "node": "14 || 16"
   },
   "dependencies": {
-    "@elgato-stream-deck/node": "^5.2.0-alpha.0",
+    "@elgato-stream-deck/node": "^5.2.0",
     "@julusian/jpeg-turbo": "^1.1.1",
-    "@xencelabs-quick-keys/node": "^0.4.0-alpha.0",
+    "@xencelabs-quick-keys/node": "^0.4.0",
     "eventemitter3": "^4.0.7",
     "exit-hook": "^2.2.1",
-    "infinitton-idisplay": "^1.1.1",
+    "infinitton-idisplay": "^1.1.2",
     "meow": "^9.0.0",
     "node-hid": "github:julusian/node-hid#hack/testing",
     "sharp": "^0.28.3",

@@ -63,19 +63,19 @@
     dir-compare "^2.4.0"
     fs-extra "^9.0.1"
 
-"@elgato-stream-deck/core@5.2.0-alpha.1":
-  version "5.2.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/core/-/core-5.2.0-alpha.1.tgz#4be6dedd93dadd61bee131a14c21aa0d31587358"
-  integrity sha512-w1oDx44lK7UhuC9fFr+rI84fIUgXoHHYRAwKMPKrX+lInkXM2MgCCPHFZCMruL6DvIxk1VVTLKe1MQqoFSBJsw==
+"@elgato-stream-deck/core@5.2.0":
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/core/-/core-5.2.0.tgz#42b9c540d1528bce53e02554fb8e94382a501a31"
+  integrity sha512-WcyWvXFh+V8FjVzGpCJo3HN5DQVx27zskgQUVTUaXMtIM9UWMhqvOtKp2vS6i9iWvZnozKbXNXOTGe++1Bfuvw==
   dependencies:
     eventemitter3 "^4.0.7"
 
-"@elgato-stream-deck/node@^5.2.0-alpha.0":
-  version "5.2.0-alpha.1"
-  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/node/-/node-5.2.0-alpha.1.tgz#74d52bc24004df26842d7d3bc3cc8417d1bb4f38"
-  integrity sha512-jykbAruZ/mTRIpvaEhPKtkSZ5zKHAfM/Crmk8NKtcYmp4J3dYIMhH29Rcr5sUxvHuJ2cqe5ye9dIXemfLrnzwg==
+"@elgato-stream-deck/node@^5.2.0":
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/node/-/node-5.2.0.tgz#a3b474fbf571506a5eb7eb20945c68c0a6fdd1c1"
+  integrity sha512-+zROv19WvWNbeSOfluPXxo8c/Ej/cm6WEKo0vzpBVKRFjH60Q9Izwxa7366HtV8dvNJemyw7qxzlU41a/uA0yQ==
   dependencies:
-    "@elgato-stream-deck/core" "5.2.0-alpha.1"
+    "@elgato-stream-deck/core" "5.2.0"
     jpeg-js "^0.4.2"
     node-hid "^2.1.1"
 
@@ -167,20 +167,20 @@
   integrity sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==
 
 "@sofie-automation/code-standard-preset@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@sofie-automation/code-standard-preset/-/code-standard-preset-1.0.0.tgz#13d565d0a55c1bf95e2667338c28e44ca4f82cfa"
-  integrity sha512-tu6NEoMU1LWv+yar1DFCYpBZUE5D1+NyXRJSfq+c+dDDPfUw0jHVkzpozQWopINwBy1c/oiJBW6kdcJWmLlAuQ==
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@sofie-automation/code-standard-preset/-/code-standard-preset-1.1.0.tgz#1f49f8ec6e7384dd87b6023d474dc15abdd03d04"
+  integrity sha512-noY+XJJq8R4mDPc83Gh1htOOmDTWxzwYnb6SuS+RI43wRW2TPcsGctUhx06N//jKpzwiBPGq5QN3QJC0jlfPyg==
   dependencies:
-    "@typescript-eslint/eslint-plugin" "^5.10.0"
-    "@typescript-eslint/parser" "^5.10.0"
+    "@typescript-eslint/eslint-plugin" "^5.10.1"
+    "@typescript-eslint/parser" "^5.10.1"
     eslint "^8.7.0"
     eslint-config-prettier "^8.3.0"
-    eslint-plugin-jest "^25.7.0"
+    eslint-plugin-jest "^26.0.0"
     eslint-plugin-node "^11.1.0"
     eslint-plugin-prettier "^4.0.0"
     husky "^7.0.4"
     license-checker "^25.0.1"
-    lint-staged "^12.2.0"
+    lint-staged "^12.3.1"
     meow "^10.1.2"
     prettier "^2.5.1"
     read-pkg-up "^9.0.0"
@@ -306,7 +306,7 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@typescript-eslint/eslint-plugin@^5.10.0":
+"@typescript-eslint/eslint-plugin@^5.10.1":
   version "5.10.1"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/eslint-plugin/-/eslint-plugin-5.10.1.tgz#870195d0f2146b36d11fc71131b75aba52354c69"
   integrity sha512-xN3CYqFlyE/qOcy978/L0xLR2HlcAGIyIK5sMOasxaaAPfQRj/MmMV6OC3I7NZO84oEUdWCOju34Z9W8E0pFDQ==
@@ -321,14 +321,7 @@
     semver "^7.3.5"
     tsutils "^3.21.0"
 
-"@typescript-eslint/experimental-utils@^5.0.0":
-  version "5.10.1"
-  resolved "https://registry.yarnpkg.com/@typescript-eslint/experimental-utils/-/experimental-utils-5.10.1.tgz#49fa5a7800ed08ea70aef14fccb14fbae85116ab"
-  integrity sha512-Ryeb8nkJa/1zKl8iujNtJC8tgj6PgaY0sDUnrTqbmC70nrKKkZaHfiRDTcqICmCSCEQyLQcJAoh0AukLaIaGTw==
-  dependencies:
-    "@typescript-eslint/utils" "5.10.1"
-
-"@typescript-eslint/parser@^5.10.0":
+"@typescript-eslint/parser@^5.10.1":
   version "5.10.1"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/parser/-/parser-5.10.1.tgz#4ce9633cc33fc70bc13786cb793c1a76fe5ad6bd"
   integrity sha512-GReo3tjNBwR5RnRO0K2wDIDN31cM3MmDtgyQ85oAxAmC5K3j/g85IjP+cDfcqDsDDBf1HNKQAD0WqOYL8jXqUA==
@@ -373,7 +366,7 @@
     semver "^7.3.5"
     tsutils "^3.21.0"
 
-"@typescript-eslint/utils@5.10.1":
+"@typescript-eslint/utils@5.10.1", "@typescript-eslint/utils@^5.10.0":
   version "5.10.1"
   resolved "https://registry.yarnpkg.com/@typescript-eslint/utils/-/utils-5.10.1.tgz#fa682a33af47080ba2c4368ee0ad2128213a1196"
   integrity sha512-RRmlITiUbLuTRtn/gcPRi4202niF+q7ylFLCKu4c+O/PcpRvZ/nAUwQ2G00bZgpWkhrNLNnvhZLbDn8Ml0qsQw==
@@ -393,21 +386,21 @@
     "@typescript-eslint/types" "5.10.1"
     eslint-visitor-keys "^3.0.0"
 
-"@xencelabs-quick-keys/core@0.4.0-alpha.0":
-  version "0.4.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@xencelabs-quick-keys/core/-/core-0.4.0-alpha.0.tgz#b4fe7216e9d6ce4698e145c9e7369ac7011a47ca"
-  integrity sha512-WkB/2IP7lnrp6myVnPx7BgvZvVvNVeRMzVM0jmPdVM1FjZZ6qrS8ZIwmI4nzXyHw2o5wfqAuXHtf9KCdCyoYaw==
+"@xencelabs-quick-keys/core@0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@xencelabs-quick-keys/core/-/core-0.4.0.tgz#ccef9def28a82d6ee89f131034404bd199940916"
+  integrity sha512-JqQAPzSmTg2oL8CiggpdYGRX9f5a580hQXLyPrMJkjLkx2LJm7RVZdtrWEsJLxLcHRHIsQl3gfgMUpUVRUIh0A==
   dependencies:
     eventemitter3 "^4.0.7"
 
-"@xencelabs-quick-keys/node@^0.4.0-alpha.0":
-  version "0.4.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@xencelabs-quick-keys/node/-/node-0.4.0-alpha.0.tgz#34b8860d440b724ec3eb671012b83a180dcc110b"
-  integrity sha512-WiGByImqGpRNI/T+BKbExUmuTxzVc2ujUQdD2lyH8ItQYTiUAgdQTZtYElYusHCU91ySnuHfeOWcT/g/67RmdQ==
+"@xencelabs-quick-keys/node@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@xencelabs-quick-keys/node/-/node-0.4.0.tgz#a0deb6cd395a9d84a74015bbc835805e2cdba086"
+  integrity sha512-428MOw0Y9I/BQVxlKa1zZMF1dOyCw98RiFHcxMxCgQ6rDTGe0xOsuxRyVJYjV7Rp5ct5kV9fP8v+4uZmmL1OEQ==
   dependencies:
-    "@xencelabs-quick-keys/core" "0.4.0-alpha.0"
+    "@xencelabs-quick-keys/core" "0.4.0"
     node-hid "^2.1.1"
-    usb "^2.0.0-alpha"
+    usb "^2.0.3"
 
 JSONStream@^1.0.4:
   version "1.3.5"
@@ -1782,12 +1775,12 @@ eslint-plugin-es@^3.0.0:
     eslint-utils "^2.0.0"
     regexpp "^3.0.0"
 
-eslint-plugin-jest@^25.7.0:
-  version "25.7.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-jest/-/eslint-plugin-jest-25.7.0.tgz#ff4ac97520b53a96187bad9c9814e7d00de09a6a"
-  integrity sha512-PWLUEXeeF7C9QGKqvdSbzLOiLTx+bno7/HC9eefePfEb257QFHg7ye3dh80AZVkaa/RQsBB1Q/ORQvg2X7F0NQ==
+eslint-plugin-jest@^26.0.0:
+  version "26.0.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-jest/-/eslint-plugin-jest-26.0.0.tgz#f83a25a23ab90ce5b375b1d44389b8c391be5ce8"
+  integrity sha512-Fvs0YgJ/nw9FTrnqTuMGVrkozkd07jkQzWm0ajqyHlfcsdkxGfAuv30fgfWHOnHiCr9+1YQ365CcDX7vrNhqQg==
   dependencies:
-    "@typescript-eslint/experimental-utils" "^5.0.0"
+    "@typescript-eslint/utils" "^5.10.0"
 
 eslint-plugin-node@^11.1.0:
   version "11.1.0"
@@ -2536,10 +2529,10 @@ indent-string@^5.0.0:
   resolved "https://registry.yarnpkg.com/indent-string/-/indent-string-5.0.0.tgz#4fd2980fccaf8622d14c64d694f4cf33c81951a5"
   integrity sha512-m6FAo/spmsW2Ab2fU35JTYwtOKa2yAwXSwgjSv1TJzh4Mh7mC3lzAOVLBprb72XsTrgkEIsl7YrFNAiDiRhIGg==
 
-infinitton-idisplay@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/infinitton-idisplay/-/infinitton-idisplay-1.1.1.tgz#27fafe206390da42e6e91c249c4447caa32898ec"
-  integrity sha512-Cc9UdLKG56ry2bK2Gxpxq/m67MOxxJ9mYGCvpM2hj4eqWqf8GYBmqseWA6+z30r52Rm8W1Ne9+Mcg+bLNmsADA==
+infinitton-idisplay@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/infinitton-idisplay/-/infinitton-idisplay-1.1.2.tgz#3361b7f4cea3637831ce4137aecf32a4ce6b7e2f"
+  integrity sha512-UirJs9+tdf8pH3jgJIqsnmlZ1xzL9PqKviiQApsb417tfDu//EzKLn9ac4zReyc4yo0l7oD8RwodP0bdta23wg==
   dependencies:
     node-hid "^2.1.1"
 
@@ -2883,7 +2876,7 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
-lint-staged@^12.2.0:
+lint-staged@^12.3.1:
   version "12.3.1"
   resolved "https://registry.yarnpkg.com/lint-staged/-/lint-staged-12.3.1.tgz#d475b0c0d0a12d91dde58a429ac6268dea485f06"
   integrity sha512-Ocht/eT+4/siWOZDJpNUKcKX2UeWW/pDbohJ4gRsrafAjBi79JK8kiNVk2ciIVNKdw0Q4ABptl2nr6uQAlRImw==
@@ -3286,6 +3279,7 @@ node-gyp-build@^4.3.0:
 
 node-hid@^2.1.1, "node-hid@github:julusian/node-hid#hack/testing":
   version "2.1.1"
+  uid "1017962a07852579cb5c4d35fa20a6dacb0b2e02"
   resolved "https://codeload.github.com/julusian/node-hid/tar.gz/1017962a07852579cb5c4d35fa20a6dacb0b2e02"
   dependencies:
     bindings "^1.5.0"
@@ -4708,9 +4702,9 @@ typescript@~4.5:
   integrity sha512-TCTIul70LyWe6IJWT8QSYeA54WQe8EjQFU4wY52Fasj5UKx88LNYKCgBEHcOMOrFF1rKGbD8v/xcNWVUq9SymA==
 
 uglify-js@^3.1.4:
-  version "3.14.5"
-  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.14.5.tgz#cdabb7d4954231d80cb4a927654c4655e51f4859"
-  integrity sha512-qZukoSxOG0urUTvjc2ERMTcAy+BiFh3weWAkeurLwjrCba73poHmG3E36XEjd/JGukMzwTL7uCxZiAexj8ppvQ==
+  version "3.15.0"
+  resolved "https://registry.yarnpkg.com/uglify-js/-/uglify-js-3.15.0.tgz#2d6a689d94783cab43975721977a13c2afec28f1"
+  integrity sha512-x+xdeDWq7FiORDvyIJ0q/waWd4PhjBNOm5dQUOq2AKC0IEjxOS66Ha9tctiVDGcRQuh69K7fgU5oRuTK4cysSg==
 
 unique-string@^2.0.0:
   version "2.0.0"
@@ -4783,7 +4777,7 @@ url-parse-lax@^3.0.0:
   dependencies:
     prepend-http "^2.0.0"
 
-usb@^2.0.0-alpha, usb@^2.0.3:
+usb@^2.0.3:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/usb/-/usb-2.0.3.tgz#c8a420f9a02bcdf644790eb4fa46506065c16a0d"
   integrity sha512-UnUtZK5ebhDdNTjcO+cHFnpo25iifNm+E7F4f5g4pCUH+0M8b4SiVqILNzqz9iqQNK326PGawOYdkTJbplqsIg==
