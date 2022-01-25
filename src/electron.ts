@@ -130,7 +130,7 @@ function trayAbout() {
 		icon_path: path.join(__dirname, '../assets', 'icon.png'),
 		product_name: 'Companion Satellite',
 		use_inner_html: true,
-		description: 'Satellite Streamdeck connector for Bitfocus Companion <br />Supports 2.1.2 and newer',
+		description: 'Satellite Streamdeck connector for Bitfocus Companion <br />Supports 2.2.0 and newer',
 		adjust_window_size: false,
 		win_options: {
 			resizable: false,

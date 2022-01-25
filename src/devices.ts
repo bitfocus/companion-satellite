@@ -1,11 +1,15 @@
 import { CompanionSatelliteClient } from './client'
-import { listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
+import { getStreamDeckDeviceInfo, listStreamDecks, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
 import { usb } from 'usb'
 import { CardGenerator } from './cards'
 import { XencelabsQuickKeysManagerInstance, XencelabsQuickKeys } from '@xencelabs-quick-keys/node'
 import { DeviceId, WrappedDevice } from './device-types/api'
 import { StreamDeckWrapper } from './device-types/streamdeck'
 import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys'
+import Infinitton = require('infinitton-idisplay')
+import { InfinittonWrapper } from './device-types/infinitton'
+import { NodeHIDDevice } from '@elgato-stream-deck/node/dist/device'
+import * as HID from 'node-hid'
 
 export class DeviceManager {
 	private readonly devices: Map<DeviceId, WrappedDevice>
@@ -21,6 +25,11 @@ export class DeviceManager {
 
 		usb.on('attach', (dev) => {
 			if (dev.deviceDescriptor.idVendor === 0x0fd9) {
+				this.foundDevice(dev)
+			} else if (
+				dev.deviceDescriptor.idVendor === 0xffff &&
+				(dev.deviceDescriptor.idProduct === 0x1f40 || dev.deviceDescriptor.idProduct === 0x1f41)
+			) {
 				this.foundDevice(dev)
 			} else if (dev.deviceDescriptor.idVendor === 0x28bd) {
 				XencelabsQuickKeysManagerInstance.scanDevices().catch((e) => {
@@ -166,13 +175,22 @@ export class DeviceManager {
 	}
 
 	public scanDevices(): void {
-		for (const device of listStreamDecks()) {
-			if (device.serialNumber) {
-				this.tryAddStreamdeck(device.path, device.serialNumber)
+		const devices = HID.devices()
+		for (const device of devices) {
+			const sdInfo = getStreamDeckDeviceInfo(device)
+			if (sdInfo && sdInfo.serialNumber) {
+				this.tryAddStreamdeck(sdInfo.path, sdInfo.serialNumber)
+			} else if (
+				device.path &&
+				device.serialNumber &&
+				device.vendorId === Infinitton.VENDOR_ID &&
+				Infinitton.PRODUCT_IDS.includes(device.productId)
+			) {
+				this.tryAddInfinitton(device.path, device.serialNumber)
 			}
 		}
 
-		XencelabsQuickKeysManagerInstance.scanDevices().catch((e) => {
+		XencelabsQuickKeysManagerInstance.openDevicesFromArray(devices).catch((e) => {
 			console.error(`Quick keys scan failed: ${e}`)
 		})
 	}
@@ -230,6 +248,28 @@ export class DeviceManager {
 			}
 		} catch (e) {
 			console.log(`Open "${surface.deviceId}" failed: ${e}`)
+		}
+	}
+
+	private async tryAddInfinitton(path: string, serial: string) {
+		let panel: Infinitton | undefined
+		try {
+			if (!this.devices.has(serial)) {
+				console.log(`adding new device: ${path}`)
+				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
+
+				panel = new Infinitton(path)
+				panel.on('error', (e) => {
+					console.error('device error', e)
+					this.cleanupDeviceById(serial)
+				})
+
+				const devInfo = new InfinittonWrapper(serial, panel, this.cardGenerator)
+				await this.tryAddDeviceInner(serial, devInfo)
+			}
+		} catch (e) {
+			console.log(`Open "${path}" failed: ${e}`)
+			if (panel) panel.close() //.catch((e) => null)
 		}
 	}
 

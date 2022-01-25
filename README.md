@@ -5,11 +5,11 @@
 
 A small application to allow for connecting a streamdeck to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
 
-Companion 2.1.2 and newer are supported
+Companion 2.2.0 and newer are supported
 
 Each device will appear in companion as its own 'satellite' device, and can be configured as if they are local.
 
-Note: This connects over the satellite device api which uses port TCP 37133.
+Note: This connects over the satellite device api which uses port TCP 16622.
 
 ## Getting started
 
@@ -61,7 +61,7 @@ WantedBy=multi-user.target
 
 ## Development
 
-NodeJS 14 is supported
+NodeJS 14 and NodeJS 16 are supported
 
 ### Electron
 

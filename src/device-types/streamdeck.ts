@@ -104,8 +104,10 @@ export class StreamDeckWrapper implements WrappedDevice {
 		this.#queueOutputId++
 
 		const outputId = this.#queueOutputId
+		const width = this.#deck.ICON_SIZE * this.#deck.KEY_COLUMNS
+		const height = this.#deck.ICON_SIZE * this.#deck.KEY_ROWS
 		this.#cardGenerator
-			.generateBasicCard(this.#deck, hostname, status)
+			.generateBasicCard(width, height, hostname, status)
 			.then(async (buffer) => {
 				if (outputId === this.#queueOutputId) {
 					// still valid
