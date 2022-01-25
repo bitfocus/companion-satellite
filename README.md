@@ -1,7 +1,7 @@
 ## Companion Satellite
 
-[![License](https://img.shields.io/github/license/bitfocus/companion-satellite)](https://github.com/Julusian/companion-satellite/blob/master/LICENSE)
-[![Version](https://img.shields.io/github/v/release/bitfocus/companion-satellite)](https://github.com/Julusian/companion-satellite/releases)
+[![License](https://img.shields.io/github/license/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/blob/master/LICENSE)
+[![Version](https://img.shields.io/github/v/release/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/releases)
 
 A small application to allow for connecting a streamdeck to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
 

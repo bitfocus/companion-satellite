@@ -9,6 +9,7 @@ import * as prompt from 'electron-prompt'
 import openAboutWindow from 'electron-about-window'
 import { DeviceManager } from './devices'
 import { CompanionSatelliteClient } from './client'
+import { DEFAULT_PORT } from './lib'
 
 const store = new electronStore<SatelliteConfig>()
 let tray: Tray | undefined
@@ -19,6 +20,7 @@ app.on('window-all-closed', () => {
 
 interface SatelliteConfig {
 	remoteIp: string
+	remotePort: number
 }
 
 console.log('Starting')
@@ -29,13 +31,18 @@ const devices = new DeviceManager(client)
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
 
+function tryConnect() {
+	const ip = store.get('remoteIp')
+	const port = store.get('remotePort') ?? DEFAULT_PORT
+	if (ip) {
+		client.connect(ip, port)
+	}
+}
+
 app.whenReady().then(function () {
 	console.log('App ready')
 
-	const ip = store.get('remoteIp')
-	if (ip) {
-		client.connect(ip)
-	}
+	tryConnect()
 
 	tray = new Tray(
 		process.platform == 'darwin'
@@ -48,6 +55,12 @@ app.whenReady().then(function () {
 		new MenuItem({
 			label: 'Change Host',
 			click: changeHost,
+		})
+	)
+	menu.append(
+		new MenuItem({
+			label: 'Change Port',
+			click: changePort,
 		})
 	)
 	menu.append(
@@ -87,7 +100,32 @@ function changeHost() {
 			} else {
 				console.log('new ip', r)
 				store.set('remoteIp', r)
-				client.connect(r)
+				tryConnect()
+			}
+		})
+		.catch((e) => {
+			console.error('Failed to change host', e)
+		})
+}
+function changePort() {
+	const current = store.get('remotePort')
+	prompt({
+		title: 'Companion Satellite Port Number',
+		label: 'Port',
+		value: `${current ?? DEFAULT_PORT}`,
+		inputAttrs: {},
+		type: 'input',
+	})
+		.then((r) => {
+			if (r === null) {
+				console.log('user cancelled')
+			} else {
+				const r2 = Number(r)
+				console.log('new port', r2)
+				if (!isNaN(r2)) {
+					store.set('remotePort', r)
+					tryConnect()
+				}
 			}
 		})
 		.catch((e) => {

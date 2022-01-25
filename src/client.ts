@@ -1,8 +1,8 @@
 import { EventEmitter } from 'eventemitter3'
 import { Socket } from 'net'
 import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
+import { DEFAULT_PORT } from './lib'
 
-const SERVER_PORT = 16622
 const PING_UNACKED_LIMIT = 5 // Arbitrary number
 const PING_INTERVAL = 100
 const RECONNECT_DELAY = 1000
@@ -65,9 +65,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _connectionActive = false // True when connected/connecting/reconnecting
 	private _retryConnectTimeout: NodeJS.Timer | undefined = undefined
 	private _host = ''
+	private _port = DEFAULT_PORT
 
 	public get host(): string {
 		return this._host
+	}
+	public get port(): number {
+		return this._port
 	}
 
 	constructor(options: CompanionSatelliteClientOptions = {}) {
@@ -131,8 +135,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		})
 
 		if (this._host) {
-			this.emit('log', `Connecting to ${this._host}:${SERVER_PORT}`)
-			this.socket.connect(SERVER_PORT, this._host)
+			this.emit('log', `Connecting to ${this._host}:${this._port}`)
+			this.socket.connect(this._port, this._host)
 		}
 	}
 
@@ -154,7 +158,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
-	public async connect(host: string): Promise<void> {
+	public async connect(host: string, port: number): Promise<void> {
 		if (this._connected || this._connectionActive) {
 			await this.disconnect()
 		}
@@ -165,6 +169,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		})
 
 		this._host = host
+		this._port = port
 
 		this.initSocket()
 	}
