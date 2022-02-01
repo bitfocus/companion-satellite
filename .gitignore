@@ -3,3 +3,5 @@ node_modules
 dist
 config.json
 electron-output
+assets/.DS_Store
+.DS_Store
