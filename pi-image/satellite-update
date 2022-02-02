@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+if [[ $(/usr/bin/id -u) -ne 0 ]]; then
+    echo "Must be run as root. Try sudo satellite-update"
+    exit 1
+fi
+
+# stop satellite
+systemctl stop satellite
+
+# fetch new code
+cd /usr/local/src/companion-satellite
+git pull
+
+# TODO - prompt for which branch to use
+
+# do the update
+./pi-image/update.sh
+
+# restart satellite
+# reboot
+systemctl start satellite

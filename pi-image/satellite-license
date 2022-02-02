@@ -1,0 +1,3 @@
+#!/bin/bash
+
+less /usr/local/src/companion-satellite/LICENSE

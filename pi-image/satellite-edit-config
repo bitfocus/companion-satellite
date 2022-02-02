@@ -1,0 +1,16 @@
+#!/bin/bash -e
+
+if [[ $(/usr/bin/id -u) -ne 0 ]]; then
+    echo "Must be run as root. Try sudo satellite-edit-config"
+    exit 1
+fi
+
+# stop satellite
+systemctl stop satellite
+
+# open config editor
+nano /boot/satellite-config
+
+# restart satellite
+# reboot
+systemctl start satellite

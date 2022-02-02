@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo "To view the Companion Satellite License information run:"
+echo "  $ satellite-license"
+echo ""
+
+echo "To stop/start/restart or check the status of Companion Satellite run:"
+echo "  $ sudo systemctl [start/stop/restart/status] satellite"
+echo ""
+
+echo "To update Companion Satellite run:"
+echo "  $ sudo satellite-update"
+echo "and follow the prompts"
+echo ""
+
+echo "To edit the companion configuration run:"
+echo "  $ sudo companion-edit-config"
+echo "and follow the prompts"
+echo ""

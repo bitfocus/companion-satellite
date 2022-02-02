@@ -1,0 +1,12 @@
+The source code repository for this project can be found here:
+https://github.com/bitfocus/companion-satellite
+
+Full licensing information for Bitfocus Commpanion can be found by running 'satellite-license' 
+in the terminal or visiting https://github.com/bitfocus/companion-satellite/blob/master/LICENSE in a web browser
+
+Any bugs, issues, or feature requests for the Companion Satellite software should be reported on the project's GitHub:
+https://github.com/bitfocus/companion-satellite/issues
+
+Companion Satellite should auto-start on this computer as soon as a viable network connection is detected.
+
+For more information on Companion Satellite specific commands you can run try running `satellite-help`

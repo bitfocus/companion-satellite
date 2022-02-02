@@ -1,0 +1,17 @@
+[Unit]
+Description=Bitfocus Companion Satellite
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=satellite
+WorkingDirectory=/usr/local/src/companion-satellite
+EnvironmentFile=/boot/satellite-config
+ExecStart=/opt/fnm/aliases/default/bin/node /usr/local/src/companion-satellite/dist/main.js $COMPANION_IP
+Restart=on-failure
+KillSignal=SIGINT
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

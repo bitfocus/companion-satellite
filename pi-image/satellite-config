@@ -1,0 +1,5 @@
+# Set this to the ip address or hostname of your companion installation
+# examples:
+# - COMPANION_IP=192.168.100.1
+# - COMPANION_IP=companion.example.org
+COMPANION_IP=127.0.0.1

@@ -1,0 +1,44 @@
+name: SatellitePi Build
+
+on:
+  # TODO not on every push
+  push:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: build image
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: install packer
+        run: |
+          curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
+          sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
+          sudo apt-get update && sudo apt-get install -y packer
+
+      - name: build image
+        run: |
+          cd pi-image
+          sudo packer init satellitepi.pkr.hcl
+          sudo packer build --var branch=${GITHUB_REF_NAME} satellitepi.pkr.hcl
+
+      - name: rename image
+        run: |
+          cd pi-image/output-satellitepi
+          sudo mv image satellitepi-test.img
+
+      # upload artifact
+      - name: Upload production artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: satellitepi
+          if-no-files-found: error
+          path: |
+            pi-image/output-satellitepi/*.img
