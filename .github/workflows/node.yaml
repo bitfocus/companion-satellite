@@ -3,19 +3,13 @@ name: Build/release
 on: push
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
-
+  Linux-x64:
+    runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v1
 
-      - name: Install linux dependencies
-        if: runner.os == 'Linux'
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y yasm libudev-dev libusb-1.0-0-dev
@@ -25,16 +19,13 @@ jobs:
         with:
           node-version: 16
 
-      - name: Build/release Electron app
-        uses: samuelmeuli/action-electron-builder@v1
-        with:
-          # GitHub token, automatically provided to the action
-          # (No need to define this secret in the repo settings)
-          github_token: ${{ secrets.github_token }}
+      - name: Run build
+        run: |
+          # try and avoid timeout errors
+          yarn config set network-timeout 100000 -g
 
-          # If the commit is tagged with a version (e.g. "v1.0.0"),
-          # release the app after building
-          release: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          yarn
+          yarn dist
 
       - name: Determine files to upload
         if: github.ref == 'refs/heads/master' # always publish for just the master branch
@@ -44,19 +35,95 @@ jobs:
           HASH=$(git rev-parse --short HEAD)
           COUNT=$(git rev-list --count HEAD)
 
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.exe"
-            echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.exe"
-          elif [ "$RUNNER_OS" == "macOS" ]; then
-            echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.dmg"
-            echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.dmg"
-          elif [ "$RUNNER_OS" == "Linux" ]; then
-            echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.tar.gz"
-            echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.tar.gz"
-          else
-            echo "$RUNNER_OS not supported"
-            exit 0
-          fi
+          echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.tar.gz"
+          echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.tar.gz"
+
+      - name: Upload app
+        if: ${{ steps.filenames.outputs.sourcename }}
+        uses: ./.github/actions/s3-upload
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          host: ${{ secrets.S3_HOST }}
+          bucket: ${{ secrets.S3_BUCKET }}
+          access-key: ${{ secrets.S3_KEY }}
+          secret-key: ${{ secrets.S3_SECRET }}
+
+  Windows-x64:
+    runs-on: windows-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+
+      - name: Run build
+        run: |
+          # try and avoid timeout errors
+          yarn config set network-timeout 100000 -g
+
+          yarn
+          yarn dist
+
+      - name: Determine files to upload
+        if: github.ref == 'refs/heads/master' # always publish for just the master branch
+        id: filenames
+        shell: bash
+        run: |
+          HASH=$(git rev-parse --short HEAD)
+          COUNT=$(git rev-list --count HEAD)
+
+          echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.exe"
+          echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.exe"
+
+      - name: Upload app
+        if: ${{ steps.filenames.outputs.sourcename }}
+        uses: ./.github/actions/s3-upload
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          host: ${{ secrets.S3_HOST }}
+          bucket: ${{ secrets.S3_BUCKET }}
+          access-key: ${{ secrets.S3_KEY }}
+          secret-key: ${{ secrets.S3_SECRET }}
+
+  Mac-x64:
+    runs-on: macos-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+
+      - name: Run build
+        run: |
+          # try and avoid timeout errors
+          yarn config set network-timeout 100000 -g
+
+          yarn
+          yarn dist
+        env:
+          CSC_LINK: ${{ secrets.OSX_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.OSX_CSC_KEY_PASSWORD }}
+          APPLEID: ${{ secrets.APPLEID }}
+          APPLEIDPASS: ${{ secrets.APPLEIDPASS }}
+
+      - name: Determine files to upload
+        if: github.ref == 'refs/heads/master' # always publish for just the master branch
+        id: filenames
+        shell: bash
+        run: |
+          HASH=$(git rev-parse --short HEAD)
+          COUNT=$(git rev-list --count HEAD)
+
+          echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.dmg"
+          echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.dmg"
 
       - name: Upload app
         if: ${{ steps.filenames.outputs.sourcename }}

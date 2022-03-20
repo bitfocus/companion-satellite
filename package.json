@@ -28,7 +28,7 @@
     "lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
     "lint": "yarn lint:raw .",
     "license-validate": "yarn sofie-licensecheck",
-    "dist": "yarn build && yarn electron-builder"
+    "dist": "yarn build && yarn electron-builder --publish=never"
   },
   "devDependencies": {
     "@sofie-automation/code-standard-preset": "~2.0",
@@ -38,6 +38,7 @@
     "@types/sharp": "^0.28.5",
     "electron": "^16.1.0",
     "electron-builder": "^22.14.13",
+    "electron-notarize": "^1.1.1",
     "rimraf": "^3.0.2",
     "standard-version": "^9.3.2",
     "ts-node": "^9.1.1",
@@ -78,6 +79,7 @@
     "productName": "Companion Satellite",
     "appId": "remote.companion.bitfocus.no",
     "remoteBuild": false,
+	"afterSign": "tools/notarize.js",
     "directories": {
       "buildResources": "assets/",
       "output": "electron-output/"
@@ -102,11 +104,11 @@
       "perMachine": true,
       "oneClick": false,
       "allowElevation": true,
-	  "artifactName": "companion-satellite-x64.exe"
+      "artifactName": "companion-satellite-x64.exe"
     },
     "linux": {
       "target": "tar.gz",
-	  "artifactName": "companion-satellite-${arch}.tar.gz",
+      "artifactName": "companion-satellite-${arch}.tar.gz",
       "extraFiles": [
         {
           "from": "./node_modules/sharp/vendor/8.10.6/lib",
