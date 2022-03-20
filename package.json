@@ -101,10 +101,12 @@
       "createStartMenuShortcut": true,
       "perMachine": true,
       "oneClick": false,
-      "allowElevation": true
+      "allowElevation": true,
+	  "artifactName": "companion-satellite-x64.exe"
     },
     "linux": {
-      "target": "dir",
+      "target": "tar.gz",
+	  "artifactName": "companion-satellite-${arch}.tar.gz",
       "extraFiles": [
         {
           "from": "./node_modules/sharp/vendor/8.10.6/lib",
