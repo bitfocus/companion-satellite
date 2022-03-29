@@ -28,7 +28,6 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    # Based on https://github.com/kneufeld/minio-put/blob/fe6c40f6fbade3e84926b8131b7eaf45966ff7e5/minio-put.sh
     - name: Upload file
       shell: bash
       run: |

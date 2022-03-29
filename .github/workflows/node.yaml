@@ -28,7 +28,6 @@ jobs:
           yarn dist
 
       - name: Determine files to upload
-        if: github.ref == 'refs/heads/master' # always publish for just the master branch
         id: filenames
         shell: bash
         run: |
@@ -38,8 +37,14 @@ jobs:
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.tar.gz"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.tar.gz"
 
+      - name: Versions
+        if: versions
+        uses: ./.github/actions/s3-upload
+        with:
+          beta-branch: master
+
       - name: Upload app
-        if: ${{ steps.filenames.outputs.sourcename }}
+        if: ${{ steps.filenames.outputs.sourcename }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
         uses: ./.github/actions/s3-upload
         with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
@@ -48,6 +53,17 @@ jobs:
           bucket: ${{ secrets.S3_BUCKET }}
           access-key: ${{ secrets.S3_KEY }}
           secret-key: ${{ secrets.S3_SECRET }}
+
+      - name: Notify API Server'
+        if: ${{ steps.filenames.outputs.targetname }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+        uses: ./.github/actions/webhook
+        with:
+          product: satellite
+          branch: ${{ steps.versions.outputs.branch }}
+          version: ${{ steps.versions.outputs.version }}
+          target: 'linux-tgz'
+          filename: ${{ steps.filenames.outputs.targetname }}
+          secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
   Windows-x64:
     runs-on: windows-latest
@@ -69,7 +85,6 @@ jobs:
           yarn dist
 
       - name: Determine files to upload
-        if: github.ref == 'refs/heads/master' # always publish for just the master branch
         id: filenames
         shell: bash
         run: |
@@ -79,8 +94,14 @@ jobs:
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.exe"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.exe"
 
+      - name: Versions
+        if: versions
+        uses: ./.github/actions/s3-upload
+        with:
+          beta-branch: master
+
       - name: Upload app
-        if: ${{ steps.filenames.outputs.sourcename }}
+        if: ${{ steps.filenames.outputs.sourcename }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
         uses: ./.github/actions/s3-upload
         with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
@@ -89,6 +110,17 @@ jobs:
           bucket: ${{ secrets.S3_BUCKET }}
           access-key: ${{ secrets.S3_KEY }}
           secret-key: ${{ secrets.S3_SECRET }}
+
+      - name: Notify API Server'
+        if: ${{ steps.filenames.outputs.targetname }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+        uses: ./.github/actions/webhook
+        with:
+          product: satellite
+          branch: ${{ steps.versions.outputs.branch }}
+          version: ${{ steps.versions.outputs.version }}
+          target: 'win-x64'
+          filename: ${{ steps.filenames.outputs.targetname }}
+          secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
   Mac-x64:
     runs-on: macos-latest
@@ -115,7 +147,6 @@ jobs:
           APPLEIDPASS: ${{ secrets.APPLEIDPASS }}
 
       - name: Determine files to upload
-        if: github.ref == 'refs/heads/master' # always publish for just the master branch
         id: filenames
         shell: bash
         run: |
@@ -125,8 +156,14 @@ jobs:
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.dmg"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.dmg"
 
+      - name: Versions
+        if: versions
+        uses: ./.github/actions/s3-upload
+        with:
+          beta-branch: master
+
       - name: Upload app
-        if: ${{ steps.filenames.outputs.sourcename }}
+        if: ${{ steps.filenames.outputs.sourcename }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
         uses: ./.github/actions/s3-upload
         with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
@@ -135,3 +172,14 @@ jobs:
           bucket: ${{ secrets.S3_BUCKET }}
           access-key: ${{ secrets.S3_KEY }}
           secret-key: ${{ secrets.S3_SECRET }}
+
+      - name: Notify API Server'
+        if: ${{ steps.filenames.outputs.targetname }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+        uses: ./.github/actions/webhook
+        with:
+          product: satellite
+          branch: ${{ steps.versions.outputs.branch }}
+          version: ${{ steps.versions.outputs.version }}
+          target: 'mac-x64'
+          filename: ${{ steps.filenames.outputs.targetname }}
+          secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
