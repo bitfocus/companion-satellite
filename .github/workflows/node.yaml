@@ -33,18 +33,21 @@ jobs:
         run: |
           HASH=$(git rev-parse --short HEAD)
           COUNT=$(git rev-list --count HEAD)
+          VERSION=$(node -e "console.log(require('./package.json').version)")
 
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.tar.gz"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.tar.gz"
+          echo ::set-output name=longversion::"${VERSION}"
 
       - name: Versions
         id: versions
         uses: ./.github/actions/versions
         with:
+          long-vesion: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
       - name: Upload app
-        if: ${{ steps.filenames.outputs.sourcename }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+        if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
         uses: ./.github/actions/s3-upload
         with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
@@ -55,7 +58,7 @@ jobs:
           secret-key: ${{ secrets.S3_SECRET }}
 
       - name: Notify API Server'
-        if: ${{ steps.filenames.outputs.targetname }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+        if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
         uses: ./.github/actions/webhook
         with:
           product: satellite
@@ -90,14 +93,17 @@ jobs:
         run: |
           HASH=$(git rev-parse --short HEAD)
           COUNT=$(git rev-list --count HEAD)
+          VERSION=$(node -e "console.log(require('./package.json').version)")
 
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.exe"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.exe"
+          echo ::set-output name=longversion::"${VERSION}"
 
       - name: Versions
         id: versions
         uses: ./.github/actions/versions
         with:
+          long-vesion: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
       - name: Upload app
@@ -152,14 +158,17 @@ jobs:
         run: |
           HASH=$(git rev-parse --short HEAD)
           COUNT=$(git rev-list --count HEAD)
+          VERSION=$(node -e "console.log(require('./package.json').version)")
 
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.dmg"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.dmg"
+          echo ::set-output name=longversion::"${VERSION}"
 
       - name: Versions
         id: versions
         uses: ./.github/actions/versions
         with:
+          long-vesion: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
       - name: Upload app

@@ -1,6 +1,10 @@
 name: 'Determine API Server versions'
 description: 'Determine API Server versions'
 inputs:
+  long-vesion:
+    description: 'Long version number'
+    required: true
+    default: ''
   beta-branch:
     description: 'Name of branch for beta builds'
     required: true
@@ -31,13 +35,13 @@ runs:
            echo ::set-output name=version::"${VERSION}"
          elif [[ "${{ github.ref }}" == refs/heads/* && "${{ github.ref_name }}" == "${{ inputs.beta-branch }}" ]]
          then
-           VERSION=$(cat BUILD)
+           VERSION="${{ inputs.long-version }}"
            echo "beta build ${VERSION}"
            echo ::set-output name=branch::"beta"
            echo ::set-output name=version::"${VERSION}"
          elif [[ "${{ github.ref }}" == refs/heads/* && "${{ github.ref_name }}" == "${{ inputs.dev-branch }}" ]]
          then
-           VERSION=$(cat BUILD)
+           VERSION="${{ inputs.long-version }}"
            echo "dev build ${VERSION}"
            echo ::set-output name=branch::"experimental"
            echo ::set-output name=version::"${VERSION}"
