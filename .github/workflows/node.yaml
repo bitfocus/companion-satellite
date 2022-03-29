@@ -85,7 +85,7 @@ jobs:
 
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.exe"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.exe"
-          echo ::set-output name=longversion::"${VERSION}"
+          echo ::set-output name=longversion::"${VERSION}+${COUNT}-${HASH}"
 
       - name: Upload build
         uses: ./.github/actions/upload-and-notify
@@ -138,7 +138,7 @@ jobs:
 
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.dmg"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.dmg"
-          echo ::set-output name=longversion::"${VERSION}"
+          echo ::set-output name=longversion::"${VERSION}+${COUNT}-${HASH}"
 
       - name: Upload build
         uses: ./.github/actions/upload-and-notify
