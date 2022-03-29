@@ -47,14 +47,14 @@ jobs:
 
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          host: ${{ secrets.S3_HOST }}
-          bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
-          access-key: ${{ secrets.S3_KEY }}
-          secret-key: ${{ secrets.S3_SECRET }}
+          s3-host: ${{ secrets.S3_HOST }}
+          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-access-key: ${{ secrets.S3_KEY }}
+          s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          product: companion-satellite
-          target: 'linux-tgz'
-          secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+          api-product: companion-satellite
+          api-target: 'linux-tgz'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
   Windows-x64:
     runs-on: windows-latest
@@ -95,14 +95,14 @@ jobs:
 
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          host: ${{ secrets.S3_HOST }}
-          bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
-          access-key: ${{ secrets.S3_KEY }}
-          secret-key: ${{ secrets.S3_SECRET }}
+          s3-host: ${{ secrets.S3_HOST }}
+          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-access-key: ${{ secrets.S3_KEY }}
+          s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          product: companion-satellite
-          target: 'win-x64'
-          secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+          api-product: companion-satellite
+          api-target: 'win-x64'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
   Mac-x64:
     runs-on: macos-latest
@@ -148,11 +148,11 @@ jobs:
 
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          host: ${{ secrets.S3_HOST }}
-          bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
-          access-key: ${{ secrets.S3_KEY }}
-          secret-key: ${{ secrets.S3_SECRET }}
+          s3-host: ${{ secrets.S3_HOST }}
+          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-access-key: ${{ secrets.S3_KEY }}
+          s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          product: companion-satellite
-          target: 'mac-x64'
-          secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+          api-product: companion-satellite
+          api-target: 'mac-x64'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}

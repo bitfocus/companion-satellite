@@ -22,28 +22,28 @@ inputs:
     description: 'Target filename in s3'
     required: true
     default: ''
-  host:
+  s3-host:
     description: 'Server endpoint'
     required: true
     default: 's3.bitfocus.io'
-  bucket:
+  s3-bucket:
     description: 'Bucket to upload to'
     required: true
     default: ''
-  access-key:
+  s3-access-key:
     description: 'Access Key'
     required: true
     default: ''
-  secret-key:
+  s3-secret-key:
     description: 'Secret Key'
     required: true
     default: ''
 
-  product:
+  api-product:
     description: 'Name of the product'
     required: true
     default: ''
-  target:
+  api-target:
     description: 'Build target (linux-img/linux-deb/linux-tgz/mac-intel/mac-arm/win-x86/win-x64)'
     required: true
     default: ''
@@ -103,22 +103,22 @@ runs:
       if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
       shell: bash
       run: |
-        ./mc alias set remote/ https://${{ inputs.host }} ${{ inputs.access-key }} ${{ inputs.secret-key }}
+        ./mc alias set remote/ https://${{ inputs.s3-host }} ${{ inputs.s3-access-key }} ${{ inputs.s3-secret-key }}
 
-        ./mc cp "${{ inputs.source-filename }}" "remote/${{ inputs.bucket }}/${{ inputs.destination-filename }}"
+        ./mc cp "${{ inputs.source-filename }}" "remote/${{ inputs.s3-bucket }}/${{ inputs.destination-filename }}"
 
     - name: Notify API Server
       if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
       shell: bash
       run: |
         curl -X 'POST' \
-          'https://api.bitfocus.io/v1/product/${{ inputs.product }}/package' \
+          'https://api.bitfocus.io/v1/product/${{ inputs.api-product }}/package' \
           -H 'accept: application/json' \
           -H 'Content-Type: application/json' \
           -d '{
           "branch": "${{ steps.versions.outputs.branch }}",
           "version": "${{ steps.versions.outputs.version }}",
-          "target": "${{ inputs.target }}",
+          "target": "${{ inputs.api-target }}",
           "filename": "${{ inputs.destination-filename }}",
           "secret": "${{ inputs.api-secret }}"
         }'
