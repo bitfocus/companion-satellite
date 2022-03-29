@@ -39,7 +39,7 @@ jobs:
 
       - name: Versions
         id: versions
-        uses: ./.github/actions/s3-upload
+        uses: ./.github/actions/version
         with:
           beta-branch: master
 
@@ -96,7 +96,7 @@ jobs:
 
       - name: Versions
         id: versions
-        uses: ./.github/actions/s3-upload
+        uses: ./.github/actions/version
         with:
           beta-branch: master
 
@@ -158,7 +158,7 @@ jobs:
 
       - name: Versions
         id: versions
-        uses: ./.github/actions/s3-upload
+        uses: ./.github/actions/version
         with:
           beta-branch: master
 
