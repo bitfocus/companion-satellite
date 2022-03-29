@@ -40,7 +40,7 @@ jobs:
           echo ::set-output name=longversion::"${VERSION}+${COUNT}-${HASH}"
 
       - name: Upload build
-        uses: ./.github/actions/upload-and-notify
+        uses: bitfocus/actions/upload-and-notify@main
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
@@ -88,7 +88,7 @@ jobs:
           echo ::set-output name=longversion::"${VERSION}+${COUNT}-${HASH}"
 
       - name: Upload build
-        uses: ./.github/actions/upload-and-notify
+        uses: bitfocus/actions/upload-and-notify@main
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
@@ -141,7 +141,7 @@ jobs:
           echo ::set-output name=longversion::"${VERSION}+${COUNT}-${HASH}"
 
       - name: Upload build
-        uses: ./.github/actions/upload-and-notify
+        uses: bitfocus/actions/upload-and-notify@main
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
