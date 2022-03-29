@@ -38,7 +38,7 @@ jobs:
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.tar.gz"
 
       - name: Versions
-        if: versions
+        id: versions
         uses: ./.github/actions/s3-upload
         with:
           beta-branch: master
@@ -95,7 +95,7 @@ jobs:
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.exe"
 
       - name: Versions
-        if: versions
+        id: versions
         uses: ./.github/actions/s3-upload
         with:
           beta-branch: master
@@ -157,7 +157,7 @@ jobs:
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.dmg"
 
       - name: Versions
-        if: versions
+        id: versions
         uses: ./.github/actions/s3-upload
         with:
           beta-branch: master
