@@ -39,33 +39,21 @@ jobs:
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.tar.gz"
           echo ::set-output name=longversion::"${VERSION}+${COUNT}-${HASH}"
 
-      - name: Versions
-        id: versions
-        uses: ./.github/actions/versions
+      - name: Upload build
+        uses: ./.github/actions/upload-and-notify
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
-      - name: Upload app
-        if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
-        uses: ./.github/actions/s3-upload
-        with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
-          destination-filename: companion-satellite/${{ steps.filenames.outputs.targetname }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
           host: ${{ secrets.S3_HOST }}
-          bucket: ${{ secrets.S3_BUCKET }}
+          bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
           access-key: ${{ secrets.S3_KEY }}
           secret-key: ${{ secrets.S3_SECRET }}
 
-      - name: Notify API Server'
-        if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
-        uses: ./.github/actions/webhook
-        with:
           product: companion-satellite
-          branch: ${{ steps.versions.outputs.branch }}
-          version: ${{ steps.versions.outputs.version }}
           target: 'linux-tgz'
-          filename: ${{ steps.filenames.outputs.targetname }}
           secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
   Windows-x64:
@@ -99,33 +87,21 @@ jobs:
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.exe"
           echo ::set-output name=longversion::"${VERSION}"
 
-      - name: Versions
-        id: versions
-        uses: ./.github/actions/versions
+      - name: Upload build
+        uses: ./.github/actions/upload-and-notify
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
-      - name: Upload app
-        if: ${{ steps.filenames.outputs.sourcename }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
-        uses: ./.github/actions/s3-upload
-        with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
-          destination-filename: companion-satellite/${{ steps.filenames.outputs.targetname }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
           host: ${{ secrets.S3_HOST }}
-          bucket: ${{ secrets.S3_BUCKET }}
+          bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
           access-key: ${{ secrets.S3_KEY }}
           secret-key: ${{ secrets.S3_SECRET }}
 
-      - name: Notify API Server'
-        if: ${{ steps.filenames.outputs.targetname }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
-        uses: ./.github/actions/webhook
-        with:
           product: companion-satellite
-          branch: ${{ steps.versions.outputs.branch }}
-          version: ${{ steps.versions.outputs.version }}
           target: 'win-x64'
-          filename: ${{ steps.filenames.outputs.targetname }}
           secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
   Mac-x64:
@@ -164,31 +140,19 @@ jobs:
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.dmg"
           echo ::set-output name=longversion::"${VERSION}"
 
-      - name: Versions
-        id: versions
-        uses: ./.github/actions/versions
+      - name: Upload build
+        uses: ./.github/actions/upload-and-notify
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
-      - name: Upload app
-        if: ${{ steps.filenames.outputs.sourcename }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
-        uses: ./.github/actions/s3-upload
-        with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
-          destination-filename: companion-satellite/${{ steps.filenames.outputs.targetname }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
           host: ${{ secrets.S3_HOST }}
-          bucket: ${{ secrets.S3_BUCKET }}
+          bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
           access-key: ${{ secrets.S3_KEY }}
           secret-key: ${{ secrets.S3_SECRET }}
 
-      - name: Notify API Server'
-        if: ${{ steps.filenames.outputs.targetname }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
-        uses: ./.github/actions/webhook
-        with:
           product: companion-satellite
-          branch: ${{ steps.versions.outputs.branch }}
-          version: ${{ steps.versions.outputs.version }}
           target: 'mac-x64'
-          filename: ${{ steps.filenames.outputs.targetname }}
           secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
