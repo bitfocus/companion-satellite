@@ -1,0 +1,45 @@
+name: 'Webhook to API Server'
+description: 'Webhook to API Server'
+inputs:
+  product:
+    description: 'Name of the product'
+    required: true
+    default: ''
+  branch:
+    description: 'Branch name (stable/beta/experimental)'
+    required: true
+    default: ''
+  version:
+    description: 'Version number'
+    required: true
+    default: ''
+  target:
+    description: 'Build target (linux-img/linux-deb/linux-tgz/mac-intel/mac-arm/win-x86/win-x64)'
+    required: true
+    default: ''
+  filename:
+    description: 'Name of the uploaded file'
+    required: true
+    default: ''
+  secret:
+    description: 'Secret for the api server'
+    required: true
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+    # Based on https://github.com/kneufeld/minio-put/blob/fe6c40f6fbade3e84926b8131b7eaf45966ff7e5/minio-put.sh
+    - name: Upload file
+      shell: bash
+      run: |
+        curl -X 'POST' \
+          'https://api.bitfocus.io/v1/product/${{ inputs.product }}/package' \
+          -H 'accept: application/json' \
+          -H 'Content-Type: application/json' \
+          -d '{
+          "branch": "${{ inputs.branch }}",
+          "version": "${{ inputs.version }}",
+          "target": "${{ inputs.target }}",
+          "filename": "${{ inputs.filename }}",
+          "secret": "${{ inputs.secret }}"
+        }'

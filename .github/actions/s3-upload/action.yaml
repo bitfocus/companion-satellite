@@ -28,20 +28,28 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    # Based on https://github.com/kneufeld/minio-put/blob/fe6c40f6fbade3e84926b8131b7eaf45966ff7e5/minio-put.sh
+    - name: Download minio client
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        wget https://dl.min.io/client/mc/release/linux-amd64/mc
+        chmod +x mc
+    - name: Download minio client
+      if: runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Invoke-WebRequest -Uri "https://dl.minio.io/client/mc/release/windows-amd64/mc.exe" -OutFile "./mc"
+        chmod +x mc
+    - name: Download minio client
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        wget https://dl.min.io/client/mc/release/darwin-amd64/mc
+        chmod +x mc
+
     - name: Upload file
       shell: bash
       run: |
-        resource="/${{ inputs.bucket }}/${{ inputs.destination-filename }}"
-        content_type="application/octet-stream"
-        date=`date -R`
-        _signature="PUT\n\n${content_type}\n${date}\n${resource}"
-        signature=`echo -en ${_signature} | openssl sha1 -hmac ${{ inputs.secret-key }} -binary | base64`
+        ./mc alias set remote/ https://${{ inputs.host }} ${{ inputs.access-key }} ${{ inputs.secret-key }}
 
-        curl -v -X PUT -T "${{ inputs.source-filename }}" \
-          --fail \
-          -H "Host: ${{ inputs.host }}" \
-          -H "Date: ${date}" \
-          -H "Content-Type: ${content_type}" \
-          -H "Authorization: AWS ${{ inputs.access-key }}:${signature}" \
-          https://${{ inputs.host }}${resource}
+        ./mc cp "${{ inputs.source-filename }}" "remote/${{ inputs.bucket }}/${{ inputs.destination-filename }}"
