@@ -81,26 +81,26 @@ runs:
          fi
 
     - name: Download minio client
-      if: runner.os == 'Linux' && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+      if: ${{ runner.os == 'Linux' && steps.versions.outputs.version && steps.versions.outputs.branch }}
       shell: bash
       run: |
         wget https://dl.min.io/client/mc/release/linux-amd64/mc
         chmod +x mc
     - name: Download minio client
-      if: runner.os == 'Windows' && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+      if: ${{ runner.os == 'Windows' && steps.versions.outputs.version && steps.versions.outputs.branch }}
       shell: pwsh
       run: |
         Invoke-WebRequest -Uri "https://dl.minio.io/client/mc/release/windows-amd64/mc.exe" -OutFile "./mc"
         chmod +x mc
     - name: Download minio client
-      if: runner.os == 'macOS' && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+      if: ${{ runner.os == 'macOS' && steps.versions.outputs.version && steps.versions.outputs.branch }}
       shell: bash
       run: |
         wget https://dl.min.io/client/mc/release/darwin-amd64/mc
         chmod +x mc
 
     - name: Upload file
-      if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+      if: ${{ steps.versions.outputs.version && steps.versions.outputs.branch }}
       shell: bash
       run: |
         ./mc alias set remote/ https://${{ inputs.s3-host }} ${{ inputs.s3-access-key }} ${{ inputs.s3-secret-key }}
@@ -108,7 +108,7 @@ runs:
         ./mc cp "${{ inputs.source-filename }}" "remote/${{ inputs.s3-bucket }}/${{ inputs.destination-filename }}"
 
     - name: Notify API Server
-      if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
+      if: ${{ steps.versions.outputs.version && steps.versions.outputs.branch }}
       shell: bash
       run: |
         curl -X 'POST' \
