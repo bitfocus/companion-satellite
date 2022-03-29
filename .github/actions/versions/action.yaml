@@ -1,7 +1,7 @@
 name: 'Determine API Server versions'
 description: 'Determine API Server versions'
 inputs:
-  long-vesion:
+  long-version:
     description: 'Long version number'
     required: true
     default: ''

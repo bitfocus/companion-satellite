@@ -43,7 +43,7 @@ jobs:
         id: versions
         uses: ./.github/actions/versions
         with:
-          long-vesion: ${{ steps.filenames.outputs.longversion }}
+          long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
       - name: Upload app
@@ -103,7 +103,7 @@ jobs:
         id: versions
         uses: ./.github/actions/versions
         with:
-          long-vesion: ${{ steps.filenames.outputs.longversion }}
+          long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
       - name: Upload app
@@ -168,7 +168,7 @@ jobs:
         id: versions
         uses: ./.github/actions/versions
         with:
-          long-vesion: ${{ steps.filenames.outputs.longversion }}
+          long-version: ${{ steps.filenames.outputs.longversion }}
           beta-branch: master
 
       - name: Upload app
