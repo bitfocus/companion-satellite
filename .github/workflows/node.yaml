@@ -61,7 +61,7 @@ jobs:
         if: ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
         uses: ./.github/actions/webhook
         with:
-          product: satellite
+          product: companion-satellite
           branch: ${{ steps.versions.outputs.branch }}
           version: ${{ steps.versions.outputs.version }}
           target: 'linux-tgz'
@@ -121,7 +121,7 @@ jobs:
         if: ${{ steps.filenames.outputs.targetname }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
         uses: ./.github/actions/webhook
         with:
-          product: satellite
+          product: companion-satellite
           branch: ${{ steps.versions.outputs.branch }}
           version: ${{ steps.versions.outputs.version }}
           target: 'win-x64'
@@ -186,7 +186,7 @@ jobs:
         if: ${{ steps.filenames.outputs.targetname }} && ${{ steps.versions.outputs.version }} && ${{ steps.versions.outputs.branch }}
         uses: ./.github/actions/webhook
         with:
-          product: satellite
+          product: companion-satellite
           branch: ${{ steps.versions.outputs.branch }}
           version: ${{ steps.versions.outputs.version }}
           target: 'mac-x64'
