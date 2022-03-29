@@ -37,7 +37,7 @@ jobs:
 
           echo ::set-output name=sourcename::"electron-output/companion-satellite-x64.tar.gz"
           echo ::set-output name=targetname::"companion-satellite-x64-${COUNT}-${HASH}.tar.gz"
-          echo ::set-output name=longversion::"${VERSION}"
+          echo ::set-output name=longversion::"${VERSION}+${COUNT}-${HASH}"
 
       - name: Versions
         id: versions
@@ -51,7 +51,7 @@ jobs:
         uses: ./.github/actions/s3-upload
         with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
-          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          destination-filename: companion-satellite/${{ steps.filenames.outputs.targetname }}
           host: ${{ secrets.S3_HOST }}
           bucket: ${{ secrets.S3_BUCKET }}
           access-key: ${{ secrets.S3_KEY }}
@@ -111,7 +111,7 @@ jobs:
         uses: ./.github/actions/s3-upload
         with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
-          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          destination-filename: companion-satellite/${{ steps.filenames.outputs.targetname }}
           host: ${{ secrets.S3_HOST }}
           bucket: ${{ secrets.S3_BUCKET }}
           access-key: ${{ secrets.S3_KEY }}
@@ -176,7 +176,7 @@ jobs:
         uses: ./.github/actions/s3-upload
         with:
           source-filename: ${{ steps.filenames.outputs.sourcename }}
-          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          destination-filename: companion-satellite/${{ steps.filenames.outputs.targetname }}
           host: ${{ secrets.S3_HOST }}
           bucket: ${{ secrets.S3_BUCKET }}
           access-key: ${{ secrets.S3_KEY }}
