@@ -1,0 +1,1 @@
+Open the program. You will see it launch into your system tray area. For MacOS users, this is generally at the top right of your screen. For Windows users, bottom right.
