@@ -154,5 +154,5 @@ jobs:
           s3-secret-key: ${{ secrets.S3_SECRET }}
 
           api-product: companion-satellite
-          api-target: 'mac-x64'
+          api-target: 'mac-intel'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
