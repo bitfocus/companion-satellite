@@ -79,7 +79,7 @@
     "productName": "Companion Satellite",
     "appId": "remote.companion.bitfocus.no",
     "remoteBuild": false,
-	"afterSign": "tools/notarize.js",
+    "afterSign": "tools/notarize.js",
     "directories": {
       "buildResources": "assets/",
       "output": "electron-output/"
@@ -90,7 +90,11 @@
       "extendInfo": {
         "LSBackgroundOnly": 1,
         "LSUIElement": 1
-      }
+      },
+      "hardenedRuntime": "true",
+      "gatekeeperAssess": "false",
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist"
     },
     "dmg": {
       "artifactName": "companion-satellite-${arch}.dmg",
