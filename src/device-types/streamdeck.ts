@@ -27,7 +27,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 
 		this.#queueOutputId = 0
 
-		if (this.#deck.ICON_SIZE !== 72) {
+		if (this.#deck.ICON_SIZE !== 72 && this.#deck.ICON_SIZE !== 0) {
 			this.#queue = new ImageWriteQueue(async (key: number, buffer: Buffer) => {
 				const outputId = this.#queueOutputId
 				let newbuffer: Buffer | null = null
@@ -57,7 +57,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 		return {
 			keysTotal: this.#deck.NUM_KEYS,
 			keysPerRow: this.#deck.KEY_COLUMNS,
-			bitmaps: true,
+			bitmaps: this.#deck.ICON_SIZE !== 0,
 			colours: false,
 			text: false,
 		}
@@ -88,34 +88,38 @@ export class StreamDeckWrapper implements WrappedDevice {
 		await this.#deck.clearPanel()
 	}
 	async draw(d: DeviceDrawProps): Promise<void> {
-		if (d.image) {
-			if (this.#queue) {
-				this.#queue.queue(d.keyIndex, d.image)
+		if (this.#deck.ICON_SIZE !== 0) {
+			if (d.image) {
+				if (this.#queue) {
+					this.#queue.queue(d.keyIndex, d.image)
+				} else {
+					await this.#deck.fillKeyBuffer(d.keyIndex, d.image)
+				}
 			} else {
-				await this.#deck.fillKeyBuffer(d.keyIndex, d.image)
+				throw new Error(`Cannot draw for Streamdeck without image`)
 			}
-		} else {
-			throw new Error(`Cannot draw for Streamdeck without image`)
 		}
 	}
 	async showStatus(hostname: string, status: string): Promise<void> {
-		// abort and discard current operations
-		this.#queue?.abort()
-		this.#queueOutputId++
+		if (this.#deck.ICON_SIZE !== 0) {
+			// abort and discard current operations
+			this.#queue?.abort()
+			this.#queueOutputId++
 
-		const outputId = this.#queueOutputId
-		const width = this.#deck.ICON_SIZE * this.#deck.KEY_COLUMNS
-		const height = this.#deck.ICON_SIZE * this.#deck.KEY_ROWS
-		this.#cardGenerator
-			.generateBasicCard(width, height, hostname, status)
-			.then(async (buffer) => {
-				if (outputId === this.#queueOutputId) {
-					// still valid
-					await this.#deck.fillPanelBuffer(buffer, { format: 'rgba' })
-				}
-			})
-			.catch((e) => {
-				console.error(`Failed to fill device`, e)
-			})
+			const outputId = this.#queueOutputId
+			const width = this.#deck.ICON_SIZE * this.#deck.KEY_COLUMNS
+			const height = this.#deck.ICON_SIZE * this.#deck.KEY_ROWS
+			this.#cardGenerator
+				.generateBasicCard(width, height, hostname, status)
+				.then(async (buffer) => {
+					if (outputId === this.#queueOutputId) {
+						// still valid
+						await this.#deck.fillPanelBuffer(buffer, { format: 'rgba' })
+					}
+				})
+				.catch((e) => {
+					console.error(`Failed to fill device`, e)
+				})
+		}
 	}
 }

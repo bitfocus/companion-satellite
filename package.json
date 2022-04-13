@@ -48,7 +48,7 @@
     "node": "14 || 16"
   },
   "dependencies": {
-    "@elgato-stream-deck/node": "^5.3.1",
+    "@elgato-stream-deck/node": "^5.4.0-alpha.0",
     "@julusian/jpeg-turbo": "^1.1.2",
     "@xencelabs-quick-keys/node": "^0.4.0",
     "electron-about-window": "^1.15.2",
