@@ -25,14 +25,10 @@ if (!platform) {
 		electronBuilderArgs.push('--x64', '--mac')
 		sharpPlatform = 'darwin'
 		sharpArch = 'x64'
-
-		electronBuilderArgs.push(`-c.buildVersion="${buildString}"`)
 	} else if (platform === 'mac-arm64') {
 		electronBuilderArgs.push('--arm64', '--mac')
 		sharpPlatform = 'darwin'
 		sharpArch = 'arm64'
-
-		electronBuilderArgs.push(`-c.buildVersion="${buildString}"`)
 	} else if (platform === 'win-x64') {
 		electronBuilderArgs.push('--x64', '--win')
 		sharpPlatform = 'win32'
