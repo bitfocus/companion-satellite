@@ -241,6 +241,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case 'ADD-DEVICE':
 				this.handleAddedDevice(params)
 				break
+			case 'BEGIN':
+				console.log(`Connected to Companion: ${body}`)
+				break
 			default:
 				console.log(`Received unhandled command: ${cmd} ${body}`)
 				break
