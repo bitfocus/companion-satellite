@@ -15,14 +15,14 @@
     "url": "https://github.com/bitfocus/companion-satellite/issues"
   },
   "homepage": "https://github.com/bitfocus/companion-satellite#readme",
-  "main": "dist/electron.js",
+  "main": "electron_entrypoint.cjs",
   "type": "module",
   "license": "MIT",
   "private": true,
   "scripts": {
     "prepare": "husky install",
     "dev": "yarn ts-node-esm src/main.ts",
-    "dev-electron": "yarn build:main && electron dist/electron.js",
+    "dev-electron": "yarn build:main && electron electron_entrypoint.cjs",
     "dist:prepare:sharp": "cd node_modules/sharp && rimraf vendor && node install/libvips && node install/dll-copy",
     "electron-rebuild": "yarn dist:prepare:sharp && electron-builder install-app-deps",
     "build": "rimraf dist && yarn build:main",

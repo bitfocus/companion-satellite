@@ -1,20 +1,21 @@
-// eslint-disable-next-line node/no-unpublished-import
-import { app, Tray, Menu, MenuItem, dialog } from 'electron'
-import * as path from 'path'
-// eslint-disable-next-line node/no-unpublished-import
-import * as electronStore from 'electron-store'
-// eslint-disable-next-line node/no-unpublished-import
-import * as prompt from 'electron-prompt'
-// eslint-disable-next-line node/no-unpublished-import
-import openAboutWindow from 'electron-about-window'
-import { DeviceManager } from './devices'
-import { CompanionSatelliteClient } from './client'
-import { DEFAULT_PORT } from './lib'
+import electronStore from 'electron-store'
+import prompt from 'electron-prompt'
+import { DeviceManager } from './devices.js'
+import { CompanionSatelliteClient } from './client.js'
+import { DEFAULT_PORT } from './lib.js'
+import { fileURLToPath } from 'url'
+
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+
+// Hack to resolve import not working correctly..
+const openAboutWindow: typeof import('electron-about-window')['default'] = require('electron-about-window').default
+const electron: typeof import('electron') = require('electron')
 
 const store = new electronStore<SatelliteConfig>()
-let tray: Tray | undefined
+let tray: import('electron').Tray | undefined
 
-app.on('window-all-closed', () => {
+electron.app.on('window-all-closed', () => {
 	// Block default behaviour of exit on close
 })
 
@@ -39,44 +40,46 @@ function tryConnect() {
 	}
 }
 
-app.whenReady().then(function () {
+electron.app.whenReady().then(function () {
 	console.log('App ready')
 
 	tryConnect()
 
-	tray = new Tray(
-		process.platform == 'darwin'
-			? path.join(__dirname, '../assets', 'trayTemplate.png')
-			: path.join(__dirname, '../assets', 'icon.png')
+	tray = new electron.Tray(
+		fileURLToPath(
+			process.platform == 'darwin'
+				? new URL('../assets/trayTemplate.png', import.meta.url)
+				: new URL('../assets/icon.png', import.meta.url)
+		)
 	)
 
-	const menu = new Menu()
+	const menu = new electron.Menu()
 	menu.append(
-		new MenuItem({
+		new electron.MenuItem({
 			label: 'Change Host',
 			click: changeHost,
 		})
 	)
 	menu.append(
-		new MenuItem({
+		new electron.MenuItem({
 			label: 'Change Port',
 			click: changePort,
 		})
 	)
 	menu.append(
-		new MenuItem({
+		new electron.MenuItem({
 			label: 'Scan devices',
 			click: trayScanDevices,
 		})
 	)
 	menu.append(
-		new MenuItem({
+		new electron.MenuItem({
 			label: 'About',
 			click: trayAbout,
 		})
 	)
 	menu.append(
-		new MenuItem({
+		new electron.MenuItem({
 			label: 'Quit',
 			click: trayQuit,
 		})
@@ -135,7 +138,7 @@ function changePort() {
 
 function trayQuit() {
 	console.log('quit click')
-	dialog
+	electron.dialog
 		.showMessageBox({
 			title: 'Companion Satellite',
 			message: 'Are you sure you want to quit Companion Satellite?',
@@ -149,7 +152,7 @@ function trayQuit() {
 					client.disconnect(),
 					devices.close(),
 				])
-				app.quit()
+				electron.app.quit()
 			}
 		})
 		.catch((e) => {
@@ -163,9 +166,9 @@ function trayScanDevices() {
 }
 
 function trayAbout() {
-	console.log('about click')
+	console.log('about click', openAboutWindow)
 	openAboutWindow({
-		icon_path: path.join(__dirname, '../assets', 'icon.png'),
+		icon_path: fileURLToPath(new URL('../assets/icon.png', import.meta.url)),
 		product_name: 'Companion Satellite',
 		use_inner_html: true,
 		description: 'Satellite Streamdeck connector for Bitfocus Companion <br />Supports 2.2.0 and newer',
