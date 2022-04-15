@@ -61,7 +61,7 @@ WantedBy=multi-user.target
 
 ## Development
 
-NodeJS 14 and NodeJS 16 are supported
+NodeJS 16 is required
 
 ### Electron
 
