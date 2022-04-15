@@ -244,6 +244,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case 'BEGIN':
 				console.log(`Connected to Companion: ${body}`)
 				break
+			case 'KEY-PRESS':
+				// Ignore
+				break
 			default:
 				console.log(`Received unhandled command: ${cmd} ${body}`)
 				break
