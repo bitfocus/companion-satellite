@@ -5,8 +5,8 @@ import {
 	XencelabsQuickKeysDisplayOrientation,
 	WheelEvent,
 } from '@xencelabs-quick-keys/node'
-import { CompanionSatelliteClient } from '../client'
-import { WrappedDevice, DeviceRegisterProps, DeviceDrawProps } from './api'
+import { CompanionSatelliteClient } from '../client.js'
+import { WrappedDevice, DeviceRegisterProps, DeviceDrawProps } from './api.js'
 
 function keyToCompanion(k: number): number | null {
 	if (k >= 0 && k < 4) return k + 1

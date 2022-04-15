@@ -1,7 +1,7 @@
-import { EventEmitter } from 'eventemitter3'
+import EE3 from 'eventemitter3'
 import { Socket } from 'net'
-import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
-import { DEFAULT_PORT } from './lib'
+import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
+import { DEFAULT_PORT } from './lib.js'
 
 const PING_UNACKED_LIMIT = 5 // Arbitrary number
 const PING_INTERVAL = 100
@@ -53,7 +53,7 @@ export type CompanionSatelliteClientEvents = {
 	clearDeck: [{ deviceId: string }]
 }
 
-export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> {
+export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatelliteClientEvents> {
 	private readonly debug: boolean
 	private socket: Socket | undefined
 

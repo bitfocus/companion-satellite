@@ -1,8 +1,8 @@
-import exitHook = require('exit-hook')
-import * as meow from 'meow'
-import { CompanionSatelliteClient } from './client'
-import { DeviceManager } from './devices'
-import { DEFAULT_PORT } from './lib'
+import exitHook from 'exit-hook'
+import meow from 'meow'
+import { CompanionSatelliteClient } from './client.js'
+import { DeviceManager } from './devices.js'
+import { DEFAULT_PORT } from './lib.js'
 
 const cli = meow(
 	`
@@ -13,7 +13,9 @@ const cli = meow(
 	  $ companion-satellite 192.168.1.100
 	  $ companion-satellite 192.168.1.100 16622
 `,
-	{}
+	{
+		importMeta: import.meta,
+	}
 )
 
 if (cli.input.length === 0) {

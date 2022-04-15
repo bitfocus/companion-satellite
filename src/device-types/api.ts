@@ -1,4 +1,4 @@
-import { CompanionSatelliteClient } from '../client'
+import { CompanionSatelliteClient } from '../client.js'
 
 export type DeviceId = string
 

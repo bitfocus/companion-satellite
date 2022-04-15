@@ -1,16 +1,12 @@
-import * as path from 'path'
-import { promisify } from 'util'
-import { readFile } from 'fs'
-import * as sharp from 'sharp'
-
-const readFileP = promisify(readFile)
+import { readFile } from 'fs/promises'
+import sharp from 'sharp'
 
 export class CardGenerator {
 	private iconImage: Buffer | undefined
 
 	async loadIcon(): Promise<Buffer> {
 		if (!this.iconImage) {
-			const rawData = await readFileP(path.join(__dirname, '../assets/icon.png'))
+			const rawData = await readFile(new URL('../assets/icon.png', import.meta.url))
 			this.iconImage = rawData
 		}
 

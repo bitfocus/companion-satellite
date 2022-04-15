@@ -1,13 +1,13 @@
-import { CompanionSatelliteClient } from './client'
+import { CompanionSatelliteClient } from './client.js'
 import { getStreamDeckDeviceInfo, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
 import { usb } from 'usb'
-import { CardGenerator } from './cards'
+import { CardGenerator } from './cards.js'
 import { XencelabsQuickKeysManagerInstance, XencelabsQuickKeys } from '@xencelabs-quick-keys/node'
-import { DeviceId, WrappedDevice } from './device-types/api'
-import { StreamDeckWrapper } from './device-types/streamdeck'
-import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys'
-import Infinitton = require('infinitton-idisplay')
-import { InfinittonWrapper } from './device-types/infinitton'
+import { DeviceId, WrappedDevice } from './device-types/api.js'
+import { StreamDeckWrapper } from './device-types/streamdeck.js'
+import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys.js'
+import Infinitton from 'infinitton-idisplay'
+import { InfinittonWrapper } from './device-types/infinitton.js'
 import * as HID from 'node-hid'
 
 export class DeviceManager {

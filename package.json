@@ -16,11 +16,12 @@
   },
   "homepage": "https://github.com/bitfocus/companion-satellite#readme",
   "main": "dist/electron.js",
+  "type": "module",
   "license": "MIT",
   "private": true,
   "scripts": {
     "prepare": "husky install",
-    "dev": "yarn ts-node src/main.ts",
+    "dev": "yarn ts-node-esm src/main.ts",
     "dev-electron": "yarn build:main && electron dist/electron.js",
     "dist:prepare:sharp": "cd node_modules/sharp && rimraf vendor && node install/libvips && node install/dll-copy",
     "electron-rebuild": "yarn dist:prepare:sharp && electron-builder install-app-deps",
@@ -43,7 +44,7 @@
     "electron-notarize": "^1.2.1",
     "rimraf": "^3.0.2",
     "standard-version": "^9.3.2",
-    "ts-node": "^9.1.1",
+    "ts-node": "^10.7.0",
     "typescript": "~4.5",
     "zx": "^6.1.0"
   },
@@ -58,9 +59,9 @@
     "electron-prompt": "^1.7.0",
     "electron-store": "^8.0.1",
     "eventemitter3": "^4.0.7",
-    "exit-hook": "^2.2.1",
+    "exit-hook": "^3.0.0",
     "infinitton-idisplay": "^1.1.2",
-    "meow": "^9.0.0",
+    "meow": "^10.1.2",
     "node-hid": "github:julusian/node-hid#v2.1.2-1",
     "sharp": "^0.30.3",
     "tslib": "^2.3.1",
@@ -126,14 +127,14 @@
       "target": "tar.gz",
       "artifactName": "companion-satellite-${arch}.tar.gz",
       "extraFiles": [
-				{
-					"from": "./node_modules/sharp/vendor/${env.VIPS_VENDOR}/lib",
-					"to": ".",
-					"filter": [
-						"libvips*.so.*"
-					]
-				}
-			]
+        {
+          "from": "./node_modules/sharp/vendor/${env.VIPS_VENDOR}/lib",
+          "to": ".",
+          "filter": [
+            "libvips*.so.*"
+          ]
+        }
+      ]
     },
     "files": [
       "**/*",
