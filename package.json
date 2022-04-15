@@ -83,7 +83,7 @@
     "productName": "Companion Satellite",
     "appId": "remote.companion.bitfocus.no",
     "remoteBuild": false,
-    "afterSign": "tools/notarize.js",
+    "afterSign": "tools/notarize.cjs",
     "directories": {
       "buildResources": "assets/",
       "output": "electron-output/"
