@@ -10,6 +10,10 @@ import Infinitton from 'infinitton-idisplay'
 import { InfinittonWrapper } from './device-types/infinitton.js'
 import * as HID from 'node-hid'
 
+// Force into hidraw mode
+HID.setDriverType('hidraw')
+HID.devices()
+
 export class DeviceManager {
 	private readonly devices: Map<DeviceId, WrappedDevice>
 	private readonly client: CompanionSatelliteClient
