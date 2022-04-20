@@ -51,6 +51,7 @@ export type CompanionSatelliteClientEvents = {
 	brightness: [{ deviceId: string; percent: number }]
 	newDevice: [{ deviceId: string }]
 	clearDeck: [{ deviceId: string }]
+	deviceErrored: [{ deviceId: string; message: string }]
 }
 
 export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatelliteClientEvents> {
@@ -241,6 +242,9 @@ export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatellit
 			case 'ADD-DEVICE':
 				this.handleAddedDevice(params)
 				break
+			case 'REMOVE-DEVICE':
+				console.log('Removed device: ${body}')
+				break
 			case 'BEGIN':
 				console.log(`Connected to Companion: ${body}`)
 				break
@@ -304,6 +308,12 @@ export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatellit
 	private handleAddedDevice(params: Record<string, string | boolean>): void {
 		if (!params.OK || params.ERROR) {
 			console.log(`Add device failed: ${JSON.stringify(params)}`)
+			if (typeof params.DEVICEID === 'string') {
+				this.emit('deviceErrored', {
+					deviceId: params.DEVICEID,
+					message: `${params.MESSAGE || 'Unknown Error'}`,
+				})
+			}
 			return
 		}
 		if (typeof params.DEVICEID !== 'string') {

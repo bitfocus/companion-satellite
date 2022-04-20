@@ -113,6 +113,30 @@ export class DeviceManager {
 				console.error(`Setup device: ${e}`)
 			}
 		})
+		client.on('deviceErrored', async (d) => {
+			try {
+				const dev = this.devices.get(d.deviceId)
+				if (dev) {
+					await dev.showStatus(this.client.host, d.message)
+
+					// Try again to add the device, in case we can recover
+					this.delayRetryAddOfDevice(d.deviceId)
+				} else {
+					throw new Error(`Device missing: ${d.deviceId}`)
+				}
+			} catch (e) {
+				console.error(`Failed device: ${e}`)
+			}
+		})
+	}
+
+	private delayRetryAddOfDevice(deviceId: string) {
+		setTimeout(() => {
+			const dev = this.devices.get(deviceId)
+			if (dev) {
+				this.client.addDevice(deviceId, dev.productName, dev.getRegisterProps())
+			}
+		}, 1000)
 	}
 
 	public async close(): Promise<void> {
