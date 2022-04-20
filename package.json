@@ -139,12 +139,12 @@
     "files": [
       "**/*",
       "assets/*",
-	  "!.nvmrc",
-	  "!.node_version",
-	  "!docs",
-	  "!samples",
-	  "!src",
-	  "!tools"
+      "!.nvmrc",
+      "!.node_version",
+      "!docs",
+      "!samples",
+      "!src",
+      "!tools"
     ]
   }
 }
