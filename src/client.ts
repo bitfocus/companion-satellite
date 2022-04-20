@@ -4,6 +4,7 @@ import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
 import { DEFAULT_PORT } from './lib.js'
 
 const PING_UNACKED_LIMIT = 5 // Arbitrary number
+const PING_IDLE_TIMEOUT = 500 // Pings are allowed to be late if another packet has been received recently
 const PING_INTERVAL = 100
 const RECONNECT_DELAY = 1000
 
@@ -62,6 +63,7 @@ export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatellit
 
 	private _pingInterval: NodeJS.Timer | undefined
 	private _pingUnackedCount = 0
+	private _lastReceivedAt = 0
 	private _connected = false
 	private _connectionActive = false // True when connected/connecting/reconnecting
 	private _retryConnectTimeout: NodeJS.Timer | undefined = undefined
@@ -97,6 +99,7 @@ export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatellit
 				this.emit('disconnected')
 			}
 			this._connected = false
+			this.receiveBuffer = ''
 
 			if (this._pingInterval) {
 				clearInterval(this._pingInterval)
@@ -121,6 +124,7 @@ export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatellit
 
 			this._connected = true
 			this._pingUnackedCount = 0
+			this.receiveBuffer = ''
 
 			if (!this._pingInterval) {
 				this._pingInterval = setInterval(() => this.sendPing(), PING_INTERVAL)
@@ -143,7 +147,7 @@ export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatellit
 
 	private sendPing(): void {
 		if (this._connected && this.socket) {
-			if (this._pingUnackedCount > PING_UNACKED_LIMIT) {
+			if (this._pingUnackedCount > PING_UNACKED_LIMIT && this._lastReceivedAt <= Date.now() - PING_IDLE_TIMEOUT) {
 				// Ping was never acked, so it looks like a timeout
 				this.emit('log', 'ping timeout')
 				try {
@@ -204,16 +208,17 @@ export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatellit
 	}
 
 	private _handleReceivedData(data: Buffer): void {
+		this._lastReceivedAt = Date.now()
 		this.receiveBuffer += data.toString()
 
 		let i = -1
 		let offset = 0
 		while ((i = this.receiveBuffer.indexOf('\n', offset)) !== -1) {
-			const line = this.receiveBuffer.substr(offset, i - offset)
+			const line = this.receiveBuffer.substring(offset, i)
 			offset = i + 1
 			this.handleCommand(line.toString().replace(/\r/, ''))
 		}
-		this.receiveBuffer = this.receiveBuffer.substr(offset)
+		this.receiveBuffer = this.receiveBuffer.substring(offset)
 	}
 
 	private handleCommand(line: string): void {
@@ -221,6 +226,8 @@ export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatellit
 		const cmd = i === -1 ? line : line.slice(0, i)
 		const body = i === -1 ? '' : line.slice(i + 1)
 		const params = parseLineParameters(body)
+
+		console.log(line)
 
 		switch (cmd.toUpperCase()) {
 			case 'PING':
