@@ -15,6 +15,12 @@ Note: This connects over the satellite device api which uses port TCP 16622.
 
 You can find prebuilt installers on the [releases](https://github.com/bitfocus/companion-satellite/releases) page
 
+### Raspberry Pi
+
+A prebuilt image is provided for recent releases. Check the releases tab for the latest image.
+
+After writing the image to an sd card, edit the satellite-config file in the boot partition to point to your companion instance.
+
 ### Electron
 
 This application can be built with electron to provide a minimal ui and to allow for minimising to the system tray.
@@ -29,7 +35,7 @@ To manually build the latest version for your machine:
 - `yarn dist`
 - Locate the output under `electron-output/`
 
-### Headless / Raspbrry pi
+### Manual Headless / Raspbrry pi
 
 It can be built and run as a systemd service on a pi or other linux machine
 
