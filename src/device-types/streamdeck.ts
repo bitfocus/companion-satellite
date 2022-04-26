@@ -37,7 +37,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 						.raw()
 						.toBuffer()
 				} catch (e) {
-					console.error(`device(${deviceId}): scale image failed: ${e}`)
+					console.log(`device(${deviceId}): scale image failed: ${e}`)
 					return
 				}
 
