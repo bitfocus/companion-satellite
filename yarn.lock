@@ -65,21 +65,23 @@
     minimatch "^3.0.4"
     plist "^3.0.4"
 
-"@elgato-stream-deck/core@5.4.0-alpha.0":
-  version "5.4.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/core/-/core-5.4.0-alpha.0.tgz#c35fbab24b024a5000ca9106395aa62d39757e77"
-  integrity sha512-PyXf79qdA79dYWve2ohERLomSdKN6gF1oyAAlc+PmdKMirbc38P/xVqql7pNlduTuzFbjIRhXGaHNTG2E1D3Zw==
+"@elgato-stream-deck/core@5.4.0":
+  version "5.4.0"
+  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/core/-/core-5.4.0.tgz#5875b2a7f6cbdbd51b5e2e73767d4f3fc2b3a6df"
+  integrity sha512-SKGSy5bMM49Xmpkq2H6Dc5INDU2Hlsas2Acxa++C+cuvdxNkjZA+nxQeYTyOKjctht3Fs3OPOJNs6UN+xj7G+w==
   dependencies:
     eventemitter3 "^4.0.7"
+    tslib "^2.4.0"
 
-"@elgato-stream-deck/node@^5.4.0-alpha.0":
-  version "5.4.0-alpha.0"
-  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/node/-/node-5.4.0-alpha.0.tgz#95a4daf299b21070235d41005f74055382639766"
-  integrity sha512-5G3ZgEG/jYafyD5S2ampaRRR4XK2AfT2xcmjsUKZHGwRWlep0Sa0JELseD3BOEfm4JLa3aTURJA5mYFFblFUTA==
+"@elgato-stream-deck/node@^5.4.0":
+  version "5.4.0"
+  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/node/-/node-5.4.0.tgz#ccef87d4afca8cb64f3fc2031f1840f3fec0bfc7"
+  integrity sha512-98tYohcNeuIzQsmB4Rw0MHeryQxoFp4W+yodaRKbuPc1AaGJitlbLzhMa7cTjzEXuy+ARduS8XQ00RDeN+Q2wg==
   dependencies:
-    "@elgato-stream-deck/core" "5.4.0-alpha.0"
+    "@elgato-stream-deck/core" "5.4.0"
     jpeg-js "^0.4.2"
     node-hid "^2.1.1"
+    tslib "^2.4.0"
 
 "@eslint/eslintrc@^1.2.3":
   version "1.2.3"
@@ -4866,7 +4868,7 @@ tslib@^1.8.1:
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==
 
-tslib@^2.1.0, tslib@^2.3.1:
+tslib@^2.1.0, tslib@^2.3.1, tslib@^2.4.0:
   version "2.4.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.4.0.tgz#7cecaa7f073ce680a05847aa77be941098f36dc3"
   integrity sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==
