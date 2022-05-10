@@ -126,14 +126,14 @@
       "target": "tar.gz",
       "artifactName": "companion-satellite-${arch}.tar.gz",
       "extraFiles": [
-				{
-					"from": "./node_modules/sharp/vendor/${env.VIPS_VENDOR}/lib",
-					"to": ".",
-					"filter": [
-						"libvips*.so.*"
-					]
-				}
-			]
+        {
+          "from": "./node_modules/sharp/vendor/${env.VIPS_VENDOR}/lib",
+          "to": ".",
+          "filter": [
+            "libvips*.so.*"
+          ]
+        }
+      ]
     },
     "files": [
       "**/*",
