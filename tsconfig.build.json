@@ -10,8 +10,6 @@
 			"{{PACKAGE-NAME}}": ["./src/index.ts"]
 		},
 		"types": ["node"],
-		"skipLibCheck": true,
-		"module": "ES2020",
-		"allowSyntheticDefaultImports": true
+		"skipLibCheck": true
 	}
 }

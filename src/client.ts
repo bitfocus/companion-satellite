@@ -1,7 +1,7 @@
-import EE3 from 'eventemitter3'
+import { EventEmitter } from 'eventemitter3'
 import { Socket } from 'net'
-import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
-import { DEFAULT_PORT } from './lib.js'
+import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
+import { DEFAULT_PORT } from './lib'
 
 const PING_UNACKED_LIMIT = 5 // Arbitrary number
 const PING_IDLE_TIMEOUT = 500 // Pings are allowed to be late if another packet has been received recently
@@ -55,7 +55,7 @@ export type CompanionSatelliteClientEvents = {
 	deviceErrored: [{ deviceId: string; message: string }]
 }
 
-export class CompanionSatelliteClient extends EE3.EventEmitter<CompanionSatelliteClientEvents> {
+export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> {
 	private readonly debug: boolean
 	private socket: Socket | undefined
 

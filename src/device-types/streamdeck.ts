@@ -1,9 +1,9 @@
 import { StreamDeck } from '@elgato-stream-deck/node'
-import sharp from 'sharp'
-import { CompanionSatelliteClient } from '../client.js'
-import { CardGenerator } from '../cards.js'
-import { ImageWriteQueue } from '../writeQueue.js'
-import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
+import sharp = require('sharp')
+import { CompanionSatelliteClient } from '../client'
+import { CardGenerator } from '../cards'
+import { ImageWriteQueue } from '../writeQueue'
+import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
 export class StreamDeckWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator

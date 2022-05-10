@@ -1,7 +1,7 @@
-import { CompanionSatelliteClient } from '../client.js'
-import { CardGenerator } from '../cards.js'
-import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
-import Infinitton from 'infinitton-idisplay'
+import { CompanionSatelliteClient } from '../client'
+import { CardGenerator } from '../cards'
+import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import Infinitton = require('infinitton-idisplay')
 
 export class InfinittonWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
