@@ -8,6 +8,8 @@ import { StreamDeckWrapper } from './device-types/streamdeck'
 import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys'
 import Infinitton = require('infinitton-idisplay')
 import { InfinittonWrapper } from './device-types/infinitton'
+import { LoupedeckWrapper } from './device-types/loupedeck'
+import { listDevices as listLoupedecks, LoupedeckDevice } from 'loupedeck'
 import * as HID from 'node-hid'
 
 // Force into hidraw mode
@@ -38,6 +40,8 @@ export class DeviceManager {
 				XencelabsQuickKeysManagerInstance.scanDevices().catch((e) => {
 					console.error(`Quickey scan failed: ${e}`)
 				})
+			} else if (dev.deviceDescriptor.idVendor === 0x2ec2) {
+				this.foundDevice(dev)
 			}
 		})
 		usb.on('detach', (dev) => {
@@ -220,6 +224,41 @@ export class DeviceManager {
 		XencelabsQuickKeysManagerInstance.openDevicesFromArray(devices).catch((e) => {
 			console.error(`Quick keys scan failed: ${e}`)
 		})
+
+		listLoupedecks({ ignoreWebsocket: true })
+			.then((devs) => {
+				for (const dev of devs) {
+					if (dev.type === 'serial' && dev.serialNumber) {
+						this.tryAddLoupedeck(dev.path, dev.serialNumber)
+					}
+				}
+			})
+			.catch((e) => {
+				console.error(`Loupedeck scan failed: ${e}`)
+			})
+	}
+
+	private async tryAddLoupedeck(path: string, serial: string) {
+		let ld: LoupedeckDevice | undefined
+		try {
+			if (!this.devices.has(serial)) {
+				console.log(`adding new device: ${path}`)
+				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
+
+				ld = new LoupedeckDevice({ path, autoConnect: false })
+				// ld.on('error', (e) => {
+				// 	console.error('device error', e)
+				// 	this.cleanupDeviceById(serial)
+				// })
+				await ld.connect()
+
+				const devInfo = new LoupedeckWrapper(serial, ld, this.cardGenerator)
+				await this.tryAddDeviceInner(serial, devInfo)
+			}
+		} catch (e) {
+			console.log(`Open "${path}" failed: ${e}`)
+			if (ld) ld.close() //.catch((e) => null)
+		}
 	}
 
 	private async tryAddStreamdeck(path: string, serial: string) {
