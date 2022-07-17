@@ -117,14 +117,14 @@
   resolved "https://registry.yarnpkg.com/@hutson/parse-repository-url/-/parse-repository-url-3.0.2.tgz#98c23c950a3d9b6c8f0daed06da6c3af06981340"
   integrity sha512-H9XAx3hc0BQHY6l+IFSWHDySypcXsvsuLhgYLUGywmJ5pswRVQJUHpOsobnLYp2ZUaUlKiKDrgWWhosOwAEM8Q==
 
-"@julusian/jpeg-turbo@^2.0.0-1":
-  version "2.0.0-1"
-  resolved "https://registry.yarnpkg.com/@julusian/jpeg-turbo/-/jpeg-turbo-2.0.0-1.tgz#62b6d93a4ef0ba384a9a9fb086978ee2ab16aae9"
-  integrity sha512-YfwkfARW+4Ua1Sjwm5aw+LY9/ULGFbV6rIJJxSMJGCfv3nIh7iPkObOOF+Dyobsz7UeadCb99HzWo1JqLHUIjg==
+"@julusian/jpeg-turbo@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@julusian/jpeg-turbo/-/jpeg-turbo-2.0.0.tgz#53d313d409e7ccbcfb505931c4282affa6e9c528"
+  integrity sha512-POmnPuLIyUVUbOJvz7Qb55fCPZIsQFMB4aDQ40cc/1+R5W+lokEmrjP7FiNdaRvBv/UdTKgnWEsB0lQK5TRNlw==
   dependencies:
     cmake-js "7.0.0-3"
     node-addon-api "^5.0.0"
-    pkg-prebuilds "^0.0.2"
+    pkg-prebuilds "~0.1.0"
 
 "@malept/cross-spawn-promise@^1.1.0":
   version "1.1.1"
@@ -3724,10 +3724,12 @@ pify@^3.0.0:
   resolved "https://registry.yarnpkg.com/pify/-/pify-3.0.0.tgz#e5a4acd2c101fdf3d9a4d07f0dbc4db49dd28176"
   integrity sha512-C3FsVNH1udSEX48gGX1xfvwTWfsYWj5U+8/uK15BGzIGrKoUpghX8hWZwa/OFnakBiiVNmBvemTJR5mcy7iPcg==
 
-pkg-prebuilds@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/pkg-prebuilds/-/pkg-prebuilds-0.0.2.tgz#1f4f5dc26a3043c7dcf39fc7aa79fff4389df97a"
-  integrity sha512-gsjn9BkOCZtAyCgC96zkGkODgTEy9+31zNGL7Tk2ODx5w2O+fc90rDzX9PWEbGNy6iRRzK3opLKmfZhwQN5uOQ==
+pkg-prebuilds@~0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/pkg-prebuilds/-/pkg-prebuilds-0.1.0.tgz#7ac38674146708e763a4581a0759d5e8594f61b6"
+  integrity sha512-ALsGSiwO6EDvjrrFRiv7Q6HZPrqCgTpNxQMFs3P4Ic25cP94DmLy0iGvZDlJmQBbq2IS8xkZrifwkoOHIetY9Q==
+  dependencies:
+    yargs "^17.5.1"
 
 pkg-up@^3.1.0:
   version "3.1.0"
@@ -5039,7 +5041,7 @@ yargs@^16.0.0, yargs@^16.2.0:
     y18n "^5.0.5"
     yargs-parser "^20.2.2"
 
-yargs@^17.0.1, yargs@^17.4.1:
+yargs@^17.0.1, yargs@^17.4.1, yargs@^17.5.1:
   version "17.5.1"
   resolved "https://registry.yarnpkg.com/yargs/-/yargs-17.5.1.tgz#e109900cab6fcb7fd44b1d8249166feb0b36e58e"
   integrity sha512-t6YAJcxDkNX7NFYiVtKvWUz8l+PaKTLiL63mJYWR2GnHq2gjEWISzsLp9wg3aY36dY1j+gfIEL3pIF+XlJJfbA==

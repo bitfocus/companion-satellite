@@ -1,6 +1,6 @@
 {
   "name": "companion-satellite",
-  "version": "0.5.0-1",
+  "version": "1.0.0-1",
   "description": "Satellite Streamdeck connector for Bitfocus Companion",
   "author": {
     "name": "Julian Waller",
@@ -52,7 +52,7 @@
   },
   "dependencies": {
     "@elgato-stream-deck/node": "^5.4.0",
-    "@julusian/jpeg-turbo": "^2.0.0-1",
+    "@julusian/jpeg-turbo": "^2.0.0",
     "@xencelabs-quick-keys/node": "^0.4.0",
     "electron-about-window": "^1.15.2",
     "electron-prompt": "^1.7.0",
