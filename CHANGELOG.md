@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.0.1](https://github.com/bitfocus/companion-satellite/compare/v1.0.0...v1.0.1) (2022-07-31)
+
+
+### Bug Fixes
+
+* support new revisions of the streamdeck mini ([45548e0](https://github.com/bitfocus/companion-satellite/commit/45548e07e6a27eb6778bc2f995a73cd1d00098e4))
+* update usb to get native windows hotplug detection ([074c47f](https://github.com/bitfocus/companion-satellite/commit/074c47f3e85ea59f7bd3888af24e434caf9986ba))
+
 ## [1.0.0](https://github.com/bitfocus/companion-satellite/compare/v0.4.0...v1.0.0) (2022-07-17)
 
 
