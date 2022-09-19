@@ -60,6 +60,7 @@
     "eventemitter3": "^4.0.7",
     "exit-hook": "^2.2.1",
     "infinitton-idisplay": "^1.1.2",
+    "loupedeck": "github:julusian/loupedeck#master",
     "meow": "^9.0.0",
     "node-hid": "github:julusian/node-hid#v2.1.2-1",
     "sharp": "^0.30.7",

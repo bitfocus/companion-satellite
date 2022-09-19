@@ -46,6 +46,7 @@ export class CardGenerator {
 					left: 10,
 				},
 			])
+			.removeAlpha()
 			.toBuffer()
 	}
 }

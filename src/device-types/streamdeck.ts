@@ -114,7 +114,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 				.then(async (buffer) => {
 					if (outputId === this.#queueOutputId) {
 						// still valid
-						await this.#deck.fillPanelBuffer(buffer, { format: 'rgba' })
+						await this.#deck.fillPanelBuffer(buffer)
 					}
 				})
 				.catch((e) => {
