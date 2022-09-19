@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/bitfocus/companion-satellite/compare/v1.0.1...v1.1.0) (2022-09-19)
+
+
+### Features
+
+* loupedeck live support ([#50](https://github.com/bitfocus/companion-satellite/issues/50)) ([a9a4ae8](https://github.com/bitfocus/companion-satellite/commit/a9a4ae8401e2d8a15f4da775557ce612238698bc))
+
 ### [1.0.1](https://github.com/bitfocus/companion-satellite/compare/v1.0.0...v1.0.1) (2022-07-31)
 
 
