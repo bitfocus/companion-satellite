@@ -11,9 +11,11 @@ Each device will appear in companion as its own 'satellite' device, and can be c
 
 Note: This connects over the satellite device api which uses port TCP 16622.
 
+[![Satellite Getting Started](http://img.youtube.com/vi/eNnUxRl4yP4/0.jpg)](http://www.youtube.com/watch?v=eNnUxRl4yP4 "Remote Stream Deck control with Companion Satellite")
+
 ## Getting started
 
-You can find prebuilt installers on the [releases](https://github.com/bitfocus/companion-satellite/releases) page
+You can find installers on the [releases](https://github.com/bitfocus/companion-satellite/releases) page
 
 ### Raspberry Pi
 
@@ -21,7 +23,7 @@ A prebuilt image is provided for recent releases. Check the releases tab for the
 
 After writing the image to an sd card, edit the satellite-config file in the boot partition to point to your companion instance.
 
-### Electron
+### Desktop
 
 This application can be built with electron to provide a minimal ui and to allow for minimising to the system tray.
 You can right click the tray icon to:
