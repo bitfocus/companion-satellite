@@ -248,7 +248,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this.handleAddedDevice(params)
 				break
 			case 'REMOVE-DEVICE':
-				console.log('Removed device: ${body}')
+				console.log(`Removed device: ${body}`)
 				break
 			case 'BEGIN':
 				console.log(`Connected to Companion: ${body}`)

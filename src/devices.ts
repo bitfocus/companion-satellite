@@ -246,10 +246,14 @@ export class DeviceManager {
 				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
 				ld = new LoupedeckDevice({ path, autoConnect: false })
-				// ld.on('error', (e) => {
-				// 	console.error('device error', e)
-				// 	this.cleanupDeviceById(serial)
-				// })
+				ld.on('disconnect', () => {
+					console.error('device disconnect')
+					this.cleanupDeviceById(serial)
+				})
+				ld.on('error', (err) => {
+					console.error('device error', err)
+					this.cleanupDeviceById(serial)
+				})
 				await ld.connect()
 
 				const devInfo = new LoupedeckWrapper(serial, ld, this.cardGenerator)
