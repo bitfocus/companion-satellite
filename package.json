@@ -34,18 +34,18 @@
   "devDependencies": {
     "@sofie-automation/code-standard-preset": "~2.0",
     "@types/electron-prompt": "^1.6.1",
-    "@types/node": "^16.11.59",
+    "@types/node": "^16.11.64",
     "@types/node-hid": "^1.3.1",
     "@types/sharp": "^0.31.0",
     "cross-env": "^7.0.3",
-    "electron": "^19.0.17",
-    "electron-builder": "^23.3.3",
+    "electron": "^19.1.2",
+    "electron-builder": "^23.6.0",
     "electron-notarize": "^1.2.1",
     "rimraf": "^3.0.2",
     "standard-version": "^9.5.0",
     "ts-node": "^9.1.1",
     "typescript": "~4.5",
-    "zx": "^6.2.5"
+    "zx": "^7.1.1"
   },
   "engines": {
     "node": "^16.14"
@@ -63,9 +63,9 @@
     "loupedeck": "github:julusian/loupedeck#master",
     "meow": "^9.0.0",
     "node-hid": "github:julusian/node-hid#v2.1.2-1",
-    "sharp": "^0.31.0",
+    "sharp": "^0.31.1",
     "tslib": "^2.3.1",
-    "usb": "^2.5.1"
+    "usb": "^2.5.2"
   },
   "resolutions": {
     "node-hid": "github:julusian/node-hid#v2.1.2-1"
