@@ -5,12 +5,17 @@ import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
 import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
+const screenWidth = 360
+const screenHeight = 270
+const keyPadding = 5
+
 export class LoupedeckWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
 	readonly #deviceId: string
 
 	#queueOutputId: number
+	#isShowingCard = true
 	#queue: ImageWriteQueue
 
 	public get deviceId(): string {
@@ -38,6 +43,8 @@ export class LoupedeckWrapper implements WrappedDevice {
 
 			const width = 80
 			const height = 80
+			const boundaryWidth = width + keyPadding * 2
+			const boundaryHeight = height + keyPadding * 2
 
 			let newbuffer: Buffer | null = null
 			try {
@@ -54,15 +61,22 @@ export class LoupedeckWrapper implements WrappedDevice {
 			if (this.#queueOutputId === outputId) {
 				try {
 					// Get offset x/y for key index
-					const x = (key % 4) * 90
-					const y = Math.floor(key / 4) * 90
+					const x = (key % 4) * boundaryWidth
+					const y = Math.floor(key / 4) * boundaryHeight
+
+					if (this.#isShowingCard) {
+						this.#isShowingCard = false
+
+						// Do a blank of the whole panel before drawing a button, so that there isnt any bleed
+						await this.blankDevice()
+					}
 
 					await this.#deck.drawBuffer({
 						id: 'center',
 						width,
 						height,
-						x: x + (90 - width) / 2,
-						y: y + (90 - height) / 2,
+						x: x + keyPadding,
+						y: y + keyPadding,
 						buffer: newbuffer,
 					})
 				} catch (e_1) {
@@ -179,7 +193,15 @@ export class LoupedeckWrapper implements WrappedDevice {
 			})
 		}
 
-		// await this.#deck.clearPanel()
+		// Clear the center screen
+		await this.#deck.drawBuffer({
+			id: 'center',
+			width: screenWidth,
+			height: screenHeight,
+			x: 0,
+			y: 0,
+			buffer: Buffer.alloc(screenWidth * screenHeight * 3),
+		})
 	}
 	async draw(d: DeviceDrawProps): Promise<void> {
 		if (d.keyIndex >= 24 && d.keyIndex < 32) {
@@ -204,18 +226,26 @@ export class LoupedeckWrapper implements WrappedDevice {
 		}
 	}
 	async showStatus(hostname: string, status: string): Promise<void> {
+		const width = screenWidth - keyPadding * 2
+		const height = screenHeight - keyPadding * 2
+
 		// abort and discard current operations
 		this.#queue?.abort()
 		this.#queueOutputId++
 		const outputId = this.#queueOutputId
 		this.#cardGenerator
-			.generateBasicCard(360, 270, hostname, status)
+			.generateBasicCard(width, height, hostname, status)
 			.then(async (buffer) => {
 				if (outputId === this.#queueOutputId) {
+					this.#isShowingCard = true
 					// still valid
 					this.#deck.drawBuffer({
 						id: 'center',
 						buffer,
+						x: keyPadding,
+						y: keyPadding,
+						width,
+						height,
 					})
 				}
 			})
