@@ -53,6 +53,7 @@
   "dependencies": {
     "@elgato-stream-deck/node": "^5.6.0",
     "@julusian/jpeg-turbo": "^2.0.0",
+    "@loupedeck/node": "^0.1.0",
     "@xencelabs-quick-keys/node": "^0.4.0",
     "electron-about-window": "^1.15.2",
     "electron-prompt": "^1.7.0",
@@ -60,7 +61,6 @@
     "eventemitter3": "^4.0.7",
     "exit-hook": "^2.2.1",
     "infinitton-idisplay": "^1.1.2",
-    "loupedeck": "github:julusian/loupedeck#master",
     "meow": "^9.0.0",
     "node-hid": "github:julusian/node-hid#v2.1.2-1",
     "sharp": "^0.31.1",
@@ -124,7 +124,7 @@
       "artifactName": "companion-satellite-x64.exe"
     },
     "linux": {
-      "target": "tar.gz",
+      "target": "dir",
       "artifactName": "companion-satellite-${arch}.tar.gz",
       "extraFiles": [
         {

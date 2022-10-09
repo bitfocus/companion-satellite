@@ -9,8 +9,8 @@ import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys'
 import Infinitton = require('infinitton-idisplay')
 import { InfinittonWrapper } from './device-types/infinitton'
 import { LoupedeckWrapper } from './device-types/loupedeck'
-import { listDevices as listLoupedecks, LoupedeckDevice } from 'loupedeck'
 import * as HID from 'node-hid'
+import { openLoupedeck, listLoupedecks, LoupedeckDevice, LoupedeckModelId } from '@loupedeck/node'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -225,11 +225,11 @@ export class DeviceManager {
 			console.error(`Quick keys scan failed: ${e}`)
 		})
 
-		listLoupedecks({ ignoreWebsocket: true })
+		listLoupedecks()
 			.then((devs) => {
 				for (const dev of devs) {
-					if (dev.type === 'serial' && dev.serialNumber) {
-						this.tryAddLoupedeck(dev.path, dev.serialNumber)
+					if (dev.serialNumber && dev.model === LoupedeckModelId.LoupedeckLive) {
+						this.tryAddLoupedeckLive(dev.path, dev.serialNumber)
 					}
 				}
 			})
@@ -238,23 +238,18 @@ export class DeviceManager {
 			})
 	}
 
-	private async tryAddLoupedeck(path: string, serial: string) {
+	private async tryAddLoupedeckLive(path: string, serial: string) {
 		let ld: LoupedeckDevice | undefined
 		try {
 			if (!this.devices.has(serial)) {
 				console.log(`adding new device: ${path}`)
 				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
-				ld = new LoupedeckDevice({ path, autoConnect: false })
-				ld.on('disconnect', () => {
-					console.error('device disconnect')
-					this.cleanupDeviceById(serial)
-				})
+				ld = await openLoupedeck(path)
 				ld.on('error', (err) => {
 					console.error('device error', err)
 					this.cleanupDeviceById(serial)
 				})
-				await ld.connect()
 
 				const devInfo = new LoupedeckWrapper(serial, ld, this.cardGenerator)
 				await this.tryAddDeviceInner(serial, devInfo)

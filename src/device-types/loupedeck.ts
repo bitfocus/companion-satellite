@@ -1,4 +1,4 @@
-import { LoupedeckDevice, LoupedeckButtonId, LoupedeckKnobId } from 'loupedeck'
+import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
 import sharp = require('sharp')
 import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
@@ -30,9 +30,8 @@ export class LoupedeckWrapper implements WrappedDevice {
 		this.#deviceId = deviceId
 		this.#cardGenerator = cardGenerator
 
+		if (device.modelId !== LoupedeckModelId.LoupedeckLive) throw new Error('Incorrect model passed to wrapper!')
 		this.#queueOutputId = 0
-
-		this.#cardGenerator
 
 		this.#queue = new ImageWriteQueue(async (key: number, buffer: Buffer) => {
 			if (key > 40) {
@@ -46,7 +45,7 @@ export class LoupedeckWrapper implements WrappedDevice {
 			const boundaryWidth = width + keyPadding * 2
 			const boundaryHeight = height + keyPadding * 2
 
-			let newbuffer: Buffer | null = null
+			let newbuffer: Buffer
 			try {
 				newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
 					.resize(width, height)
@@ -68,17 +67,19 @@ export class LoupedeckWrapper implements WrappedDevice {
 						this.#isShowingCard = false
 
 						// Do a blank of the whole panel before drawing a button, so that there isnt any bleed
-						await this.blankDevice()
+						await this.blankDevice(true)
 					}
 
-					await this.#deck.drawBuffer({
-						id: 'center',
+					await this.#deck.drawBuffer(
+						LoupedeckDisplayId.Center,
+						newbuffer,
+						LoupedeckBufferFormat.RGB,
 						width,
 						height,
-						x: x + keyPadding,
-						y: y + keyPadding,
-						buffer: newbuffer,
-					})
+						x + keyPadding,
+						y + keyPadding,
+						true
+					)
 				} catch (e_1) {
 					console.error(`device(${deviceId}): fillImage failed: ${e_1}`)
 				}
@@ -101,55 +102,62 @@ export class LoupedeckWrapper implements WrappedDevice {
 		this.#deck.close()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
-		const convertButtonId = (id: LoupedeckButtonId | LoupedeckKnobId): number => {
-			if (!isNaN(Number(id))) {
-				return 24 + Number(id)
-			} else if (id === 'circle') {
-				return 24
-			} else if (id === 'knobTL') {
-				return 1
-			} else if (id === 'knobCL') {
-				return 9
-			} else if (id === 'knobBL') {
-				return 17
-			} else if (id === 'knobTR') {
-				return 6
-			} else if (id === 'knobCR') {
-				return 14
-			} else if (id === 'knobBR') {
-				return 22
-			} else {
-				// Discard
-				return 99
+		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
+			if (type === 'button' && id >= 0 && id < 8) {
+				return 24 + id
+			} else if (type === 'rotary') {
+				switch (id) {
+					case 0:
+						return 1
+					case 1:
+						return 9
+					case 2:
+						return 17
+					case 3:
+						return 6
+					case 4:
+						return 14
+					case 5:
+						return 22
+				}
 			}
+
+			// Discard
+			return 99
 		}
 		console.log('Registering key events for ' + this.deviceId)
-		this.#deck.on('down', ({ id }) => client.keyDown(this.deviceId, convertButtonId(id)))
-		this.#deck.on('up', ({ id }) => client.keyUp(this.deviceId, convertButtonId(id)))
-		this.#deck.on('rotate', ({ id, delta }) => {
+		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('rotate', (info, delta) => {
+			if (info.type !== 'rotary') return
+
 			let id2
-			if (id === 'knobTL') {
-				id2 = 0
-			} else if (id === 'knobCL') {
-				id2 = 8
-			} else if (id === 'knobBL') {
-				id2 = 16
-			} else if (id === 'knobTR') {
-				id2 = 7
-			} else if (id === 'knobCR') {
-				id2 = 15
-			} else if (id === 'knobBR') {
-				id2 = 23
+			switch (info.index) {
+				case 0:
+					id2 = 0
+					break
+				case 1:
+					id2 = 8
+					break
+				case 2:
+					id2 = 16
+					break
+				case 3:
+					id2 = 7
+					break
+				case 4:
+					id2 = 15
+					break
+				case 5:
+					id2 = 23
+					break
 			}
 
 			if (id2 !== undefined) {
-				switch (delta) {
-					case -1:
-						client.keyUp(this.deviceId, id2)
-						break
-					case 1:
-						client.keyDown(this.deviceId, id2)
-						break
+				if (delta < 0) {
+					client.keyUp(this.deviceId, id2)
+				} else if (delta > 0) {
+					client.keyDown(this.deviceId, id2)
 				}
 			}
 		})
@@ -185,32 +193,30 @@ export class LoupedeckWrapper implements WrappedDevice {
 	async setBrightness(percent: number): Promise<void> {
 		this.#deck.setBrightness(percent / 100)
 	}
-	async blankDevice(): Promise<void> {
-		for (let i = 0; i < 8; i++) {
-			this.#deck.setButtonColor({
-				id: i === 0 ? 'circle' : ((i + '') as any),
-				color: '#0000',
-			})
-		}
+	async blankDevice(skipButtons?: boolean): Promise<void> {
+		// Hopefully this fixes the issue with the display getting stuck
+		// await this.#deck.getSerialNumber()
 
-		// Clear the center screen
-		await this.#deck.drawBuffer({
-			id: 'center',
-			width: screenWidth,
-			height: screenHeight,
-			x: 0,
-			y: 0,
-			buffer: Buffer.alloc(screenWidth * screenHeight * 3),
-		})
+		await this.#deck.blankDevice(true, !skipButtons)
+
+		// Hopefully this fixes the issue with the display getting stuck
+		// await this.#deck.getSerialNumber()
 	}
 	async draw(d: DeviceDrawProps): Promise<void> {
 		if (d.keyIndex >= 24 && d.keyIndex < 32) {
 			const index = d.keyIndex - 24
-			const color = d.color || '#000000'
+
+			const red = d.color ? parseInt(d.color.substr(1, 2), 16) : 0
+			const green = d.color ? parseInt(d.color.substr(3, 2), 16) : 0
+			const blue = d.color ? parseInt(d.color.substr(5, 2), 16) : 0
+
 			this.#deck.setButtonColor({
-				id: index === 0 ? 'circle' : ((index + '') as any),
-				color,
+				id: index,
+				red,
+				green,
+				blue,
 			})
+
 			return
 		}
 		const x = (d.keyIndex % 8) - 2
@@ -239,14 +245,16 @@ export class LoupedeckWrapper implements WrappedDevice {
 				if (outputId === this.#queueOutputId) {
 					this.#isShowingCard = true
 					// still valid
-					this.#deck.drawBuffer({
-						id: 'center',
+					await this.#deck.drawBuffer(
+						LoupedeckDisplayId.Center,
 						buffer,
-						x: keyPadding,
-						y: keyPadding,
+						LoupedeckBufferFormat.RGB,
 						width,
 						height,
-					})
+						keyPadding,
+						keyPadding,
+						true
+					)
 				}
 			})
 			.catch((e) => {
