@@ -194,13 +194,7 @@ export class LoupedeckWrapper implements WrappedDevice {
 		this.#deck.setBrightness(percent / 100)
 	}
 	async blankDevice(skipButtons?: boolean): Promise<void> {
-		// Hopefully this fixes the issue with the display getting stuck
-		// await this.#deck.getSerialNumber()
-
 		await this.#deck.blankDevice(true, !skipButtons)
-
-		// Hopefully this fixes the issue with the display getting stuck
-		// await this.#deck.getSerialNumber()
 	}
 	async draw(d: DeviceDrawProps): Promise<void> {
 		if (d.keyIndex >= 24 && d.keyIndex < 32) {

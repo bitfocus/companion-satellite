@@ -245,7 +245,7 @@ export class DeviceManager {
 				console.log(`adding new device: ${path}`)
 				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
-				ld = await openLoupedeck(path)
+				ld = await openLoupedeck(path, { waitForAcks: true })
 				ld.on('error', (err) => {
 					console.error('device error', err)
 					this.cleanupDeviceById(serial)
