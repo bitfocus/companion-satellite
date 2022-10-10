@@ -10,7 +10,7 @@ function $withoutEscaping(pieces, ...args) {
 	}
 }
 
-const platform = argv._[1]
+const platform = argv._[0]
 
 let electronBuilderArgs = []
 let sharpPlatform = null
