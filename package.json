@@ -124,7 +124,7 @@
       "artifactName": "companion-satellite-x64.exe"
     },
     "linux": {
-      "target": "dir",
+      "target": "tar.gz",
       "artifactName": "companion-satellite-${arch}.tar.gz",
       "extraFiles": [
         {
