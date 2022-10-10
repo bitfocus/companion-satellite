@@ -77,8 +77,7 @@ export class LoupedeckWrapper implements WrappedDevice {
 						width,
 						height,
 						x + keyPadding,
-						y + keyPadding,
-						true
+						y + keyPadding
 					)
 				} catch (e_1) {
 					console.error(`device(${deviceId}): fillImage failed: ${e_1}`)
@@ -246,8 +245,7 @@ export class LoupedeckWrapper implements WrappedDevice {
 						width,
 						height,
 						keyPadding,
-						keyPadding,
-						true
+						keyPadding
 					)
 				}
 			})
