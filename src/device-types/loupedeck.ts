@@ -22,7 +22,7 @@ export class LoupedeckWrapper implements WrappedDevice {
 		return this.#deviceId
 	}
 	public get productName(): string {
-		return `Satellite Loupedeck Live`
+		return this.#deck.modelName
 	}
 
 	public constructor(deviceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) {
@@ -30,7 +30,12 @@ export class LoupedeckWrapper implements WrappedDevice {
 		this.#deviceId = deviceId
 		this.#cardGenerator = cardGenerator
 
-		if (device.modelId !== LoupedeckModelId.LoupedeckLive) throw new Error('Incorrect model passed to wrapper!')
+		if (
+			device.modelId !== LoupedeckModelId.LoupedeckLive &&
+			device.modelId !== LoupedeckModelId.RazerStreamController
+		)
+			throw new Error('Incorrect model passed to wrapper!')
+
 		this.#queueOutputId = 0
 
 		this.#queue = new ImageWriteQueue(async (key: number, buffer: Buffer) => {

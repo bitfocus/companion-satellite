@@ -228,7 +228,11 @@ export class DeviceManager {
 		listLoupedecks()
 			.then((devs) => {
 				for (const dev of devs) {
-					if (dev.serialNumber && dev.model === LoupedeckModelId.LoupedeckLive) {
+					if (
+						dev.serialNumber &&
+						(dev.model === LoupedeckModelId.LoupedeckLive ||
+							dev.model === LoupedeckModelId.RazerStreamController)
+					) {
 						this.tryAddLoupedeckLive(dev.path, dev.serialNumber)
 					}
 				}
