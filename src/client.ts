@@ -9,28 +9,31 @@ const PING_INTERVAL = 100
 const RECONNECT_DELAY = 1000
 
 function parseLineParameters(line: string): Record<string, string | boolean> {
-	// https://newbedev.com/javascript-split-string-by-space-but-ignore-space-in-quotes-notice-not-to-split-by-the-colon-too
-	const match = line.match(/\\?.|^$/g)
-	const fragments = match
-		? match.reduce(
-				(p, c) => {
-					if (c === '"') {
-						p.quote ^= 1
-					} else if (!p.quote && c === ' ') {
-						p.a.push('')
-					} else {
-						p.a[p.a.length - 1] += c.replace(/\\(.)/, '$1')
-					}
-					return p
-				},
-				{ a: [''], quote: 0 }
-		  ).a
-		: []
+	let fragments: string[] = ['']
+	let quotes = 0
+
+	// Future: this could probably be optimised more by skipping/processing larger chunks at a time rather than individual characters
+
+	for (let i = 0; i < line.length; i++) {
+		let c = line[i]
+		if (c == '\\') {
+			i++
+			c += line[i]
+		}
+
+		if (c === '"') {
+			quotes ^= 1
+		} else if (!quotes && c === ' ') {
+			fragments.push('')
+		} else {
+			fragments[fragments.length - 1] += c.length === 2 ? c[1] : c
+		}
+	}
 
 	const res: Record<string, string | boolean> = {}
 
 	for (const fragment of fragments) {
-		const [key, value] = fragment.split('=')
+		const [key, value] = fragment.split('=', 2)
 		res[key] = value === undefined ? true : value
 	}
 
@@ -214,9 +217,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		let i = -1
 		let offset = 0
 		while ((i = this.receiveBuffer.indexOf('\n', offset)) !== -1) {
-			const line = this.receiveBuffer.substring(offset, i)
+			let line = this.receiveBuffer.substring(offset, i)
+			if (line.endsWith('\r')) line = line.substring(0, line.length - 1)
+
 			offset = i + 1
-			this.handleCommand(line.toString().replace(/\r/, ''))
+			this.handleCommand(line)
 		}
 		this.receiveBuffer = this.receiveBuffer.substring(offset)
 	}
