@@ -47,7 +47,7 @@ export class ImageWriteQueue {
 
 	private tryDequeue() {
 		// Start another if not too many in progress
-		if (this.inProgress.length <= this.maxConcurrent && this.pendingImages.length > 0) {
+		if (this.inProgress.length < this.maxConcurrent && this.pendingImages.length > 0) {
 			// Find first image where key is not being worked on
 			const nextImageIndex = this.pendingImages.findIndex((img) => this.inProgress.indexOf(img.key) === -1)
 			if (nextImageIndex === -1) {
