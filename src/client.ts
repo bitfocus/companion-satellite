@@ -9,24 +9,52 @@ const PING_INTERVAL = 100
 const RECONNECT_DELAY = 1000
 
 function parseLineParameters(line: string): Record<string, string | boolean> {
+	const makeSafe = (index: number): number => {
+		return index === -1 ? Number.POSITIVE_INFINITY : index
+	}
+
 	let fragments: string[] = ['']
 	let quotes = 0
 
-	// Future: this could probably be optimised more by skipping/processing larger chunks at a time rather than individual characters
+	let i = 0
+	while (i < line.length) {
+		// Find the next characters of interest
+		const spaceIndex = makeSafe(line.indexOf(' ', i))
+		const slashIndex = makeSafe(line.indexOf('\\', i))
+		const quoteIndex = makeSafe(line.indexOf('"', i))
 
-	for (let i = 0; i < line.length; i++) {
-		let c = line[i]
-		if (c == '\\') {
-			i++
-			c += line[i]
-		}
+		// Find which is closest
+		let o = Math.min(spaceIndex, slashIndex, quoteIndex)
+		if (!isFinite(o)) {
+			// None were found, copy the remainder and stop
+			const slice = line.substring(i)
+			fragments[fragments.length - 1] += slice
 
-		if (c === '"') {
-			quotes ^= 1
-		} else if (!quotes && c === ' ') {
-			fragments.push('')
+			break
 		} else {
-			fragments[fragments.length - 1] += c.length === 2 ? c[1] : c
+			// copy the slice before this character
+			const slice = line.substring(i, o)
+			fragments[fragments.length - 1] += slice
+
+			const c = line[o]
+			if (c == '\\') {
+				// If char is a slash, the character following it is of interest
+				// Future: does this consider non \" chars?
+				fragments[fragments.length - 1] += line[o + 1]
+
+				i = o + 2
+			} else {
+				i = o + 1
+
+				// Figure out what the char was
+				if (c === '"') {
+					quotes ^= 1
+				} else if (!quotes && c === ' ') {
+					fragments.push('')
+				} else {
+					fragments[fragments.length - 1] += c
+				}
+			}
 		}
 	}
 
