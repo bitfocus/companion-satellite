@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y \
 	unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
+RUN yarn config set network-timeout 100000 -g
 RUN yarn --frozen-lockfile
 RUN yarn build
 RUN yarn --prod --frozen-lockfile
