@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/bitfocus/companion-satellite/compare/v1.1.0...v1.2.0) (2022-10-21)
+
+
+### Features
+
+* prototype razer stream controller support ([15b62ac](https://github.com/bitfocus/companion-satellite/commit/15b62accb7c93384be239b51944d7feb12125cf1))
+
+
+### Bug Fixes
+
+* headless port broken ([2ecf115](https://github.com/bitfocus/companion-satellite/commit/2ecf1157639f805476be66f2eb16b413845141e2))
+* linux build ([79172e7](https://github.com/bitfocus/companion-satellite/commit/79172e73c07a4c4093d3e7711ca7ac7ebf7a2909))
+* loupedeck bleed between buttons ([939b5b4](https://github.com/bitfocus/companion-satellite/commit/939b5b48b09ed2c0020c7a9c1f97f71334a4b229))
+* loupedeck disconnection and errors ([87a817c](https://github.com/bitfocus/companion-satellite/commit/87a817ccfccdfd39b41034e81231f40f736b83fe))
+* loupedeck drawing ([1225dbe](https://github.com/bitfocus/companion-satellite/commit/1225dbeb2b50cd5afb23ae58fd1aed13a3024d55))
+* mac-arm64 build ([705f954](https://github.com/bitfocus/companion-satellite/commit/705f9540916a9f89248f1de184245dda0b2b7dc5))
+* optimise parseLineParameters ([d3166e1](https://github.com/bitfocus/companion-satellite/commit/d3166e1745688032605c17b8971b4e5d81fcfd1e))
+* optimise parseLineParameters ([3af36ae](https://github.com/bitfocus/companion-satellite/commit/3af36aea4ba9a45e9c0d8872902292c811f17239))
+* streamdeck draw performance ([72485ba](https://github.com/bitfocus/companion-satellite/commit/72485ba335dc5e97e74ac7f4b2187f47c775939d))
+* update loupedeck lib ([f822386](https://github.com/bitfocus/companion-satellite/commit/f822386d671cd29987e0a0f7a9a89a0ddd224aab))
+* use different loupedeck library ([c589404](https://github.com/bitfocus/companion-satellite/commit/c5894042d58709c05e2989121b29d24503c11156))
+
 ## [1.1.0](https://github.com/bitfocus/companion-satellite/compare/v1.0.1...v1.1.0) (2022-09-19)
 
 
