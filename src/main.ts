@@ -22,7 +22,7 @@ if (cli.input.length === 0) {
 
 let port = DEFAULT_PORT
 if (cli.input.length > 1) {
-	port = Number(cli.input[0])
+	port = Number(cli.input[1])
 	if (isNaN(port)) {
 		cli.showHelp(1)
 	}
