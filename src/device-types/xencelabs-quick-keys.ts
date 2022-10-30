@@ -16,6 +16,7 @@ function keyToCompanion(k: number): number | null {
 	return null
 }
 export class QuickKeysWrapper implements WrappedDevice {
+	#client: CompanionSatelliteClient | undefined
 	readonly #surface: XencelabsQuickKeys
 	readonly #deviceId: string
 
@@ -51,6 +52,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 		await this.#surface.stopData()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
+		this.#client = client
 		console.log('Registering key events for ' + this.deviceId)
 
 		const handleDown = (key: number) => {
@@ -68,10 +70,18 @@ export class QuickKeysWrapper implements WrappedDevice {
 		const handleWheel = (ev: WheelEvent) => {
 			switch (ev) {
 				case WheelEvent.Left:
-					client.keyUp(this.deviceId, 11)
+					if (client.useCombinedEncoders) {
+						client.rotateLeft(this.deviceId, 5)
+					} else {
+						client.keyUp(this.deviceId, 11)
+					}
 					break
 				case WheelEvent.Right:
-					client.keyDown(this.deviceId, 11)
+					if (client.useCombinedEncoders) {
+						client.rotateRight(this.deviceId, 5)
+					} else {
+						client.keyDown(this.deviceId, 11)
+					}
 					break
 			}
 		}
@@ -133,7 +143,9 @@ export class QuickKeysWrapper implements WrappedDevice {
 				await this.#surface.setKeyText(keyIndex, data.text.substr(0, 8))
 			}
 		}
-		if (data.color && data.keyIndex === 11) {
+
+		const wheelIndex = this.#client?.useCombinedEncoders ? 5 : 11
+		if (data.color && data.keyIndex === wheelIndex) {
 			const r = parseInt(data.color.substr(1, 2), 16)
 			const g = parseInt(data.color.substr(3, 2), 16)
 			const b = parseInt(data.color.substr(5, 2), 16)

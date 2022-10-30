@@ -106,23 +106,40 @@ export class LoupedeckWrapper implements WrappedDevice {
 		this.#deck.close()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
-		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
+		const convertButtonId = (type: 'button' | 'rotary', id: number, rotarySecondary: boolean): number => {
 			if (type === 'button' && id >= 0 && id < 8) {
 				return 24 + id
 			} else if (type === 'rotary') {
-				switch (id) {
-					case 0:
-						return 1
-					case 1:
-						return 9
-					case 2:
-						return 17
-					case 3:
-						return 6
-					case 4:
-						return 14
-					case 5:
-						return 22
+				if (!client.useCombinedEncoders && rotarySecondary) {
+					switch (id) {
+						case 0:
+							return 1
+						case 1:
+							return 9
+						case 2:
+							return 17
+						case 3:
+							return 6
+						case 4:
+							return 14
+						case 5:
+							return 22
+					}
+				} else {
+					switch (id) {
+						case 0:
+							return 0
+						case 1:
+							return 8
+						case 2:
+							return 16
+						case 3:
+							return 7
+						case 4:
+							return 15
+						case 5:
+							return 23
+					}
 				}
 			}
 
@@ -130,38 +147,25 @@ export class LoupedeckWrapper implements WrappedDevice {
 			return 99
 		}
 		console.log('Registering key events for ' + this.deviceId)
-		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index, true)))
+		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index, true)))
 		this.#deck.on('rotate', (info, delta) => {
 			if (info.type !== 'rotary') return
 
-			let id2
-			switch (info.index) {
-				case 0:
-					id2 = 0
-					break
-				case 1:
-					id2 = 8
-					break
-				case 2:
-					id2 = 16
-					break
-				case 3:
-					id2 = 7
-					break
-				case 4:
-					id2 = 15
-					break
-				case 5:
-					id2 = 23
-					break
-			}
-
-			if (id2 !== undefined) {
+			const id2 = convertButtonId(info.type, info.index, false)
+			if (id2 < 90) {
 				if (delta < 0) {
-					client.keyUp(this.deviceId, id2)
+					if (client.useCombinedEncoders) {
+						client.rotateLeft(this.deviceId, id2)
+					} else {
+						client.keyUp(this.deviceId, id2)
+					}
 				} else if (delta > 0) {
-					client.keyDown(this.deviceId, id2)
+					if (client.useCombinedEncoders) {
+						client.rotateRight(this.deviceId, id2)
+					} else {
+						client.keyDown(this.deviceId, id2)
+					}
 				}
 			}
 		})
