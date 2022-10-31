@@ -2,6 +2,7 @@ import { EventEmitter } from 'eventemitter3'
 import { Socket } from 'net'
 import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
 import { DEFAULT_PORT } from './lib'
+import * as semver from 'semver'
 
 const PING_UNACKED_LIMIT = 5 // Arbitrary number
 const PING_IDLE_TIMEOUT = 500 // Pings are allowed to be late if another packet has been received recently
@@ -100,12 +101,23 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _retryConnectTimeout: NodeJS.Timer | undefined = undefined
 	private _host = ''
 	private _port = DEFAULT_PORT
+	private _supportsCombinedEncoders = false
+
+	public forceSplitEncoders = false
 
 	public get host(): string {
 		return this._host
 	}
 	public get port(): number {
 		return this._port
+	}
+
+	/**
+	 * Older versions of Companion do not support rotary encoders.
+	 * For these, we can 'simulate' them by use the press/release actions of a button.
+	 */
+	public get useCombinedEncoders(): boolean {
+		return !this.forceSplitEncoders && this._supportsCombinedEncoders
 	}
 
 	constructor(options: CompanionSatelliteClientOptions = {}) {
@@ -285,13 +297,23 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				break
 			case 'BEGIN':
 				console.log(`Connected to Companion: ${body}`)
+				this.handleBegin(params)
 				break
 			case 'KEY-PRESS':
+			case 'KEY-ROTATE':
 				// Ignore
 				break
 			default:
 				console.log(`Received unhandled command: ${cmd} ${body}`)
 				break
+		}
+	}
+
+	private handleBegin(params: Record<string, string | boolean>): void {
+		const protocolVersion = params.ApiVersion
+		if (typeof protocolVersion === 'string' && semver.lte('1.3.0', protocolVersion)) {
+			this._supportsCombinedEncoders = true
+			console.log('Companion supports combined encoders')
 		}
 	}
 
@@ -370,6 +392,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	public keyUp(deviceId: string, keyIndex: number): void {
 		if (this._connected && this.socket) {
 			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${keyIndex} PRESSED=0\n`)
+		}
+	}
+	public rotateLeft(deviceId: string, keyIndex: number): void {
+		if (this._connected && this.socket) {
+			this.socket.write(`KEY-ROTATE DEVICEID=${deviceId} KEY=${keyIndex} DIRECTION=0\n`)
+		}
+	}
+	public rotateRight(deviceId: string, keyIndex: number): void {
+		if (this._connected && this.socket) {
+			this.socket.write(`KEY-ROTATE DEVICEID=${deviceId} KEY=${keyIndex} DIRECTION=1\n`)
 		}
 	}
 
