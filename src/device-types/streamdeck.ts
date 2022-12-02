@@ -1,4 +1,4 @@
-import { StreamDeck } from '@elgato-stream-deck/node'
+import { DeviceModelId, StreamDeck } from '@elgato-stream-deck/node'
 import sharp = require('sharp')
 import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
@@ -12,6 +12,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 
 	#queueOutputId: number
 	#queue: ImageWriteQueue | undefined
+	#queueLcdStrip: ImageWriteQueue | undefined
 
 	public get deviceId(): string {
 		return this.#deviceId
@@ -55,16 +56,55 @@ export class StreamDeckWrapper implements WrappedDevice {
 				}
 			})
 		}
+
+		if (this.#deck.LCD_ENCODER_SIZE) {
+			const encoderSize = this.#deck.LCD_ENCODER_SIZE
+			const xPad = (encoderSize.width - encoderSize.height) / 2
+			this.#queueLcdStrip = new ImageWriteQueue(async (key: number, buffer: Buffer) => {
+				const outputId = this.#queueOutputId
+
+				let newbuffer: Buffer
+				// scale if necessary
+				try {
+					newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
+						.resize(encoderSize.height, encoderSize.height)
+						.raw()
+						.toBuffer()
+				} catch (e) {
+					console.log(`device(${deviceId}): scale image failed: ${e}`)
+					return
+				}
+
+				// Check if generated image is still valid
+				if (this.#queueOutputId === outputId) {
+					try {
+						await this.#deck.fillLcdRegion(key * encoderSize.width + xPad, 0, newbuffer, {
+							format: 'rgb',
+							width: encoderSize.height,
+							height: encoderSize.height,
+						})
+					} catch (e_1) {
+						console.error(`device(${deviceId}): fillImage failed: ${e_1}`)
+					}
+				}
+			})
+		}
 	}
 
 	getRegisterProps(): DeviceRegisterProps {
-		return {
+		const info = {
 			keysTotal: this.#deck.NUM_KEYS,
 			keysPerRow: this.#deck.KEY_COLUMNS,
 			bitmaps: this.#deck.ICON_SIZE !== 0,
 			colours: false,
 			text: false,
 		}
+
+		if (this.#deck.MODEL === DeviceModelId.PLUS) {
+			info.keysTotal += this.#deck.NUM_ENCODERS * 2
+		}
+
+		return info
 	}
 
 	async close(): Promise<void> {
@@ -75,6 +115,44 @@ export class StreamDeckWrapper implements WrappedDevice {
 		console.log('Registering key events for ' + this.deviceId)
 		this.#deck.on('down', (key) => client.keyDown(this.deviceId, key))
 		this.#deck.on('up', (key) => client.keyUp(this.deviceId, key))
+
+		if (this.#deck.MODEL === DeviceModelId.PLUS) {
+			this.#deck.on('encoderDown', (encoder) => {
+				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
+				client.keyDown(this.deviceId, index)
+			})
+			this.#deck.on('encoderUp', (encoder) => {
+				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
+				client.keyUp(this.deviceId, index)
+			})
+			this.#deck.on('rotateLeft', (encoder) => {
+				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
+				client.rotateLeft(this.deviceId, index)
+			})
+			this.#deck.on('rotateRight', (encoder) => {
+				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
+				client.rotateRight(this.deviceId, index)
+			})
+
+			this.#deck.on('lcdShortPress', (encoder) => {
+				const index = this.#deck.NUM_KEYS + encoder
+
+				client.keyDown(this.deviceId, index)
+
+				setTimeout(() => {
+					client.keyUp(this.deviceId, index)
+				}, 20)
+			})
+			this.#deck.on('lcdLongPress', (encoder) => {
+				const index = this.#deck.NUM_KEYS + encoder
+
+				client.keyDown(this.deviceId, index)
+
+				setTimeout(() => {
+					client.keyUp(this.deviceId, index)
+				}, 20)
+			})
+		}
 
 		// Start with blanking it
 		await this.blankDevice()
@@ -94,10 +172,15 @@ export class StreamDeckWrapper implements WrappedDevice {
 	async draw(d: DeviceDrawProps): Promise<void> {
 		if (this.#deck.ICON_SIZE !== 0) {
 			if (d.image) {
-				if (this.#queue) {
-					this.#queue.queue(d.keyIndex, d.image)
-				} else {
-					await this.#deck.fillKeyBuffer(d.keyIndex, d.image)
+				if (d.keyIndex < this.#deck.NUM_KEYS) {
+					if (this.#queue) {
+						this.#queue.queue(d.keyIndex, d.image)
+					} else {
+						await this.#deck.fillKeyBuffer(d.keyIndex, d.image)
+					}
+				} else if (this.#deck.MODEL === DeviceModelId.PLUS && d.keyIndex < this.#deck.NUM_KEYS + 4) {
+					const index = d.keyIndex - this.#deck.NUM_KEYS
+					this.#queueLcdStrip?.queue(index, d.image)
 				}
 			} else {
 				throw new Error(`Cannot draw for Streamdeck without image`)
