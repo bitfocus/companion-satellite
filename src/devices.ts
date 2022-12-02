@@ -8,7 +8,8 @@ import { StreamDeckWrapper } from './device-types/streamdeck'
 import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys'
 import Infinitton = require('infinitton-idisplay')
 import { InfinittonWrapper } from './device-types/infinitton'
-import { LoupedeckWrapper } from './device-types/loupedeck'
+import { LoupedeckLiveWrapper } from './device-types/loupedeck-live'
+import { LoupedeckLiveSWrapper } from './device-types/loupedeck-live-s'
 import * as HID from 'node-hid'
 import { openLoupedeck, listLoupedecks, LoupedeckDevice, LoupedeckModelId } from '@loupedeck/node'
 
@@ -233,7 +234,9 @@ export class DeviceManager {
 						(dev.model === LoupedeckModelId.LoupedeckLive ||
 							dev.model === LoupedeckModelId.RazerStreamController)
 					) {
-						this.tryAddLoupedeckLive(dev.path, dev.serialNumber)
+						this.tryAddLoupedeckLive(dev.path, dev.serialNumber, false)
+					} else if (dev.serialNumber && dev.model === LoupedeckModelId.LoupedeckLiveS) {
+						this.tryAddLoupedeckLive(dev.path, dev.serialNumber, true)
 					}
 				}
 			})
@@ -242,7 +245,7 @@ export class DeviceManager {
 			})
 	}
 
-	private async tryAddLoupedeckLive(path: string, serial: string) {
+	private async tryAddLoupedeckLive(path: string, serial: string, isLiveS: boolean) {
 		let ld: LoupedeckDevice | undefined
 		try {
 			if (!this.devices.has(serial)) {
@@ -255,8 +258,13 @@ export class DeviceManager {
 					this.cleanupDeviceById(serial)
 				})
 
-				const devInfo = new LoupedeckWrapper(serial, ld, this.cardGenerator)
-				await this.tryAddDeviceInner(serial, devInfo)
+				if (isLiveS) {
+					const devInfo = new LoupedeckLiveSWrapper(serial, ld, this.cardGenerator)
+					await this.tryAddDeviceInner(serial, devInfo)
+				} else {
+					const devInfo = new LoupedeckLiveWrapper(serial, ld, this.cardGenerator)
+					await this.tryAddDeviceInner(serial, devInfo)
+				}
 			}
 		} catch (e) {
 			console.log(`Open "${path}" failed: ${e}`)

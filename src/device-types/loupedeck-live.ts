@@ -9,7 +9,7 @@ const screenWidth = 360
 const screenHeight = 270
 const keyPadding = 5
 
-export class LoupedeckWrapper implements WrappedDevice {
+export class LoupedeckLiveWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
 	readonly #deviceId: string
@@ -97,7 +97,7 @@ export class LoupedeckWrapper implements WrappedDevice {
 			keysPerRow: 8,
 			bitmaps: true,
 			colours: true,
-			text: true,
+			text: false,
 		}
 	}
 
