@@ -1,6 +1,15 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
+
+## [1.3.0](https://github.com/bitfocus/companion-satellite/compare/v1.2.0...v1.3.0) (Fri Dec 02 2022)
+
+
+### Features
+
+* support streamdeck plus [5e9a19b](https://github.com/bitfocus/companion-satellite/commit/5e9a19b185cce94bb0af22c336f4a425bfabad47)
+* support loupedeck live s [f021503](https://github.com/bitfocus/companion-satellite/commit/f0215035e955c902e6bb90aee84bfc4c3d26e65c)
+* use new KEY-ROTATE message (#60) [fb8806a](https://github.com/bitfocus/companion-satellite/commit/fb8806a1bc2f1d75a9a0f575c7ab0bae6cb8da27)
 
 ## [1.2.0](https://github.com/bitfocus/companion-satellite/compare/v1.1.0...v1.2.0) (2022-10-21)
 
