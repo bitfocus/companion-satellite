@@ -174,7 +174,7 @@ function trayAbout() {
 			resizable: false,
 		},
 		bug_report_url: 'https://github.com/bitfocus/companion-satellite/issues',
-		copyright: '2021 Julian Waller',
+		copyright: '2023 Julian Waller',
 		homepage: 'https://github.com/bitfocus/companion-satellite',
 		license: 'MIT',
 		use_version_info: true,
