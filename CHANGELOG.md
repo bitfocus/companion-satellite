@@ -1,6 +1,13 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [1.3.1](https://github.com/bitfocus/companion-satellite/compare/v1.3.0...v1.3.1) (2022-12-19)
+
+
+### Bug Fixes
+
+* pin sharp to 0.31.1 to fix older macos support ([fe81b57](https://github.com/bitfocus/companion-satellite/commit/fe81b571a9caa9ae27dd54773e35587522cfa6b9))
 
 ## [1.3.0](https://github.com/bitfocus/companion-satellite/compare/v1.2.0...v1.3.0) (Fri Dec 02 2022)
 
