@@ -131,14 +131,14 @@
     eventemitter3 "^4.0.7"
     tslib "^2.4.0"
 
-"@elgato-stream-deck/node@^6.0.0-async-test.1":
-  version "6.0.0-async-test.1"
-  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/node/-/node-6.0.0-async-test.1.tgz#9ca118bcb4fd29ba97c4dccb47e05e3c7579afda"
-  integrity sha512-IM89GtMJD2jpoiB1e5lkh1r/No/iDjVlhzWAniPaC19ZvSKe+QG83b5RKapzx2reLcasBPrdrkUw1pf6NUVpgA==
+"@elgato-stream-deck/node@^6.0.0-async-test.3":
+  version "6.0.0-async-test.3"
+  resolved "https://registry.yarnpkg.com/@elgato-stream-deck/node/-/node-6.0.0-async-test.3.tgz#131fc075cb02d945820c535c46fd9578a5b1ddb6"
+  integrity sha512-mQvqYb8gY3SQ1A1a7p1zFIse15257vsPSutf9CSeTD1eOcE+Cn9LEKr2syv0BPHVGyD2Yp6pHgFxJeYO3am7SA==
   dependencies:
     "@elgato-stream-deck/core" "6.0.0-async-test.1"
     jpeg-js "^0.4.2"
-    node-hid "npm:@julusian/hid@2.5.0-1"
+    node-hid "npm:@julusian/hid@^2.5.0-3"
     tslib "^2.4.0"
 
 "@eslint-community/eslint-utils@^4.2.0":
@@ -205,14 +205,14 @@
     wrap-ansi-cjs "npm:wrap-ansi@^7.0.0"
 
 "@jridgewell/resolve-uri@^3.0.3":
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/@jridgewell/resolve-uri/-/resolve-uri-3.1.1.tgz#c08679063f279615a3326583ba3a90d1d82cc721"
-  integrity sha512-dSYZh7HhCDtCKm4QakX0xFpsRDqjjtZf/kjI/v3T3Nwt5r8/qz/M19F9ySyOqU94SXBmeG9ttTul+YnR4LOxFA==
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@jridgewell/resolve-uri/-/resolve-uri-3.1.0.tgz#2203b118c157721addfe69d47b70465463066d78"
+  integrity sha512-F2msla3tad+Mfht5cJq7LSXcdudKTWCVYUgw6pLFOOHSTtZlj6SWNYAp+AhuqLmWdBO2X5hPrLcu8cVP8fy28w==
 
 "@jridgewell/sourcemap-codec@^1.4.10":
-  version "1.4.15"
-  resolved "https://registry.yarnpkg.com/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.4.15.tgz#d7c6e6755c78567a951e04ab52ef0fd26de59f32"
-  integrity sha512-eF2rxCRulEKXHTRiDrDy6erMYWqNw4LPdQ8UQA4huuxaQsVeRPFl2oM8oDGxMFhJUWZf9McpLtJasDDZb/Bpeg==
+  version "1.4.14"
+  resolved "https://registry.yarnpkg.com/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.4.14.tgz#add4c98d341472a289190b424efbdb096991bb24"
+  integrity sha512-XPSJHWmi394fuUuzDnGz1wiKqWfo1yXecHQMRf2l6hztTO+nPru658AyDngaBe7isIxEkRsPR3FZh+s7iVa4Uw==
 
 "@jridgewell/trace-mapping@0.3.9":
   version "0.3.9"
@@ -470,9 +470,9 @@
   integrity sha512-ysT8mhdixWK6Hw3i1V2AeRqZ5WfXg1G43mqoYlM2nc6388Fq5jcXyr5mRsqViLx/GJYdoL0bfXD8nmF+Zn/Iow==
 
 "@tsconfig/node16@^1.0.2":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.4.tgz#0b92dcc0cc1c81f6f306a381f28e31b1a56536e9"
-  integrity sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.3.tgz#472eaab5f15c1ffdd7f8628bd4c4f753995ec79e"
+  integrity sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==
 
 "@types/accepts@*":
   version "1.3.5"
@@ -3519,7 +3519,7 @@ node-hid@^2.1.1:
     node-addon-api "^3.0.2"
     prebuild-install "^7.1.1"
 
-"node-hid@npm:@julusian/hid@2.5.0-1", "node-hid@npm:@julusian/hid@2.5.0-3":
+"node-hid@npm:@julusian/hid@2.5.0-3", "node-hid@npm:@julusian/hid@^2.5.0-3":
   version "2.5.0-3"
   resolved "https://registry.yarnpkg.com/@julusian/hid/-/hid-2.5.0-3.tgz#4d0a1aabef8a47b79a3ccdb30fc5b53e8618f5e1"
   integrity sha512-BXL3QbgWvtuFPY8lMwBQ6CwDBeU/WJDedOhe5Y9QGf2ibwdbSMMLRfdFGUqeVgoO5YcyvUqXTM6oighswc3yVg==

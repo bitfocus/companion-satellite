@@ -49,7 +49,7 @@
     "node": "^18.15"
   },
   "dependencies": {
-    "@elgato-stream-deck/node": "^6.0.0-async-test.1",
+    "@elgato-stream-deck/node": "^6.0.0-async-test.3",
     "@julusian/image-rs": "^0.2.0",
     "@julusian/jpeg-turbo": "^2.1.0",
     "@julusian/skia-canvas": "^1.0.4",
