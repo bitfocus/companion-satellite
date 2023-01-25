@@ -13,9 +13,9 @@ variable "branch" {
 }
 
 source "arm-image" "satellitepi" {
-  iso_checksum              = "sha256:d694d2838018cf0d152fe81031dba83182cee79f785c033844b520d222ac12f5"
-  iso_url                   = "https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-01-28/2022-01-28-raspios-bullseye-arm64-lite.zip"
-  last_partition_extra_size = 4294967296
+  iso_checksum              = "sha256:72c773781a0a57160eb3fa8bb2a927642fe60c3af62bc980827057bcecb7b98b"
+  iso_url                   = "https://downloads.raspberrypi.org/raspios_lite_arm64/images/raspios_lite_arm64-2022-09-26/2022-09-22-raspios-bullseye-arm64-lite.img.xz"
+  last_partition_extra_size = 2147483648
   qemu_binary               = "qemu-aarch64-static"
 }
 
@@ -38,6 +38,7 @@ build {
 
       # install some dependencies
       "apt-get update",
+      "apt-get upgrade -y",
       "apt-get install -y git unzip curl libusb-1.0-0-dev libudev-dev cmake",
       "apt-get clean"
     ]
