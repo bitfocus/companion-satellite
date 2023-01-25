@@ -5,6 +5,8 @@ on:
 
   push:
 
+permissions: {}
+
 jobs:
   Linux-x64:
     runs-on: ubuntu-latest
@@ -236,6 +238,8 @@ jobs:
           cd pi-image
           sudo packer init satellitepi.pkr.hcl
           sudo packer build --var branch=${GITHUB_REF_NAME} satellitepi.pkr.hcl
+        env:
+          PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: compress image
         shell: bash
