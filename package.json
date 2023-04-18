@@ -52,7 +52,7 @@
   "dependencies": {
     "@elgato-stream-deck/node": "^5.7.2",
     "@julusian/jpeg-turbo": "^2.1.0",
-    "@loupedeck/node": "^0.3.1",
+    "@loupedeck/node": "^0.4.0",
     "@xencelabs-quick-keys/node": "^0.4.0",
     "electron-about-window": "^1.15.2",
     "electron-prompt": "^1.7.0",

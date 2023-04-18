@@ -234,9 +234,9 @@ export class DeviceManager {
 						(dev.model === LoupedeckModelId.LoupedeckLive ||
 							dev.model === LoupedeckModelId.RazerStreamController)
 					) {
-						this.tryAddLoupedeckLive(dev.path, dev.serialNumber, false)
+						this.tryAddLoupedeck(dev.path, dev.serialNumber, LoupedeckLiveWrapper)
 					} else if (dev.serialNumber && dev.model === LoupedeckModelId.LoupedeckLiveS) {
-						this.tryAddLoupedeckLive(dev.path, dev.serialNumber, true)
+						this.tryAddLoupedeck(dev.path, dev.serialNumber, LoupedeckLiveSWrapper)
 					}
 				}
 			})
@@ -245,26 +245,25 @@ export class DeviceManager {
 			})
 	}
 
-	private async tryAddLoupedeckLive(path: string, serial: string, isLiveS: boolean) {
+	private async tryAddLoupedeck(
+		path: string,
+		serial: string,
+		wrapperClass: new (deviceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) => WrappedDevice
+	) {
 		let ld: LoupedeckDevice | undefined
 		try {
 			if (!this.devices.has(serial)) {
 				console.log(`adding new device: ${path}`)
 				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
-				ld = await openLoupedeck(path, { waitForAcks: true })
+				ld = await openLoupedeck(path)
 				ld.on('error', (err) => {
 					console.error('device error', err)
 					this.cleanupDeviceById(serial)
 				})
 
-				if (isLiveS) {
-					const devInfo = new LoupedeckLiveSWrapper(serial, ld, this.cardGenerator)
-					await this.tryAddDeviceInner(serial, devInfo)
-				} else {
-					const devInfo = new LoupedeckLiveWrapper(serial, ld, this.cardGenerator)
-					await this.tryAddDeviceInner(serial, devInfo)
-				}
+				const devInfo = new wrapperClass(serial, ld, this.cardGenerator)
+				await this.tryAddDeviceInner(serial, devInfo)
 			}
 		} catch (e) {
 			console.log(`Open "${path}" failed: ${e}`)

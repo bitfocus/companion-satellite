@@ -5,10 +5,6 @@ import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
 import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
-const screenWidth = 450
-const screenHeight = 270
-const keyPadding = 5
-
 export class LoupedeckLiveSWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
@@ -41,10 +37,8 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 
 			const outputId = this.#queueOutputId
 
-			const width = 80
-			const height = 80
-			const boundaryWidth = width + keyPadding * 2
-			const boundaryHeight = height + keyPadding * 2
+			const width = this.#deck.lcdKeySize
+			const height = this.#deck.lcdKeySize
 
 			let newbuffer: Buffer
 			try {
@@ -60,10 +54,6 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 			// Check if generated image is still valid
 			if (this.#queueOutputId === outputId) {
 				try {
-					// Get offset x/y for key index
-					const x = (key % 5) * boundaryWidth
-					const y = Math.floor(key / 5) * boundaryHeight
-
 					if (this.#isShowingCard) {
 						this.#isShowingCard = false
 
@@ -71,15 +61,7 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 						await this.blankDevice(true)
 					}
 
-					await this.#deck.drawBuffer(
-						LoupedeckDisplayId.Center,
-						newbuffer,
-						LoupedeckBufferFormat.RGB,
-						width,
-						height,
-						x + keyPadding,
-						y + keyPadding
-					)
+					await this.#deck.drawKeyBuffer(key, newbuffer, LoupedeckBufferFormat.RGB)
 				} catch (e_1) {
 					console.error(`device(${deviceId}): fillImage failed: ${e_1}`)
 				}
@@ -229,8 +211,8 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 		}
 	}
 	async showStatus(hostname: string, status: string): Promise<void> {
-		const width = screenWidth - keyPadding * 2
-		const height = screenHeight - keyPadding * 2
+		const width = this.#deck.displayMain.width
+		const height = this.#deck.displayMain.height
 
 		// abort and discard current operations
 		this.#queue?.abort()
@@ -249,8 +231,8 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 						LoupedeckBufferFormat.RGB,
 						width,
 						height,
-						keyPadding,
-						keyPadding
+						0,
+						0
 					)
 				}
 			})
