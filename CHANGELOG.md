@@ -1,6 +1,14 @@
 # Changelog
 
-All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
+
+## [1.4.0](https://github.com/bitfocus/companion-satellite/compare/v1.3.1...v1.4.0) (Tue Apr 18 2023)
+
+
+### Features
+
+* support razer stream controller x [71cb009](https://github.com/bitfocus/companion-satellite/commit/71cb009dcc9bb3e7caecbdac1af89715850b4f50)
+* update loupedeck library [99de79e](https://github.com/bitfocus/companion-satellite/commit/99de79e1a687e282e2709c93d045f6f37f1aa778)
 
 ### [1.3.1](https://github.com/bitfocus/companion-satellite/compare/v1.3.0...v1.3.1) (2022-12-19)
 
