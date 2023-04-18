@@ -2,7 +2,11 @@ import { CompanionSatelliteClient } from './client'
 import { getStreamDeckDeviceInfo, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
 import { usb } from 'usb'
 import { CardGenerator } from './cards'
-import { XencelabsQuickKeysManagerInstance, XencelabsQuickKeys } from '@xencelabs-quick-keys/node'
+import {
+	XencelabsQuickKeysManagerInstance,
+	XencelabsQuickKeys,
+	VENDOR_ID as VendorIdXencelabs,
+} from '@xencelabs-quick-keys/node'
 import { DeviceId, WrappedDevice } from './device-types/api'
 import { StreamDeckWrapper } from './device-types/streamdeck'
 import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys'
@@ -11,7 +15,16 @@ import { InfinittonWrapper } from './device-types/infinitton'
 import { LoupedeckLiveWrapper } from './device-types/loupedeck-live'
 import { LoupedeckLiveSWrapper } from './device-types/loupedeck-live-s'
 import * as HID from 'node-hid'
-import { openLoupedeck, listLoupedecks, LoupedeckDevice, LoupedeckModelId } from '@loupedeck/node'
+import {
+	openLoupedeck,
+	listLoupedecks,
+	LoupedeckDevice,
+	LoupedeckModelId,
+	VendorIdLoupedeck,
+	VendorIdRazer,
+} from '@loupedeck/node'
+import { RazerStreamControllerXWrapper } from './device-types/razer-stream-controller-x'
+import { VENDOR_ID as VendorIdElgato } from '@elgato-stream-deck/core'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -30,18 +43,21 @@ export class DeviceManager {
 		this.cardGenerator = new CardGenerator()
 
 		usb.on('attach', (dev) => {
-			if (dev.deviceDescriptor.idVendor === 0x0fd9) {
+			if (dev.deviceDescriptor.idVendor === VendorIdElgato) {
 				this.foundDevice(dev)
 			} else if (
 				dev.deviceDescriptor.idVendor === 0xffff &&
 				(dev.deviceDescriptor.idProduct === 0x1f40 || dev.deviceDescriptor.idProduct === 0x1f41)
 			) {
 				this.foundDevice(dev)
-			} else if (dev.deviceDescriptor.idVendor === 0x28bd) {
+			} else if (dev.deviceDescriptor.idVendor === VendorIdXencelabs) {
 				XencelabsQuickKeysManagerInstance.scanDevices().catch((e) => {
 					console.error(`Quickey scan failed: ${e}`)
 				})
-			} else if (dev.deviceDescriptor.idVendor === 0x2ec2) {
+			} else if (
+				dev.deviceDescriptor.idVendor === VendorIdLoupedeck ||
+				dev.deviceDescriptor.idVendor === VendorIdRazer
+			) {
 				this.foundDevice(dev)
 			}
 		})
@@ -237,6 +253,8 @@ export class DeviceManager {
 						this.tryAddLoupedeck(dev.path, dev.serialNumber, LoupedeckLiveWrapper)
 					} else if (dev.serialNumber && dev.model === LoupedeckModelId.LoupedeckLiveS) {
 						this.tryAddLoupedeck(dev.path, dev.serialNumber, LoupedeckLiveSWrapper)
+					} else if (dev.serialNumber && dev.model === LoupedeckModelId.RazerStreamControllerX) {
+						this.tryAddLoupedeck(dev.path, dev.serialNumber, RazerStreamControllerXWrapper)
 					}
 				}
 			})
