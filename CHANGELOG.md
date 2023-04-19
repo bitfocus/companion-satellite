@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.4.1](https://github.com/bitfocus/companion-satellite/compare/v1.4.0...v1.4.1) (Thu Apr 20 2023)
+
+
+### Fixes
+
+* downgrade electron due to memory cage bug [75a395e](https://github.com/bitfocus/companion-satellite/commit/75a395ea93dd1f385f4a9f47e0c4aadbeff208ed)
+
 ## [1.4.0](https://github.com/bitfocus/companion-satellite/compare/v1.3.1...v1.4.0) (Tue Apr 18 2023)
 
 
