@@ -10,7 +10,7 @@ systemctl stop satellite
 
 # fetch new code
 cd /usr/local/src/companion-satellite
-git pull
+git pull -q
 
 # TODO - prompt for which branch to use
 
@@ -20,3 +20,5 @@ git pull
 # restart satellite
 # reboot
 systemctl start satellite
+
+echo "Update is complete"

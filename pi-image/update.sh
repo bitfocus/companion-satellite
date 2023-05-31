@@ -38,5 +38,3 @@ ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-update /usr/local
 
 # install the motd
 ln -s -f /usr/local/src/companion-satellite/pi-image/motd /etc/motd 
-
-echo "Update is complete"
