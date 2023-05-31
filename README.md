@@ -37,35 +37,21 @@ To manually build the latest version for your machine:
 - `yarn dist`
 - Locate the output under `electron-output/`
 
-### Manual Headless / Raspbrry pi
+### Manual Headless / Raspberry pi
 
 It can be built and run as a systemd service on a pi or other linux machine
 
-To prepare the application, after cloning:
 
-- `yarn install`
-- `yarn build`
+No images are provided for this, but the process has been written to be a single script.
 
-An example systemd unit (make sure to update the paths and companion ip as appropriate):
-
+As root, run the following:
 ```
-[Unit]
-Description=Bitfocus Companion Satellite
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=simple
-User=pi
-WorkingDirectory=/home/pi/companion-satellite
-ExecStart=node /home/pi/companion-satellite/dist/main.js 192.168.0.1
-Restart=on-failure
-KillSignal=SIGINT
-TimeoutStopSec=60
-
-[Install]
-WantedBy=multi-user.target
+curl https://raw.githubusercontent.com/bitfocus/companion-satellite/master/pi-image/install.sh | sh
 ```
+
+After this, you can use `sudo satellite-update` to change the version it has installed. Note: this is currently not fully implemented.
+
+Note: This script will create a new user called `satellite`, which Satellite will be run as and will own the configuration.
 
 ## Development
 

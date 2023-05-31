@@ -32,9 +32,11 @@ systemctl daemon-reload
 # install some scripts
 ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-license /usr/local/bin/satellite-license
 ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-help /usr/local/bin/satellite-help
+ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-update /usr/local/sbin/satellite-update
 # This isn't something we want to allow for now, so skip these
-# ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-update /usr/local/sbin/satellite-update
 # ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-edit-config /usr/local/sbin/satellite-edit-config
 
 # install the motd
 ln -s -f /usr/local/src/companion-satellite/pi-image/motd /etc/motd 
+
+echo "Update is complete"
