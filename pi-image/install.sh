@@ -28,6 +28,10 @@ curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir /opt/fnm
 export PATH=/opt/fnm:$PATH
 eval "`fnm env --shell bash`"
 
+# clone the repository
+git clone https://github.com/bitfocus/companion-satellite.git -b $SATELLITE_BRANCH /usr/local/src/companion-satellite
+cd /usr/local/src/companion-satellite
+
 # configure git for future updates
 git config --global pull.rebase false
 
