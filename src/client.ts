@@ -319,11 +319,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private handleState(params: Record<string, string | boolean>): void {
 		if (typeof params.DEVICEID !== 'string') {
-			console.log('Mising DEVICEID in KEY-DRAW response')
+			console.log('Missing DEVICEID in KEY-DRAW response')
 			return
 		}
 		if (typeof params.KEY !== 'string') {
-			console.log('Mising KEY in KEY-DRAW response')
+			console.log('Missing KEY in KEY-DRAW response')
 			return
 		}
 
@@ -350,11 +350,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private handleBrightness(params: Record<string, string | boolean>): void {
 		if (typeof params.DEVICEID !== 'string') {
-			console.log('Mising DEVICEID in BRIGHTNESS response')
+			console.log('Missing DEVICEID in BRIGHTNESS response')
 			return
 		}
 		if (typeof params.VALUE !== 'string') {
-			console.log('Mising VALUE in BRIGHTNESS response')
+			console.log('Missing VALUE in BRIGHTNESS response')
 			return
 		}
 		const percent = parseInt(params.VALUE)
@@ -377,7 +377,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			return
 		}
 		if (typeof params.DEVICEID !== 'string') {
-			console.log('Mising DEVICEID in ADD-DEVICE response')
+			console.log('Missing DEVICEID in ADD-DEVICE response')
 			return
 		}
 
