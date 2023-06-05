@@ -49,4 +49,4 @@ cp ./pi-image/satellite-config /boot/satellite-config
 echo "export PATH=/opt/fnm/aliases/default/bin:\$PATH" >> /home/satellite/.bashrc
 
 echo "Companion Satellite is installed!"
-echo "You should edit the configuration file at \"/boot/satellite-config"\ then can start it with \"sudo systemctl start satellite\" or \"sudo satellite-update\""
+echo "You should edit the configuration file at \"/boot/satellite-config\" then can start it with \"sudo systemctl start satellite\" or \"sudo satellite-update\""
