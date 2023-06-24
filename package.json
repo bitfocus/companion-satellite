@@ -62,7 +62,7 @@
     "infinitton-idisplay": "^1.1.2",
     "meow": "^9.0.0",
     "node-hid": "npm:@julusian/hid@2.5.0-3",
-    "semver": "^7.5.0",
+    "semver": "^7.5.2",
     "sharp": "^0.32.0",
     "tslib": "^2.5.0",
     "usb": "^2.9.0"
