@@ -14,6 +14,8 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 	#isShowingCard = true
 	#queue: ImageWriteQueue
 
+	#companionSupportsScaling = false
+
 	public get deviceId(): string {
 		return this.#deviceId
 	}
@@ -41,15 +43,17 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 			const width = this.#deck.lcdKeySize
 			const height = this.#deck.lcdKeySize
 
-			let newbuffer: Buffer
-			try {
-				newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
-					.resize(width, height)
-					.raw()
-					.toBuffer()
-			} catch (e) {
-				console.log(`device(${deviceId}): scale image failed: ${e}`)
-				return
+			let newbuffer: Buffer = buffer
+			if (!this.#companionSupportsScaling) {
+				try {
+					newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
+						.resize(width, height)
+						.raw()
+						.toBuffer()
+				} catch (e) {
+					console.log(`device(${deviceId}): scale image failed: ${e}`)
+					return
+				}
 			}
 
 			// Check if generated image is still valid
@@ -74,7 +78,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		return {
 			keysTotal: 15,
 			keysPerRow: 5,
-			bitmaps: true,
+			bitmapSize: this.#deck.lcdKeySize,
 			colours: true,
 			text: false,
 		}
@@ -85,6 +89,8 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		this.#deck.close()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
+		this.#companionSupportsScaling = client.useCustomBitmapResolution
+
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button') {
 				return id

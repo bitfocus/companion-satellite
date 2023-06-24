@@ -102,6 +102,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _host = ''
 	private _port = DEFAULT_PORT
 	private _supportsCombinedEncoders = false
+	private _supportsBitmapResolution = false
 
 	public forceSplitEncoders = false
 
@@ -113,11 +114,18 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	/**
-	 * Older versions of Companion do not support rotary encoders.
+	 * Until 2.4 of Companion it does not support rotary encoders.
 	 * For these, we can 'simulate' them by use the press/release actions of a button.
 	 */
 	public get useCombinedEncoders(): boolean {
 		return !this.forceSplitEncoders && this._supportsCombinedEncoders
+	}
+
+	/**
+	 * Until 3.x of Companion it only supports providing 72x72px bitmaps for buttons.
+	 */
+	public get useCustomBitmapResolution(): boolean {
+		return this._supportsBitmapResolution
 	}
 
 	constructor(options: CompanionSatelliteClientOptions = {}) {
@@ -311,9 +319,15 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private handleBegin(params: Record<string, string | boolean>): void {
 		const protocolVersion = params.ApiVersion
-		if (typeof protocolVersion === 'string' && semver.lte('1.3.0', protocolVersion)) {
-			this._supportsCombinedEncoders = true
-			console.log('Companion supports combined encoders')
+		if (typeof protocolVersion === 'string') {
+			if (semver.lte('1.3.0', protocolVersion)) {
+				this._supportsCombinedEncoders = true
+				console.log('Companion supports combined encoders')
+			}
+			if (semver.lte('1.5.0', protocolVersion)) {
+				this._supportsBitmapResolution = true
+				console.log('Companion supports bitmap resolution')
+			}
 		}
 	}
 
@@ -410,9 +424,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this.socket.write(
 				`ADD-DEVICE DEVICEID=${deviceId} PRODUCT_NAME="${productName}" KEYS_TOTAL=${
 					props.keysTotal
-				} KEYS_PER_ROW=${props.keysPerRow} BITMAPS=${props.bitmaps ? 1 : 0} COLORS=${
-					props.colours ? 1 : 0
-				} TEXT=${props.text ? 1 : 0}\n`
+				} KEYS_PER_ROW=${props.keysPerRow} BITMAPS=${
+					this._supportsBitmapResolution ? props.bitmapSize ?? 0 : props.bitmapSize ? 1 : 0
+				} COLORS=${props.colours ? 1 : 0} TEXT=${props.text ? 1 : 0}\n`
 			)
 		}
 	}

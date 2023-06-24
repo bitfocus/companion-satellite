@@ -14,6 +14,8 @@ export class StreamDeckWrapper implements WrappedDevice {
 	#queue: ImageWriteQueue | undefined
 	#queueLcdStrip: ImageWriteQueue | undefined
 
+	#companionSupportsScaling = false
+
 	public get deviceId(): string {
 		return this.#deviceId
 	}
@@ -33,7 +35,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 				const outputId = this.#queueOutputId
 
 				let newbuffer: Buffer = buffer
-				if (this.#deck.ICON_SIZE !== 72) {
+				if (this.#deck.ICON_SIZE !== 72 && !this.#companionSupportsScaling) {
 					// scale if necessary
 					try {
 						newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
@@ -66,7 +68,8 @@ export class StreamDeckWrapper implements WrappedDevice {
 				let newbuffer: Buffer
 				// scale if necessary
 				try {
-					newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
+					const inputRes = this.#companionSupportsScaling ? this.#deck.ICON_SIZE : 72
+					newbuffer = await sharp(buffer, { raw: { width: inputRes, height: inputRes, channels: 3 } })
 						.resize(encoderSize.height, encoderSize.height)
 						.raw()
 						.toBuffer()
@@ -95,7 +98,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 		const info = {
 			keysTotal: this.#deck.NUM_KEYS,
 			keysPerRow: this.#deck.KEY_COLUMNS,
-			bitmaps: this.#deck.ICON_SIZE !== 0,
+			bitmapSize: this.#deck.ICON_SIZE,
 			colours: false,
 			text: false,
 		}
@@ -115,6 +118,8 @@ export class StreamDeckWrapper implements WrappedDevice {
 		console.log('Registering key events for ' + this.deviceId)
 		this.#deck.on('down', (key) => client.keyDown(this.deviceId, key))
 		this.#deck.on('up', (key) => client.keyUp(this.deviceId, key))
+
+		this.#companionSupportsScaling = client.useCustomBitmapResolution
 
 		if (this.#deck.MODEL === DeviceModelId.PLUS) {
 			this.#deck.on('encoderDown', (encoder) => {

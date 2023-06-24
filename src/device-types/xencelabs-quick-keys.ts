@@ -39,7 +39,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 		return {
 			keysTotal: 12,
 			keysPerRow: 6,
-			bitmaps: false,
+			bitmapSize: null,
 			colours: true,
 			text: true,
 		}

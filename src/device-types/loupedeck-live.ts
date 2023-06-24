@@ -14,6 +14,8 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 	#isShowingCard = true
 	#queue: ImageWriteQueue
 
+	#companionSupportsScaling = false
+
 	public get deviceId(): string {
 		return this.#deviceId
 	}
@@ -44,15 +46,17 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 			const width = this.#deck.lcdKeySize
 			const height = this.#deck.lcdKeySize
 
-			let newbuffer: Buffer
-			try {
-				newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
-					.resize(width, height)
-					.raw()
-					.toBuffer()
-			} catch (e) {
-				console.log(`device(${deviceId}): scale image failed: ${e}`)
-				return
+			let newbuffer: Buffer = buffer
+			if (!this.#companionSupportsScaling) {
+				try {
+					newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
+						.resize(width, height)
+						.raw()
+						.toBuffer()
+				} catch (e) {
+					console.log(`device(${deviceId}): scale image failed: ${e}`)
+					return
+				}
 			}
 
 			// Check if generated image is still valid
@@ -77,7 +81,7 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 		return {
 			keysTotal: 32,
 			keysPerRow: 8,
-			bitmaps: true,
+			bitmapSize: this.#deck.lcdKeySize,
 			colours: true,
 			text: false,
 		}
@@ -88,6 +92,8 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 		this.#deck.close()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
+		this.#companionSupportsScaling = client.useCustomBitmapResolution
+
 		const convertButtonId = (type: 'button' | 'rotary', id: number, rotarySecondary: boolean): number => {
 			if (type === 'button' && id >= 0 && id < 8) {
 				return 24 + id

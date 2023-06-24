@@ -12,7 +12,7 @@ export interface DeviceDrawProps {
 export interface DeviceRegisterProps {
 	keysTotal: number
 	keysPerRow: number
-	bitmaps: boolean
+	bitmapSize: number | null
 	colours: boolean
 	text: boolean
 }

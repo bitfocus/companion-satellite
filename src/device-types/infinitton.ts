@@ -27,7 +27,7 @@ export class InfinittonWrapper implements WrappedDevice {
 		return {
 			keysTotal: 15,
 			keysPerRow: 5,
-			bitmaps: true,
+			bitmapSize: 72,
 			colours: false,
 			text: false,
 		}
