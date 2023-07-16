@@ -69,10 +69,11 @@ if (sharpPlatformDirs.length !== 1) {
 const vipsVendorName = path.join(sharpVersionDirs[0], sharpPlatformDirs[0])
 process.env.VIPS_VENDOR = vipsVendorName
 
-if (!platform) {
-	// If for our own platform, make sure the correct deps are installed
-	await $`electron-builder install-app-deps`
-}
+// HACK: skip this as it is trying to rebuild everything from source and failing
+// if (!platform) {
+// 	// If for our own platform, make sure the correct deps are installed
+// 	await $`electron-builder install-app-deps`
+// }
 
 // perform the electron build
 await fs.remove('./electron-output')
