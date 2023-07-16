@@ -22,8 +22,6 @@
     "prepare": "husky install",
     "dev": "yarn ts-node src/main.ts",
     "dev-electron": "yarn build:main && electron dist/electron.js",
-    "dist:prepare:sharp": "cd node_modules/sharp && rimraf vendor && node install/libvips && node install/dll-copy",
-    "electron-rebuild": "yarn dist:prepare:sharp",
     "build": "rimraf dist && yarn build:main",
     "build:main": "tsc -p tsconfig.build.json",
     "lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
@@ -37,7 +35,6 @@
     "@types/electron-prompt": "^1.6.1",
     "@types/node": "^18.16.19",
     "@types/node-hid": "^1.3.1",
-    "@types/sharp": "^0.32.0",
     "cross-env": "^7.0.3",
     "electron": "^25.3.0",
     "electron-builder": "^24.4.0",
@@ -53,6 +50,7 @@
     "@elgato-stream-deck/node": "^5.7.3",
     "@julusian/image-rs": "^0.1.3",
     "@julusian/jpeg-turbo": "^2.1.0",
+    "@julusian/skia-canvas": "^1.0.4",
     "@loupedeck/node": "^0.4.0",
     "@xencelabs-quick-keys/node": "^0.4.0",
     "electron-about-window": "^1.15.2",
@@ -64,7 +62,6 @@
     "meow": "^9.0.0",
     "node-hid": "npm:@julusian/hid@2.5.0-3",
     "semver": "^7.5.4",
-    "sharp": "^0.32.1",
     "tslib": "^2.6.0",
     "usb": "^2.9.0"
   },
@@ -96,15 +93,6 @@
         "LSBackgroundOnly": 1,
         "LSUIElement": 1
       },
-      "extraFiles": [
-        {
-          "from": "./node_modules/sharp/vendor/${env.VIPS_VENDOR}/lib",
-          "to": "Frameworks",
-          "filter": [
-            "libvips*.dylib"
-          ]
-        }
-      ],
       "hardenedRuntime": "true",
       "gatekeeperAssess": "false",
       "entitlements": "entitlements.mac.plist",
@@ -126,16 +114,7 @@
     },
     "linux": {
       "target": "tar.gz",
-      "artifactName": "companion-satellite-${arch}.tar.gz",
-      "extraFiles": [
-        {
-          "from": "./node_modules/sharp/vendor/${env.VIPS_VENDOR}/lib",
-          "to": ".",
-          "filter": [
-            "libvips*.so.*"
-          ]
-        }
-      ]
+      "artifactName": "companion-satellite-${arch}.tar.gz"
     },
     "files": [
       "**/*",

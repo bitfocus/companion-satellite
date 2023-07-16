@@ -1,52 +1,59 @@
 import * as path from 'path'
 import { promisify } from 'util'
 import { readFile } from 'fs'
-import * as sharp from 'sharp'
+import { Canvas, Image, loadImage } from '@julusian/skia-canvas'
 
 const readFileP = promisify(readFile)
 
 export class CardGenerator {
-	private iconImage: Buffer | undefined
+	private iconImage: Image | undefined
 
-	async loadIcon(): Promise<Buffer> {
+	constructor() {
+		// Ensure skia-canvas is loaded at startup
+		new Canvas()
+	}
+
+	async loadIcon(): Promise<Image> {
 		if (!this.iconImage) {
 			const rawData = await readFileP(path.join(__dirname, '../assets/icon.png'))
-			this.iconImage = rawData
+
+			this.iconImage = await loadImage(rawData)
 		}
 
 		return this.iconImage
 	}
 
 	async generateBasicCard(width: number, height: number, remoteIp: string, status: string): Promise<Buffer> {
-		const size = Math.round(Math.min(width, height) * 0.6)
-		const icon = await sharp(await this.loadIcon())
-			.resize(size)
-			.toBuffer()
+		const iconImage = await this.loadIcon()
 
-		return sharp({
-			create: {
-				width: width,
-				height: height,
-				channels: 3,
-				background: { r: 0, g: 0, b: 0 },
-			},
-		})
-			.composite([
-				{
-					input: icon,
-				},
-				{
-					input: Buffer.from(
-						`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width - 20} 40" version="1.1">
-						<text font-family="'sans-serif'" font-size="12px" x="10" y="32" fill="#fff" text-anchor="left">Remote: ${remoteIp}</text>
-						<text font-family="'sans-serif'" font-size="12px" x="10" y="12" fill="#fff" text-anchor="left">Status: ${status}</text>
-						</svg>`
-					),
-					top: height - 20,
-					left: 10,
-				},
-			])
-			.removeAlpha()
-			.toBuffer()
+		const canvas = new Canvas(width, height)
+		const context2d = canvas.getContext('2d')
+
+		// draw icon
+		const iconTargetSize = Math.round(Math.min(width, height) * 0.6)
+		const iconTargetX = (width - iconTargetSize) / 2
+		const iconTargetY = (height - iconTargetSize) / 2
+		context2d.drawImage(
+			iconImage,
+			0,
+			0,
+			iconImage.width,
+			iconImage.height,
+			iconTargetX,
+			iconTargetY,
+			iconTargetSize,
+			iconTargetSize
+		)
+
+		// draw text
+		context2d.font = `normal normal normal ${12}px sans-serif`
+		context2d.textAlign = 'left'
+		context2d.fillStyle = '#ffffff'
+
+		context2d.fillText(`Remote: ${remoteIp}`, 10, height - 10)
+		context2d.fillText(`Status: ${status}`, 10, height - 30)
+
+		// return result
+		return Buffer.from(context2d.getImageData(0, 0, width, height).data)
 	}
 }

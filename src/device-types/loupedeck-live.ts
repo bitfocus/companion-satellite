@@ -4,6 +4,7 @@ import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
 import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { rgbaToRgb } from '../lib'
 
 export class LoupedeckLiveWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -233,6 +234,8 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 		this.#cardGenerator
 			.generateBasicCard(width, height, hostname, status)
 			.then(async (buffer) => {
+				buffer = await rgbaToRgb(buffer, width, height)
+
 				if (outputId === this.#queueOutputId) {
 					this.#isShowingCard = true
 					// still valid
