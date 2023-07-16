@@ -1,5 +1,5 @@
 import { DeviceModelId, StreamDeck } from '@elgato-stream-deck/node'
-import sharp = require('sharp')
+import * as imageRs from '@julusian/image-rs'
 import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
@@ -38,10 +38,11 @@ export class StreamDeckWrapper implements WrappedDevice {
 				if (this.#deck.ICON_SIZE !== 72 && !this.#companionSupportsScaling) {
 					// scale if necessary
 					try {
-						newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
-							.resize(this.#deck.ICON_SIZE, this.#deck.ICON_SIZE)
-							.raw()
-							.toBuffer()
+						newbuffer = Buffer.from(
+							(await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
+								.scale(this.#deck.ICON_SIZE, this.#deck.ICON_SIZE)
+								.toBuffer(imageRs.PixelFormat.Rgb)) as Uint8Array
+						)
 					} catch (e) {
 						console.log(`device(${deviceId}): scale image failed: ${e}`)
 						return
@@ -69,10 +70,11 @@ export class StreamDeckWrapper implements WrappedDevice {
 				// scale if necessary
 				try {
 					const inputRes = this.#companionSupportsScaling ? this.#deck.ICON_SIZE : 72
-					newbuffer = await sharp(buffer, { raw: { width: inputRes, height: inputRes, channels: 3 } })
-						.resize(encoderSize.height, encoderSize.height)
-						.raw()
-						.toBuffer()
+					newbuffer = Buffer.from(
+						(await imageRs.ImageTransformer.fromBuffer(buffer, inputRes, inputRes, imageRs.PixelFormat.Rgb)
+							.scale(encoderSize.height, encoderSize.height)
+							.toBuffer(imageRs.PixelFormat.Rgb)) as Uint8Array
+					)
 				} catch (e) {
 					console.log(`device(${deviceId}): scale image failed: ${e}`)
 					return

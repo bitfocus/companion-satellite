@@ -1,5 +1,5 @@
 import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
-import sharp = require('sharp')
+import * as imageRs from '@julusian/image-rs'
 import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
@@ -49,10 +49,11 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 			let newbuffer: Buffer = buffer
 			if (!this.#companionSupportsScaling) {
 				try {
-					newbuffer = await sharp(buffer, { raw: { width: 72, height: 72, channels: 3 } })
-						.resize(width, height)
-						.raw()
-						.toBuffer()
+					newbuffer = Buffer.from(
+						(await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
+							.scale(width, height)
+							.toBuffer(imageRs.PixelFormat.Rgb)) as Uint8Array
+					)
 				} catch (e) {
 					console.log(`device(${deviceId}): scale image failed: ${e}`)
 					return
