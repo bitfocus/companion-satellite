@@ -17,7 +17,7 @@ adduser --disabled-password satellite --gecos ""
 
 # install some dependencies
 apt-get update
-apt-get install -y git unzip curl libusb-1.0-0-dev libudev-dev cmake
+apt-get install -y git zip unzip curl libusb-1.0-0-dev libudev-dev cmake libfontconfig1
 apt-get clean
 
 # install fnm to manage node version
