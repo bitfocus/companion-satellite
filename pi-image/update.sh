@@ -30,6 +30,7 @@ cp pi-image/satellite.service /etc/systemd/system
 
 # ADD REST_PORT to old config files
 if grep -q REST_PORT /boot/satellite-config; then
+echo "config ok"
 else
 echo "
 #PORT FOR THE REST server
