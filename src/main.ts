@@ -4,6 +4,8 @@ import { CompanionSatelliteClient } from './client'
 import { DeviceManager } from './devices'
 import { DEFAULT_PORT } from './lib'
 
+import { RestServer } from './rest'
+
 const cli = meow(
 	`
 	Usage
@@ -32,6 +34,7 @@ console.log('Starting')
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
+const server = new RestServer(client)
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
@@ -40,6 +43,7 @@ exitHook(() => {
 	console.log('Exiting')
 	client.disconnect()
 	devices.close()
+	server.close()
 })
 
 client.connect(cli.input[0], port)
