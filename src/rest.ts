@@ -5,7 +5,7 @@ import { CompanionSatelliteClient } from './client'
 export class RestServer {
     private _cs_client: CompanionSatelliteClient
 
-    constructor(client: CompanionSatelliteClient) {
+    constructor(client: CompanionSatelliteClient, port: Number) {
 
         this._cs_client = client
         // super()
@@ -76,8 +76,8 @@ export class RestServer {
             }
         })
 
-        server.listen(9090, () => {
-            console.log(`server started on port: ${9090}`);
+        server.listen(port, () => {
+            console.log(`server started on port: ${port}`);
         });
     }
 

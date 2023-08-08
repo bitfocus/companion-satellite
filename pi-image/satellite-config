@@ -6,3 +6,6 @@ COMPANION_IP=127.0.0.1
 
 # If you are connecting through a router or firewall which has remapped the port, you will need to change that here to match
 COMPANION_PORT=16622
+
+#PORT FOR THE REST server
+REST_PORT=9999
