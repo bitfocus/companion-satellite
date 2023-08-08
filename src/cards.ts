@@ -51,9 +51,25 @@ export class CardGenerator {
 		context2d.fillStyle = '#ffffff'
 
 		context2d.fillText(`Remote: ${remoteIp}`, 10, height - 10)
-		context2d.fillText(`Status: ${status}`, 10, height - 30)
+		context2d.fillText(`local: ${getIPAddress()}`, 10, height - 30)
+		context2d.fillText(`Status: ${status}`, 10, height - 50)
 
 		// return result
 		return Buffer.from(context2d.getImageData(0, 0, width, height).data)
 	}
+}
+
+import { networkInterfaces } from 'os'
+function getIPAddress() {
+	for (let devName in networkInterfaces()) {
+		let iface = networkInterfaces()[devName];
+		if (iface) {
+			for (let i = 0; i < iface.length; i++) {
+				let alias = iface[i];
+				if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
+					return alias.address;
+			}
+		}
+	}
+	return '0.0.0.0';
 }
