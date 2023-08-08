@@ -53,6 +53,17 @@ After this, you can use `sudo satellite-update` to change the version it has ins
 
 Note: This script will create a new user called `satellite`, which Satellite will be run as and will own the configuration.
 
+### REST API
+
+The default rest port is 9999
+a GET request to `http://Satellite-IP:9999/api/ip` will return the current target ip
+a GET request to `http://Satellite-IP:9999/api/port` will return the current target ip
+
+a POST request to `http://Satellite-IP:9999/api/ip` with a valid ip will connect the sattelite to that ip
+a POST request to `http://Satellite-IP:9999/api/port` with a valid port number will connect the sattelite to that port
+
+hostenames are not yet suporrted
+
 ## Development
 
 NodeJS 16 is required

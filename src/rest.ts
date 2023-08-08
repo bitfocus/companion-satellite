@@ -15,6 +15,7 @@ export class RestServer {
             if (req.method === 'GET') {
                 console.log("api get: ", req.url)
                 switch (req.url) {
+                    //#TODO:add host case
                     case ('/api/ip'): {
                         res.writeHead(200, { "Content-Type": "application/json" })
                         res.write(this._cs_client.host)
