@@ -51,7 +51,7 @@ export class CardGenerator {
 		context2d.fillStyle = '#ffffff'
 
 		context2d.fillText(`Remote: ${remoteIp}`, 10, height - 10)
-		context2d.fillText(`local: ${getIPAddress()}`, 10, height - 30)
+		context2d.fillText(`Local: ${getIPAddress()}`, 10, height - 30)
 		context2d.fillText(`Status: ${status}`, 10, height - 50)
 
 		// return result
