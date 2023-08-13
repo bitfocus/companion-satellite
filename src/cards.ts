@@ -58,7 +58,7 @@ export class CardGenerator {
 		return Buffer.from(context2d.getImageData(0, 0, width, height).data)
 	}
 }
-
+//#TODO: make llocal ip reactive
 import { networkInterfaces } from 'os'
 function getIPAddress() {
 	for (let devName in networkInterfaces()) {
