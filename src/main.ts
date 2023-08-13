@@ -49,38 +49,8 @@ client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
 
 client.on('ipChange', (newIP) => {
-	fs.access('/boot/satellite-config', (err: any) => {
-		if (err) {
-			console.log(err)
-		} else {
-			fs.readFile('/boot/satellite-config', 'utf-8', function (err: any, data: string) {
-				if (err) {
-					console.error(err)
-				}
-				else {
-					let lines = data.split(/\r?\n/)
-
-					for (let i = 0; i < lines.length; i++) {
-						if (lines[i].startsWith('COMPANION_IP=')) {
-							lines[i] = 'COMPANION_IP=' + newIP
-						}
-						if (lines[i].startsWith('COMPANION_PORT=')) {
-							lines[i] = 'COMPANION_PORT=' + String(client.port)
-						}
-					}
-
-					let newData = lines.join('\n')
-
-					fs.writeFile('/boot/satellite-config', newData, 'utf-8', function (err: any) {
-						if (err) {
-							console.error(err)
-						}
-					});
-				}
-
-			})
-		}
-	})
+	updateEnvironmentFile('/boot/satellite-config',
+		{ "COMPANION_IP": newIP, "COMPANION_PORT": String(client.port) })
 })
 
 exitHook(() => {
@@ -91,3 +61,37 @@ exitHook(() => {
 })
 
 client.connect(cli.input[0], port)
+
+function updateEnvironmentFile(filePath: string, changes: Record<string, string>): void {
+	fs.access(filePath, (err: any) => {
+		if (err) {
+			console.log(err)
+		} else {
+			fs.readFile(filePath, 'utf-8', function (err: any, data: string) {
+				if (err) {
+					console.error(err)
+				}
+				else {
+					let lines = data.split(/\r?\n/)
+
+					for (let i = 0; i < lines.length; i++) {
+						for (const key in changes) {
+							if (lines[i].startsWith(key)) {
+								lines[i] = key + '=' + changes[key]
+							}
+						}
+					}
+
+					let newData = lines.join('\n')
+
+					fs.writeFile(filePath, newData, 'utf-8', function (err: any) {
+						if (err) {
+							console.error(err)
+						}
+					});
+				}
+
+			})
+		}
+	})
+}
