@@ -4,13 +4,14 @@ import { CompanionSatelliteClient } from './client'
 
 export class RestServer {
     private _cs_client: CompanionSatelliteClient
+    private _server: http.Server
 
     constructor(client: CompanionSatelliteClient, port: Number) {
 
         this._cs_client = client
         // super()
 
-        const server = http.createServer(async (req, res) => {
+        this._server = http.createServer(async (req, res) => {
             //set the request route
             if (req.method === 'GET') {
                 console.log("api get: ", req.url)
@@ -76,13 +77,25 @@ export class RestServer {
             }
         })
 
-        server.listen(port, () => {
-            console.log(`server started on port: ${port}`);
-        });
+        this.open(port)
+    }
+
+    public open(port: Number) {
+        if (port != 0) {
+            this._server.listen(port, () => {
+                console.log(`REST server starting: port: ${port}`)
+            })
+        }else {
+            console.log("REST server not starting: port 0")
+        }
+
     }
 
     public close(): void {
-
+        this._server.close((err) => {
+            console.log("The rest server is closed")
+            if (err) console.log(err)
+        })
     }
 
 }
