@@ -30,14 +30,16 @@ export class RestServer {
 
         //POST
         this.router.post('/api/host', koaBody(), (ctx: any) => {
-            this._cs_client.connect(ctx.request.body.data['host'], this._cs_client.port)
+            this._cs_client.connect(ctx.request['host'], this._cs_client.port)
+            ctx.body = 'OK'
         })
         this.router.post('/api/port', koaBody(), (ctx: any) => {
-            this._cs_client.connect(this._cs_client.host, ctx.request.body.data['port'])
+            this._cs_client.connect(this._cs_client.host, ctx.request.body['port'])
+            ctx.body = 'OK'
         })
         this.router.post('/api/config', (ctx: any) => {
-            this._cs_client.connect(ctx.request.body.data['host'], ctx.request.body.data['port'])
-
+            this._cs_client.connect(ctx.request.body['host'], ctx.request.body['port'])
+            ctx.body = 'OK'
         })
 
         this.app
