@@ -25,7 +25,7 @@ if (cli.input.length === 0) {
 }
 
 let port = DEFAULT_PORT
-let rest_port = 9999
+let rest_port = 0
 if (cli.input.length > 1) {
 	port = Number(cli.input[1])
 	if (isNaN(port)) {
