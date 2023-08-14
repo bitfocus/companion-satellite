@@ -1,12 +1,11 @@
 import * as Koa from 'koa'
-import Router from 'koa-router'
+import * as Router from 'koa-router'
 import koaBody from 'koa-body'
 import http = require('http')
 import { CompanionSatelliteClient } from './client'
 
 export class RestServer {
     private _cs_client: CompanionSatelliteClient
-    private _server: http.Server
     private server: http.Server
     private app: Koa
     private router: Router
@@ -19,24 +18,24 @@ export class RestServer {
         // super()
 
         //GET
-        this.router.get('/api/host', (ctx) => {
+        this.router.get('/api/host', (ctx: any) => {
             ctx.body = { host: this._cs_client.host }
         })
-        this.router.get('/api/port', (ctx) => {
+        this.router.get('/api/port', (ctx: any) => {
             ctx.body = { port: this._cs_client.port }
         })
-        this.router.get('/api/config', (ctx) => {
+        this.router.get('/api/config', (ctx: any) => {
             ctx.body = { host: this._cs_client.host, port: this._cs_client.port }
         })
 
         //POST
-        this.router.post('/api/host', koaBody(), (ctx) => {
+        this.router.post('/api/host', koaBody(), (ctx: any) => {
             this._cs_client.connect(ctx.request.body.data['host'], this._cs_client.port)
         })
-        this.router.post('/api/port', koaBody(), (ctx) => {
+        this.router.post('/api/port', koaBody(), (ctx: any) => {
             this._cs_client.connect(this._cs_client.host, ctx.request.body.data['port'])
         })
-        this.router.post('/api/config', (ctx) => {
+        this.router.post('/api/config', (ctx: any) => {
             this._cs_client.connect(ctx.request.body.data['host'], ctx.request.body.data['port'])
 
         })
@@ -48,7 +47,7 @@ export class RestServer {
     }
 
     public open(port: Number) {
-        if (this._server.listening) { this.close() }
+        if (this.server.listening) { this.close() }
         if (port != 0) {
             this.server = this.app.listen(port)
             console.log(`REST server starting: port: ${port}`)
