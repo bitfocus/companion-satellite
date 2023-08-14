@@ -47,7 +47,7 @@ export class RestServer {
     }
 
     public open(port: Number) {
-        if (this.server.listening) { this.close() }
+        if (this.server != null && this.server.listening) { this.close() }
         if (port != 0) {
             this.server = this.app.listen(port)
             console.log(`REST server starting: port: ${port}`)
