@@ -80,6 +80,13 @@ export class DeviceManager {
 		})
 
 		this.statusString = 'Connecting'
+		this.IpWatchTimer = setInterval(() => {
+			let dots =''
+			for (let i = 0; i < Date.now()%4; i++) {
+				dots += '.'
+			}
+			this.showStatusCard('Connecting'+dots)
+		}, 1000)
 
 		this.scanDevices()
 
@@ -102,8 +109,6 @@ export class DeviceManager {
 				}
 				this.showStatusCard('Disconnected'+dots)
 			}, 1000)
-
-			this.IpWatchTimer
 		})
 		client.on('ipChange', () => {
 			this.showStatusCard()
