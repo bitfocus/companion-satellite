@@ -2,7 +2,6 @@ import * as Koa from 'koa'
 import Router from 'koa-router'
 import koaBody from 'koa-body'
 import http = require('http')
-import net = require('net')
 import { CompanionSatelliteClient } from './client'
 
 export class RestServer {
