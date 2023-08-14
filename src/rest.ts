@@ -19,10 +19,10 @@ export class RestServer {
 
         //GET
         this.router.get('/api/host', (ctx: any) => {
-            ctx.body = { host: this._cs_client.host }
+            ctx.body = this._cs_client.host
         })
         this.router.get('/api/port', (ctx: any) => {
-            ctx.body = { port: this._cs_client.port }
+            ctx.body = this._cs_client.port
         })
         this.router.get('/api/config', (ctx: any) => {
             ctx.body = { host: this._cs_client.host, port: this._cs_client.port }
