@@ -19,24 +19,24 @@ export class RestServer {
         // super()
 
         //GET
-        this.router.get('/api/host', (ctx, next) => {
+        this.router.get('/api/host', (ctx) => {
             ctx.body = { host: this._cs_client.host }
         })
-        this.router.get('/api/port', (ctx, next) => {
+        this.router.get('/api/port', (ctx) => {
             ctx.body = { port: this._cs_client.port }
         })
-        this.router.get('/api/config', (ctx, next) => {
+        this.router.get('/api/config', (ctx) => {
             ctx.body = { host: this._cs_client.host, port: this._cs_client.port }
         })
 
         //POST
-        this.router.post('/api/host', koaBody(), (ctx, next) => {
+        this.router.post('/api/host', koaBody(), (ctx) => {
             this._cs_client.connect(ctx.request.body.data['host'], this._cs_client.port)
         })
-        this.router.post('/api/port', koaBody(), (ctx, next) => {
+        this.router.post('/api/port', koaBody(), (ctx) => {
             this._cs_client.connect(this._cs_client.host, ctx.request.body.data['port'])
         })
-        this.router.post('/api/config', (ctx, next) => {
+        this.router.post('/api/config', (ctx) => {
             this._cs_client.connect(ctx.request.body.data['host'], ctx.request.body.data['port'])
 
         })
