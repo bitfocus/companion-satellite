@@ -43,7 +43,7 @@ console.log('Starting')
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
-const server = new RestServer(client, rest_port)
+const server = new RestServer(client)
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
@@ -61,6 +61,7 @@ exitHook(() => {
 })
 
 client.connect(cli.input[0], port)
+server.open(rest_port)
 
 function updateEnvironmentFile(filePath: string, changes: Record<string, string>): void {
 	fs.access(filePath, (err: any) => {

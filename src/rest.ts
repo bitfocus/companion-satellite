@@ -1,3 +1,6 @@
+import * as Koa from 'koa'
+import Router from 'koa-router'
+import koaBody from 'koa-body'
 import http = require('http')
 import net = require('net')
 import { CompanionSatelliteClient } from './client'
@@ -5,87 +8,51 @@ import { CompanionSatelliteClient } from './client'
 export class RestServer {
     private _cs_client: CompanionSatelliteClient
     private _server: http.Server
+    private server: http.Server
+    private app: Koa
+    private router: Router
 
-    constructor(client: CompanionSatelliteClient, port: Number) {
+    constructor(client: CompanionSatelliteClient) {
 
+        this.app = new Koa()
+        this.router = new Router()
         this._cs_client = client
         // super()
 
-        this._server = http.createServer(async (req, res) => {
-            //set the request route
-            if (req.method === 'GET') {
-                console.log("api get: ", req.url)
-                switch (req.url) {
-                    //#TODO:add host case
-                    case ('/api/ip'): {
-                        res.writeHead(200, { "Content-Type": "application/json" })
-                        res.write(this._cs_client.host)
-                        res.end()
-                        break
-                    }
-                    case ('/api/port'): {
-                        res.writeHead(200, { "Content-Type": "application/json" })
-                        res.write(String(this._cs_client.port))
-                        res.end()
-                        break
-                    }
-                    default: {
-                        res.writeHead(204, { "Content-Type": "application/json" })
-                        res.end(JSON.stringify({ message: "Route not found" }))
-                        break
-                    }
-                }
-            }
-            if (req.method === 'POST') {
-                let body = ''
-                req.on('data', (data) => {
-                    body += data
-                })
-                req.on('end', () => {
-                    console.log("api post:", req.url, body)
-                    switch (req.url) {
-                        case ('/api/ip'): {
-                            if (net.isIP(body) != 0) {
-                                res.writeHead(200, { "Content-Type": "application/json" })
-                                res.end()
-                                this._cs_client.connect(body, this._cs_client.port)
-                            } else {
-                                res.writeHead(400, { "Content-Type": "application/json" })
-                                res.end(JSON.stringify({ message: "Malformed ip" }))
-                            }
-                            break
-                        }
-                        case ('/api/port'): {
-                            let port = Number(body)
-                            if (port && port > 0 && port < 65535) {
-                                res.writeHead(200, { "Content-Type": "application/json" })
-                                res.end()
-                                this._cs_client.connect(this._cs_client.host, port)
-                            } else {
-                                res.writeHead(400, { "Content-Type": "application/json" })
-                                res.end(JSON.stringify({ message: "bad port" }))
-                            }
-                            break
-                        }
-                        default: {
-                            res.writeHead(204, { "Content-Type": "application/json" })
-                            res.end(JSON.stringify({ message: "Route not found" }))
-                            break
-                        }
-                    }
-                })
-            }
+        //GET
+        this.router.get('/api/host', (ctx, next) => {
+            ctx.body = { host: this._cs_client.host }
+        })
+        this.router.get('/api/port', (ctx, next) => {
+            ctx.body = { port: this._cs_client.port }
+        })
+        this.router.get('/api/config', (ctx, next) => {
+            ctx.body = { host: this._cs_client.host, port: this._cs_client.port }
         })
 
-        this.open(port)
+        //POST
+        this.router.post('/api/host', koaBody(), (ctx, next) => {
+            this._cs_client.connect(ctx.request.body.data['host'], this._cs_client.port)
+        })
+        this.router.post('/api/port', koaBody(), (ctx, next) => {
+            this._cs_client.connect(this._cs_client.host, ctx.request.body.data['port'])
+        })
+        this.router.post('/api/config', (ctx, next) => {
+            this._cs_client.connect(ctx.request.body.data['host'], ctx.request.body.data['port'])
+
+        })
+
+        this.app
+            .use(this.router.routes())
+            .use(this.router.allowedMethods())
+
     }
 
     public open(port: Number) {
         if (this._server.listening) { this.close() }
         if (port != 0) {
-            this._server.listen(port, () => {
-                console.log(`REST server starting: port: ${port}`)
-            })
+            this.server = this.app.listen(port)
+            console.log(`REST server starting: port: ${port}`)
         } else {
             console.log("REST server not starting: port 0")
         }
@@ -93,7 +60,8 @@ export class RestServer {
     }
 
     public close(): void {
-        this._server.closeAllConnections()
+        this.server.close()
+        this.server.closeAllConnections()
         console.log("The rest server is closed")
     }
 
