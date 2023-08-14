@@ -6,7 +6,7 @@ import { CompanionSatelliteClient } from './client'
 
 export class RestServer {
     private _cs_client: CompanionSatelliteClient
-    private server: http.Server
+    private server!: http.Server
     private app: Koa
     private router: Router
 
