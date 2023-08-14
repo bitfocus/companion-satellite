@@ -37,7 +37,7 @@ export class RestServer {
             this._cs_client.connect(this._cs_client.host, ctx.request.body['port'])
             ctx.body = 'OK'
         })
-        this.router.post('/api/config', (ctx: any) => {
+        this.router.post('/api/config', koaBody(), (ctx: any) => {
             this._cs_client.connect(ctx.request.body['host'], ctx.request.body['port'])
             ctx.body = 'OK'
         })
