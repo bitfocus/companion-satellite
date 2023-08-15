@@ -33,7 +33,7 @@ if grep -q REST_PORT /boot/satellite-config; then
 echo "config ok"
 else
 echo "
-#PORT FOR THE REST server
+# Port for the REST server (0 to disable)
 REST_PORT=9999" >> /boot/satellite-config
 fi
 
