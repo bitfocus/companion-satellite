@@ -66,11 +66,22 @@ export class RestServer {
         })
         this.router.post('/api/config', koaBody(), (ctx: any) => {
             if (ctx.request.type == 'application/json') {
-                this._cs_client.connect(ctx.request.body['host'], ctx.request.body['port']).catch(e => {
-					console.log('update config failed:', e)
-				})
-            }
-            ctx.body = 'OK'
+				const host = ctx.request.body['host']
+				const port = Number(ctx.request.body['port'])
+
+				if (!host) {
+					ctx.status = 400
+					ctx.body = 'Invalid host'
+				} else if (isNaN(port) || port <= 0 || port > 65535) {
+					ctx.status = 400
+					ctx.body = 'Invalid port'
+				} else {
+					this._cs_client.connect(host, port).catch(e => {
+						console.log('update config failed:', e)
+					})
+				}
+				ctx.body = 'OK'
+			}
         })
 
         this.app
