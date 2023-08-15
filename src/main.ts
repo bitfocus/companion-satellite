@@ -39,7 +39,9 @@ client.on('error', (e) => console.error(e))
 exitHook(() => {
 	console.log('Exiting')
 	client.disconnect()
-	devices.close()
+	devices.close().catch(() => null)
 })
 
-client.connect(cli.input[0], port)
+client.connect(cli.input[0], port).catch((e) => {
+	console.log(`Failed to connect`, e)
+})

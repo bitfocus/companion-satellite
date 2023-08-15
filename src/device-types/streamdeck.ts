@@ -114,7 +114,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 
 	async close(): Promise<void> {
 		this.#queue?.abort()
-		this.#deck.close()
+		await this.#deck.close()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
@@ -164,14 +164,14 @@ export class StreamDeckWrapper implements WrappedDevice {
 		// Start with blanking it
 		await this.blankDevice()
 
-		await this.showStatus(client.host, status)
+		this.showStatus(client.host, status)
 	}
 
 	async deviceAdded(): Promise<void> {
 		this.#queueOutputId++
 	}
 	async setBrightness(percent: number): Promise<void> {
-		this.#deck.setBrightness(percent)
+		await this.#deck.setBrightness(percent)
 	}
 	async blankDevice(): Promise<void> {
 		await this.#deck.clearPanel()
@@ -194,7 +194,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 			}
 		}
 	}
-	async showStatus(hostname: string, status: string): Promise<void> {
+	showStatus(hostname: string, status: string): void {
 		if (this.#deck.ICON_SIZE !== 0) {
 			// abort and discard current operations
 			this.#queue?.abort()

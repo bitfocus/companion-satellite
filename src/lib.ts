@@ -13,3 +13,12 @@ export async function rgbaToRgb(input: Uint8Array, width: number, height: number
 			.toBuffer(imageRs.PixelFormat.Rgb)) as Uint8Array
 	)
 }
+
+export function wrapAsync<TArgs extends any[]>(
+	fn: (...args: TArgs) => Promise<void>,
+	catcher: (e: any) => void
+): (...args: TArgs) => void {
+	return (...args) => {
+		fn(...args).catch(catcher)
+	}
+}

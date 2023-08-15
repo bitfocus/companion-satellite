@@ -14,7 +14,7 @@ function parseLineParameters(line: string): Record<string, string | boolean> {
 		return index === -1 ? Number.POSITIVE_INFINITY : index
 	}
 
-	let fragments: string[] = ['']
+	const fragments: string[] = ['']
 	let quotes = 0
 
 	let i = 0
@@ -25,7 +25,7 @@ function parseLineParameters(line: string): Record<string, string | boolean> {
 		const quoteIndex = makeSafe(line.indexOf('"', i))
 
 		// Find which is closest
-		let o = Math.min(spaceIndex, slashIndex, quoteIndex)
+		const o = Math.min(spaceIndex, slashIndex, quoteIndex)
 		if (!isFinite(o)) {
 			// None were found, copy the remainder and stop
 			const slice = line.substring(i)
@@ -216,7 +216,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	public async connect(host: string, port: number): Promise<void> {
 		if (this._connected || this._connectionActive) {
-			await this.disconnect()
+			this.disconnect()
 		}
 		this._connectionActive = true
 
@@ -230,7 +230,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.initSocket()
 	}
 
-	public disconnect(): Promise<void> {
+	public disconnect(): void {
 		this._connectionActive = false
 		if (this._retryConnectTimeout) {
 			clearTimeout(this._retryConnectTimeout)
@@ -243,19 +243,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 
 		if (!this._connected) {
-			return Promise.resolve()
+			return
 		}
 
-		return new Promise((resolve, reject) => {
-			try {
-				this.socket?.end()
-				this.socket = undefined
-				return resolve()
-			} catch (e) {
-				this.socket = undefined
-				return reject(e)
-			}
-		})
+		try {
+			this.socket?.end()
+			this.socket = undefined
+		} catch (e) {
+			this.socket = undefined
+			throw e
+		}
 	}
 
 	private _handleReceivedData(data: Buffer): void {

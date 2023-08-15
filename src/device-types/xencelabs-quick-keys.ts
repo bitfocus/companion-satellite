@@ -104,16 +104,16 @@ export class QuickKeysWrapper implements WrappedDevice {
 		// Start with blanking it
 		await this.blankDevice()
 
-		await this.showStatus(client.host, status)
+		this.showStatus(client.host, status)
 	}
 
 	async deviceAdded(): Promise<void> {
-		this.clearStatus()
+		await this.clearStatus()
 	}
 	async setBrightness(percent: number): Promise<void> {
-		const opts = Object.values(XencelabsQuickKeysDisplayBrightness).filter(
-			(k) => typeof k === 'number'
-		) as XencelabsQuickKeysDisplayBrightness[]
+		const opts = Object.values<XencelabsQuickKeysDisplayBrightness | string>(
+			XencelabsQuickKeysDisplayBrightness
+		).filter((k): k is XencelabsQuickKeysDisplayBrightness => typeof k === 'number')
 
 		const perStep = 100 / (opts.length - 1)
 		const step = Math.round(percent / perStep)
@@ -153,7 +153,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 			await this.#surface.setWheelColor(r, g, b)
 		}
 	}
-	async showStatus(_hostname: string, status: string): Promise<void> {
+	showStatus(_hostname: string, status: string): void {
 		this.stopStatusInterval()
 
 		const newMessage = status
@@ -164,7 +164,9 @@ export class QuickKeysWrapper implements WrappedDevice {
 			})
 		}, 3000)
 
-		await this.#surface.showOverlayText(5, newMessage)
+		this.#surface.showOverlayText(5, newMessage).catch((e) => {
+			console.error(`Overlay failed: ${e}`)
+		})
 	}
 
 	private stopStatusInterval(): boolean {
