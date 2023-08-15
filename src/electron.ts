@@ -44,11 +44,17 @@ app.whenReady().then(function () {
 
 	tryConnect()
 
-	tray = new Tray(
-		process.platform == 'darwin'
-			? path.join(__dirname, '../assets', 'trayTemplate.png')
-			: path.join(__dirname, '../assets', 'icon.png')
-	)
+	let trayImage = path.join(__dirname, '../assets', 'tray.png')
+	switch (process.platform) {
+		case 'darwin':
+			trayImage = path.join(__dirname, '../assets', 'trayTemplate.png')
+			break
+		case 'win32':
+			trayImage = path.join(__dirname, '../assets', 'tray.ico')
+			break
+	}
+
+	tray = new Tray(trayImage)
 
 	const menu = new Menu()
 	menu.append(
