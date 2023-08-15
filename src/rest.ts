@@ -61,7 +61,8 @@ export class RestServer {
     }
 
     public open(port: Number) {
-        if (this.server != null && this.server.listening) { this.close() }
+        this.close()
+
         if (port != 0) {
             this.server = this.app.listen(port)
             console.log(`REST server starting: port: ${port}`)
@@ -72,9 +73,11 @@ export class RestServer {
     }
 
     public close(): void {
-        this.server.close()
-        this.server.closeAllConnections()
-        console.log("The rest server is closed")
+        if(this.server != null && this.server.listening) {
+            this.server.close()
+            this.server.closeAllConnections()
+            console.log("The rest server is closed")
+        }
     }
 
 }
