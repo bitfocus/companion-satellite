@@ -56,11 +56,13 @@ Note: This script will create a new user called `satellite`, which Satellite wil
 ### REST API
 
 The default rest port is 9999
-a GET request to `http://Satellite-IP:9999/api/ip` will return the current target ip
-a GET request to `http://Satellite-IP:9999/api/port` will return the current target ip
+a GET request to `http://Satellite-IP:9999/api/host` will return the current target ip in plain text
+a GET request to `http://Satellite-IP:9999/api/port` will return the current target port in plain text
+a GET request to `http://Satellite-IP:9999/api/config` will return the current target port and ip as json
 
-a POST request to `http://Satellite-IP:9999/api/ip` with a valid ip will connect the sattelite to that ip
-a POST request to `http://Satellite-IP:9999/api/port` with a valid port number will connect the sattelite to that port
+a POST request to `http://Satellite-IP:9999/api/host` with json body `{"host": "newhostip"}` or plain text will connect the sattelite to that ip
+a POST request to `http://Satellite-IP:9999/api/port` with  `{"port": "newport"}` or plain text will connect the sattelite to that port
+a POST request to `http://Satellite-IP:9999/api/config` with  `{"host": "newhostip", "port": "newport"}` will connect the sattelite to that ip adn port
 
 hostenames are not yet suporrted
 
