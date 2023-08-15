@@ -48,9 +48,9 @@ const server = new RestServer(client)
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
 
-client.on('ipChange', (newIP) => {
+client.on('ipChange', (newIP, newPort) => {
 	updateEnvironmentFile('/boot/satellite-config',
-		{ "COMPANION_IP": newIP, "COMPANION_PORT": String(client.port) })
+		{ "COMPANION_IP": newIP, "COMPANION_PORT": String(newPort) })
 })
 
 exitHook(() => {
