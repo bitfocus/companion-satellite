@@ -30,15 +30,27 @@ export class RestServer {
 
         //POST
         this.router.post('/api/host', koaBody(), (ctx: any) => {
-            this._cs_client.connect(ctx.request.body['host'], this._cs_client.port)
-            ctx.body = 'OK'
+            if (ctx.request.type == 'application/json') {
+                this._cs_client.connect(ctx.request.body['host'], this._cs_client.port)
+                ctx.body = 'OK'
+            } else if (ctx.request.type == 'text/plain') {
+                this._cs_client.connect(ctx.request.body, this._cs_client.port)
+                ctx.body = 'OK'
+            }
         })
         this.router.post('/api/port', koaBody(), (ctx: any) => {
-            this._cs_client.connect(this._cs_client.host, ctx.request.body['port'])
-            ctx.body = 'OK'
+            if (ctx.request.type == 'application/json') {
+                this._cs_client.connect(this._cs_client.host, ctx.request.body['port'])
+                ctx.body = 'OK'
+            } else if (ctx.request.type == 'text/plain') {
+                this._cs_client.connect(this._cs_client.host, ctx.request.body)
+                ctx.body = 'OK'
+            }
         })
         this.router.post('/api/config', koaBody(), (ctx: any) => {
-            this._cs_client.connect(ctx.request.body['host'], ctx.request.body['port'])
+            if (ctx.request.type == 'application/json') {
+                this._cs_client.connect(ctx.request.body['host'], ctx.request.body['port'])
+            }
             ctx.body = 'OK'
         })
 
