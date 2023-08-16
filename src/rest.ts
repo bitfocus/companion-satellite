@@ -16,7 +16,7 @@ export class RestServer {
 		this.router = new Router()
 
 		//GET
-		this.router.get('/api/host', (ctx: any) => {
+		this.router.get('/api/host', async (ctx: any) => {
 			ctx.body = this._cs_client.host
 		})
 		this.router.get('/api/port', (ctx: any) => {
@@ -27,7 +27,7 @@ export class RestServer {
 		})
 
 		//POST
-		this.router.post('/api/host', koaBody(), (ctx: any) => {
+		this.router.post('/api/host', koaBody(), async (ctx: any) => {
 			let host = ''
 			if (ctx.request.type == 'application/json') {
 				host = ctx.request.body['host']
@@ -45,7 +45,7 @@ export class RestServer {
 				ctx.body = 'Invalid host'
 			}
 		})
-		this.router.post('/api/port', koaBody(), (ctx: any) => {
+		this.router.post('/api/port', koaBody(), async (ctx: any) => {
 			let newPort = NaN
 			if (ctx.request.type == 'application/json') {
 				newPort = Number(ctx.request.body['port'])
@@ -63,7 +63,7 @@ export class RestServer {
 				ctx.body = 'Invalid port'
 			}
 		})
-		this.router.post('/api/config', koaBody(), (ctx: any) => {
+		this.router.post('/api/config', koaBody(), async (ctx: any) => {
 			if (ctx.request.type == 'application/json') {
 				const host = ctx.request.body['host']
 				const port = Number(ctx.request.body['port'])
@@ -86,7 +86,7 @@ export class RestServer {
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())
 	}
 
-	public open(port: Number) {
+	public open(port: Number): void {
 		this.close()
 
 		if (port != 0) {
