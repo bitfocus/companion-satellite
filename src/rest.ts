@@ -86,7 +86,7 @@ export class RestServer {
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())
 	}
 
-	public open(port: Number) {
+	public open(port: Number): void {
 		this.close()
 
 		if (port != 0) {
