@@ -119,7 +119,13 @@
     },
     "linux": {
       "target": "tar.gz",
-      "artifactName": "companion-satellite-${arch}.tar.gz"
+      "artifactName": "companion-satellite-${arch}.tar.gz",
+      "extraFiles": [
+        {
+          "from": "assets/linux",
+          "to": "."
+        }
+      ]
     },
     "files": [
       "**/*",

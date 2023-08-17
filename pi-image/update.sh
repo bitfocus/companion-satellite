@@ -23,7 +23,7 @@ yarn
 yarn build
 
 # update some tooling
-cp pi-image/50-satellite.rules /etc/udev/rules.d/
+cp assets/linux/50-satellite.rules /etc/udev/rules.d/
 
 # update startup script
 cp pi-image/satellite.service /etc/systemd/system
