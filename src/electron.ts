@@ -31,7 +31,7 @@ console.log('Starting')
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
-const server = new RestServer(client)
+const server = new RestServer(client, devices)
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))

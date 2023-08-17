@@ -2,32 +2,36 @@ import * as Koa from 'koa'
 import * as Router from 'koa-router'
 import koaBody from 'koa-body'
 import http = require('http')
-import { CompanionSatelliteClient } from './client'
+import type { CompanionSatelliteClient } from './client'
+import type { DeviceManager } from './devices'
 
 export class RestServer {
-	private _cs_client: CompanionSatelliteClient
+	private readonly client: CompanionSatelliteClient
+	private readonly devices: DeviceManager
+	private readonly app: Koa
+	private readonly router: Router
 	private server: http.Server | undefined
-	private app: Koa
-	private router: Router
 
-	constructor(client: CompanionSatelliteClient) {
-		this._cs_client = client
+	constructor(client: CompanionSatelliteClient, devices: DeviceManager) {
+		this.client = client
+		this.devices = devices
+
 		this.app = new Koa()
 		this.router = new Router()
 
 		//GET
-		this.router.get('/api/host', async (ctx: any) => {
-			ctx.body = this._cs_client.host
+		this.router.get('/api/host', async (ctx) => {
+			ctx.body = this.client.host
 		})
-		this.router.get('/api/port', (ctx: any) => {
-			ctx.body = this._cs_client.port
+		this.router.get('/api/port', (ctx) => {
+			ctx.body = this.client.port
 		})
-		this.router.get('/api/config', (ctx: any) => {
-			ctx.body = { host: this._cs_client.host, port: this._cs_client.port }
+		this.router.get('/api/config', (ctx) => {
+			ctx.body = { host: this.client.host, port: this.client.port }
 		})
 
 		//POST
-		this.router.post('/api/host', koaBody(), async (ctx: any) => {
+		this.router.post('/api/host', koaBody(), async (ctx) => {
 			let host = ''
 			if (ctx.request.type == 'application/json') {
 				host = ctx.request.body['host']
@@ -36,7 +40,7 @@ export class RestServer {
 			}
 
 			if (host) {
-				this._cs_client.connect(host, this._cs_client.port).catch((e) => {
+				this.client.connect(host, this.client.port).catch((e) => {
 					console.log('set host failed:', e)
 				})
 				ctx.body = 'OK'
@@ -45,7 +49,7 @@ export class RestServer {
 				ctx.body = 'Invalid host'
 			}
 		})
-		this.router.post('/api/port', koaBody(), async (ctx: any) => {
+		this.router.post('/api/port', koaBody(), async (ctx) => {
 			let newPort = NaN
 			if (ctx.request.type == 'application/json') {
 				newPort = Number(ctx.request.body['port'])
@@ -54,7 +58,7 @@ export class RestServer {
 			}
 
 			if (!isNaN(newPort) && newPort > 0 && newPort <= 65535) {
-				this._cs_client.connect(this._cs_client.host, newPort).catch((e) => {
+				this.client.connect(this.client.host, newPort).catch((e) => {
 					console.log('set port failed:', e)
 				})
 				ctx.body = 'OK'
@@ -63,7 +67,7 @@ export class RestServer {
 				ctx.body = 'Invalid port'
 			}
 		})
-		this.router.post('/api/config', koaBody(), async (ctx: any) => {
+		this.router.post('/api/config', koaBody(), async (ctx) => {
 			if (ctx.request.type == 'application/json') {
 				const host = ctx.request.body['host']
 				const port = Number(ctx.request.body['port'])
@@ -75,12 +79,18 @@ export class RestServer {
 					ctx.status = 400
 					ctx.body = 'Invalid port'
 				} else {
-					this._cs_client.connect(host, port).catch((e) => {
+					this.client.connect(host, port).catch((e) => {
 						console.log('update config failed:', e)
 					})
 				}
 				ctx.body = 'OK'
 			}
+		})
+
+		this.router.post('/api/rescan', async (ctx) => {
+			this.devices.scanDevices()
+
+			ctx.body = 'OK'
 		})
 
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())
