@@ -1,6 +1,7 @@
 import * as imageRs from '@julusian/image-rs'
 
 export const DEFAULT_PORT = 16622
+export const DEFAULT_REST_PORT = 9999 // Note: this is also defined elsewhere
 
 export function assertNever(_v: never): void {
 	// Nothing to do

@@ -9,7 +9,8 @@ import * as prompt from 'electron-prompt'
 import openAboutWindow from 'electron-about-window'
 import { DeviceManager } from './devices'
 import { CompanionSatelliteClient } from './client'
-import { DEFAULT_PORT } from './lib'
+import { DEFAULT_PORT, DEFAULT_REST_PORT } from './lib'
+import { RestServer } from './rest'
 
 const store = new electronStore<SatelliteConfig>()
 let tray: Tray | undefined
@@ -21,15 +22,25 @@ app.on('window-all-closed', () => {
 interface SatelliteConfig {
 	remoteIp: string
 	remotePort: number
+
+	restPort: number | undefined
+	restEnabled: boolean
 }
 
 console.log('Starting')
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
+const server = new RestServer(client)
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
+
+client.on('ipChange', (newIP, newPort) => {
+	// Store remote settings when it changes
+	store.set('remoteIp', newIP)
+	store.set('remotePort', newPort)
+})
 
 function tryConnect() {
 	const ip = store.get('remoteIp')
@@ -40,12 +51,76 @@ function tryConnect() {
 		})
 	}
 }
+function restartRestApi() {
+	const restPort = Number(store.get('restPort') ?? DEFAULT_REST_PORT)
+	if (store.get('restEnabled') && !isNaN(restPort) && restPort > 0 && restPort <= 65535) {
+		server.open(restPort)
+	} else {
+		server.close()
+	}
+}
+
+const menuItemApiEnableDisable = new MenuItem({
+	label: 'Enable API',
+	type: 'checkbox',
+	click: toggleRestApi,
+})
+const menuItemApiPort = new MenuItem({
+	label: 'Change API Port',
+	click: changeRestPort,
+})
+const trayMenu = new Menu()
+trayMenu.append(
+	new MenuItem({
+		label: 'Change Host',
+		click: changeHost,
+	})
+)
+trayMenu.append(
+	new MenuItem({
+		label: 'Change Port',
+		click: changePort,
+	})
+)
+trayMenu.append(menuItemApiEnableDisable)
+trayMenu.append(menuItemApiPort)
+trayMenu.append(
+	new MenuItem({
+		label: 'Scan devices',
+		click: trayScanDevices,
+	})
+)
+trayMenu.append(
+	new MenuItem({
+		label: 'About',
+		click: trayAbout,
+	})
+)
+trayMenu.append(
+	new MenuItem({
+		label: 'Quit',
+		click: trayQuit,
+	})
+)
+
+function updateTray() {
+	if (!tray) throw new Error(`Tray not ready`)
+
+	const restEnabled = !!store.get('restEnabled')
+
+	menuItemApiEnableDisable.checked = restEnabled
+	menuItemApiPort.enabled = restEnabled
+
+	console.log('set tray')
+	tray.setContextMenu(trayMenu)
+}
 
 app.whenReady()
 	.then(function () {
 		console.log('App ready')
 
 		tryConnect()
+		restartRestApi()
 
 		let trayImage = path.join(__dirname, '../assets', 'tray.png')
 		switch (process.platform) {
@@ -59,39 +134,7 @@ app.whenReady()
 
 		tray = new Tray(trayImage)
 
-		const menu = new Menu()
-		menu.append(
-			new MenuItem({
-				label: 'Change Host',
-				click: changeHost,
-			})
-		)
-		menu.append(
-			new MenuItem({
-				label: 'Change Port',
-				click: changePort,
-			})
-		)
-		menu.append(
-			new MenuItem({
-				label: 'Scan devices',
-				click: trayScanDevices,
-			})
-		)
-		menu.append(
-			new MenuItem({
-				label: 'About',
-				click: trayAbout,
-			})
-		)
-		menu.append(
-			new MenuItem({
-				label: 'Quit',
-				click: trayQuit,
-			})
-		)
-		console.log('set tray')
-		tray.setContextMenu(menu)
+		updateTray()
 	})
 	.catch((e) => {
 		dialog.showErrorBox(`Startup error`, `Failed to launch: ${e}`)
@@ -141,8 +184,41 @@ function changePort() {
 			}
 		})
 		.catch((e) => {
-			console.error('Failed to change host', e)
+			console.error('Failed to change port', e)
 		})
+}
+function changeRestPort() {
+	const current = store.get('restPort')
+	prompt({
+		title: 'Companion Satellite API Port Number',
+		label: 'API Port',
+		value: `${current ?? DEFAULT_REST_PORT}`,
+		inputAttrs: {},
+		type: 'input',
+	})
+		.then((r) => {
+			if (r === null) {
+				console.log('user cancelled')
+			} else {
+				const r2 = Number(r)
+				console.log('new rest port', r2)
+				if (!isNaN(r2)) {
+					store.set('restPort', r)
+					restartRestApi()
+				}
+			}
+		})
+		.catch((e) => {
+			console.error('Failed to change hrest port', e)
+		})
+}
+function toggleRestApi() {
+	const current = store.get('restEnabled')
+	store.set('restEnabled', !current)
+
+	restartRestApi()
+
+	updateTray()
 }
 
 function trayQuit() {
