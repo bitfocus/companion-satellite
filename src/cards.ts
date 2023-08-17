@@ -61,15 +61,14 @@ export class CardGenerator {
 //#TODO: make llocal ip reactive
 import { networkInterfaces } from 'os'
 function getIPAddress() {
-	for (let devName in networkInterfaces()) {
-		let iface = networkInterfaces()[devName];
+	for (const devName in networkInterfaces()) {
+		const iface = networkInterfaces()[devName]
 		if (iface) {
 			for (let i = 0; i < iface.length; i++) {
-				let alias = iface[i];
-				if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal)
-					return alias.address;
+				const alias = iface[i]
+				if (alias.family === 'IPv4' && alias.address !== '127.0.0.1' && !alias.internal) return alias.address
 			}
 		}
 	}
-	return '0.0.0.0';
+	return '0.0.0.0'
 }

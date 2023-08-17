@@ -73,8 +73,7 @@ server.open(rest_port)
 async function updateEnvironmentFile(filePath: string, changes: Record<string, string>): Promise<void> {
 	const data = await fs.readFile(filePath, 'utf-8')
 
-	let lines = data.split(/\r?\n/)
-
+	const lines = data.split(/\r?\n/)
 	for (let i = 0; i < lines.length; i++) {
 		for (const key in changes) {
 			if (lines[i].startsWith(key)) {
