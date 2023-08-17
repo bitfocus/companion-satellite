@@ -78,7 +78,7 @@ export type CompanionSatelliteClientEvents = {
 	log: [string]
 	connected: []
 	disconnected: []
-	ipChange: [string]
+	ipChange: [host: string, port: number]
 
 	draw: [DeviceDrawProps]
 	brightness: [{ deviceId: string; percent: number }]
@@ -221,7 +221,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this._connectionActive = true
 
 		setImmediate(() => {
-			this.emit('ipChange', host)
+			this.emit('ipChange', host, port)
 		})
 
 		this._host = host

@@ -27,6 +27,16 @@ cp pi-image/50-satellite.rules /etc/udev/rules.d/
 
 # update startup script
 cp pi-image/satellite.service /etc/systemd/system
+
+# ADD REST_PORT to old config files
+if grep -q REST_PORT /boot/satellite-config; then
+echo "config ok"
+else
+echo "
+# Port for the REST server (0 to disable)
+REST_PORT=9999" >> /boot/satellite-config
+fi
+
 systemctl daemon-reload
 
 # install some scripts
