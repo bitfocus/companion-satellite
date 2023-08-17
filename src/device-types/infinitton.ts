@@ -45,7 +45,7 @@ export class InfinittonWrapper implements WrappedDevice {
 		// Start with blanking it
 		await this.blankDevice()
 
-		await this.showStatus(client.host, status)
+		this.showStatus(client.host, status)
 	}
 
 	async deviceAdded(): Promise<void> {
@@ -64,7 +64,7 @@ export class InfinittonWrapper implements WrappedDevice {
 			throw new Error(`Cannot draw for Streamdeck without image`)
 		}
 	}
-	async showStatus(hostname: string, status: string): Promise<void> {
+	showStatus(hostname: string, status: string): void {
 		this.#currentStatus = status
 
 		const width = Infinitton.ICON_SIZE * Infinitton.NUM_KEYS_PER_ROW

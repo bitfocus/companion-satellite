@@ -35,55 +35,67 @@ function tryConnect() {
 	const ip = store.get('remoteIp')
 	const port = store.get('remotePort') ?? DEFAULT_PORT
 	if (ip) {
-		client.connect(ip, port)
+		client.connect(ip, port).catch((e) => {
+			console.log('Failed to update connection: ', e)
+		})
 	}
 }
 
-app.whenReady().then(function () {
-	console.log('App ready')
+app.whenReady()
+	.then(function () {
+		console.log('App ready')
 
-	tryConnect()
+		tryConnect()
 
-	tray = new Tray(
-		process.platform == 'darwin'
-			? path.join(__dirname, '../assets', 'trayTemplate.png')
-			: path.join(__dirname, '../assets', 'icon.png')
-	)
+		let trayImage = path.join(__dirname, '../assets', 'tray.png')
+		switch (process.platform) {
+			case 'darwin':
+				trayImage = path.join(__dirname, '../assets', 'trayTemplate.png')
+				break
+			case 'win32':
+				trayImage = path.join(__dirname, '../assets', 'tray.ico')
+				break
+		}
 
-	const menu = new Menu()
-	menu.append(
-		new MenuItem({
-			label: 'Change Host',
-			click: changeHost,
-		})
-	)
-	menu.append(
-		new MenuItem({
-			label: 'Change Port',
-			click: changePort,
-		})
-	)
-	menu.append(
-		new MenuItem({
-			label: 'Scan devices',
-			click: trayScanDevices,
-		})
-	)
-	menu.append(
-		new MenuItem({
-			label: 'About',
-			click: trayAbout,
-		})
-	)
-	menu.append(
-		new MenuItem({
-			label: 'Quit',
-			click: trayQuit,
-		})
-	)
-	console.log('set tray')
-	tray.setContextMenu(menu)
-})
+		tray = new Tray(trayImage)
+
+		const menu = new Menu()
+		menu.append(
+			new MenuItem({
+				label: 'Change Host',
+				click: changeHost,
+			})
+		)
+		menu.append(
+			new MenuItem({
+				label: 'Change Port',
+				click: changePort,
+			})
+		)
+		menu.append(
+			new MenuItem({
+				label: 'Scan devices',
+				click: trayScanDevices,
+			})
+		)
+		menu.append(
+			new MenuItem({
+				label: 'About',
+				click: trayAbout,
+			})
+		)
+		menu.append(
+			new MenuItem({
+				label: 'Quit',
+				click: trayQuit,
+			})
+		)
+		console.log('set tray')
+		tray.setContextMenu(menu)
+	})
+	.catch((e) => {
+		dialog.showErrorBox(`Startup error`, `Failed to launch: ${e}`)
+	})
 
 function changeHost() {
 	const current = store.get('remoteIp')
