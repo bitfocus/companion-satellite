@@ -38,7 +38,7 @@ export class DeviceManager {
 	private readonly cardGenerator: CardGenerator
 
 	private statusString: string
-	private IpWatchTimer!: NodeJS.Timer
+	private IpWatchTimer: NodeJS.Timer | undefined
 
 	constructor(client: CompanionSatelliteClient) {
 		this.client = client
@@ -82,11 +82,10 @@ export class DeviceManager {
 		})
 
 		this.statusString = 'Connecting'
+		let dots = ''
 		this.IpWatchTimer = setInterval(() => {
-			let dots = ''
-			for (let i = 0; i < Date.now() % 4; i++) {
-				dots += '.'
-			}
+			dots += ' .'
+			if (dots.length > 7) { dots = '' }
 			this.showStatusCard('Connecting' + dots)
 		}, 1000)
 
@@ -104,11 +103,10 @@ export class DeviceManager {
 			console.log('disconnected')
 
 			this.showStatusCard('Disconnected')
+			let dots = ''
 			this.IpWatchTimer = setInterval(() => {
-				let dots = ''
-				for (let i = 0; i < Date.now() % 4; i++) {
-					dots += '.'
-				}
+				dots += ' .'
+				if (dots.length > 7) { dots = '' }
 				this.showStatusCard('Disconnected' + dots)
 			}, 1000)
 		})
