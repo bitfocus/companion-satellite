@@ -1,0 +1,33 @@
+# Quickstart guide
+
+1. Headless Companion Satellite
+
+   If you want to run satellite on a headless machine, consider using the install script
+
+   This can be run with:
+   $ curl https://raw.githubusercontent.com/bitfocus/companion-satellite/master/pi-image/install.sh | sh
+
+   The benefit of this approach is that it will setup and manage any required dependencies, udev rules for you, and provide you with an easy script to run to perform an update.
+
+   Alternatively, you are able to set it up yourself and define a systemd unit to launch it or do whatever you wish. For examples on how to do this, check the scripts in the repository https://github.com/bitfocus/companion-satellite
+
+2. Required Dependencies
+
+   Satellite requires some dependencies that aren't included by default on some Debian and Ubuntu installations.
+
+   $ apt-get update
+   $ apt-get install -y libusb-1.0-0-dev libudev-dev libfontconfig1
+
+3. Udev rules
+
+   For Satellite to be able to access your Streamdecks, Loupedecks, xkeys or other supported USB devices, some udev rules must be setup.
+   You can do this by running as root:
+   $ cp 50-satellite.rules /etc/udev/rules.d/50-satellite.rules
+   $ udevadm control --reload-rules
+   And replugging any usb devices that Satellite should be able to use.
+
+   Sometimes this file can change, when adding support for new devices, so it can be a good idea to update it when updating Satellite.
+
+4. Launching
+
+   To run Satellite, either run companion-satellite to get the desktop build, or run `node dist/main.js` to start it headless.

@@ -1,5 +1,5 @@
 import { CompanionSatelliteClient } from './client'
-import { getStreamDeckDeviceInfo, openStreamDeck, StreamDeck } from '@elgato-stream-deck/node'
+import { getStreamDeckDeviceInfo, openStreamDeck } from '@elgato-stream-deck/node'
 import { usb } from 'usb'
 import { CardGenerator } from './cards'
 import {
@@ -24,7 +24,9 @@ import {
 	VendorIdRazer,
 } from '@loupedeck/node'
 import { RazerStreamControllerXWrapper } from './device-types/razer-stream-controller-x'
+// eslint-disable-next-line node/no-extraneous-import
 import { VENDOR_ID as VendorIdElgato } from '@elgato-stream-deck/core'
+import { wrapAsync } from './lib'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -81,11 +83,11 @@ export class DeviceManager {
 
 		this.statusString = 'Connecting'
 		this.IpWatchTimer = setInterval(() => {
-			let dots =''
-			for (let i = 0; i < Date.now()%4; i++) {
+			let dots = ''
+			for (let i = 0; i < Date.now() % 4; i++) {
 				dots += '.'
 			}
-			this.showStatusCard('Connecting'+dots)
+			this.showStatusCard('Connecting' + dots)
 		}, 1000)
 
 		this.scanDevices()
@@ -103,68 +105,88 @@ export class DeviceManager {
 
 			this.showStatusCard('Disconnected')
 			this.IpWatchTimer = setInterval(() => {
-				let dots =''
-				for (let i = 0; i < Date.now()%4; i++) {
+				let dots = ''
+				for (let i = 0; i < Date.now() % 4; i++) {
 					dots += '.'
 				}
-				this.showStatusCard('Disconnected'+dots)
+				this.showStatusCard('Disconnected' + dots)
 			}, 1000)
 		})
 		client.on('ipChange', () => {
 			this.showStatusCard()
 		})
 
-		client.on('brightness', async (d) => {
-			try {
-				const dev = this.getDeviceInfo(d.deviceId)
-				await dev.setBrightness(d.percent)
-			} catch (e) {
-				console.error(`Set brightness: ${e}`)
-			}
-		})
-		client.on('clearDeck', async (d) => {
-			try {
-				const dev = this.getDeviceInfo(d.deviceId)
-				await dev.blankDevice()
-			} catch (e) {
-				console.error(`Set brightness: ${e}`)
-			}
-		})
-		client.on('draw', async (d) => {
-			try {
-				const dev = this.getDeviceInfo(d.deviceId)
-				await dev.draw(d)
-			} catch (e) {
-				console.error(`Draw: ${e}`)
-			}
-		})
-		client.on('newDevice', async (d) => {
-			try {
-				const dev = this.devices.get(d.deviceId)
-				if (dev) {
-					await dev.deviceAdded()
-				} else {
-					throw new Error(`Device missing: ${d.deviceId}`)
+		client.on(
+			'brightness',
+			wrapAsync(
+				async (d) => {
+					const dev = this.getDeviceInfo(d.deviceId)
+					await dev.setBrightness(d.percent)
+				},
+				(e) => {
+					console.error(`Set brightness: ${e}`)
 				}
-			} catch (e) {
-				console.error(`Setup device: ${e}`)
-			}
-		})
-		client.on('deviceErrored', async (d) => {
-			try {
-				const dev = this.devices.get(d.deviceId)
-				if (dev) {
-					await dev.showStatus(this.client.host, d.message)
+			)
+		)
+		client.on(
+			'clearDeck',
+			wrapAsync(
+				async (d) => {
+					const dev = this.getDeviceInfo(d.deviceId)
+					await dev.blankDevice()
+				},
+				(e) => {
+					console.error(`Clear deck: ${e}`)
+				}
+			)
+		)
+		client.on(
+			'draw',
+			wrapAsync(
+				async (d) => {
+					const dev = this.getDeviceInfo(d.deviceId)
+					await dev.draw(d)
+				},
+				(e) => {
+					console.error(`Draw: ${e}`)
+				}
+			)
+		)
+		client.on(
+			'newDevice',
+			wrapAsync(
+				async (d) => {
+					const dev = this.devices.get(d.deviceId)
+					if (dev) {
+						await dev.deviceAdded()
+					} else {
+						throw new Error(`Device missing: ${d.deviceId}`)
+					}
+				},
+				(e) => {
+					console.error(`Setup device: ${e}`)
+				}
+			)
+		)
+		client.on(
+			'deviceErrored',
+			wrapAsync(
+				async (d) => {
+					const dev = this.devices.get(d.deviceId)
+					if (dev) {
+						dev.showStatus(this.client.host, d.message)
 
-					// Try again to add the device, in case we can recover
-					this.delayRetryAddOfDevice(d.deviceId)
-				} else {
-					throw new Error(`Device missing: ${d.deviceId}`)
+						// Try again to add the device, in case we can recover
+						this.delayRetryAddOfDevice(d.deviceId)
+					} else {
+						throw new Error(`Device missing: ${d.deviceId}`)
+					}
+				},
+				(e) => {
+					console.error(`Failed device: ${e}`)
 				}
-			} catch (e) {
-				console.error(`Failed device: ${e}`)
-			}
-		})
+			)
+		)
 	}
 
 	private delayRetryAddOfDevice(deviceId: string) {
@@ -180,7 +202,7 @@ export class DeviceManager {
 		// usbDetect.stopMonitoring()
 
 		// Close all the devices
-		await Promise.allSettled(Array.from(this.devices.values()).map((d) => d.close()))
+		await Promise.allSettled(Array.from(this.devices.values()).map(async (d) => d.close()))
 	}
 
 	private getDeviceInfo(deviceId: string): WrappedDevice {
@@ -222,7 +244,7 @@ export class DeviceManager {
 
 	public registerAll(): void {
 		console.log('registerAll', Array.from(this.devices.keys()))
-		for (const [_, device] of this.devices.entries()) {
+		for (const device of this.devices.values()) {
 			// If it is already in the process of initialising, core will give us back the same id twice, so we dont need to track it
 			// if (!devices2.find((d) => d[1] === serial)) { // TODO - do something here?
 
@@ -279,51 +301,56 @@ export class DeviceManager {
 			})
 	}
 
-	private async tryAddLoupedeck(
+	private tryAddLoupedeck(
 		path: string,
 		serial: string,
 		wrapperClass: new (deviceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) => WrappedDevice
 	) {
-		let ld: LoupedeckDevice | undefined
-		try {
-			if (!this.devices.has(serial)) {
-				console.log(`adding new device: ${path}`)
-				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
+		if (!this.devices.has(serial)) {
+			console.log(`adding new device: ${path}`)
+			console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
-				ld = await openLoupedeck(path)
-				ld.on('error', (err) => {
-					console.error('device error', err)
-					this.cleanupDeviceById(serial)
+			openLoupedeck(path)
+				.then(async (ld) => {
+					try {
+						ld.on('error', (err) => {
+							console.error('device error', err)
+							this.cleanupDeviceById(serial)
+						})
+
+						const devInfo = new wrapperClass(serial, ld, this.cardGenerator)
+						await this.tryAddDeviceInner(serial, devInfo)
+					} catch (e) {
+						console.log(`Open "${path}" failed: ${e}`)
+						ld.close().catch(() => null)
+					}
 				})
-
-				const devInfo = new wrapperClass(serial, ld, this.cardGenerator)
-				await this.tryAddDeviceInner(serial, devInfo)
-			}
-		} catch (e) {
-			console.log(`Open "${path}" failed: ${e}`)
-			if (ld) ld.close() //.catch((e) => null)
+				.catch((e) => {
+					console.log(`Open "${path}" failed: ${e}`)
+				})
 		}
 	}
 
-	private async tryAddStreamdeck(path: string, serial: string) {
-		let sd: StreamDeck | undefined
+	private tryAddStreamdeck(path: string, serial: string) {
 		try {
 			if (!this.devices.has(serial)) {
 				console.log(`adding new device: ${path}`)
 				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
-				sd = openStreamDeck(path)
+				const sd = openStreamDeck(path)
 				sd.on('error', (e) => {
 					console.error('device error', e)
 					this.cleanupDeviceById(serial)
 				})
 
 				const devInfo = new StreamDeckWrapper(serial, sd, this.cardGenerator)
-				await this.tryAddDeviceInner(serial, devInfo)
+				this.tryAddDeviceInner(serial, devInfo).catch((e) => {
+					console.log(`Open "${path}" failed: ${e}`)
+					sd.close().catch(() => null)
+				})
 			}
 		} catch (e) {
 			console.log(`Open "${path}" failed: ${e}`)
-			if (sd) sd.close() //.catch((e) => null)
 		}
 	}
 
@@ -337,7 +364,7 @@ export class DeviceManager {
 	// 	return val2
 	// }
 
-	private async tryAddQuickKeys(surface: XencelabsQuickKeys) {
+	private tryAddQuickKeys(surface: XencelabsQuickKeys) {
 		// TODO - support no deviceId for wired devices
 		if (!surface.deviceId) return
 
@@ -354,32 +381,35 @@ export class DeviceManager {
 				})
 
 				const devInfo = new QuickKeysWrapper(deviceId, surface)
-				await this.tryAddDeviceInner(deviceId, devInfo)
+				this.tryAddDeviceInner(deviceId, devInfo).catch((e) => {
+					console.log(`Open "${surface.deviceId}" failed: ${e}`)
+				})
 			}
 		} catch (e) {
 			console.log(`Open "${surface.deviceId}" failed: ${e}`)
 		}
 	}
 
-	private async tryAddInfinitton(path: string, serial: string) {
-		let panel: Infinitton | undefined
+	private tryAddInfinitton(path: string, serial: string) {
 		try {
 			if (!this.devices.has(serial)) {
 				console.log(`adding new device: ${path}`)
 				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
-				panel = new Infinitton(path)
+				const panel = new Infinitton(path)
 				panel.on('error', (e) => {
 					console.error('device error', e)
 					this.cleanupDeviceById(serial)
 				})
 
 				const devInfo = new InfinittonWrapper(serial, panel, this.cardGenerator)
-				await this.tryAddDeviceInner(serial, devInfo)
+				this.tryAddDeviceInner(serial, devInfo).catch((e) => {
+					console.log(`Open "${path}" failed: ${e}`)
+					panel.close()
+				})
 			}
 		} catch (e) {
 			console.log(`Open "${path}" failed: ${e}`)
-			if (panel) panel.close() //.catch((e) => null)
 		}
 	}
 

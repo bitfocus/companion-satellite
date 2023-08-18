@@ -5,7 +5,7 @@ import { DeviceManager } from './devices'
 import { DEFAULT_PORT } from './lib'
 
 import { RestServer } from './rest'
-import * as fs from 'fs'
+import * as fs from 'fs/promises'
 
 const cli = meow(
 	`
@@ -43,56 +43,45 @@ console.log('Starting')
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
-const server = new RestServer(client)
+const server = new RestServer(client, devices)
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
 
-client.on('ipChange', (newIP) => {
-	updateEnvironmentFile('/boot/satellite-config',
-		{ "COMPANION_IP": newIP, "COMPANION_PORT": String(client.port) })
-})
+const configFilePath = process.env.SATELLITE_CONFIG_PATH
+if (configFilePath) {
+	// Update the config file on changes, if a path is provided
+	client.on('ipChange', (newIP, newPort) => {
+		updateEnvironmentFile(configFilePath, { COMPANION_IP: newIP, COMPANION_PORT: String(newPort) }).catch((e) => {
+			console.log(`Failed to update config file:`, e)
+		})
+	})
+}
 
 exitHook(() => {
 	console.log('Exiting')
 	client.disconnect()
-	devices.close()
+	devices.close().catch(() => null)
 	server.close()
 })
 
-client.connect(cli.input[0], port)
+client.connect(cli.input[0], port).catch((e) => {
+	console.log(`Failed to connect`, e)
+})
 server.open(rest_port)
 
-function updateEnvironmentFile(filePath: string, changes: Record<string, string>): void {
-	fs.access(filePath, (err: any) => {
-		if (err) {
-			console.log(err)
-		} else {
-			fs.readFile(filePath, 'utf-8', function (err: any, data: string) {
-				if (err) {
-					console.error(err)
-				}
-				else {
-					let lines = data.split(/\r?\n/)
+async function updateEnvironmentFile(filePath: string, changes: Record<string, string>): Promise<void> {
+	const data = await fs.readFile(filePath, 'utf-8')
 
-					for (let i = 0; i < lines.length; i++) {
-						for (const key in changes) {
-							if (lines[i].startsWith(key)) {
-								lines[i] = key + '=' + changes[key]
-							}
-						}
-					}
-
-					let newData = lines.join('\n')
-
-					fs.writeFile(filePath, newData, 'utf-8', function (err: any) {
-						if (err) {
-							console.error(err)
-						}
-					});
-				}
-
-			})
+	const lines = data.split(/\r?\n/)
+	for (let i = 0; i < lines.length; i++) {
+		for (const key in changes) {
+			if (lines[i].startsWith(key)) {
+				lines[i] = key + '=' + changes[key]
+			}
 		}
-	})
+	}
+
+	const newData = lines.join('\n')
+	await fs.writeFile(filePath, newData, 'utf-8')
 }

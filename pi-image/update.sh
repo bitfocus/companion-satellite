@@ -23,7 +23,7 @@ yarn
 yarn build
 
 # update some tooling
-cp pi-image/50-satellite.rules /etc/udev/rules.d/
+cp assets/linux/50-satellite.rules /etc/udev/rules.d/
 
 # update startup script
 cp pi-image/satellite.service /etc/systemd/system
@@ -33,7 +33,7 @@ if grep -q REST_PORT /boot/satellite-config; then
 echo "config ok"
 else
 echo "
-#PORT FOR THE REST server
+# Port for the REST server (0 to disable)
 REST_PORT=9999" >> /boot/satellite-config
 fi
 
@@ -43,8 +43,7 @@ systemctl daemon-reload
 ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-license /usr/local/bin/satellite-license
 ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-help /usr/local/bin/satellite-help
 ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-update /usr/local/sbin/satellite-update
-# This isn't something we want to allow for now, so skip these
-# ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-edit-config /usr/local/sbin/satellite-edit-config
+ln -s -f /usr/local/src/companion-satellite/pi-image/satellite-edit-config /usr/local/sbin/satellite-edit-config
 
 # install the motd
 ln -s -f /usr/local/src/companion-satellite/pi-image/motd /etc/motd 

@@ -68,7 +68,7 @@ export class ImageWriteQueue {
 					// Ensure it doesnt error out
 					console.error('fillImage error:', e)
 				})
-				.then(() => {
+				.finally(() => {
 					// Stop tracking key
 					this.inProgress = this.inProgress.filter((k) => k !== nextImage.key)
 

@@ -88,7 +88,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 
 	async close(): Promise<void> {
 		this.#queue?.abort()
-		this.#deck.close()
+		await this.#deck.close()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
 		this.#companionSupportsScaling = client.useCustomBitmapResolution
@@ -108,14 +108,14 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		// Start with blanking it
 		await this.blankDevice()
 
-		await this.showStatus(client.host, status)
+		this.showStatus(client.host, status)
 	}
 
 	async deviceAdded(): Promise<void> {
 		this.#queueOutputId++
 	}
 	async setBrightness(percent: number): Promise<void> {
-		this.#deck.setBrightness(percent / 100)
+		await this.#deck.setBrightness(percent / 100)
 	}
 	async blankDevice(skipButtons?: boolean): Promise<void> {
 		await this.#deck.blankDevice(true, !skipButtons)
@@ -127,7 +127,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 			throw new Error(`Cannot draw for Loupedeck without image`)
 		}
 	}
-	async showStatus(hostname: string, status: string): Promise<void> {
+	showStatus(hostname: string, status: string): void {
 		const width = this.#deck.displayMain.width
 		const height = this.#deck.displayMain.height
 

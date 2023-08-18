@@ -35,5 +35,5 @@ export interface WrappedDevice {
 
 	draw(data: DeviceDrawProps): Promise<void>
 
-	showStatus(hostname: string, status: string): Promise<void>
+	showStatus(hostname: string, status: string): void
 }
