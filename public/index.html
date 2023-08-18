@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>companion-satellite</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+        }
+    </style>
+    <script>
+        function getConfig() {
+            fetch("api/config")
+                .then((response) => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error: ${response.status}`);
+                    }
+                    return response.json();
+                }).then((json) => {
+                    document.getElementById('host').value = json['host']
+                    document.getElementById('port').value = json['port']
+                })
+        }
+        window.onload = () => { getConfig() }
+    </script>
+</head>
+
+<body>
+    <main>
+        <form id="form">
+            <label for="host">Host:</label>
+            <input type="text" id="host" name="host"><br><br>
+            <label for="port">Port:</label>
+            <input type="number" id="port" name="port"><br><br>
+            <input type="submit" value="Submit">
+        </form>
+    </main>
+</body>
+<script>
+    const form = document.getElementById('form')
+    form.onsubmit = (event) => {
+        event.preventDefault()
+        const xhr = new XMLHttpRequest()
+        const formData = new FormData(form)
+        xhr.open('POST', '/api/config')
+        xhr.setRequestHeader("Content-Type", "application/json")
+        xhr.send(JSON.stringify(Object.fromEntries(formData)))
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == XMLHttpRequest.DONE) {
+                form.reset()
+                getConfig()
+            }
+        }
+    }
+</script>
+
+</html>

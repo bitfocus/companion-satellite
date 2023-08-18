@@ -1,6 +1,7 @@
 import * as Koa from 'koa'
 import * as Router from 'koa-router'
 import koaBody from 'koa-body'
+import * as send from 'koa-send'
 import http = require('http')
 import type { CompanionSatelliteClient } from './client'
 import type { DeviceManager } from './devices'
@@ -18,6 +19,10 @@ export class RestServer {
 
 		this.app = new Koa()
 		this.router = new Router()
+
+		this.router.get('/', async (ctx) => {
+			await send(ctx, './public/index.html')
+		})
 
 		//GET
 		this.router.get('/api/host', async (ctx) => {
