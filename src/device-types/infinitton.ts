@@ -2,7 +2,7 @@ import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 import Infinitton = require('infinitton-idisplay')
-import { rgbaToRgb } from '../lib'
+import * as imageRs from '@julusian/image-rs'
 
 export class InfinittonWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -70,10 +70,8 @@ export class InfinittonWrapper implements WrappedDevice {
 		const width = Infinitton.ICON_SIZE * Infinitton.NUM_KEYS_PER_ROW
 		const height = Infinitton.ICON_SIZE * Math.floor(Infinitton.NUM_KEYS / Infinitton.NUM_KEYS_PER_ROW)
 		this.#cardGenerator
-			.generateBasicCard(width, height, hostname, status)
+			.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
 			.then(async (buffer) => {
-				buffer = await rgbaToRgb(buffer, width, height)
-
 				if (status === this.#currentStatus) {
 					// still valid
 					this.#panel.fillPanelImage(buffer)
