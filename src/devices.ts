@@ -38,7 +38,6 @@ export class DeviceManager {
 	private readonly cardGenerator: CardGenerator
 
 	private statusString: string
-	private IpWatchTimer: NodeJS.Timer | undefined
 
 	constructor(client: CompanionSatelliteClient) {
 		this.client = client
@@ -82,36 +81,24 @@ export class DeviceManager {
 		})
 
 		this.statusString = 'Connecting'
-		let dots = ''
-		this.IpWatchTimer = setInterval(() => {
-			dots += ' .'
-			if (dots.length > 7) { dots = '' }
-			this.showStatusCard('Connecting' + dots)
-		}, 1000)
+		this.showStatusCard(this.statusString, true)
 
 		this.scanDevices()
 
 		client.on('connected', () => {
 			console.log('connected')
 
-			this.showStatusCard('Connected')
+			this.showStatusCard('Connected', false)
 
 			this.registerAll()
-			clearInterval(this.IpWatchTimer)
 		})
 		client.on('disconnected', () => {
 			console.log('disconnected')
 
-			this.showStatusCard('Disconnected')
-			let dots = ''
-			this.IpWatchTimer = setInterval(() => {
-				dots += ' .'
-				if (dots.length > 7) { dots = '' }
-				this.showStatusCard('Disconnected' + dots)
-			}, 1000)
+			this.showStatusCard('Connecting', true)
 		})
 		client.on('ipChange', () => {
-			this.showStatusCard()
+			this.showStatusCard('Connecting', true)
 		})
 
 		client.on(
@@ -426,13 +413,31 @@ export class DeviceManager {
 		}
 	}
 
-	private showStatusCard(status?: string): void {
-		if (status !== undefined) {
-			this.statusString = status
+	private statusCardTimer: NodeJS.Timer | undefined
+	private showStatusCard(message: string, runLoop: boolean): void {
+		this.statusString = message
+
+		if (this.statusCardTimer) {
+			clearInterval(this.statusCardTimer)
+			delete this.statusCardTimer
 		}
 
+		if (runLoop) {
+			let dots = ''
+			this.statusCardTimer = setInterval(() => {
+				dots += ' .'
+				if (dots.length > 7) dots = ''
+
+				this.doDrawStatusCard(message + dots)
+			}, 1000)
+		}
+
+		this.doDrawStatusCard(message)
+	}
+
+	private doDrawStatusCard(message: string) {
 		for (const dev of this.devices.values()) {
-			dev.showStatus(this.client.host, this.statusString)
+			dev.showStatus(this.client.host, message)
 		}
 	}
 }
