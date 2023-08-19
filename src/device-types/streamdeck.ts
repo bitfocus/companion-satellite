@@ -38,11 +38,9 @@ export class StreamDeckWrapper implements WrappedDevice {
 				if (this.#deck.ICON_SIZE !== 72 && !this.#companionSupportsScaling) {
 					// scale if necessary
 					try {
-						newbuffer = Buffer.from(
-							(await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
-								.scale(this.#deck.ICON_SIZE, this.#deck.ICON_SIZE)
-								.toBuffer(imageRs.PixelFormat.Rgb)) as Uint8Array
-						)
+						newbuffer = await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
+							.scale(this.#deck.ICON_SIZE, this.#deck.ICON_SIZE)
+							.toBuffer(imageRs.PixelFormat.Rgb)
 					} catch (e) {
 						console.log(`device(${deviceId}): scale image failed: ${e}`)
 						return
@@ -70,11 +68,14 @@ export class StreamDeckWrapper implements WrappedDevice {
 				// scale if necessary
 				try {
 					const inputRes = this.#companionSupportsScaling ? this.#deck.ICON_SIZE : 72
-					newbuffer = Buffer.from(
-						(await imageRs.ImageTransformer.fromBuffer(buffer, inputRes, inputRes, imageRs.PixelFormat.Rgb)
-							.scale(encoderSize.height, encoderSize.height)
-							.toBuffer(imageRs.PixelFormat.Rgb)) as Uint8Array
+					newbuffer = await imageRs.ImageTransformer.fromBuffer(
+						buffer,
+						inputRes,
+						inputRes,
+						imageRs.PixelFormat.Rgb
 					)
+						.scale(encoderSize.height, encoderSize.height)
+						.toBuffer(imageRs.PixelFormat.Rgb)
 				} catch (e) {
 					console.log(`device(${deviceId}): scale image failed: ${e}`)
 					return
@@ -204,7 +205,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 			const width = this.#deck.ICON_SIZE * this.#deck.KEY_COLUMNS
 			const height = this.#deck.ICON_SIZE * this.#deck.KEY_ROWS
 			this.#cardGenerator
-				.generateBasicCard(width, height, hostname, status)
+				.generateBasicCard(width, height, imageRs.PixelFormat.Rgba, hostname, status)
 				.then(async (buffer) => {
 					if (outputId === this.#queueOutputId) {
 						// still valid

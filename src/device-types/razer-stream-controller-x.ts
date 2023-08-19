@@ -4,7 +4,6 @@ import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
 import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
-import { rgbaToRgb } from '../lib'
 
 export class RazerStreamControllerXWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -47,11 +46,9 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 			let newbuffer: Buffer = buffer
 			if (!this.#companionSupportsScaling) {
 				try {
-					newbuffer = Buffer.from(
-						(await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
-							.scale(width, height)
-							.toBuffer(imageRs.PixelFormat.Rgb)) as Uint8Array
-					)
+					newbuffer = await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
+						.scale(width, height)
+						.toBuffer(imageRs.PixelFormat.Rgb)
 				} catch (e) {
 					console.log(`device(${deviceId}): scale image failed: ${e}`)
 					return
@@ -136,10 +133,8 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		this.#queueOutputId++
 		const outputId = this.#queueOutputId
 		this.#cardGenerator
-			.generateBasicCard(width, height, hostname, status)
+			.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
 			.then(async (buffer) => {
-				buffer = await rgbaToRgb(buffer, width, height)
-
 				if (outputId === this.#queueOutputId) {
 					console.log('draw buffer')
 					this.#isShowingCard = true

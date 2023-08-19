@@ -2,6 +2,8 @@ import * as path from 'path'
 import { promisify } from 'util'
 import { readFile } from 'fs'
 import { Canvas, Image, loadImage } from '@julusian/skia-canvas'
+import * as imageRs from '@julusian/image-rs'
+import { networkInterfaces } from 'os'
 
 const readFileP = promisify(readFile)
 
@@ -23,11 +25,22 @@ export class CardGenerator {
 		return this.iconImage
 	}
 
-	async generateBasicCard(width: number, height: number, remoteIp: string, status: string): Promise<Buffer> {
+	async generateBasicCard(
+		width: number,
+		height: number,
+		pixelFormat: imageRs.PixelFormat,
+		remoteIp: string,
+		status: string
+	): Promise<Buffer> {
 		const iconImage = await this.loadIcon()
 
-		const canvas = new Canvas(width, height)
+		const overSampling = 2 // Must be 1 or greater
+
+		const canvasWidth = width * overSampling
+		const canvasHeight = height * overSampling
+		const canvas = new Canvas(canvasWidth, canvasHeight)
 		const context2d = canvas.getContext('2d')
+		context2d.scale(overSampling, overSampling)
 
 		// draw icon
 		const iconTargetSize = Math.round(Math.min(width, height) * 0.6)
@@ -55,11 +68,14 @@ export class CardGenerator {
 		context2d.fillText(`Status: ${status}`, 10, height - 50)
 
 		// return result
-		return Buffer.from(context2d.getImageData(0, 0, width, height).data)
+		const rawImage = Buffer.from(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
+
+		return await imageRs.ImageTransformer.fromBuffer(rawImage, canvasWidth, canvasHeight, imageRs.PixelFormat.Rgba)
+			.scale(width, height)
+			.toBuffer(pixelFormat)
 	}
 }
 
-import { networkInterfaces } from 'os'
 function getIPAddress() {
 	for (const devName in networkInterfaces()) {
 		const iface = networkInterfaces()[devName]
