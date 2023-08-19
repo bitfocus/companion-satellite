@@ -65,13 +65,13 @@
     "koa-body": "^6.0.1",
     "koa-router": "^12.0.0",
     "meow": "^9.0.0",
-    "node-hid": "npm:@julusian/hid@2.5.0-3",
+    "node-hid": "npm:@julusian/hid@3.0.0-0",
     "semver": "^7.5.4",
     "tslib": "^2.6.1",
     "usb": "^2.9.0"
   },
   "resolutions": {
-	"@elgato-stream-deck/node/node-hid": "npm:@julusian/hid@2.5.0-3"
+	"node-hid": "npm:@julusian/hid@3.0.0-0"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
   "lint-staged": {
