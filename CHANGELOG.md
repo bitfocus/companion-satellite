@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.5.0](https://github.com/bitfocus/companion-satellite/compare/v1.4.1...v1.5.0) (Sat Aug 19 2023)
+
+
+### Fixes
+
+* macos offline icon [5e04a02](https://github.com/bitfocus/companion-satellite/commit/5e04a0285cf355f2714e8bdc952bc3d5e7f4e5aa)
+* simplify @julusian/image-rs usage [ec0672f](https://github.com/bitfocus/companion-satellite/commit/ec0672f025df978b5ec10378ea7c3f7fdb563c07)
+* upgrade @julusian/image-rs to resolve streamdeck drawing black [65bae64](https://github.com/bitfocus/companion-satellite/commit/65bae6494294386b6123d0974531f5a2caff59ff)
+* skia-canvas [52ce045](https://github.com/bitfocus/companion-satellite/commit/52ce04562ab95a24f845208bc2bed8af9ee775b3)
+* install libfontconfig1 required by skia-canvas #76 [997fe7f](https://github.com/bitfocus/companion-satellite/commit/997fe7f9f716a15d83b0b04e51696c1b07c843fa)
+* missing line [63ef41f](https://github.com/bitfocus/companion-satellite/commit/63ef41fd7fc9b66ba1e675892766c232aadad8ef)
+
+### Features
+
+* show connection status in tray icon #3 [d84117e](https://github.com/bitfocus/companion-satellite/commit/d84117e0bfb468cf2932d57382aa4ad102e647ea)
+* oversample status card generation to improve text rendering [6ebaf36](https://github.com/bitfocus/companion-satellite/commit/6ebaf3679672be978bfa46701884b637f626c5c2)
+* add rest endpoint to rescan for surfaces [06eb299](https://github.com/bitfocus/companion-satellite/commit/06eb2994c64823e264e7bfea264d4c06ed9c51be)
+* enable/disable api from tray menu [59a6103](https://github.com/bitfocus/companion-satellite/commit/59a6103086bb5dcc825ded708407e59197c676d4)
+* REST api (#78) [5e924b8](https://github.com/bitfocus/companion-satellite/commit/5e924b84316714d8163f6351e78984aa9dfbb81a)
+* update icons [4a76fc4](https://github.com/bitfocus/companion-satellite/commit/4a76fc48fa4a51cae91bce9ce071018fef170e90)
+* replace sharp with skia-canvas for placeholder drawing [3c01b55](https://github.com/bitfocus/companion-satellite/commit/3c01b55fc86325cd9be9d2ca8aa477e623cd8d61)
+* replace sharp with @julusian/image-rs for image scaling [103344d](https://github.com/bitfocus/companion-satellite/commit/103344d0c3e75e54389fc8e1c8ab3fff6a482b90)
+* update electron [f863304](https://github.com/bitfocus/companion-satellite/commit/f863304f7e1c508034e5f577cb9a51e7c1d2c829)
+* support companion provided bitmap scaling [b335e2e](https://github.com/bitfocus/companion-satellite/commit/b335e2edba7d8617430e05b71a636907b03bf0c8)
+* isolated install script [4b060a1](https://github.com/bitfocus/companion-satellite/commit/4b060a1610936442947406c52ba4a5902640fa9b)
+* update electron and node-hid [d96acfe](https://github.com/bitfocus/companion-satellite/commit/d96acfe5e3c5c1ed15895ffbe615fef268a1f4cf)
+
 ## [1.4.1](https://github.com/bitfocus/companion-satellite/compare/v1.4.0...v1.4.1) (Thu Apr 20 2023)
 
 
