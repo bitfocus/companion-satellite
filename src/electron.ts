@@ -127,7 +127,7 @@ app.whenReady()
 		switch (process.platform) {
 			case 'darwin':
 				trayImagePath = path.join(__dirname, '../assets', 'trayTemplate.png')
-				trayImageOfflinePath = path.join(__dirname, '../assets', 'trayTemplate-offline.png')
+				trayImageOfflinePath = path.join(__dirname, '../assets', 'trayOfflineTemplate.png')
 				break
 			case 'win32':
 				trayImagePath = path.join(__dirname, '../assets', 'tray.ico')
