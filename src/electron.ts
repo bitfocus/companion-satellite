@@ -1,5 +1,5 @@
 // eslint-disable-next-line node/no-unpublished-import
-import { app, Tray, Menu, MenuItem, dialog } from 'electron'
+import { app, Tray, Menu, MenuItem, dialog, nativeImage } from 'electron'
 import * as path from 'path'
 // eslint-disable-next-line node/no-unpublished-import
 import * as electronStore from 'electron-store'
@@ -122,17 +122,29 @@ app.whenReady()
 		tryConnect()
 		restartRestApi()
 
-		let trayImage = path.join(__dirname, '../assets', 'tray.png')
+		let trayImagePath = path.join(__dirname, '../assets', 'tray.png')
+		let trayImageOfflinePath = path.join(__dirname, '../assets', 'tray-offline.png')
 		switch (process.platform) {
 			case 'darwin':
-				trayImage = path.join(__dirname, '../assets', 'trayTemplate.png')
+				trayImagePath = path.join(__dirname, '../assets', 'trayTemplate.png')
+				trayImageOfflinePath = path.join(__dirname, '../assets', 'trayTemplate-offline.png')
 				break
 			case 'win32':
-				trayImage = path.join(__dirname, '../assets', 'tray.ico')
+				trayImagePath = path.join(__dirname, '../assets', 'tray.ico')
+				trayImageOfflinePath = path.join(__dirname, '../assets', 'tray-offline.ico')
 				break
 		}
+		const trayImage = nativeImage.createFromPath(trayImagePath)
+		const trayImageOffline = nativeImage.createFromPath(trayImageOfflinePath)
 
-		tray = new Tray(trayImage)
+		tray = new Tray(trayImageOffline)
+
+		client.on('connected', () => {
+			tray?.setImage(trayImage)
+		})
+		client.on('disconnected', () => {
+			tray?.setImage(trayImageOffline)
+		})
 
 		updateTray()
 	})
