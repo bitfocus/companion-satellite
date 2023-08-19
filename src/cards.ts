@@ -76,7 +76,6 @@ export class CardGenerator {
 	}
 }
 
-//#TODO: make llocal ip reactive
 function getIPAddress() {
 	for (const devName in networkInterfaces()) {
 		const iface = networkInterfaces()[devName]
