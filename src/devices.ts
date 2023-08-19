@@ -34,16 +34,18 @@ HID.devices()
 
 export class DeviceManager {
 	private readonly devices: Map<DeviceId, WrappedDevice>
+	private readonly pendingDevices: Set<DeviceId>
 	private readonly client: CompanionSatelliteClient
 	private readonly cardGenerator: CardGenerator
 
 	private statusString: string
-	private scanIsRunning: boolean = false
-	private scanPending: boolean = false
+	private scanIsRunning = false
+	private scanPending = false
 
 	constructor(client: CompanionSatelliteClient) {
 		this.client = client
 		this.devices = new Map()
+		this.pendingDevices = new Set()
 		this.cardGenerator = new CardGenerator()
 
 		usb.on('attach', (dev) => {
@@ -180,6 +182,7 @@ export class DeviceManager {
 		setTimeout(() => {
 			const dev = this.devices.get(deviceId)
 			if (dev) {
+				console.log('try add', deviceId)
 				this.client.addDevice(deviceId, dev.productName, dev.getRegisterProps())
 			}
 		}, 1000)
@@ -234,16 +237,14 @@ export class DeviceManager {
 
 		console.log('registerAll', Array.from(this.devices.keys()))
 		for (const device of this.devices.values()) {
-			// If it is already in the process of initialising, core will give us back the same id twice, so we dont need to track it
-			// if (!devices2.find((d) => d[1] === serial)) { // TODO - do something here?
+			// If it is still in the process of initialising skip it
+			if (this.pendingDevices.has(device.deviceId)) continue
 
 			// Indicate on device
 			device.showStatus(this.client.host, this.statusString)
 
 			// Re-init device
 			this.client.addDevice(device.deviceId, device.productName, device.getRegisterProps())
-
-			// }
 		}
 
 		this.scanDevices()
@@ -308,15 +309,20 @@ export class DeviceManager {
 		})
 	}
 
+	private canAddDevice(deviceId: string): boolean {
+		return !this.pendingDevices.has(deviceId) && !this.devices.has(deviceId)
+	}
+
 	private tryAddLoupedeck(
 		path: string,
 		serial: string,
 		wrapperClass: new (deviceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) => WrappedDevice
 	) {
-		if (!this.devices.has(serial)) {
+		if (this.canAddDevice(serial)) {
 			console.log(`adding new device: ${path}`)
 			console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
+			this.pendingDevices.add(serial)
 			openLoupedeck(path)
 				.then(async (ld) => {
 					try {
@@ -335,14 +341,18 @@ export class DeviceManager {
 				.catch((e) => {
 					console.log(`Open "${path}" failed: ${e}`)
 				})
+				.finally(() => {
+					this.pendingDevices.delete(serial)
+				})
 		}
 	}
 
 	private tryAddStreamdeck(path: string, serial: string) {
-		if (!this.devices.has(serial)) {
+		if (this.canAddDevice(serial)) {
 			console.log(`adding new device: ${path}`)
 			console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
+			this.pendingDevices.add(serial)
 			openStreamDeck(path)
 				.then(async (sd) => {
 					try {
@@ -360,6 +370,9 @@ export class DeviceManager {
 				})
 				.catch((e) => {
 					console.log(`Open "${path}" failed: ${e}`)
+				})
+				.finally(() => {
+					this.pendingDevices.delete(serial)
 				})
 		}
 	}
@@ -380,9 +393,11 @@ export class DeviceManager {
 
 		try {
 			const deviceId = surface.deviceId
-			if (!this.devices.has(deviceId)) {
+			if (this.canAddDevice(deviceId)) {
 				console.log(`adding new device: ${deviceId}`)
 				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
+
+				this.pendingDevices.add(deviceId)
 
 				// TODO - this is race prone..
 				surface.on('error', (e) => {
@@ -391,9 +406,13 @@ export class DeviceManager {
 				})
 
 				const devInfo = new QuickKeysWrapper(deviceId, surface)
-				this.tryAddDeviceInner(deviceId, devInfo).catch((e) => {
-					console.log(`Open "${surface.deviceId}" failed: ${e}`)
-				})
+				this.tryAddDeviceInner(deviceId, devInfo)
+					.catch((e) => {
+						console.log(`Open "${surface.deviceId}" failed: ${e}`)
+					})
+					.finally(() => {
+						this.pendingDevices.delete(deviceId)
+					})
 			}
 		} catch (e) {
 			console.log(`Open "${surface.deviceId}" failed: ${e}`)
@@ -402,10 +421,11 @@ export class DeviceManager {
 
 	private tryAddInfinitton(path: string, serial: string): void {
 		try {
-			if (!this.devices.has(serial)) {
+			if (this.canAddDevice(serial)) {
 				console.log(`adding new device: ${path}`)
 				console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
 
+				this.pendingDevices.add(serial)
 				const panel = new Infinitton(path)
 				panel.on('error', (e) => {
 					console.error('device error', e)
@@ -413,10 +433,14 @@ export class DeviceManager {
 				})
 
 				const devInfo = new InfinittonWrapper(serial, panel, this.cardGenerator)
-				this.tryAddDeviceInner(serial, devInfo).catch((e) => {
-					console.log(`Open "${path}" failed: ${e}`)
-					panel.close()
-				})
+				this.tryAddDeviceInner(serial, devInfo)
+					.catch((e) => {
+						console.log(`Open "${path}" failed: ${e}`)
+						panel.close()
+					})
+					.finally(() => {
+						this.pendingDevices.delete(serial)
+					})
 			}
 		} catch (e) {
 			console.log(`Open "${path}" failed: ${e}`)

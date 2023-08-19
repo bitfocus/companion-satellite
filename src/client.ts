@@ -104,6 +104,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsCombinedEncoders = false
 	private _supportsBitmapResolution = false
 
+	private _registeredDevices = new Set<string>()
+	private _pendingDevices = new Map<string, number>() // Time submitted
+
 	public forceSplitEncoders = false
 
 	public get host(): string {
@@ -146,6 +149,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this.emit('log', 'Connection closed')
 			}
 
+			this._registeredDevices.clear()
+			this._pendingDevices.clear()
+
 			if (this._connected) {
 				this.emit('disconnected')
 			}
@@ -172,6 +178,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			if (this.debug) {
 				this.emit('log', 'Connected')
 			}
+
+			this._registeredDevices.clear()
+			this._pendingDevices.clear()
 
 			this._connected = true
 			this._pingUnackedCount = 0
@@ -392,6 +401,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			return
 		}
 
+		this._registeredDevices.add(params.DEVICEID)
+		this._pendingDevices.delete(params.DEVICEID)
+
 		this.emit('newDevice', { deviceId: params.DEVICEID })
 	}
 
@@ -417,7 +429,18 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	public addDevice(deviceId: string, productName: string, props: DeviceRegisterProps): void {
+		if (this._registeredDevices.has(deviceId)) {
+			throw new Error('Device is already registered')
+		}
+
+		const pendingTime = this._pendingDevices.get(deviceId)
+		if (pendingTime && pendingTime < Date.now() - 10000) {
+			throw new Error('Device is already being added')
+		}
+
 		if (this._connected && this.socket) {
+			this._pendingDevices.set(deviceId, Date.now())
+
 			this.socket.write(
 				`ADD-DEVICE DEVICEID=${deviceId} PRODUCT_NAME="${productName}" KEYS_TOTAL=${
 					props.keysTotal
@@ -430,6 +453,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	public removeDevice(deviceId: string): void {
 		if (this._connected && this.socket) {
+			this._registeredDevices.delete(deviceId)
+			this._pendingDevices.delete(deviceId)
+
 			this.socket.write(`REMOVE-DEVICE DEVICEID=${deviceId}\n`)
 		}
 	}
