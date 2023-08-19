@@ -277,6 +277,5 @@ function trayAbout() {
 		copyright: '2023 Julian Waller',
 		homepage: 'https://github.com/bitfocus/companion-satellite',
 		license: 'MIT',
-		use_version_info: true,
 	})
 }
