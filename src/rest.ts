@@ -23,6 +23,9 @@ export class RestServer {
 		this.router.get('/', async (ctx) => {
 			await send(ctx, './public/index.html')
 		})
+		this.router.get('/favicon.ico', async (ctx) => {
+			await send(ctx, './assets/tray.ico')
+		})
 
 		//GET
 		this.router.get('/api/host', async (ctx) => {
