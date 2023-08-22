@@ -4,3 +4,4 @@ dist
 config.json
 electron-output
 .DS_STORE
+config/user.ini
