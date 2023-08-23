@@ -186,8 +186,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this.disconnect()
 				return
 			}
-
-			this.emit('connected')
+			setImmediate(() => {
+				this.emit('connected')
+			})
 		})
 
 		if (this._host) {
