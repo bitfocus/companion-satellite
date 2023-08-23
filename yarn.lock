@@ -3452,10 +3452,10 @@ node-gyp-build@^4.3.0, node-gyp-build@^4.5.0:
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.6.0.tgz#0c52e4cbf54bbd28b709820ef7b6a3c2d6209055"
   integrity sha512-NTZVKn9IylLwUzaKjkas1e4u2DLNcV4rdYagA4PWdPwW87Bi7z+BznyKSRwS/761tV/lzCGXplWsiaMjLqP2zQ==
 
-node-hid@^2.1.1, "node-hid@npm:@julusian/hid@3.0.0-0", "node-hid@npm:@julusian/hid@^2.5.0-3":
-  version "3.0.0-0"
-  resolved "https://registry.yarnpkg.com/@julusian/hid/-/hid-3.0.0-0.tgz#f3cbde6a13781e3c436f388c24225805006582fa"
-  integrity sha512-7k1lpDZcI8zH8Qsu6ivBWMhcJL7TxaJLZiYGx0KoxGPJhOvkEf7z+ZwHk02wZmh+z5gccHGKIpMKhP5P54aZeQ==
+node-hid@^2.1.1, "node-hid@npm:@julusian/hid@3.0.0-2", "node-hid@npm:@julusian/hid@^2.5.0-3":
+  version "3.0.0-2"
+  resolved "https://registry.yarnpkg.com/@julusian/hid/-/hid-3.0.0-2.tgz#de7e0a1d995f1cd9ce12c68cc9133614e3b60b0f"
+  integrity sha512-dudqS7tqTNwhy54CujPpUqSAJioOMQjQYiiLWRuYwMLb+G1Z0u3jxKTw9NCv7pWPtC+DZ8gcxqph9EJ5qZ0mlQ==
   dependencies:
     node-addon-api "^3.2.1"
     pkg-prebuilds "^0.2.1"
