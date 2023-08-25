@@ -10,19 +10,39 @@ import { Conifg } from './config'
 const cli = meow(
 	`
 	Usage
-	  $ companion-satellite hostname [port] [REST port]
+	  $ companion-satellite 
 
-	Examples
-	  $ companion-satellite 192.168.1.100
-	  $ companion-satellite 192.168.1.100 16622
-	  $ companion-satellite 192.168.1.100 16622 9999
+	Options
+		--target, -t			target ip or host name of the companion server
+		--port, -p				port for the Satellite API
+		--rest, -r				enables the rust server and set a port
 `,
-	{}
+	{
+		flags: {
+			config: {
+				type: 'string',
+				shortflag: 'c',
+			},
+			target: {
+				type: 'string',
+				shortflag: 't',
+				default: '127.0.0.1',
+			},
+			port: {
+				type: 'number',
+				shortflag: 'p',
+				default: 16622,
+			},
+			rest: {
+				type: 'number',
+				shortflag: 'r',
+				default: 0,
+			},
+		},
+	}
 )
 
-// if (cli.input.length === 0) {
-// 	cli.showHelp(0)
-// }
+console.log(cli.flags)
 
 const config = new Conifg()
 
