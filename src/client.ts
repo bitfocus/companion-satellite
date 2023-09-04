@@ -112,6 +112,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	public get port(): number {
 		return this._port
 	}
+	public get connected(): boolean {
+		return this._connected
+	}
 
 	/**
 	 * Until 2.4 of Companion it does not support rotary encoders.
