@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+
+## [1.5.1](https://github.com/bitfocus/companion-satellite/compare/v1.5.0...v1.5.1) (Mon Sep 04 2023)
+
+
+### Fixes
+
+* hide version info from about dialog [20aa59c](https://github.com/bitfocus/companion-satellite/commit/20aa59ca599ec51aeb77e0d2e63a85a7cdd4b285)
+* add setImmediate to connected event (#85) [0528e36](https://github.com/bitfocus/companion-satellite/commit/0528e36df83d02669da8cb43909d275b19fc82c8)
+
+### Features
+
+* add connected endpoint (#87) [2b40358](https://github.com/bitfocus/companion-satellite/commit/2b4035818c267f5d80dbc8fc3490ea8125739d06)
+
 ## [1.5.0](https://github.com/bitfocus/companion-satellite/compare/v1.4.1...v1.5.0) (Sat Aug 19 2023)
 
 
