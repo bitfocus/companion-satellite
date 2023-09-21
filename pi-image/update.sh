@@ -24,6 +24,7 @@ yarn build
 
 # update some tooling
 cp assets/linux/50-satellite.rules /etc/udev/rules.d/
+udevadm control --reload-rules || true
 
 # update startup script
 cp pi-image/satellite.service /etc/systemd/system
