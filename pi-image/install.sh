@@ -16,6 +16,7 @@ SATELLITE_BRANCH="${SATELLITE_BRANCH:-master}"
 adduser --disabled-password satellite --gecos ""
 
 # install some dependencies
+export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y git zip unzip curl libusb-1.0-0-dev libudev-dev cmake libfontconfig1
 apt-get clean
