@@ -37,6 +37,7 @@ echo "
 # Port for the REST server (0 to disable)
 REST_PORT=9999" >> /boot/satellite-config
 fi
+chmod 666 /boot/satellite-config
 
 systemctl daemon-reload
 
