@@ -39,6 +39,9 @@ To manually build the latest version for your machine:
 
 ### Manual Headless / Raspberry pi
 
+If using a Raspberry Pi, we recommend using the 64bit 'Raspberry Pi OS Lite' images, the non-64bit version should work too but it less tested.  
+If using a different brand SBC, we recommend running [Armbian](https://www.armbian.com/) specifically the minimal debian images, as this provides a minimal and consistent debian environment and are typically more up to date then the manufacturer images.
+
 It can be built and run as a systemd service on a pi or other linux machine
 
 No images are provided for this, but the process has been written to be a single script.
