@@ -10,33 +10,41 @@ import * as fs from 'fs/promises'
 const cli = meow(
 	`
 	Usage
-	  $ companion-satellite hostname [port] [REST port]
+	  $ companion-satellite --hostname [hostname or ip] -port [number] --rest [number]
 
 	Examples
-	  $ companion-satellite 192.168.1.100
-	  $ companion-satellite 192.168.1.100 16622
-	  $ companion-satellite 192.168.1.100 16622 9999
+	  $ companion-satellite --hostname 192.168.1.100
+	  $ companion-satellite --hostname 192.168.1.100 --port 16622
+	  $ companion-satellite --hostname 192.168.1.100 --port 16622 --rest 9999
+	  $ companion-satellite --hostname 192.168.1.100 --rest 9999
 `,
-	{}
+	{
+		flags: {
+			hostname: {
+				type: 'string',
+				isRequired: true,
+			},
+			port: {
+				type: 'number',
+				default: DEFAULT_PORT,
+			},
+			rest: {
+				type: 'number',
+				default: 0,
+			},
+		},
+	}
 )
 
-if (cli.input.length === 0) {
+if (!cli.flags.hostname) {
 	cli.showHelp(0)
 }
 
-let port = DEFAULT_PORT
-let rest_port = 0
-if (cli.input.length > 1) {
-	port = Number(cli.input[1])
-	if (isNaN(port)) {
-		cli.showHelp(1)
-	}
-	if (cli.input.length > 2) {
-		rest_port = Number(cli.input[2])
-		if (isNaN(rest_port)) {
-			cli.showHelp(1)
-		}
-	}
+if (isNaN(cli.flags.port)) {
+	cli.showHelp(1)
+}
+if (isNaN(cli.flags.rest)) {
+	cli.showHelp(1)
 }
 
 console.log('Starting')
@@ -65,10 +73,10 @@ exitHook(() => {
 	server.close()
 })
 
-client.connect(cli.input[0], port).catch((e) => {
+client.connect(cli.flags.hostname, cli.flags.port).catch((e) => {
 	console.log(`Failed to connect`, e)
 })
-server.open(rest_port)
+server.open(cli.flags.rest)
 
 async function updateEnvironmentFile(filePath: string, changes: Record<string, string>): Promise<void> {
 	const data = await fs.readFile(filePath, 'utf-8')

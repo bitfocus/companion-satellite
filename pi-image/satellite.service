@@ -9,7 +9,7 @@ User=satellite
 WorkingDirectory=/usr/local/src/companion-satellite
 EnvironmentFile=/boot/satellite-config
 Environment=SATELLITE_CONFIG_PATH=/boot/satellite-config
-ExecStart=/opt/fnm/aliases/default/bin/node /usr/local/src/companion-satellite/dist/main.js $COMPANION_IP $COMPANION_PORT $REST_PORT
+ExecStart=/opt/fnm/aliases/default/bin/node /usr/local/src/companion-satellite/dist/main.js --hostname $COMPANION_IP --port $COMPANION_PORT --rest $REST_PORT
 Restart=on-failure
 KillSignal=SIGINT
 TimeoutStopSec=60
