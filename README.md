@@ -83,4 +83,4 @@ Building for another platform has not been tested.
 ### Headless
 
 1. If you are running this after either running in electron, or packaging for electron, it is best to remove the node_modules folder and rerun `yarn install`
-1. Run it `yarn dev 127.0.0.1` substituting in your companion instance ip address
+1. Run it `yarn dev --hostname 127.0.0.1` substituting in your companion instance ip address
