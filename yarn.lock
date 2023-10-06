@@ -236,10 +236,10 @@
     node-addon-api "^5.0.0"
     pkg-prebuilds "~0.1.0"
 
-"@julusian/skia-canvas@^1.0.4":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@julusian/skia-canvas/-/skia-canvas-1.0.4.tgz#c0119526d3ad5585cec961409497cb7b5ab3776a"
-  integrity sha512-k5RXtBab/IMJPV2E/dv2a9MZ34VEdmT+oHFsVO5NxB7+FjI6JO2QNUadLhQiGv9r7l8BMn0Ze+mGQPRTAYmaZg==
+"@julusian/skia-canvas@^1.0.5":
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@julusian/skia-canvas/-/skia-canvas-1.0.5.tgz#f415f9a92a12609a321761fe7d680998d40289c9"
+  integrity sha512-zF4LPyeQNr1ViDI55k1smwVai/s8TscCb0owalDu8JG8i3zZSEEe68AJOGH/Xw1CQDZebwSlclLY42I97iC95A==
   dependencies:
     "@mapbox/node-pre-gyp" "^1.0.9"
     cargo-cp-artifact "^0.1"
