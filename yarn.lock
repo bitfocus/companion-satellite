@@ -1819,19 +1819,10 @@ electron-store@^8.1.0:
     conf "^10.2.0"
     type-fest "^2.17.0"
 
-electron@^25.8.4:
+electron@^25.8.4, electron@latest:
   version "25.8.4"
   resolved "https://registry.yarnpkg.com/electron/-/electron-25.8.4.tgz#b50877aac7d96323920437baf309ad86382cb455"
   integrity sha512-hUYS3RGdaa6E1UWnzeGnsdsBYOggwMMg4WGxNGvAoWtmRrr6J1BsjFW/yRq4WsJHJce2HdzQXtz4OGXV6yUCLg==
-  dependencies:
-    "@electron/get" "^2.0.0"
-    "@types/node" "^18.11.18"
-    extract-zip "^2.0.1"
-
-electron@latest:
-  version "25.6.0"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-25.6.0.tgz#1c92858d3cf85a5ade5ac00cf501a8f24711a505"
-  integrity sha512-MYScf2Pwc2IzpIQ7+IpmxSrNb38B4nra67J+XN41gX1I5PNvD7iJEQ5qQ4qlEu+aPvRU+8fDaB02JteEYeAyzA==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^18.11.18"
