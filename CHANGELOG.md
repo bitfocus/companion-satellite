@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.5.2](https://github.com/bitfocus/companion-satellite/compare/v1.5.1...v1.5.2) (Sat Oct 07 2023)
+
+
+### Fixes
+
+* update @julusian/image-rs for arm7 support [64a6903](https://github.com/bitfocus/companion-satellite/commit/64a6903d93f9e89aa648ed3f4cd3bcf1fb76c260)
+* **(pi)** reload udev rules during install. ensure nano is installed [6c96faa](https://github.com/bitfocus/companion-satellite/commit/6c96faafc22a582c70d76707af0a2a3c78001b0c)
 
 ## [1.5.1](https://github.com/bitfocus/companion-satellite/compare/v1.5.0...v1.5.1) (Mon Sep 04 2023)
 
