@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.5.3](https://github.com/bitfocus/companion-satellite/compare/v1.5.2...v1.5.3) (Wed Oct 11 2023)
+
+
+### Fixes
+
+* install vcruntime [4523f1f](https://github.com/bitfocus/companion-satellite/commit/4523f1fda308c944782fe9ba2c1484a544dc254c)
+
 ## [1.5.2](https://github.com/bitfocus/companion-satellite/compare/v1.5.1...v1.5.2) (Sat Oct 07 2023)
 
 
