@@ -413,7 +413,7 @@ export class DeviceManager {
 		}
 	}
 
-	private statusCardTimer: NodeJS.Timer | undefined
+	private statusCardTimer: NodeJS.Timeout | undefined
 	private showStatusCard(message: string, runLoop: boolean): void {
 		this.statusString = message
 

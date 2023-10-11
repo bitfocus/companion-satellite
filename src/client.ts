@@ -93,12 +93,12 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private receiveBuffer = ''
 
-	private _pingInterval: NodeJS.Timer | undefined
+	private _pingInterval: NodeJS.Timeout | undefined
 	private _pingUnackedCount = 0
 	private _lastReceivedAt = 0
 	private _connected = false
 	private _connectionActive = false // True when connected/connecting/reconnecting
-	private _retryConnectTimeout: NodeJS.Timer | undefined = undefined
+	private _retryConnectTimeout: NodeJS.Timeout | undefined = undefined
 	private _host = ''
 	private _port = DEFAULT_PORT
 	private _supportsCombinedEncoders = false

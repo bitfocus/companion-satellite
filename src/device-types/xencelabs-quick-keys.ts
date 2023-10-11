@@ -20,7 +20,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 	readonly #surface: XencelabsQuickKeys
 	readonly #deviceId: string
 
-	#statusTimer: NodeJS.Timer | undefined
+	#statusTimer: NodeJS.Timeout | undefined
 	#unsub: (() => void) | undefined
 
 	public get deviceId(): string {
