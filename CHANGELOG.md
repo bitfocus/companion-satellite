@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.5.5](https://github.com/bitfocus/companion-satellite/compare/v1.5.3...v1.5.5) (Wed Oct 11 2023)
+
+
+### Fixes
+
+* build errors [1dd8969](https://github.com/bitfocus/companion-satellite/commit/1dd896921d2ea2ec5affcd3abba79a76c6eadca4)
+
 ## [1.5.4](https://github.com/bitfocus/companion-satellite/compare/v1.5.3...v1.5.4) (Wed Oct 11 2023)
 
 
