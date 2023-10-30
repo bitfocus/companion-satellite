@@ -1,6 +1,6 @@
 import { EventEmitter } from 'eventemitter3'
 import { Socket } from 'net'
-import { DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
+import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
 import { DEFAULT_PORT } from './lib'
 import * as semver from 'semver'
 
@@ -116,19 +116,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		return this._connected
 	}
 
-	/**
-	 * Until 2.4 of Companion it does not support rotary encoders.
-	 * For these, we can 'simulate' them by use the press/release actions of a button.
-	 */
-	public get useCombinedEncoders(): boolean {
-		return !this.forceSplitEncoders && this._supportsCombinedEncoders
-	}
-
-	/**
-	 * Until 3.x of Companion it only supports providing 72x72px bitmaps for buttons.
-	 */
-	public get useCustomBitmapResolution(): boolean {
-		return this._supportsBitmapResolution
+	public get capabilities(): ClientCapabilities {
+		return {
+			useCombinedEncoders: !this.forceSplitEncoders && this._supportsCombinedEncoders,
+			useCustomBitmapResolution: this._supportsBitmapResolution,
+		}
 	}
 
 	constructor(options: CompanionSatelliteClientOptions = {}) {
@@ -189,9 +181,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this.disconnect()
 				return
 			}
-			setImmediate(() => {
-				this.emit('connected')
-			})
+
+			// 'connected' gets emitted once we receive 'Begin'
 		})
 
 		if (this._host) {
@@ -330,6 +321,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				console.log('Companion supports bitmap resolution')
 			}
 		}
+
+		// report the connection as ready
+		setImmediate(() => {
+			this.emit('connected')
+		})
 	}
 
 	private handleState(params: Record<string, string | boolean>): void {

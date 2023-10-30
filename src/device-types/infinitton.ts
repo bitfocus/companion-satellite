@@ -1,6 +1,6 @@
 import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
-import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 import Infinitton = require('infinitton-idisplay')
 import * as imageRs from '@julusian/image-rs'
 
@@ -46,6 +46,10 @@ export class InfinittonWrapper implements WrappedDevice {
 		await this.blankDevice()
 
 		this.showStatus(client.host, status)
+	}
+
+	updateCapabilities(_capabilities: ClientCapabilities): void {
+		// Nothing to do
 	}
 
 	async deviceAdded(): Promise<void> {

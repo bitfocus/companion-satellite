@@ -90,7 +90,7 @@ export class DeviceManager {
 
 			this.showStatusCard('Connected', false)
 
-			this.registerAll()
+			this.syncCapabilitiesAndRegisterAllDevices()
 		})
 		client.on('disconnected', () => {
 			console.log('disconnected')
@@ -178,6 +178,9 @@ export class DeviceManager {
 		setTimeout(() => {
 			const dev = this.devices.get(deviceId)
 			if (dev) {
+				// Make sure device knows what the client is capable of
+				dev.updateCapabilities(this.client.capabilities)
+
 				this.client.addDevice(deviceId, dev.productName, dev.getRegisterProps())
 			}
 		}, 1000)
@@ -227,7 +230,7 @@ export class DeviceManager {
 		}
 	}
 
-	public registerAll(): void {
+	public syncCapabilitiesAndRegisterAllDevices(): void {
 		console.log('registerAll', Array.from(this.devices.keys()))
 		for (const device of this.devices.values()) {
 			// If it is already in the process of initialising, core will give us back the same id twice, so we dont need to track it
@@ -235,6 +238,9 @@ export class DeviceManager {
 
 			// Indicate on device
 			device.showStatus(this.client.host, this.statusString)
+
+			// Make sure device knows what the client is capable of
+			device.updateCapabilities(this.client.capabilities)
 
 			// Re-init device
 			this.client.addDevice(device.deviceId, device.productName, device.getRegisterProps())
@@ -403,6 +409,8 @@ export class DeviceManager {
 
 		try {
 			await devInfo.initDevice(this.client, this.statusString)
+
+			devInfo.updateCapabilities(this.client.capabilities)
 
 			this.client.addDevice(deviceId, devInfo.productName, devInfo.getRegisterProps())
 		} catch (e) {

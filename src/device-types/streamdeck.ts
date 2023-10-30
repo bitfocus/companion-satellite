@@ -3,7 +3,7 @@ import * as imageRs from '@julusian/image-rs'
 import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
-import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
 export class StreamDeckWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -125,8 +125,6 @@ export class StreamDeckWrapper implements WrappedDevice {
 		this.#deck.on('down', (key) => client.keyDown(this.deviceId, key))
 		this.#deck.on('up', (key) => client.keyUp(this.deviceId, key))
 
-		this.#companionSupportsScaling = client.useCustomBitmapResolution
-
 		if (this.#deck.MODEL === DeviceModelId.PLUS) {
 			this.#deck.on('encoderDown', (encoder) => {
 				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
@@ -169,6 +167,10 @@ export class StreamDeckWrapper implements WrappedDevice {
 		await this.blankDevice()
 
 		this.showStatus(client.host, status)
+	}
+
+	updateCapabilities(capabilities: ClientCapabilities): void {
+		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
 	}
 
 	async deviceAdded(): Promise<void> {

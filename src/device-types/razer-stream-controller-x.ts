@@ -3,7 +3,7 @@ import * as imageRs from '@julusian/image-rs'
 import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
-import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
 export class RazerStreamControllerXWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -88,8 +88,6 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		await this.#deck.close()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
-		this.#companionSupportsScaling = client.useCustomBitmapResolution
-
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button') {
 				return id
@@ -106,6 +104,10 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		await this.blankDevice()
 
 		this.showStatus(client.host, status)
+	}
+
+	updateCapabilities(capabilities: ClientCapabilities): void {
+		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
 	}
 
 	async deviceAdded(): Promise<void> {

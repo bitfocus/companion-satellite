@@ -3,7 +3,7 @@ import * as imageRs from '@julusian/image-rs'
 import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
-import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
 export class LoupedeckLiveSWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -15,6 +15,7 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 	#queue: ImageWriteQueue
 
 	#companionSupportsScaling = false
+	#companionSupportsCombinedEncoders = false
 
 	public get deviceId(): string {
 		return this.#deviceId
@@ -87,8 +88,6 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 		await this.#deck.close()
 	}
 	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
-		this.#companionSupportsScaling = client.useCustomBitmapResolution
-
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button') {
 				// return 24 + id
@@ -123,13 +122,13 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 			const id2 = convertButtonId(info.type, info.index)
 			if (id2 < 90) {
 				if (delta < 0) {
-					if (client.useCombinedEncoders) {
+					if (this.#companionSupportsCombinedEncoders) {
 						client.rotateLeft(this.deviceId, id2)
 					} else {
 						client.keyUp(this.deviceId, id2)
 					}
 				} else if (delta > 0) {
-					if (client.useCombinedEncoders) {
+					if (this.#companionSupportsCombinedEncoders) {
 						client.rotateRight(this.deviceId, id2)
 					} else {
 						client.keyDown(this.deviceId, id2)
@@ -161,6 +160,11 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 		await this.blankDevice()
 
 		this.showStatus(client.host, status)
+	}
+
+	updateCapabilities(capabilities: ClientCapabilities): void {
+		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
+		this.#companionSupportsCombinedEncoders = capabilities.useCombinedEncoders
 	}
 
 	async deviceAdded(): Promise<void> {
