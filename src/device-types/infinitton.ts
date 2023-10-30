@@ -1,6 +1,5 @@
-import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
-import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 import Infinitton = require('infinitton-idisplay')
 import * as imageRs from '@julusian/image-rs'
 
@@ -37,7 +36,7 @@ export class InfinittonWrapper implements WrappedDevice {
 	async close(): Promise<void> {
 		this.#panel.close()
 	}
-	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
+	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
 		this.#panel.on('down', (key) => client.keyDown(this.deviceId, key))
 		this.#panel.on('up', (key) => client.keyUp(this.deviceId, key))

@@ -1,6 +1,6 @@
 import { EventEmitter } from 'eventemitter3'
 import { Socket } from 'net'
-import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
 import { DEFAULT_PORT } from './lib'
 import * as semver from 'semver'
 
@@ -87,7 +87,7 @@ export type CompanionSatelliteClientEvents = {
 	deviceErrored: [{ deviceId: string; message: string }]
 }
 
-export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> {
+export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> implements CompanionClient {
 	private readonly debug: boolean
 	private socket: Socket | undefined
 

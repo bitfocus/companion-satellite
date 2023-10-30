@@ -5,8 +5,7 @@ import {
 	XencelabsQuickKeysDisplayOrientation,
 	WheelEvent,
 } from '@xencelabs-quick-keys/node'
-import { CompanionSatelliteClient } from '../client'
-import { WrappedDevice, DeviceRegisterProps, DeviceDrawProps, ClientCapabilities } from './api'
+import { WrappedDevice, DeviceRegisterProps, DeviceDrawProps, ClientCapabilities, CompanionClient } from './api'
 
 function keyToCompanion(k: number): number | null {
 	if (k >= 0 && k < 4) return k + 1
@@ -52,7 +51,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 
 		await this.#surface.stopData()
 	}
-	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
+	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
 
 		const handleDown = (key: number) => {

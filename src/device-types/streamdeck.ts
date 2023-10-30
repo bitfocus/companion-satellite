@@ -1,9 +1,8 @@
 import { DeviceModelId, StreamDeck } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
-import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
 export class StreamDeckWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -120,7 +119,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 		this.#queue?.abort()
 		await this.#deck.close()
 	}
-	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
+	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
 		this.#deck.on('down', (key) => client.keyDown(this.deviceId, key))
 		this.#deck.on('up', (key) => client.keyUp(this.deviceId, key))

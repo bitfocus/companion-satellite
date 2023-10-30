@@ -1,5 +1,3 @@
-import { CompanionSatelliteClient } from '../client'
-
 export type DeviceId = string
 
 export interface DeviceDrawProps {
@@ -25,7 +23,7 @@ export interface WrappedDevice {
 
 	close(): Promise<void>
 
-	initDevice(client: CompanionSatelliteClient, status: string): Promise<void>
+	initDevice(client: CompanionClient, status: string): Promise<void>
 
 	updateCapabilities(capabilities: ClientCapabilities): void
 
@@ -53,6 +51,12 @@ export interface ClientCapabilities {
 	readonly useCustomBitmapResolution: boolean
 }
 
-// export interface CompanionClient {
+export interface CompanionClient {
+	get host(): string
 
-// }
+	keyDown(deviceId: string, keyIndex: number): void
+	keyUp(deviceId: string, keyIndex: number): void
+
+	rotateLeft(deviceId: string, keyIndex: number): void
+	rotateRight(deviceId: string, keyIndex: number): void
+}

@@ -1,9 +1,8 @@
 import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
-import { ClientCapabilities, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
 export class LoupedeckLiveSWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -87,7 +86,7 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 		this.#queue?.abort()
 		await this.#deck.close()
 	}
-	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
+	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button') {
 				// return 24 + id
