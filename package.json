@@ -24,7 +24,7 @@
     "dev-electron": "yarn build:main && electron dist/electron.js",
     "build": "rimraf dist && yarn build:main",
     "build:main": "tsc -p tsconfig.build.json",
-    "lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx --ignore-pattern dist",
+    "lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx",
     "lint": "yarn lint:raw .",
     "license-validate": "yarn sofie-licensecheck",
     "dist": "yarn build && zx tools/build_electron.mjs"
