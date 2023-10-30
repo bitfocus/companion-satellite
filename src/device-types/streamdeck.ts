@@ -13,6 +13,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 	#queueOutputId: number
 	#queue: ImageWriteQueue | undefined
 	#queueLcdStrip: ImageWriteQueue | undefined
+	#hasDrawnLcdStrip = false
 
 	#companionSupportsScaling = false
 
@@ -83,6 +84,8 @@ export class StreamDeckWrapper implements WrappedDevice {
 
 				// Check if generated image is still valid
 				if (this.#queueOutputId === outputId) {
+					this.#hasDrawnLcdStrip = true
+
 					try {
 						await this.#deck.fillLcdRegion(key * encoderSize.width + xPad, 0, newbuffer, {
 							format: 'rgb',
@@ -208,6 +211,12 @@ export class StreamDeckWrapper implements WrappedDevice {
 				.generateBasicCard(width, height, imageRs.PixelFormat.Rgba, hostname, status)
 				.then(async (buffer) => {
 					if (outputId === this.#queueOutputId) {
+						if (this.#hasDrawnLcdStrip) {
+							// Blank everything first, to ensure the strip is cleared
+							this.#hasDrawnLcdStrip = false
+							await this.#deck.clearPanel()
+						}
+
 						// still valid
 						await this.#deck.fillPanelBuffer(buffer, {
 							format: 'rgba',
