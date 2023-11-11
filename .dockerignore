@@ -9,3 +9,6 @@ Dockerfile
 .gitattributes
 .gitignore
 .prettierignore
+
+.yarn/cache
+.yarn/install-state.gz
