@@ -13,7 +13,7 @@ cd /usr/local/src/companion-satellite
 # update the node version
 fnm use --install-if-missing
 fnm default $(fnm current)
-npm --unsafe-perm install -g yarn
+corepack enable
 
 # install dependencies
 yarn config set network-timeout 100000 -g
