@@ -5,8 +5,11 @@ import { SatelliteHeader } from './Header'
 import { SettingsForm } from './SettingsForm'
 import { ConnectionStatus } from './ConnectionStatus'
 import { MyErrorBoundary } from './Util/ErrorBoundary'
+import { useRestConfigApi } from './Api/rest'
 
 function App() {
+	const restApi = useRestConfigApi()
+
 	return (
 		<>
 			<SatelliteHeader />
@@ -18,7 +21,7 @@ function App() {
 						</MyErrorBoundary>
 
 						<MyErrorBoundary>
-							<SettingsForm />
+							<SettingsForm {...restApi} />
 						</MyErrorBoundary>
 					</Col>
 				</Row>

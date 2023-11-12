@@ -1,7 +1,7 @@
 import type { ApiStatusResponse } from '../../src/rest'
 import { useFetchInterval } from './Util/useFetchInterval'
 
-const POLL_INTERVAL = 5000
+const POLL_INTERVAL = 2000
 
 export function ConnectionStatus() {
 	const apiStatus = useFetchInterval<ApiStatusResponse>(POLL_INTERVAL, '/api/status')

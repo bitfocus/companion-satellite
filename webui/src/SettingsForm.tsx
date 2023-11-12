@@ -1,27 +1,23 @@
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
-import { useFetchInterval } from './Util/useFetchInterval'
 import { ApiConfigData } from '../../src/rest'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { SaveApiConfigData } from './Api/types'
 
-const POLL_INTERVAL = 5000
-
-export function SettingsForm() {
-	const apiConfig = useFetchInterval<ApiConfigData>(POLL_INTERVAL, '/api/config')
+interface SettingsFormProps {
+	currentConfig: ApiConfigData | null
+	loadError: Error | null
+	saveConfig: SaveApiConfigData
+}
+export function SettingsForm({ currentConfig, loadError, saveConfig }: SettingsFormProps) {
 	const [modifiedConfig, setModifiedConfig] = useState<Partial<ApiConfigData>>({})
-	const fullModifiedConfig: ApiConfigData | undefined = apiConfig.data
-		? { ...apiConfig.data, ...modifiedConfig }
-		: undefined
+	const fullModifiedConfig: ApiConfigData | undefined = useMemo(() => {
+		return currentConfig ? { ...currentConfig, ...modifiedConfig } : undefined
+	}, [currentConfig, modifiedConfig])
 
-	const saveConfig = useCallback(() => {
+	const mySaveConfig = useCallback(() => {
 		if (fullModifiedConfig) {
-			fetch('api/config', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-				},
-				body: JSON.stringify(fullModifiedConfig),
-			})
+			saveConfig(fullModifiedConfig)
 				.then(() => {
 					console.log('config saved')
 					setModifiedConfig({})
@@ -32,17 +28,19 @@ export function SettingsForm() {
 		} else {
 			console.error('No config loaded to save')
 		}
-	}, [fullModifiedConfig])
+	}, [saveConfig, fullModifiedConfig])
 
 	return (
 		<>
 			<h3>Settings</h3>
+			{loadError ? <p>{loadError.toString()}</p> : ''}
+
 			{fullModifiedConfig ? (
 				<SettingsFormInner
 					fullConfig={fullModifiedConfig}
 					hasChanges={Object.keys(modifiedConfig).length > 0}
 					setModifiedConfig={setModifiedConfig}
-					saveConfig={saveConfig}
+					saveConfig={mySaveConfig}
 				/>
 			) : (
 				'Loading...'
