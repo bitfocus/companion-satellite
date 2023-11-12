@@ -7,7 +7,6 @@ import electronStore from 'electron-store'
 import prompt from 'electron-prompt'
 // eslint-disable-next-line node/no-unpublished-import
 import openAboutWindow from 'electron-about-window'
-// import fs from 'fs'
 import { DeviceManager } from './devices'
 import { CompanionSatelliteClient } from './client'
 import { DEFAULT_PORT, DEFAULT_REST_PORT } from './lib'
@@ -20,11 +19,6 @@ const appConfig = new electronStore<SatelliteConfig>({
 	// migrations: satelliteConfigMigrations,
 })
 ensureFieldsPopulated(appConfig)
-
-// const preloadParentDir = path.join(__dirname, '../webui/dist/assets')
-// const preloadFilename = fs.readdirSync(preloadParentDir).find((n) => n.startsWith('preload-') && n.endsWith('.js'))
-// if (!preloadFilename) throw new Error('Failed to find preload file for electron ui')
-// const preloadPath = path.join(preloadParentDir, preloadFilename)
 
 let tray: Tray | undefined
 let configWindow: BrowserWindow | undefined
@@ -68,18 +62,6 @@ const menuItemApiPort = new MenuItem({
 	click: changeRestPort,
 })
 const trayMenu = new Menu()
-trayMenu.append(
-	new MenuItem({
-		label: 'Change Host',
-		click: changeHost,
-	})
-)
-trayMenu.append(
-	new MenuItem({
-		label: 'Change Port',
-		click: changePort,
-	})
-)
 trayMenu.append(menuItemApiEnableDisable)
 trayMenu.append(menuItemApiPort)
 trayMenu.append(
@@ -88,30 +70,40 @@ trayMenu.append(
 		click: () => {
 			if (configWindow?.isVisible()) return
 
+			const isProduction = app.isPackaged
+
 			configWindow = new BrowserWindow({
 				show: false,
-				width: 1280,
+				width: 1024,
 				height: 720,
-				// autoHideMenuBar: true,
+				autoHideMenuBar: isProduction,
 				webPreferences: {
 					preload: path.join(__dirname, '../dist/electronPreload.js'),
-					// nodeIntegration: true,
-					// sandbox: false, // Preload is being chunked
 				},
 			})
 			configWindow.on('close', () => {
 				configWindow = undefined
 			})
-			// configWindow.removeMenu()
-			configWindow
-				.loadURL('http://localhost:5174/electron.html')
-				// .loadFile(path.join(__dirname, '../webui/dist/electron.html'))
-				.then(() => {
-					configWindow?.show()
-				})
-				.catch((e) => {
-					console.error('Failed to load file', e)
-				})
+			if (isProduction) {
+				configWindow.removeMenu()
+				configWindow
+					.loadFile(path.join(__dirname, '../webui/dist/electron.html'))
+					.then(() => {
+						configWindow?.show()
+					})
+					.catch((e) => {
+						console.error('Failed to load file', e)
+					})
+			} else {
+				configWindow
+					.loadURL('http://localhost:5174/electron.html')
+					.then(() => {
+						configWindow?.show()
+					})
+					.catch((e) => {
+						console.error('Failed to load file', e)
+					})
+			}
 		},
 	})
 )
@@ -183,53 +175,6 @@ app.whenReady()
 		dialog.showErrorBox(`Startup error`, `Failed to launch: ${e}`)
 	})
 
-function changeHost() {
-	const current = appConfig.get('remoteIp')
-	prompt({
-		title: 'Companion IP address',
-		label: 'IP',
-		value: current ?? '127.0.0.1',
-		inputAttrs: {},
-		type: 'input',
-	})
-		.then((r) => {
-			if (r === null) {
-				console.log('user cancelled')
-			} else {
-				console.log('new ip', r)
-				appConfig.set('remoteIp', r)
-				tryConnect()
-			}
-		})
-		.catch((e) => {
-			console.error('Failed to change host', e)
-		})
-}
-function changePort() {
-	const current = appConfig.get('remotePort')
-	prompt({
-		title: 'Companion Satellite Port Number',
-		label: 'Port',
-		value: `${current ?? DEFAULT_PORT}`,
-		inputAttrs: {},
-		type: 'input',
-	})
-		.then((r) => {
-			if (r === null) {
-				console.log('user cancelled')
-			} else {
-				const r2 = Number(r)
-				console.log('new port', r2)
-				if (!isNaN(r2)) {
-					appConfig.set('remotePort', r)
-					tryConnect()
-				}
-			}
-		})
-		.catch((e) => {
-			console.error('Failed to change port', e)
-		})
-}
 function changeRestPort() {
 	const current = appConfig.get('restPort')
 	prompt({
