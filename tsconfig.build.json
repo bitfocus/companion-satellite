@@ -10,6 +10,8 @@
 			"{{PACKAGE-NAME}}": ["./src/index.ts"]
 		},
 		"types": ["node"],
-		"skipLibCheck": true
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"esModuleInterop": true
 	}
 }

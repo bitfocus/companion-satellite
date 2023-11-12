@@ -1,8 +1,10 @@
 import exitHook = require('exit-hook')
-import * as meow from 'meow'
+import meow from 'meow'
 import { CompanionSatelliteClient } from './client'
 import { DeviceManager } from './devices'
-import { DEFAULT_PORT } from './lib'
+import { DEFAULT_PORT, DEFAULT_REST_PORT } from './lib'
+import Conf from 'conf'
+import path from 'path'
 
 import { RestServer } from './rest'
 import * as fs from 'fs/promises'
@@ -10,12 +12,11 @@ import * as fs from 'fs/promises'
 const cli = meow(
 	`
 	Usage
-	  $ companion-satellite hostname [port] [REST port]
+	  $ companion-satellite <configuration-path>
 
 	Examples
-	  $ companion-satellite 192.168.1.100
-	  $ companion-satellite 192.168.1.100 16622
-	  $ companion-satellite 192.168.1.100 16622 9999
+	  $ companion-satellite config.json
+	  $ companion-satellite /home/satellite/.config/companion-satellite.json
 `,
 	{}
 )
@@ -24,20 +25,71 @@ if (cli.input.length === 0) {
 	cli.showHelp(0)
 }
 
-let port = DEFAULT_PORT
-let rest_port = 0
-if (cli.input.length > 1) {
-	port = Number(cli.input[1])
-	if (isNaN(port)) {
-		cli.showHelp(1)
+const rawConfigPath = cli.input[0]
+const absoluteConfigPath = path.isAbsolute(rawConfigPath) ? rawConfigPath : path.join(process.cwd(), rawConfigPath)
+
+interface AppConfig {
+	companion: {
+		address: string
+		port: number
 	}
-	if (cli.input.length > 2) {
-		rest_port = Number(cli.input[2])
-		if (isNaN(rest_port)) {
-			cli.showHelp(1)
-		}
+	http: {
+		enabled: boolean
+		port: number
 	}
 }
+
+const appConfig = new Conf<AppConfig>({
+	schema: {
+		companion: {
+			type: 'object',
+			description: 'Companion connection configuration',
+			properties: {
+				address: {
+					type: 'string',
+					description: 'Address of Companion installation',
+				},
+				port: {
+					type: 'integer',
+					description: 'Port number of Companion installation',
+					minimum: 1,
+					maximum: 65535,
+				},
+			},
+			required: ['address', 'port'],
+			default: {
+				address: '127.0.0.1',
+				port: 16622,
+			},
+		},
+		http: {
+			type: 'object',
+			description: 'Satellite HTTP configuration',
+			properties: {
+				enabled: {
+					type: 'boolean',
+					description: 'Enable HTTP api',
+					default: true,
+				},
+				port: {
+					type: 'integer',
+					description: 'Port number of run HTTP server on',
+					minimum: 1,
+					maximum: 65535,
+					default: 9999,
+				},
+			},
+			required: ['enabled', 'port'],
+			default: {
+				enabled: true,
+				port: 9999,
+			},
+		},
+	},
+	configName: path.parse(absoluteConfigPath).name,
+	projectName: 'companion-satellite',
+	cwd: path.dirname(absoluteConfigPath),
+})
 
 console.log('Starting')
 
@@ -65,10 +117,12 @@ exitHook(() => {
 	server.close()
 })
 
-client.connect(cli.input[0], port).catch((e) => {
-	console.log(`Failed to connect`, e)
-})
-server.open(rest_port)
+client
+	.connect(appConfig.get('companion.address') || '127.0.0.1', appConfig.get('companion.port') || DEFAULT_PORT)
+	.catch((e) => {
+		console.log(`Failed to connect`, e)
+	})
+server.open(appConfig.get('http.port') || DEFAULT_REST_PORT)
 
 async function updateEnvironmentFile(filePath: string, changes: Record<string, string>): Promise<void> {
 	const data = await fs.readFile(filePath, 'utf-8')

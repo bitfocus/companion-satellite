@@ -20,7 +20,7 @@
   "private": true,
   "scripts": {
     "prepare": "husky install",
-    "dev": "ts-node src/main.ts",
+    "dev": "ts-node src/main.ts config.json",
     "dev-electron": "run build:main && electron dist/electron.js",
     "build": "rimraf dist && run build:main",
     "build:main": "tsc -p tsconfig.build.json",
@@ -59,6 +59,7 @@
     "@julusian/skia-canvas": "^1.0.5",
     "@loupedeck/node": "^1.0.0",
     "@xencelabs-quick-keys/node": "^0.4.0",
+    "conf": "^10.2.0",
     "electron-about-window": "^1.15.2",
     "electron-prompt": "^1.7.0",
     "electron-store": "^8.1.0",

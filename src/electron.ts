@@ -2,9 +2,9 @@
 import { app, Tray, Menu, MenuItem, dialog, nativeImage } from 'electron'
 import * as path from 'path'
 // eslint-disable-next-line node/no-unpublished-import
-import * as electronStore from 'electron-store'
+import electronStore from 'electron-store'
 // eslint-disable-next-line node/no-unpublished-import
-import * as prompt from 'electron-prompt'
+import prompt from 'electron-prompt'
 // eslint-disable-next-line node/no-unpublished-import
 import openAboutWindow from 'electron-about-window'
 import { DeviceManager } from './devices'
