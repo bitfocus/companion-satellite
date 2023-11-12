@@ -28,8 +28,10 @@ jobs:
 
       - name: Run build
         run: |
+          corepack enable
+
           # try and avoid timeout errors
-          yarn config set network-timeout 100000 -g
+          yarn config set httpTimeout 100000
 
           yarn
           yarn dist
@@ -78,8 +80,10 @@ jobs:
 
       - name: Run build
         run: |
+          corepack enable
+
           # try and avoid timeout errors
-          yarn config set network-timeout 100000 -g
+          yarn config set httpTimeout 100000
 
           yarn
           yarn dist
@@ -128,8 +132,10 @@ jobs:
 
       - name: Run build
         run: |
+          corepack enable
+
           # try and avoid timeout errors
-          yarn config set network-timeout 100000 -g
+          yarn config set httpTimeout 100000
 
           yarn
           yarn dist
@@ -184,8 +190,10 @@ jobs:
 
       - name: Run build
         run: |
+          corepack enable
+
           # try and avoid timeout errors
-          yarn config set network-timeout 100000 -g
+          yarn config set httpTimeout 100000
 
           yarn
           yarn dist mac-arm64
