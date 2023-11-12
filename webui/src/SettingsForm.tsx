@@ -1,6 +1,6 @@
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
-import { ApiConfigData } from '../../src/rest'
+import type { ApiConfigData } from '../../src/rest'
 import { useCallback, useMemo, useState } from 'react'
 import { SaveApiConfigData } from './Api/types'
 

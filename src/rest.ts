@@ -1,6 +1,8 @@
 import Koa from 'koa'
 import Router from 'koa-router'
 import koaBody from 'koa-body'
+import serve from 'koa-static'
+import path from 'path'
 import http = require('http')
 import type Conf from 'conf'
 import type { CompanionSatelliteClient } from './client'
@@ -21,6 +23,8 @@ export class RestServer {
 		this.devices = devices
 
 		this.app = new Koa()
+		this.app.use(serve(path.join(__dirname, '../webui/dist')))
+
 		this.router = new Router()
 
 		const compileConfig = (): ApiConfigData => {

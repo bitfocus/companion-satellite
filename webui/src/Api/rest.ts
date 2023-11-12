@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ApiConfigData } from '../../../src/rest'
+import type { ApiConfigData } from '../../../src/rest'
 import type { SaveApiConfigData } from './types'
 import { useFetchInterval } from '../Util/useFetchInterval'
 

@@ -843,6 +843,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/koa-send@npm:*":
+  version: 4.1.6
+  resolution: "@types/koa-send@npm:4.1.6"
+  dependencies:
+    "@types/koa": "npm:*"
+  checksum: c0428cb67884e21d995eebfb02c4cc243363fe715d72ef4c2278b433e8b169fec17d9f14f0edab268947858434be9626128cc0a84188ba627c29d6b501c4f0d6
+  languageName: node
+  linkType: hard
+
+"@types/koa-static@npm:^4.0.4":
+  version: 4.0.4
+  resolution: "@types/koa-static@npm:4.0.4"
+  dependencies:
+    "@types/koa": "npm:*"
+    "@types/koa-send": "npm:*"
+  checksum: 2944c49c88a1f0308432e586df04aace976737d8abe60cc94695e0d6cfb5c0c95a3bf42b177297419a21c6718e187dcc21729ab60cbc21419d24763a6d25dcb8
+  languageName: node
+  linkType: hard
+
 "@types/koa@npm:*, @types/koa@npm:^2.13.11, @types/koa@npm:^2.13.5":
   version: 2.13.11
   resolution: "@types/koa@npm:2.13.11"
@@ -2010,6 +2029,7 @@ __metadata:
     "@types/electron-prompt": "npm:^1.6.5"
     "@types/koa": "npm:^2.13.11"
     "@types/koa-router": "npm:^7.4.7"
+    "@types/koa-static": "npm:^4.0.4"
     "@types/node": "npm:^18.18.9"
     "@types/node-hid": "npm:^1.3.4"
     "@types/semver": "npm:^7.5.5"
@@ -2027,6 +2047,7 @@ __metadata:
     koa: "npm:^2.14.2"
     koa-body: "npm:^6.0.1"
     koa-router: "npm:^12.0.1"
+    koa-static: "npm:^5.0.0"
     meow: "npm:^9.0.0"
     node-hid: "npm:@julusian/hid@2.5.0-3"
     rimraf: "npm:^5.0.5"
@@ -3620,7 +3641,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"http-errors@npm:^1.6.3, http-errors@npm:~1.8.0":
+"http-errors@npm:^1.6.3, http-errors@npm:^1.7.3, http-errors@npm:~1.8.0":
   version: 1.8.1
   resolution: "http-errors@npm:1.8.1"
   dependencies:
@@ -3630,6 +3651,18 @@ __metadata:
     statuses: "npm:>= 1.5.0 < 2"
     toidentifier: "npm:1.0.1"
   checksum: f01aeecd76260a6fe7f08e192fcbe9b2f39ed20fc717b852669a69930167053b01790998275c6297d44f435cf0e30edd50c05223d1bec9bc484e6cf35b2d6f43
+  languageName: node
+  linkType: hard
+
+"http-errors@npm:~1.6.2":
+  version: 1.6.3
+  resolution: "http-errors@npm:1.6.3"
+  dependencies:
+    depd: "npm:~1.1.2"
+    inherits: "npm:2.0.3"
+    setprototypeof: "npm:1.1.0"
+    statuses: "npm:>= 1.4.0 < 2"
+  checksum: 17ec4046ee974477778bfdd525936c254b872054703ec2caa4d6f099566b8adade636ae6aeeacb39302c5cd6e28fb407ebd937f500f5010d0b6850750414ff78
   languageName: node
   linkType: hard
 
@@ -3803,6 +3836,13 @@ __metadata:
   version: 2.0.4
   resolution: "inherits@npm:2.0.4"
   checksum: 4e531f648b29039fb7426fb94075e6545faa1eb9fe83c29f0b6d9e7263aceb4289d2d4557db0d428188eeb449cc7c5e77b0a0b2c4e248ff2a65933a0dee49ef2
+  languageName: node
+  linkType: hard
+
+"inherits@npm:2.0.3":
+  version: 2.0.3
+  resolution: "inherits@npm:2.0.3"
+  checksum: 6e56402373149ea076a434072671f9982f5fad030c7662be0332122fe6c0fa490acb3cc1010d90b6eff8d640b1167d77674add52dfd1bb85d545cf29e80e73e7
   languageName: node
   linkType: hard
 
@@ -4157,6 +4197,27 @@ __metadata:
     methods: "npm:^1.1.2"
     path-to-regexp: "npm:^6.2.1"
   checksum: 061a6205d304e7f100b5c262f7a8b69d116f53680b3114e006d638211b377ea1abc5a1849c6eecc652388514569f44776b7ff5247ff17dcb1ff046a2e19850a9
+  languageName: node
+  linkType: hard
+
+"koa-send@npm:^5.0.0":
+  version: 5.0.1
+  resolution: "koa-send@npm:5.0.1"
+  dependencies:
+    debug: "npm:^4.1.1"
+    http-errors: "npm:^1.7.3"
+    resolve-path: "npm:^1.4.0"
+  checksum: 787a8abaf3690a86cf2e6021f1d870daba5f8393f4b4da4da74c26e7d1f7a89636fa2f251a0ec1ea75364fc81a9ef20d3c52e8e2dc7ad9f1d5053357a0db204f
+  languageName: node
+  linkType: hard
+
+"koa-static@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "koa-static@npm:5.0.0"
+  dependencies:
+    debug: "npm:^3.1.0"
+    koa-send: "npm:^5.0.0"
+  checksum: 4cb7a4e98506d54274658eb3565b24fcbe606bbb6916cb5ef226b2613d3ffd417dec3404000baa171f2206f2a6d29117bbe881fd26b27d54ef746d9de6de3e91
   languageName: node
   linkType: hard
 
@@ -5311,7 +5372,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-is-absolute@npm:^1.0.0":
+"path-is-absolute@npm:1.0.1, path-is-absolute@npm:^1.0.0":
   version: 1.0.1
   resolution: "path-is-absolute@npm:1.0.1"
   checksum: 127da03c82172a2a50099cddbf02510c1791fc2cc5f7713ddb613a56838db1e8168b121a920079d052e0936c23005562059756d653b7c544c53185efe53be078
@@ -5749,6 +5810,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-path@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "resolve-path@npm:1.4.0"
+  dependencies:
+    http-errors: "npm:~1.6.2"
+    path-is-absolute: "npm:1.0.1"
+  checksum: 7405c01e02c7c71c62f89e42eac1b876e5a1bb9c3b85e07ce674646841dd177571bca5639ff6780528bec9ff58be7b44845e69eced1d8c5d519f4c1d72c30907
+  languageName: node
+  linkType: hard
+
 "resolve@npm:^1.10.0, resolve@npm:^1.10.1":
   version: 1.22.8
   resolution: "resolve@npm:1.22.8"
@@ -5982,6 +6053,13 @@ __metadata:
     gopd: "npm:^1.0.1"
     has-property-descriptors: "npm:^1.0.0"
   checksum: a29e255c116c29e3323b851c4f46c58c91be9bb8b065f191e2ea1807cb2c839df56e3175732a498e0c6d54626ba6b6fef896bf699feb7ab70c42dc47eb247c95
+  languageName: node
+  linkType: hard
+
+"setprototypeof@npm:1.1.0":
+  version: 1.1.0
+  resolution: "setprototypeof@npm:1.1.0"
+  checksum: a77b20876689c6a89c3b42f0c3596a9cae02f90fc902570cbd97198e9e8240382086c9303ad043e88cee10f61eae19f1004e51d885395a1e9bf49f9ebed12872
   languageName: node
   linkType: hard
 
@@ -6260,7 +6338,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"statuses@npm:>= 1.5.0 < 2, statuses@npm:^1.5.0":
+"statuses@npm:>= 1.4.0 < 2, statuses@npm:>= 1.5.0 < 2, statuses@npm:^1.5.0":
   version: 1.5.0
   resolution: "statuses@npm:1.5.0"
   checksum: e433900956357b3efd79b1c547da4d291799ac836960c016d10a98f6a810b1b5c0dcc13b5a7aa609a58239b5190e1ea176ad9221c2157d2fd1c747393e6b2940
