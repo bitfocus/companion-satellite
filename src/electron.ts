@@ -13,11 +13,11 @@ import { DEFAULT_PORT, DEFAULT_REST_PORT } from './lib'
 import { RestServer } from './rest'
 import { SatelliteConfig, ensureFieldsPopulated } from './config'
 
-const store = new electronStore<SatelliteConfig>({
+const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
 	// migrations: satelliteConfigMigrations,
 })
-ensureFieldsPopulated(store)
+ensureFieldsPopulated(appConfig)
 
 let tray: Tray | undefined
 
@@ -29,20 +29,17 @@ console.log('Starting')
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
-const server = new RestServer(store, client, devices)
+const server = new RestServer(appConfig, client, devices)
+
+appConfig.onDidChange('remoteIp', () => tryConnect())
+appConfig.onDidChange('remotePort', () => tryConnect())
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
 
-client.on('ipChange', (newIP, newPort) => {
-	// Store remote settings when it changes
-	store.set('remoteIp', newIP)
-	store.set('remotePort', newPort)
-})
-
 function tryConnect() {
-	const ip = store.get('remoteIp')
-	const port = store.get('remotePort') ?? DEFAULT_PORT
+	const ip = appConfig.get('remoteIp')
+	const port = appConfig.get('remotePort') ?? DEFAULT_PORT
 	if (ip) {
 		client.connect(ip, port).catch((e) => {
 			console.log('Failed to update connection: ', e)
@@ -99,7 +96,7 @@ trayMenu.append(
 function updateTray() {
 	if (!tray) throw new Error(`Tray not ready`)
 
-	const restEnabled = !!store.get('restEnabled')
+	const restEnabled = !!appConfig.get('restEnabled')
 
 	menuItemApiEnableDisable.checked = restEnabled
 	menuItemApiPort.enabled = restEnabled
@@ -146,7 +143,7 @@ app.whenReady()
 	})
 
 function changeHost() {
-	const current = store.get('remoteIp')
+	const current = appConfig.get('remoteIp')
 	prompt({
 		title: 'Companion IP address',
 		label: 'IP',
@@ -159,7 +156,7 @@ function changeHost() {
 				console.log('user cancelled')
 			} else {
 				console.log('new ip', r)
-				store.set('remoteIp', r)
+				appConfig.set('remoteIp', r)
 				tryConnect()
 			}
 		})
@@ -168,7 +165,7 @@ function changeHost() {
 		})
 }
 function changePort() {
-	const current = store.get('remotePort')
+	const current = appConfig.get('remotePort')
 	prompt({
 		title: 'Companion Satellite Port Number',
 		label: 'Port',
@@ -183,7 +180,7 @@ function changePort() {
 				const r2 = Number(r)
 				console.log('new port', r2)
 				if (!isNaN(r2)) {
-					store.set('remotePort', r)
+					appConfig.set('remotePort', r)
 					tryConnect()
 				}
 			}
@@ -193,7 +190,7 @@ function changePort() {
 		})
 }
 function changeRestPort() {
-	const current = store.get('restPort')
+	const current = appConfig.get('restPort')
 	prompt({
 		title: 'Companion Satellite API Port Number',
 		label: 'API Port',
@@ -208,7 +205,7 @@ function changeRestPort() {
 				const r2 = Number(r)
 				console.log('new rest port', r2)
 				if (!isNaN(r2)) {
-					store.set('restPort', r)
+					appConfig.set('restPort', r)
 					restartRestApi()
 				}
 			}
@@ -218,8 +215,8 @@ function changeRestPort() {
 		})
 }
 function toggleRestApi() {
-	const current = store.get('restEnabled')
-	store.set('restEnabled', !current)
+	const current = appConfig.get('restEnabled')
+	appConfig.set('restEnabled', !current)
 
 	restartRestApi()
 

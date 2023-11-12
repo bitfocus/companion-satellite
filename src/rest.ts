@@ -28,15 +28,15 @@ export class RestServer {
 		this.router = new Router()
 
 		const compileConfig = (): ApiConfigData => {
-			return { host: this.client.host, port: this.client.port }
+			return { host: this.appConfig.get('remoteIp'), port: this.appConfig.get('remotePort') }
 		}
 
 		//GET
 		this.router.get('/api/host', async (ctx) => {
-			ctx.body = this.client.host
+			ctx.body = this.appConfig.get('remoteIp')
 		})
 		this.router.get('/api/port', (ctx) => {
-			ctx.body = this.client.port
+			ctx.body = this.appConfig.get('remotePort')
 		})
 		this.router.get('/api/connected', (ctx) => {
 			ctx.body = this.client.connected
@@ -62,9 +62,8 @@ export class RestServer {
 			}
 
 			if (host) {
-				this.client.connect(host, this.client.port).catch((e) => {
-					console.log('set host failed:', e)
-				})
+				this.appConfig.set('remoteIp', host)
+
 				ctx.body = 'OK'
 			} else {
 				ctx.status = 400
@@ -80,9 +79,8 @@ export class RestServer {
 			}
 
 			if (!isNaN(newPort) && newPort > 0 && newPort <= 65535) {
-				this.client.connect(this.client.host, newPort).catch((e) => {
-					console.log('set port failed:', e)
-				})
+				this.appConfig.set('remotePOrt', newPort)
+
 				ctx.body = 'OK'
 			} else {
 				ctx.status = 400
@@ -102,9 +100,8 @@ export class RestServer {
 					ctx.status = 400
 					ctx.body = 'Invalid port'
 				} else {
-					this.client.connect(host, port).catch((e) => {
-						console.log('update config failed:', e)
-					})
+					this.appConfig.set('remoteIp', host)
+					this.appConfig.set('remotePort', port)
 				}
 				ctx.body = compileConfig()
 			}

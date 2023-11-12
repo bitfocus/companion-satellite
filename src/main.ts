@@ -51,7 +51,14 @@ exitHook(() => {
 	server.close()
 })
 
-client.connect(appConfig.get('remoteIp') || '127.0.0.1', appConfig.get('remotePort') || DEFAULT_PORT).catch((e) => {
-	console.log(`Failed to connect`, e)
-})
+const tryConnect = () => {
+	client.connect(appConfig.get('remoteIp') || '127.0.0.1', appConfig.get('remotePort') || DEFAULT_PORT).catch((e) => {
+		console.log(`Failed to connect`, e)
+	})
+}
+
+appConfig.onDidChange('remoteIp', () => tryConnect())
+appConfig.onDidChange('remotePort', () => tryConnect())
+
+tryConnect()
 server.open()

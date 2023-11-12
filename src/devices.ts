@@ -97,7 +97,7 @@ export class DeviceManager {
 
 			this.showStatusCard('Connecting', true)
 		})
-		client.on('ipChange', () => {
+		client.on('connecting', () => {
 			this.showStatusCard('Connecting', true)
 		})
 
