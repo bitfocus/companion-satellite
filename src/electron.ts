@@ -4,12 +4,10 @@ import * as path from 'path'
 // eslint-disable-next-line node/no-unpublished-import
 import electronStore from 'electron-store'
 // eslint-disable-next-line node/no-unpublished-import
-import prompt from 'electron-prompt'
-// eslint-disable-next-line node/no-unpublished-import
 import openAboutWindow from 'electron-about-window'
 import { DeviceManager } from './devices'
 import { CompanionSatelliteClient } from './client'
-import { DEFAULT_PORT, DEFAULT_REST_PORT } from './lib'
+import { DEFAULT_PORT } from './lib'
 import { RestServer } from './rest'
 import { SatelliteConfig, ensureFieldsPopulated } from './config'
 import { ApiConfigData, ApiStatusResponse, compileConfig, compileStatus, updateConfig } from './apiTypes'
@@ -52,18 +50,13 @@ function restartRestApi() {
 	server.open()
 }
 
-const menuItemApiEnableDisable = new MenuItem({
-	label: 'Enable API',
-	type: 'checkbox',
-	click: toggleRestApi,
-})
-const menuItemApiPort = new MenuItem({
-	label: 'Change API Port',
-	click: changeRestPort,
-})
 const trayMenu = new Menu()
-trayMenu.append(menuItemApiEnableDisable)
-trayMenu.append(menuItemApiPort)
+trayMenu.append(
+	new MenuItem({
+		label: 'Scan devices',
+		click: trayScanDevices,
+	})
+)
 trayMenu.append(
 	new MenuItem({
 		label: 'Configure',
@@ -109,12 +102,6 @@ trayMenu.append(
 )
 trayMenu.append(
 	new MenuItem({
-		label: 'Scan devices',
-		click: trayScanDevices,
-	})
-)
-trayMenu.append(
-	new MenuItem({
 		label: 'About',
 		click: trayAbout,
 	})
@@ -125,18 +112,6 @@ trayMenu.append(
 		click: trayQuit,
 	})
 )
-
-function updateTray() {
-	if (!tray) throw new Error(`Tray not ready`)
-
-	const restEnabled = !!appConfig.get('restEnabled')
-
-	menuItemApiEnableDisable.checked = restEnabled
-	menuItemApiPort.enabled = restEnabled
-
-	console.log('set tray')
-	tray.setContextMenu(trayMenu)
-}
 
 app.whenReady()
 	.then(async () => {
@@ -169,45 +144,12 @@ app.whenReady()
 			tray?.setImage(trayImageOffline)
 		})
 
-		updateTray()
+		console.log('set tray')
+		tray.setContextMenu(trayMenu)
 	})
 	.catch((e) => {
 		dialog.showErrorBox(`Startup error`, `Failed to launch: ${e}`)
 	})
-
-function changeRestPort() {
-	const current = appConfig.get('restPort')
-	prompt({
-		title: 'Companion Satellite API Port Number',
-		label: 'API Port',
-		value: `${current ?? DEFAULT_REST_PORT}`,
-		inputAttrs: {},
-		type: 'input',
-	})
-		.then((r) => {
-			if (r === null) {
-				console.log('user cancelled')
-			} else {
-				const r2 = Number(r)
-				console.log('new rest port', r2)
-				if (!isNaN(r2)) {
-					appConfig.set('restPort', r)
-					restartRestApi()
-				}
-			}
-		})
-		.catch((e) => {
-			console.error('Failed to change hrest port', e)
-		})
-}
-function toggleRestApi() {
-	const current = appConfig.get('restEnabled')
-	appConfig.set('restEnabled', !current)
-
-	restartRestApi()
-
-	updateTray()
-}
 
 function trayQuit() {
 	console.log('quit click')

@@ -8,8 +8,9 @@ interface SettingsFormProps {
 	currentConfig: ApiConfigData | null
 	loadError: Error | null
 	saveConfig: SaveApiConfigData
+	includeApiEnable: boolean
 }
-export function SettingsForm({ currentConfig, loadError, saveConfig }: SettingsFormProps) {
+export function SettingsForm({ currentConfig, loadError, saveConfig, includeApiEnable }: SettingsFormProps) {
 	const [modifiedConfig, setModifiedConfig] = useState<Partial<ApiConfigData>>({})
 	const fullModifiedConfig: ApiConfigData | undefined = useMemo(() => {
 		return currentConfig ? { ...currentConfig, ...modifiedConfig } : undefined
@@ -37,6 +38,7 @@ export function SettingsForm({ currentConfig, loadError, saveConfig }: SettingsF
 					hasChanges={Object.keys(modifiedConfig).length > 0}
 					setModifiedConfig={setModifiedConfig}
 					saveConfig={mySaveConfig}
+					includeApiEnable={includeApiEnable}
 				/>
 			) : (
 				'Loading...'
@@ -50,8 +52,15 @@ interface SettingsFormInnerProps {
 	hasChanges: boolean
 	setModifiedConfig: React.Dispatch<React.SetStateAction<Partial<ApiConfigData>>>
 	saveConfig: () => void
+	includeApiEnable: boolean
 }
-function SettingsFormInner({ fullConfig, hasChanges, setModifiedConfig, saveConfig }: SettingsFormInnerProps) {
+function SettingsFormInner({
+	fullConfig,
+	hasChanges,
+	setModifiedConfig,
+	saveConfig,
+	includeApiEnable,
+}: SettingsFormInnerProps) {
 	const setHost = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
 			const value = e.currentTarget.value
@@ -74,6 +83,29 @@ function SettingsFormInner({ fullConfig, hasChanges, setModifiedConfig, saveConf
 		},
 		[setModifiedConfig]
 	)
+	const setHttpEnabled = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			const value = !!e.currentTarget.checked
+
+			setModifiedConfig((oldConfig) => ({
+				...oldConfig,
+				httpEnabled: value,
+			}))
+		},
+		[setModifiedConfig]
+	)
+
+	const setHttpPort = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			const value = Number(e.currentTarget.value)
+
+			setModifiedConfig((oldConfig) => ({
+				...oldConfig,
+				httpPort: value,
+			}))
+		},
+		[setModifiedConfig]
+	)
 
 	const saveConfigFull = useCallback(
 		(e: React.FormEvent<HTMLFormElement>) => {
@@ -86,8 +118,10 @@ function SettingsFormInner({ fullConfig, hasChanges, setModifiedConfig, saveConf
 
 	return (
 		<Form onSubmit={saveConfigFull}>
+			<legend>Companion Connection</legend>
+
 			<Form.Group className="mb-3" controlId="formCompanionAddress">
-				<Form.Label>Companion Address</Form.Label>
+				<Form.Label>Address</Form.Label>
 				<Form.Control
 					type="text"
 					placeholder="Companion address (eg 127.0.0.1 or companion.local)"
@@ -110,6 +144,28 @@ function SettingsFormInner({ fullConfig, hasChanges, setModifiedConfig, saveConf
 					Only change this if you know what you are doing. In almost all cases this should be left at the default.
 				</Form.Text>
 			</Form.Group>
+
+			{includeApiEnable && (
+				<>
+					<legend>HTTP Interface & API</legend>
+
+					<Form.Group className="mb-3" controlId="formHttpPort">
+						<Form.Check type="switch" label="Enabled" checked={fullConfig.httpEnabled} onChange={setHttpEnabled} />
+					</Form.Group>
+
+					<Form.Group className="mb-3" controlId="formHttpPort">
+						<Form.Label>Port</Form.Label>
+						<Form.Control
+							type="number"
+							placeholder="9999"
+							min={1}
+							max={65535}
+							value={fullConfig.httpPort}
+							onChange={setHttpPort}
+						/>
+					</Form.Group>
+				</>
+			)}
 
 			<Button variant="primary" type="submit" disabled={!hasChanges}>
 				Save

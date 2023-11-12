@@ -60,7 +60,7 @@ export function ElectronApp() {
 						</MyErrorBoundary>
 
 						<MyErrorBoundary>
-							<SettingsForm {...restConfigApi} />
+							<SettingsForm {...restConfigApi} includeApiEnable={true} />
 						</MyErrorBoundary>
 					</Col>
 				</Row>

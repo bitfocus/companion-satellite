@@ -40,7 +40,7 @@ export function WebApp() {
 						</MyErrorBoundary>
 
 						<MyErrorBoundary>
-							<SettingsForm {...restApi} />
+							<SettingsForm {...restApi} includeApiEnable={false} />
 						</MyErrorBoundary>
 					</Col>
 				</Row>

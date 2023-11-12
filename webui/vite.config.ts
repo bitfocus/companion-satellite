@@ -17,7 +17,6 @@ export default defineConfig({
 			input: {
 				main: resolve(__dirname, 'index.html'),
 				electron: resolve(__dirname, 'electron.html'),
-				preload: resolve(__dirname, 'src/electronPreload.ts'),
 			},
 		},
 	},

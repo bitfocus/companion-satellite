@@ -11,6 +11,9 @@ export interface ApiStatusResponse {
 export interface ApiConfigData {
 	host: string
 	port: number
+
+	httpEnabled: boolean
+	httpPort: number
 }
 
 export function compileStatus(client: CompanionSatelliteClient): ApiStatusResponse {
@@ -25,10 +28,16 @@ export function compileConfig(appConfig: Conf<SatelliteConfig>): ApiConfigData {
 	return {
 		host: appConfig.get('remoteIp'),
 		port: appConfig.get('remotePort'),
+
+		httpEnabled: appConfig.get('restEnabled'),
+		httpPort: appConfig.get('restPort'),
 	}
 }
 
 export function updateConfig(appConfig: Conf<SatelliteConfig>, newConfig: Partial<ApiConfigData>): void {
 	if (newConfig.host !== undefined) appConfig.set('remoteIp', newConfig.host)
 	if (newConfig.port !== undefined) appConfig.set('remotePort', newConfig.port)
+
+	if (newConfig.httpEnabled !== undefined) appConfig.set('restEnabled', newConfig.httpEnabled)
+	if (newConfig.httpPort !== undefined) appConfig.set('restPort', newConfig.httpPort)
 }

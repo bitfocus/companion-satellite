@@ -711,15 +711,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/electron-prompt@npm:^1.6.5":
-  version: 1.6.5
-  resolution: "@types/electron-prompt@npm:1.6.5"
-  dependencies:
-    electron: "npm:latest"
-  checksum: bf9be343a960fa6e54dbb907a54d68bef3cf1c9f9ca24271e3ea9a165d27f9d4e90b300c62b2762ded4d7083411b4101418a47ed478ae25e4e7959cfffe7a489
-  languageName: node
-  linkType: hard
-
 "@types/express-serve-static-core@npm:^4.17.33":
   version: 4.17.41
   resolution: "@types/express-serve-static-core@npm:4.17.41"
@@ -2026,7 +2017,6 @@ __metadata:
     "@julusian/skia-canvas": "npm:^1.0.5"
     "@loupedeck/node": "npm:^1.0.0"
     "@sofie-automation/code-standard-preset": "npm:~2.5.2"
-    "@types/electron-prompt": "npm:^1.6.5"
     "@types/koa": "npm:^2.13.11"
     "@types/koa-router": "npm:^7.4.7"
     "@types/koa-static": "npm:^4.0.4"
@@ -2039,7 +2029,6 @@ __metadata:
     electron: "npm:^25.9.4"
     electron-about-window: "npm:^1.15.2"
     electron-builder: "npm:^24.6.4"
-    electron-prompt: "npm:^1.7.0"
     electron-store: "npm:^8.1.0"
     eventemitter3: "npm:^4.0.7"
     exit-hook: "npm:^2.2.1"
@@ -2531,13 +2520,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-prompt@npm:^1.7.0":
-  version: 1.7.0
-  resolution: "electron-prompt@npm:1.7.0"
-  checksum: 5c2be70739838257944c8e9ade800b13b8efe4f908d46d3fd28740c8f4460150df70a80acd8138e66bd782befb64ccf8d30c616ad2762644d8998d5a6bdd34da
-  languageName: node
-  linkType: hard
-
 "electron-publish@npm:24.5.0":
   version: 24.5.0
   resolution: "electron-publish@npm:24.5.0"
@@ -2573,19 +2555,6 @@ __metadata:
   bin:
     electron: cli.js
   checksum: 02fc83d2ae5ca9e0d66821b24ff646345ce011e0b09136f2aae9fb85ccb02535b077c0fd8517b1371a3c8887b43ea1bbb5f2906f61b7b288a0484cc6dd8e3ea3
-  languageName: node
-  linkType: hard
-
-"electron@npm:latest":
-  version: 27.0.4
-  resolution: "electron@npm:27.0.4"
-  dependencies:
-    "@electron/get": "npm:^2.0.0"
-    "@types/node": "npm:^18.11.18"
-    extract-zip: "npm:^2.0.1"
-  bin:
-    electron: cli.js
-  checksum: ef8c45ec3e18e6c8616671bfb2adab9e6d4a58450a5bda6e862072cd4726b1d65b3949b3f4e3de1885b7af3a5105b05e66b0d9dc26745eb7ed429ce32a1a6654
   languageName: node
   linkType: hard
 

@@ -23,6 +23,10 @@ export class RestServer {
 		this.client = client
 		this.devices = devices
 
+		// Monitor for config changes
+		this.appConfig.onDidChange('restEnabled', this.open.bind(this))
+		this.appConfig.onDidChange('restPort', this.open.bind(this))
+
 		this.app = new Koa()
 		this.app.use(serve(path.join(__dirname, '../webui/dist')))
 
@@ -103,6 +107,10 @@ export class RestServer {
 				} else {
 					partialConfig.port = port
 				}
+
+				// Ensure some fields cannot be changed
+				delete partialConfig.httpEnabled
+				delete partialConfig.httpPort
 
 				updateConfig(this.appConfig, partialConfig)
 				ctx.body = compileConfig(this.appConfig)

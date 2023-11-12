@@ -35,7 +35,6 @@
   "devDependencies": {
     "@electron/notarize": "^2.1.0",
     "@sofie-automation/code-standard-preset": "~2.5.2",
-    "@types/electron-prompt": "^1.6.5",
     "@types/koa": "^2.13.11",
     "@types/koa-router": "^7.4.7",
     "@types/koa-static": "^4.0.4",
@@ -62,7 +61,6 @@
     "@xencelabs-quick-keys/node": "^0.4.0",
     "conf": "^10.2.0",
     "electron-about-window": "^1.15.2",
-    "electron-prompt": "^1.7.0",
     "electron-store": "^8.1.0",
     "eventemitter3": "^4.0.7",
     "exit-hook": "^2.2.1",
