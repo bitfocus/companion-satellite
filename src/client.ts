@@ -104,6 +104,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsCombinedEncoders = false
 	private _supportsBitmapResolution = false
 
+	private _companionVersion: string | null = null
+	private _companionApiVersion: string | null = null
+
 	public forceSplitEncoders = false
 
 	public get host(): string {
@@ -114,6 +117,12 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get connected(): boolean {
 		return this._connected
+	}
+	public get companionVersion(): string | null {
+		return this._companionVersion
+	}
+	public get companionApiVersion(): string | null {
+		return this._companionApiVersion
 	}
 
 	public get capabilities(): ClientCapabilities {
@@ -310,6 +319,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private handleBegin(params: Record<string, string | boolean>): void {
+		this._companionVersion = typeof params.CompanionVersion === 'string' ? params.CompanionVersion : null
+		this._companionApiVersion = typeof params.ApiVersion === 'string' ? params.ApiVersion : null
+
 		const protocolVersion = params.ApiVersion
 		if (typeof protocolVersion === 'string') {
 			if (semver.lte('1.3.0', protocolVersion)) {

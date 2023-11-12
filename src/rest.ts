@@ -23,6 +23,10 @@ export class RestServer {
 		this.app = new Koa()
 		this.router = new Router()
 
+		const compileConfig = (): ApiConfigData => {
+			return { host: this.client.host, port: this.client.port }
+		}
+
 		//GET
 		this.router.get('/api/host', async (ctx) => {
 			ctx.body = this.client.host
@@ -34,7 +38,14 @@ export class RestServer {
 			ctx.body = this.client.connected
 		})
 		this.router.get('/api/config', (ctx) => {
-			ctx.body = { host: this.client.host, port: this.client.port }
+			ctx.body = compileConfig()
+		})
+		this.router.get('/api/status', (ctx) => {
+			ctx.body = {
+				connected: this.client.connected,
+				companionVersion: this.client.companionVersion,
+				companionApiVersion: this.client.companionApiVersion,
+			} satisfies ApiStatusResponse
 		})
 
 		//POST
@@ -76,8 +87,9 @@ export class RestServer {
 		})
 		this.router.post('/api/config', koaBody(), async (ctx) => {
 			if (ctx.request.type == 'application/json') {
-				const host = ctx.request.body['host']
-				const port = Number(ctx.request.body['port'])
+				const body = ctx.request.body as Partial<ApiConfigData>
+				const host = body.host
+				const port = Number(body.port)
 
 				if (!host) {
 					ctx.status = 400
@@ -90,7 +102,7 @@ export class RestServer {
 						console.log('update config failed:', e)
 					})
 				}
-				ctx.body = 'OK'
+				ctx.body = compileConfig()
 			}
 		})
 
@@ -125,4 +137,15 @@ export class RestServer {
 			console.log('The rest server is closed')
 		}
 	}
+}
+
+export interface ApiStatusResponse {
+	connected: boolean
+	companionVersion: string | null
+	companionApiVersion: string | null
+}
+
+export interface ApiConfigData {
+	host: string
+	port: number
 }
