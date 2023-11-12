@@ -2,17 +2,21 @@ import Koa from 'koa'
 import Router from 'koa-router'
 import koaBody from 'koa-body'
 import http = require('http')
+import type Conf from 'conf'
 import type { CompanionSatelliteClient } from './client'
 import type { DeviceManager } from './devices'
+import type { SatelliteConfig } from './config'
 
 export class RestServer {
+	private readonly appConfig: Conf<SatelliteConfig>
 	private readonly client: CompanionSatelliteClient
 	private readonly devices: DeviceManager
 	private readonly app: Koa
 	private readonly router: Router
 	private server: http.Server | undefined
 
-	constructor(client: CompanionSatelliteClient, devices: DeviceManager) {
+	constructor(appConfig: Conf<SatelliteConfig>, client: CompanionSatelliteClient, devices: DeviceManager) {
+		this.appConfig = appConfig
 		this.client = client
 		this.devices = devices
 
@@ -99,10 +103,13 @@ export class RestServer {
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())
 	}
 
-	public open(port: number): void {
+	public open(): void {
 		this.close()
 
-		if (port != 0) {
+		const enabled = this.appConfig.get('restEnabled')
+		const port = this.appConfig.get('restPort')
+
+		if (enabled && port) {
 			this.server = this.app.listen(port)
 			console.log(`REST server starting: port: ${port}`)
 		} else {

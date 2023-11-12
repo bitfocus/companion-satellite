@@ -28,7 +28,7 @@ console.log('Starting')
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
-const server = new RestServer(client, devices)
+const server = new RestServer(store, client, devices)
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
@@ -49,12 +49,7 @@ function tryConnect() {
 	}
 }
 function restartRestApi() {
-	const restPort = Number(store.get('restPort') ?? DEFAULT_REST_PORT)
-	if (store.get('restEnabled') && !isNaN(restPort) && restPort > 0 && restPort <= 65535) {
-		server.open(restPort)
-	} else {
-		server.close()
-	}
+	server.open()
 }
 
 const menuItemApiEnableDisable = new MenuItem({
