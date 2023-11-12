@@ -1,5 +1,5 @@
 // eslint-disable-next-line node/no-unpublished-import
-import { app, Tray, Menu, MenuItem, dialog, nativeImage } from 'electron'
+import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain } from 'electron'
 import * as path from 'path'
 // eslint-disable-next-line node/no-unpublished-import
 import electronStore from 'electron-store'
@@ -7,11 +7,13 @@ import electronStore from 'electron-store'
 import prompt from 'electron-prompt'
 // eslint-disable-next-line node/no-unpublished-import
 import openAboutWindow from 'electron-about-window'
+// import fs from 'fs'
 import { DeviceManager } from './devices'
 import { CompanionSatelliteClient } from './client'
 import { DEFAULT_PORT, DEFAULT_REST_PORT } from './lib'
 import { RestServer } from './rest'
 import { SatelliteConfig, ensureFieldsPopulated } from './config'
+import { ApiConfigData, ApiStatusResponse, compileConfig, compileStatus, updateConfig } from './apiTypes'
 
 const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
@@ -19,7 +21,13 @@ const appConfig = new electronStore<SatelliteConfig>({
 })
 ensureFieldsPopulated(appConfig)
 
+// const preloadParentDir = path.join(__dirname, '../webui/dist/assets')
+// const preloadFilename = fs.readdirSync(preloadParentDir).find((n) => n.startsWith('preload-') && n.endsWith('.js'))
+// if (!preloadFilename) throw new Error('Failed to find preload file for electron ui')
+// const preloadPath = path.join(preloadParentDir, preloadFilename)
+
 let tray: Tray | undefined
+let configWindow: BrowserWindow | undefined
 
 app.on('window-all-closed', () => {
 	// Block default behaviour of exit on close
@@ -76,6 +84,39 @@ trayMenu.append(menuItemApiEnableDisable)
 trayMenu.append(menuItemApiPort)
 trayMenu.append(
 	new MenuItem({
+		label: 'Configure',
+		click: () => {
+			if (configWindow?.isVisible()) return
+
+			configWindow = new BrowserWindow({
+				show: false,
+				width: 1280,
+				height: 720,
+				// autoHideMenuBar: true,
+				webPreferences: {
+					preload: path.join(__dirname, '../dist/electronPreload.js'),
+					// nodeIntegration: true,
+					// sandbox: false, // Preload is being chunked
+				},
+			})
+			configWindow.on('close', () => {
+				configWindow = undefined
+			})
+			// configWindow.removeMenu()
+			configWindow
+				.loadURL('http://localhost:5174/electron.html')
+				// .loadFile(path.join(__dirname, '../webui/dist/electron.html'))
+				.then(() => {
+					configWindow?.show()
+				})
+				.catch((e) => {
+					console.error('Failed to load file', e)
+				})
+		},
+	})
+)
+trayMenu.append(
+	new MenuItem({
 		label: 'Scan devices',
 		click: trayScanDevices,
 	})
@@ -106,7 +147,7 @@ function updateTray() {
 }
 
 app.whenReady()
-	.then(function () {
+	.then(async () => {
 		console.log('App ready')
 
 		tryConnect()
@@ -269,3 +310,20 @@ function trayAbout() {
 		license: 'MIT',
 	})
 }
+
+ipcMain.on('rescan', () => {
+	console.log('rescan')
+	devices.scanDevices()
+})
+ipcMain.handle('getStatus', async (): Promise<ApiStatusResponse> => {
+	// console.log('getStatus')
+	return compileStatus(client)
+})
+ipcMain.handle('getConfig', async (): Promise<ApiConfigData> => {
+	return compileConfig(appConfig)
+})
+ipcMain.handle('saveConfig', async (_e, newConfig: Partial<ApiConfigData>): Promise<ApiConfigData> => {
+	console.log('saveConfig', newConfig)
+	updateConfig(appConfig, newConfig)
+	return compileConfig(appConfig)
+})

@@ -12,6 +12,7 @@
 		"types": ["node"],
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
-		"esModuleInterop": true
+		"esModuleInterop": true,
+		"declaration": true
 	}
 }

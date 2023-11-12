@@ -1,20 +1,16 @@
 import type { ApiStatusResponse } from '../../src/rest'
-import { useFetchInterval } from './Util/useFetchInterval'
 
-const POLL_INTERVAL = 2000
+interface ConnectionStatusProps {
+	status: ApiStatusResponse | undefined
+	error: Error | undefined
+}
 
-export function ConnectionStatus() {
-	const apiStatus = useFetchInterval<ApiStatusResponse>(POLL_INTERVAL, '/api/status')
-
+export function ConnectionStatus({ status, error }: ConnectionStatusProps) {
 	return (
 		<>
 			<h3>Status</h3>
 
-			{apiStatus.data ? (
-				<ConnectionStatusData status={apiStatus.data} />
-			) : (
-				<p>Unknown status {apiStatus.error?.toString() ?? ''}</p>
-			)}
+			{status ? <ConnectionStatusData status={status} /> : <p>Unknown status {error?.toString() ?? ''}</p>}
 		</>
 	)
 }

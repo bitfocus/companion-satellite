@@ -4,20 +4,18 @@ import Nav from 'react-bootstrap/Nav'
 import Navbar from 'react-bootstrap/Navbar'
 // import NavDropdown from 'react-bootstrap/NavDropdown'
 
-export function SatelliteHeader() {
-	const rescanUSB = useCallback((e: React.MouseEvent<HTMLElement>) => {
-		e.preventDefault()
+interface SatelliteHeaderProps {
+	rescanSurfaces: () => void
+}
+export function SatelliteHeader({ rescanSurfaces }: SatelliteHeaderProps) {
+	const rescanUSB = useCallback(
+		(e: React.MouseEvent<HTMLElement>) => {
+			e.preventDefault()
 
-		fetch('/api/rescan', {
-			method: 'POST',
-		})
-			.then(() => {
-				console.log('scan success')
-			})
-			.catch((e) => {
-				console.error('scan failed', e)
-			})
-	}, [])
+			rescanSurfaces()
+		},
+		[rescanSurfaces]
+	)
 
 	return (
 		<Navbar expand="lg" className="bg-body-tertiary">

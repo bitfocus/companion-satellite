@@ -8,6 +8,7 @@ import type Conf from 'conf'
 import type { CompanionSatelliteClient } from './client'
 import type { DeviceManager } from './devices'
 import type { SatelliteConfig } from './config'
+import { ApiConfigData, compileConfig, compileStatus, updateConfig } from './apiTypes'
 
 export class RestServer {
 	private readonly appConfig: Conf<SatelliteConfig>
@@ -27,10 +28,6 @@ export class RestServer {
 
 		this.router = new Router()
 
-		const compileConfig = (): ApiConfigData => {
-			return { host: this.appConfig.get('remoteIp'), port: this.appConfig.get('remotePort') }
-		}
-
 		//GET
 		this.router.get('/api/host', async (ctx) => {
 			ctx.body = this.appConfig.get('remoteIp')
@@ -42,14 +39,10 @@ export class RestServer {
 			ctx.body = this.client.connected
 		})
 		this.router.get('/api/config', (ctx) => {
-			ctx.body = compileConfig()
+			ctx.body = compileConfig(this.appConfig)
 		})
 		this.router.get('/api/status', (ctx) => {
-			ctx.body = {
-				connected: this.client.connected,
-				companionVersion: this.client.companionVersion,
-				companionApiVersion: this.client.companionApiVersion,
-			} satisfies ApiStatusResponse
+			ctx.body = compileStatus(this.client)
 		})
 
 		//POST
@@ -90,20 +83,29 @@ export class RestServer {
 		this.router.post('/api/config', koaBody(), async (ctx) => {
 			if (ctx.request.type == 'application/json') {
 				const body = ctx.request.body as Partial<ApiConfigData>
-				const host = body.host
-				const port = Number(body.port)
 
-				if (!host) {
-					ctx.status = 400
-					ctx.body = 'Invalid host'
-				} else if (isNaN(port) || port <= 0 || port > 65535) {
+				const partialConfig: Partial<ApiConfigData> = {}
+
+				const host = body.host
+				if (host !== undefined) {
+					if (typeof host === 'string') {
+						partialConfig.host = host
+					} else {
+						ctx.status = 400
+						ctx.body = 'Invalid host'
+					}
+				}
+
+				const port = Number(body.port)
+				if (isNaN(port) || port <= 0 || port > 65535) {
 					ctx.status = 400
 					ctx.body = 'Invalid port'
 				} else {
-					this.appConfig.set('remoteIp', host)
-					this.appConfig.set('remotePort', port)
+					partialConfig.port = port
 				}
-				ctx.body = compileConfig()
+
+				updateConfig(this.appConfig, partialConfig)
+				ctx.body = compileConfig(this.appConfig)
 			}
 		})
 
@@ -138,15 +140,4 @@ export class RestServer {
 			console.log('The rest server is closed')
 		}
 	}
-}
-
-export interface ApiStatusResponse {
-	connected: boolean
-	companionVersion: string | null
-	companionApiVersion: string | null
-}
-
-export interface ApiConfigData {
-	host: string
-	port: number
 }

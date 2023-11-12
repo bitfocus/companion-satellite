@@ -1,6 +1,6 @@
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
-import type { ApiConfigData } from '../../src/rest'
+import type { ApiConfigData } from '../../src/apiTypes'
 import { useCallback, useMemo, useState } from 'react'
 import { SaveApiConfigData } from './Api/types'
 
@@ -16,19 +16,15 @@ export function SettingsForm({ currentConfig, loadError, saveConfig }: SettingsF
 	}, [currentConfig, modifiedConfig])
 
 	const mySaveConfig = useCallback(() => {
-		if (fullModifiedConfig) {
-			saveConfig(fullModifiedConfig)
-				.then(() => {
-					console.log('config saved')
-					setModifiedConfig({})
-				})
-				.catch((e) => {
-					console.error('config save failed', e)
-				})
-		} else {
-			console.error('No config loaded to save')
-		}
-	}, [saveConfig, fullModifiedConfig])
+		saveConfig(modifiedConfig)
+			.then(() => {
+				console.log('config saved')
+				setModifiedConfig({})
+			})
+			.catch((e) => {
+				console.error('config save failed', e)
+			})
+	}, [saveConfig, modifiedConfig])
 
 	return (
 		<>

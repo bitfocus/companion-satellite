@@ -3,10 +3,10 @@ import './App.scss'
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { WebApp } from './WebApp.tsx'
+import { ElectronApp } from './ElectronApp.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
-		<WebApp />
+		<ElectronApp />
 	</React.StrictMode>
 )

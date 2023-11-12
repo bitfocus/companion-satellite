@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { ApiConfigData } from '../../../src/rest'
 import type { SaveApiConfigData } from './types'
 import { useFetchInterval } from '../Util/useFetchInterval'
+import type { ApiConfigData } from '../../../src/apiTypes'
 
 const POLL_INTERVAL = 5000
 
@@ -10,7 +10,7 @@ export function useRestConfigApi(): {
 	loadError: Error | null
 	saveConfig: SaveApiConfigData
 } {
-	const saveConfig = useCallback(async (config: ApiConfigData): Promise<void> => {
+	const saveConfig = useCallback(async (config: Partial<ApiConfigData>): Promise<void> => {
 		const res = await fetch('/api/config', {
 			method: 'POST',
 			headers: {
