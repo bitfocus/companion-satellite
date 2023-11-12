@@ -11,7 +11,7 @@ export function useRestConfigApi(): {
 	saveConfig: SaveApiConfigData
 } {
 	const saveConfig = useCallback(async (config: ApiConfigData): Promise<void> => {
-		const res = await fetch('api/config', {
+		const res = await fetch('/api/config', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
