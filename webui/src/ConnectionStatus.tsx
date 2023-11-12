@@ -1,4 +1,4 @@
-import type { ApiStatusResponse } from '../../src/rest'
+import type { ApiStatusResponse } from '../../src/apiTypes'
 
 interface ConnectionStatusProps {
 	status: ApiStatusResponse | undefined

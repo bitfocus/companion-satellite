@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { SaveApiConfigData } from './types'
-import { useFetchInterval } from '../Util/useFetchInterval'
 import type { ApiConfigData } from '../../../src/apiTypes'
+import { usePoller } from '../Util/usePoller'
 
 const POLL_INTERVAL = 5000
 
@@ -26,16 +26,24 @@ export function useRestConfigApi(): {
 
 	const [currentConfig, setCurrentConfig] = useState<ApiConfigData | null>(null)
 
-	const loadData = useFetchInterval<ApiConfigData>(POLL_INTERVAL, '/api/config')
-	useEffect(() => {
-		if (loadData.data) {
-			setCurrentConfig(loadData.data)
+	const fetchConfig = useCallback(async () => {
+		const response = await fetch('/api/config')
+		if (!response.ok) {
+			throw new Error(response.statusText)
 		}
-	}, [loadData.data])
+
+		return (await response.json()) as ApiConfigData
+	}, [])
+	const loadedConfig = usePoller<ApiConfigData>(POLL_INTERVAL, fetchConfig)
+	useEffect(() => {
+		if (loadedConfig.data) {
+			setCurrentConfig(loadedConfig.data)
+		}
+	}, [loadedConfig.data])
 
 	return {
 		currentConfig,
-		loadError: loadData.error ?? null,
+		loadError: loadedConfig.error ?? null,
 		saveConfig,
 	}
 }
