@@ -11,10 +11,11 @@ import { DeviceManager } from './devices'
 import { CompanionSatelliteClient } from './client'
 import { DEFAULT_PORT, DEFAULT_REST_PORT } from './lib'
 import { RestServer } from './rest'
-import { SatelliteConfig, ensureFieldsPopulated, satelliteConfigSchema } from './config'
+import { SatelliteConfig, ensureFieldsPopulated } from './config'
 
 const store = new electronStore<SatelliteConfig>({
-	schema: satelliteConfigSchema,
+	// schema: satelliteConfigSchema,
+	// migrations: satelliteConfigMigrations,
 })
 ensureFieldsPopulated(store)
 

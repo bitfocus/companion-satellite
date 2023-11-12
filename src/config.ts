@@ -38,7 +38,7 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 
 export function ensureFieldsPopulated(store: Conf<SatelliteConfig>): void {
 	for (const [key, schema] of Object.entries<any>(satelliteConfigSchema)) {
-		if (schema.default !== undefined) {
+		if (store.get(key) === undefined && schema.default !== undefined) {
 			// Ensure values are written to disk
 			store.set(key, schema.default)
 		}
