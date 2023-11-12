@@ -8,6 +8,7 @@ import path from 'path'
 
 import { RestServer } from './rest'
 import * as fs from 'fs/promises'
+import { SatelliteConfig, ensureFieldsPopulated, satelliteConfigSchema } from './config'
 
 const cli = meow(
 	`
@@ -28,70 +29,15 @@ if (cli.input.length === 0) {
 const rawConfigPath = cli.input[0]
 const absoluteConfigPath = path.isAbsolute(rawConfigPath) ? rawConfigPath : path.join(process.cwd(), rawConfigPath)
 
-interface AppConfig {
-	companion: {
-		address: string
-		port: number
-	}
-	http: {
-		enabled: boolean
-		port: number
-	}
-}
-
-const appConfig = new Conf<AppConfig>({
-	schema: {
-		companion: {
-			type: 'object',
-			description: 'Companion connection configuration',
-			properties: {
-				address: {
-					type: 'string',
-					description: 'Address of Companion installation',
-				},
-				port: {
-					type: 'integer',
-					description: 'Port number of Companion installation',
-					minimum: 1,
-					maximum: 65535,
-				},
-			},
-			required: ['address', 'port'],
-			default: {
-				address: '127.0.0.1',
-				port: 16622,
-			},
-		},
-		http: {
-			type: 'object',
-			description: 'Satellite HTTP configuration',
-			properties: {
-				enabled: {
-					type: 'boolean',
-					description: 'Enable HTTP api',
-					default: true,
-				},
-				port: {
-					type: 'integer',
-					description: 'Port number of run HTTP server on',
-					minimum: 1,
-					maximum: 65535,
-					default: 9999,
-				},
-			},
-			required: ['enabled', 'port'],
-			default: {
-				enabled: true,
-				port: 9999,
-			},
-		},
-	},
+const appConfig = new Conf<SatelliteConfig>({
+	schema: satelliteConfigSchema,
 	configName: path.parse(absoluteConfigPath).name,
 	projectName: 'companion-satellite',
 	cwd: path.dirname(absoluteConfigPath),
 })
+ensureFieldsPopulated(appConfig)
 
-console.log('Starting')
+console.log('Starting', appConfig.path)
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
@@ -117,12 +63,10 @@ exitHook(() => {
 	server.close()
 })
 
-client
-	.connect(appConfig.get('companion.address') || '127.0.0.1', appConfig.get('companion.port') || DEFAULT_PORT)
-	.catch((e) => {
-		console.log(`Failed to connect`, e)
-	})
-server.open(appConfig.get('http.port') || DEFAULT_REST_PORT)
+client.connect(appConfig.get('remoteIp') || '127.0.0.1', appConfig.get('remotePort') || DEFAULT_PORT).catch((e) => {
+	console.log(`Failed to connect`, e)
+})
+server.open(appConfig.get('restEnabled') ? appConfig.get('restPort') || DEFAULT_REST_PORT : 0)
 
 async function updateEnvironmentFile(filePath: string, changes: Record<string, string>): Promise<void> {
 	const data = await fs.readFile(filePath, 'utf-8')

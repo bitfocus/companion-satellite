@@ -11,21 +11,18 @@ import { DeviceManager } from './devices'
 import { CompanionSatelliteClient } from './client'
 import { DEFAULT_PORT, DEFAULT_REST_PORT } from './lib'
 import { RestServer } from './rest'
+import { SatelliteConfig, ensureFieldsPopulated, satelliteConfigSchema } from './config'
 
-const store = new electronStore<SatelliteConfig>()
+const store = new electronStore<SatelliteConfig>({
+	schema: satelliteConfigSchema,
+})
+ensureFieldsPopulated(store)
+
 let tray: Tray | undefined
 
 app.on('window-all-closed', () => {
 	// Block default behaviour of exit on close
 })
-
-interface SatelliteConfig {
-	remoteIp: string
-	remotePort: number
-
-	restPort: number | undefined
-	restEnabled: boolean
-}
 
 console.log('Starting')
 
