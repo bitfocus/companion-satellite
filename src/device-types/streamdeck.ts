@@ -60,7 +60,8 @@ export class StreamDeckWrapper implements WrappedDevice {
 
 		if (this.#deck.LCD_ENCODER_SIZE) {
 			const encoderSize = this.#deck.LCD_ENCODER_SIZE
-			const xPad = (encoderSize.width - encoderSize.height) / 2
+			const xPad = 25
+			const xProgression = 216.666
 			this.#queueLcdStrip = new ImageWriteQueue(async (key: number, buffer: Buffer) => {
 				const outputId = this.#queueOutputId
 
@@ -86,7 +87,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 					this.#hasDrawnLcdStrip = true
 
 					try {
-						await this.#deck.fillLcdRegion(key * encoderSize.width + xPad, 0, newbuffer, {
+						await this.#deck.fillLcdRegion(key * xProgression + xPad, 0, newbuffer, {
 							format: 'rgb',
 							width: encoderSize.height,
 							height: encoderSize.height,
