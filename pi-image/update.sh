@@ -16,7 +16,7 @@ fnm default $(fnm current)
 corepack enable
 
 # install dependencies
-yarn config set network-timeout 100000 -g
+yarn config set httpTimeout 100000
 yarn
 
 # build typescript
