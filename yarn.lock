@@ -107,7 +107,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@electron/notarize@npm:2.1.0, @electron/notarize@npm:^2.1.0":
+"@electron/notarize@npm:2.1.0":
   version: 2.1.0
   resolution: "@electron/notarize@npm:2.1.0"
   dependencies:
@@ -115,6 +115,17 @@ __metadata:
     fs-extra: "npm:^9.0.1"
     promise-retry: "npm:^2.0.1"
   checksum: fa51f657c2bba43c2828073fa5d50313d93dfc177f8402ee1ef27ecabe363efaa98f3b53e5b71b0324451228cdc51c31392487bc2d36c427a9918e6bc68ca7ac
+  languageName: node
+  linkType: hard
+
+"@electron/notarize@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@electron/notarize@npm:2.2.0"
+  dependencies:
+    debug: "npm:^4.1.1"
+    fs-extra: "npm:^9.0.1"
+    promise-retry: "npm:^2.0.1"
+  checksum: 20d0207227a73d938539e3137bb89d07b16f16a139e60f497ed5172fa6545bb8a84998dc77140262fcbcc5f0d3c45059fd72c8a454825dbae377fcd671c6704d
   languageName: node
   linkType: hard
 
@@ -834,16 +845,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/koa-router@npm:^7.4.7":
-  version: 7.4.7
-  resolution: "@types/koa-router@npm:7.4.7"
+"@types/koa-router@npm:^7.4.8":
+  version: 7.4.8
+  resolution: "@types/koa-router@npm:7.4.8"
   dependencies:
     "@types/koa": "npm:*"
-  checksum: f14c9ba4c913eacc24baf4107b4f4f81389e33757165dd6bcb3e21c665ccbf25ffeea9e0065d0aa1db58d964d28e0d7243a8f5aaa195e52bd2a19242e0d15630
+  checksum: 9aa1018c33d6900add8071c928e60fd4f55245133a0f6adc208190273019955ed899b51871408850df48edc1ed94a084b3c16f33c5470b3c6901cb7fb4057449
   languageName: node
   linkType: hard
 
-"@types/koa@npm:*, @types/koa@npm:^2.13.11, @types/koa@npm:^2.13.5":
+"@types/koa@npm:*, @types/koa@npm:^2.13.5":
   version: 2.13.11
   resolution: "@types/koa@npm:2.13.11"
   dependencies:
@@ -856,6 +867,22 @@ __metadata:
     "@types/koa-compose": "npm:*"
     "@types/node": "npm:*"
   checksum: f1df820dc5f12cb116a75314e032b5cf655017af8a5f927f4941c0d1a9c3e7d0799fdcac7eb04108e0546276a775336f5878ab65ef3686dd8931515d8f1480b7
+  languageName: node
+  linkType: hard
+
+"@types/koa@npm:^2.13.12":
+  version: 2.13.12
+  resolution: "@types/koa@npm:2.13.12"
+  dependencies:
+    "@types/accepts": "npm:*"
+    "@types/content-disposition": "npm:*"
+    "@types/cookies": "npm:*"
+    "@types/http-assert": "npm:*"
+    "@types/http-errors": "npm:*"
+    "@types/keygrip": "npm:*"
+    "@types/koa-compose": "npm:*"
+    "@types/node": "npm:*"
+  checksum: df28727246cc318ecf8f5672ff6b6201bef915a53c44c4c01614027601ff6e917e7188872df16bfe854293ba250fc6260dcc3e3ce071ddfe0f8403f40a5d8234
   languageName: node
   linkType: hard
 
@@ -905,12 +932,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^18.11.18, @types/node@npm:^18.16.3, @types/node@npm:^18.18.9":
+"@types/node@npm:^18.11.18, @types/node@npm:^18.16.3":
   version: 18.18.9
   resolution: "@types/node@npm:18.18.9"
   dependencies:
     undici-types: "npm:~5.26.4"
   checksum: 8d58fba5eede0df009412ee188bc96f4baf340f4fafbda1bc66fb680fa775aedc88f0cb154a2455966443d9538af402fff022fb0632bddb1bd0648e5a86e5db9
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^18.18.14":
+  version: 18.18.14
+  resolution: "@types/node@npm:18.18.14"
+  dependencies:
+    undici-types: "npm:~5.26.4"
+  checksum: 7ab33be7e9ed0501bbbf1e62006b441a1ec5a8969b4f4df796919f3fc851604e2119947b72696e4049dd638a10b27e6f6b4cfaa469787d548d4d9c09fb945968
   languageName: node
   linkType: hard
 
@@ -961,10 +997,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/semver@npm:^7.3.12, @types/semver@npm:^7.5.5":
+"@types/semver@npm:^7.3.12":
   version: 7.5.5
   resolution: "@types/semver@npm:7.5.5"
   checksum: bb1b525221d93c9e7b45914af5ed1729a5bfdfa80927d6b02bcb4550ff7015f8c713152c32cb679ffcc79e77c0dda66d1f972ff5ee8d2205336729c51198bb18
+  languageName: node
+  linkType: hard
+
+"@types/semver@npm:^7.5.6":
+  version: 7.5.6
+  resolution: "@types/semver@npm:7.5.6"
+  checksum: 196dc32db5f68cbcde2e6a42bb4aa5cbb100fa2b7bd9c8c82faaaf3e03fbe063e205dbb4f03c7cdf53da2edb70a0d34c9f2e601b54281b377eb8dc1743226acd
   languageName: node
   linkType: hard
 
@@ -2000,7 +2043,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "companion-satellite@workspace:."
   dependencies:
-    "@electron/notarize": "npm:^2.1.0"
+    "@electron/notarize": "npm:^2.2.0"
     "@elgato-stream-deck/node": "npm:^5.7.3"
     "@julusian/image-rs": "npm:^0.2.1"
     "@julusian/jpeg-turbo": "npm:^2.1.0"
@@ -2008,14 +2051,14 @@ __metadata:
     "@loupedeck/node": "npm:^1.0.0"
     "@sofie-automation/code-standard-preset": "npm:~2.5.2"
     "@types/electron-prompt": "npm:^1.6.5"
-    "@types/koa": "npm:^2.13.11"
-    "@types/koa-router": "npm:^7.4.7"
-    "@types/node": "npm:^18.18.9"
+    "@types/koa": "npm:^2.13.12"
+    "@types/koa-router": "npm:^7.4.8"
+    "@types/node": "npm:^18.18.14"
     "@types/node-hid": "npm:^1.3.4"
-    "@types/semver": "npm:^7.5.5"
+    "@types/semver": "npm:^7.5.6"
     "@xencelabs-quick-keys/node": "npm:^0.4.0"
     cross-env: "npm:^7.0.3"
-    electron: "npm:^25.9.4"
+    electron: "npm:^25.9.6"
     electron-about-window: "npm:^1.15.2"
     electron-builder: "npm:^24.6.4"
     electron-prompt: "npm:^1.7.0"
@@ -2541,16 +2584,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:^25.9.4":
-  version: 25.9.4
-  resolution: "electron@npm:25.9.4"
+"electron@npm:^25.9.6":
+  version: 25.9.6
+  resolution: "electron@npm:25.9.6"
   dependencies:
     "@electron/get": "npm:^2.0.0"
     "@types/node": "npm:^18.11.18"
     extract-zip: "npm:^2.0.1"
   bin:
     electron: cli.js
-  checksum: 02fc83d2ae5ca9e0d66821b24ff646345ce011e0b09136f2aae9fb85ccb02535b077c0fd8517b1371a3c8887b43ea1bbb5f2906f61b7b288a0484cc6dd8e3ea3
+  checksum: ca7b0c8b6b6758e714ac63e160d229460a83de6ba7b775b99dd441a5ac6a6cc4cb976ef238363017218d790ad00a2a7136d3e95473a22a8a9cb86df26e66dfff
   languageName: node
   linkType: hard
 
