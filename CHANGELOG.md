@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.5.6](https://github.com/bitfocus/companion-satellite/compare/v1.5.5...v1.5.6) (Sat Nov 18 2023)
+
+
+### Fixes
+
+* align streamdeck plus lcd strip drawing [515cf4a](https://github.com/bitfocus/companion-satellite/commit/515cf4acd74e0de55bbff21f979345c9ac678afb)
+* scaling is not being setup correctly, when devices are added before the connection is fully open [4a2a30a](https://github.com/bitfocus/companion-satellite/commit/4a2a30a3b468072d93bcc9792d8d90363b5bb9b6)
+* streamdeck plus lcd strip not blanking [ed56920](https://github.com/bitfocus/companion-satellite/commit/ed5692077d651bcacfe3824f2e295e7526ff321d)
+
+## [1.5.5](https://github.com/bitfocus/companion-satellite/compare/v1.5.3...v1.5.5) (Wed Oct 11 2023)
+
+
+### Fixes
+
+* build errors [1dd8969](https://github.com/bitfocus/companion-satellite/commit/1dd896921d2ea2ec5affcd3abba79a76c6eadca4)
+
+## [1.5.4](https://github.com/bitfocus/companion-satellite/compare/v1.5.3...v1.5.4) (Wed Oct 11 2023)
+
+
+## [1.5.3](https://github.com/bitfocus/companion-satellite/compare/v1.5.2...v1.5.3) (Wed Oct 11 2023)
+
+
+### Fixes
+
+* install vcruntime [4523f1f](https://github.com/bitfocus/companion-satellite/commit/4523f1fda308c944782fe9ba2c1484a544dc254c)
+
+## [1.5.2](https://github.com/bitfocus/companion-satellite/compare/v1.5.1...v1.5.2) (Sat Oct 07 2023)
+
+
+### Fixes
+
+* update @julusian/image-rs for arm7 support [64a6903](https://github.com/bitfocus/companion-satellite/commit/64a6903d93f9e89aa648ed3f4cd3bcf1fb76c260)
+* **(pi)** reload udev rules during install. ensure nano is installed [6c96faa](https://github.com/bitfocus/companion-satellite/commit/6c96faafc22a582c70d76707af0a2a3c78001b0c)
+
+## [1.5.1](https://github.com/bitfocus/companion-satellite/compare/v1.5.0...v1.5.1) (Mon Sep 04 2023)
+
+
+### Fixes
+
+* hide version info from about dialog [20aa59c](https://github.com/bitfocus/companion-satellite/commit/20aa59ca599ec51aeb77e0d2e63a85a7cdd4b285)
+* add setImmediate to connected event (#85) [0528e36](https://github.com/bitfocus/companion-satellite/commit/0528e36df83d02669da8cb43909d275b19fc82c8)
+
+### Features
+
+* add connected endpoint (#87) [2b40358](https://github.com/bitfocus/companion-satellite/commit/2b4035818c267f5d80dbc8fc3490ea8125739d06)
+
 ## [1.5.0](https://github.com/bitfocus/companion-satellite/compare/v1.4.1...v1.5.0) (Sat Aug 19 2023)
 
 

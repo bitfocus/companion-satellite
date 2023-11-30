@@ -13,10 +13,10 @@ cd /usr/local/src/companion-satellite
 # update the node version
 fnm use --install-if-missing
 fnm default $(fnm current)
-npm --unsafe-perm install -g yarn
+corepack enable
 
 # install dependencies
-yarn config set network-timeout 100000 -g
+yarn config set httpTimeout 100000
 yarn
 
 # build typescript
@@ -24,6 +24,7 @@ yarn build
 
 # update some tooling
 cp assets/linux/50-satellite.rules /etc/udev/rules.d/
+udevadm control --reload-rules || true
 
 # update startup script
 cp pi-image/satellite.service /etc/systemd/system
@@ -36,6 +37,7 @@ echo "
 # Port for the REST server (0 to disable)
 REST_PORT=9999" >> /boot/satellite-config
 fi
+chmod 666 /boot/satellite-config
 
 systemctl daemon-reload
 

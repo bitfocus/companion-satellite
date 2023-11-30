@@ -1,9 +1,8 @@
 import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
-import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
 export class LoupedeckLiveWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -15,6 +14,7 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 	#queue: ImageWriteQueue
 
 	#companionSupportsScaling = false
+	#companionSupportsCombinedEncoders = true
 
 	public get deviceId(): string {
 		return this.#deviceId
@@ -90,14 +90,12 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 		this.#queue?.abort()
 		await this.#deck.close()
 	}
-	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
-		this.#companionSupportsScaling = client.useCustomBitmapResolution
-
+	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		const convertButtonId = (type: 'button' | 'rotary', id: number, rotarySecondary: boolean): number => {
 			if (type === 'button' && id >= 0 && id < 8) {
 				return 24 + id
 			} else if (type === 'rotary') {
-				if (!client.useCombinedEncoders && rotarySecondary) {
+				if (!this.#companionSupportsCombinedEncoders && rotarySecondary) {
 					switch (id) {
 						case 0:
 							return 1
@@ -142,13 +140,13 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 			const id2 = convertButtonId(info.type, info.index, false)
 			if (id2 < 90) {
 				if (delta < 0) {
-					if (client.useCombinedEncoders) {
+					if (this.#companionSupportsCombinedEncoders) {
 						client.rotateLeft(this.deviceId, id2)
 					} else {
 						client.keyUp(this.deviceId, id2)
 					}
 				} else if (delta > 0) {
-					if (client.useCombinedEncoders) {
+					if (this.#companionSupportsCombinedEncoders) {
 						client.rotateRight(this.deviceId, id2)
 					} else {
 						client.keyDown(this.deviceId, id2)
@@ -180,6 +178,11 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 		await this.blankDevice()
 
 		this.showStatus(client.host, status)
+	}
+
+	updateCapabilities(capabilities: ClientCapabilities): void {
+		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
+		this.#companionSupportsCombinedEncoders = capabilities.useCombinedEncoders
 	}
 
 	async deviceAdded(): Promise<void> {

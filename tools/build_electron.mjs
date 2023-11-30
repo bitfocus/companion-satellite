@@ -1,5 +1,11 @@
 #!/usr/bin/env zx
 
+import { fetch, fs } from 'zx'
+import { createWriteStream } from 'node:fs'
+import { pipeline } from 'node:stream'
+import { promisify } from 'node:util'
+const streamPipeline = promisify(pipeline)
+
 function $withoutEscaping(pieces, ...args) {
 	const origQuote = $.quote
 	try {
@@ -38,6 +44,17 @@ if (!platform) {
 	} else {
 		console.error('Unknown platform')
 		process.exit(1)
+	}
+}
+
+if (platform === 'win-x64' || process.platform === 'win32') {
+	const localRedistPath = ".cache/vc_redist.x64.exe"
+	if (!(await fs.pathExists(localRedistPath))) {
+		await fs.mkdirp('.cache')
+
+		const response = await fetch('https://aka.ms/vs/17/release/vc_redist.x64.exe')
+		if (!response.ok) throw new Error(`unexpected response ${response.statusText}`)
+		await streamPipeline(response.body, createWriteStream(".cache/vc_redist.x64.exe"))
 	}
 }
 

@@ -94,7 +94,7 @@ export class DeviceManager {
 
 			this.showStatusCard('Connected', false)
 
-			this.registerAll()
+			this.syncCapabilitiesAndRegisterAllDevices()
 		})
 		client.on('disconnected', () => {
 			console.log('disconnected')
@@ -183,6 +183,10 @@ export class DeviceManager {
 			const dev = this.devices.get(deviceId)
 			if (dev) {
 				console.log('try add', deviceId)
+
+				// Make sure device knows what the client is capable of
+				dev.updateCapabilities(this.client.capabilities)
+
 				this.client.addDevice(deviceId, dev.productName, dev.getRegisterProps())
 			}
 		}, 1000)
@@ -232,9 +236,7 @@ export class DeviceManager {
 		}
 	}
 
-	public registerAll(): void {
-		// TODO - this is a race condition, there could already be some adds in flight
-
+	public syncCapabilitiesAndRegisterAllDevices(): void {
 		console.log('registerAll', Array.from(this.devices.keys()))
 		for (const device of this.devices.values()) {
 			// If it is still in the process of initialising skip it
@@ -242,6 +244,9 @@ export class DeviceManager {
 
 			// Indicate on device
 			device.showStatus(this.client.host, this.statusString)
+
+			// Make sure device knows what the client is capable of
+			device.updateCapabilities(this.client.capabilities)
 
 			// Re-init device
 			this.client.addDevice(device.deviceId, device.productName, device.getRegisterProps())
@@ -453,6 +458,8 @@ export class DeviceManager {
 		try {
 			await devInfo.initDevice(this.client, this.statusString)
 
+			devInfo.updateCapabilities(this.client.capabilities)
+
 			this.client.addDevice(deviceId, devInfo.productName, devInfo.getRegisterProps())
 		} catch (e) {
 			// Remove the failed device
@@ -462,7 +469,7 @@ export class DeviceManager {
 		}
 	}
 
-	private statusCardTimer: NodeJS.Timer | undefined
+	private statusCardTimer: NodeJS.Timeout | undefined
 	private showStatusCard(message: string, runLoop: boolean): void {
 		this.statusString = message
 

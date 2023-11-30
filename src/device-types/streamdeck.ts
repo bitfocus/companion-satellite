@@ -1,9 +1,8 @@
 import { DeviceModelId, StreamDeck } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CompanionSatelliteClient } from '../client'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
-import { DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
 export class StreamDeckWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -13,6 +12,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 	#queueOutputId: number
 	#queue: ImageWriteQueue | undefined
 	#queueLcdStrip: ImageWriteQueue | undefined
+	#hasDrawnLcdStrip = false
 
 	#companionSupportsScaling = false
 
@@ -60,7 +60,8 @@ export class StreamDeckWrapper implements WrappedDevice {
 
 		if (this.#deck.LCD_ENCODER_SIZE) {
 			const encoderSize = this.#deck.LCD_ENCODER_SIZE
-			const xPad = (encoderSize.width - encoderSize.height) / 2
+			const xPad = 25
+			const xProgression = 216.666
 			this.#queueLcdStrip = new ImageWriteQueue(async (key: number, buffer: Buffer) => {
 				const outputId = this.#queueOutputId
 
@@ -83,8 +84,10 @@ export class StreamDeckWrapper implements WrappedDevice {
 
 				// Check if generated image is still valid
 				if (this.#queueOutputId === outputId) {
+					this.#hasDrawnLcdStrip = true
+
 					try {
-						await this.#deck.fillLcdRegion(key * encoderSize.width + xPad, 0, newbuffer, {
+						await this.#deck.fillLcdRegion(key * xProgression + xPad, 0, newbuffer, {
 							format: 'rgb',
 							width: encoderSize.height,
 							height: encoderSize.height,
@@ -117,12 +120,10 @@ export class StreamDeckWrapper implements WrappedDevice {
 		this.#queue?.abort()
 		await this.#deck.close()
 	}
-	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
+	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
 		this.#deck.on('down', (key) => client.keyDown(this.deviceId, key))
 		this.#deck.on('up', (key) => client.keyUp(this.deviceId, key))
-
-		this.#companionSupportsScaling = client.useCustomBitmapResolution
 
 		if (this.#deck.MODEL === DeviceModelId.PLUS) {
 			this.#deck.on('encoderDown', (encoder) => {
@@ -168,6 +169,10 @@ export class StreamDeckWrapper implements WrappedDevice {
 		this.showStatus(client.host, status)
 	}
 
+	updateCapabilities(capabilities: ClientCapabilities): void {
+		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
+	}
+
 	async deviceAdded(): Promise<void> {
 		this.#queueOutputId++
 	}
@@ -208,6 +213,12 @@ export class StreamDeckWrapper implements WrappedDevice {
 				.generateBasicCard(width, height, imageRs.PixelFormat.Rgba, hostname, status)
 				.then(async (buffer) => {
 					if (outputId === this.#queueOutputId) {
+						if (this.#hasDrawnLcdStrip) {
+							// Blank everything first, to ensure the strip is cleared
+							this.#hasDrawnLcdStrip = false
+							await this.#deck.clearPanel()
+						}
+
 						// still valid
 						await this.#deck.fillPanelBuffer(buffer, {
 							format: 'rgba',

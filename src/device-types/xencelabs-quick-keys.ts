@@ -5,8 +5,7 @@ import {
 	XencelabsQuickKeysDisplayOrientation,
 	WheelEvent,
 } from '@xencelabs-quick-keys/node'
-import { CompanionSatelliteClient } from '../client'
-import { WrappedDevice, DeviceRegisterProps, DeviceDrawProps } from './api'
+import { WrappedDevice, DeviceRegisterProps, DeviceDrawProps, ClientCapabilities, CompanionClient } from './api'
 
 function keyToCompanion(k: number): number | null {
 	if (k >= 0 && k < 4) return k + 1
@@ -16,11 +15,12 @@ function keyToCompanion(k: number): number | null {
 	return null
 }
 export class QuickKeysWrapper implements WrappedDevice {
-	#client: CompanionSatelliteClient | undefined
 	readonly #surface: XencelabsQuickKeys
 	readonly #deviceId: string
 
-	#statusTimer: NodeJS.Timer | undefined
+	#companionSupportsCombinedEncoders = true
+
+	#statusTimer: NodeJS.Timeout | undefined
 	#unsub: (() => void) | undefined
 
 	public get deviceId(): string {
@@ -51,8 +51,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 
 		await this.#surface.stopData()
 	}
-	async initDevice(client: CompanionSatelliteClient, status: string): Promise<void> {
-		this.#client = client
+	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
 
 		const handleDown = (key: number) => {
@@ -70,14 +69,14 @@ export class QuickKeysWrapper implements WrappedDevice {
 		const handleWheel = (ev: WheelEvent) => {
 			switch (ev) {
 				case WheelEvent.Left:
-					if (client.useCombinedEncoders) {
+					if (this.#companionSupportsCombinedEncoders) {
 						client.rotateLeft(this.deviceId, 5)
 					} else {
 						client.keyUp(this.deviceId, 11)
 					}
 					break
 				case WheelEvent.Right:
-					if (client.useCombinedEncoders) {
+					if (this.#companionSupportsCombinedEncoders) {
 						client.rotateRight(this.deviceId, 5)
 					} else {
 						client.keyDown(this.deviceId, 11)
@@ -105,6 +104,10 @@ export class QuickKeysWrapper implements WrappedDevice {
 		await this.blankDevice()
 
 		this.showStatus(client.host, status)
+	}
+
+	updateCapabilities(capabilities: ClientCapabilities): void {
+		this.#companionSupportsCombinedEncoders = capabilities.useCustomBitmapResolution
 	}
 
 	async deviceAdded(): Promise<void> {
@@ -144,7 +147,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 			}
 		}
 
-		const wheelIndex = this.#client?.useCombinedEncoders ? 5 : 11
+		const wheelIndex = this.#companionSupportsCombinedEncoders ? 5 : 11
 		if (data.color && data.keyIndex === wheelIndex) {
 			const r = parseInt(data.color.substr(1, 2), 16)
 			const g = parseInt(data.color.substr(3, 2), 16)
