@@ -53,7 +53,7 @@
     "node": "^18.15"
   },
   "dependencies": {
-    "@elgato-stream-deck/node": "^6.0.0-async-test.3",
+    "@elgato-stream-deck/node": "^6.0.0",
     "@julusian/image-rs": "^0.2.1",
     "@julusian/jpeg-turbo": "^2.1.0",
     "@julusian/skia-canvas": "^1.0.5",
@@ -69,13 +69,13 @@
     "koa-body": "^6.0.1",
     "koa-router": "^12.0.1",
     "meow": "^9.0.0",
-    "node-hid": "npm:@julusian/hid@3.0.0-2",
+    "node-hid": "^3.0.0",
     "semver": "^7.5.4",
     "tslib": "^2.6.2",
     "usb": "^2.11.0"
   },
   "resolutions": {
-    "node-hid": "npm:@julusian/hid@3.0.0-2"
+    "node-hid": "^3.0.0"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
   "lint-staged": {
