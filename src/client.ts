@@ -4,8 +4,8 @@ import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterPro
 import { DEFAULT_PORT } from './lib'
 import * as semver from 'semver'
 
-const PING_UNACKED_LIMIT = 5 // Arbitrary number
-const PING_IDLE_TIMEOUT = 500 // Pings are allowed to be late if another packet has been received recently
+const PING_UNACKED_LIMIT = 15 // Arbitrary number
+const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
 const PING_INTERVAL = 100
 const RECONNECT_DELAY = 1000
 
