@@ -58,7 +58,7 @@
     "@julusian/jpeg-turbo": "^2.1.0",
     "@julusian/skia-canvas": "^1.0.5",
     "@loupedeck/node": "^1.0.0",
-    "@xencelabs-quick-keys/node": "^0.4.0",
+    "@xencelabs-quick-keys/node": "^1.0.0",
     "electron-about-window": "^1.15.2",
     "electron-prompt": "^1.7.0",
     "electron-store": "^8.1.0",

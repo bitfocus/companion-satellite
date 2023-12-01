@@ -1187,23 +1187,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@xencelabs-quick-keys/core@npm:0.4.0":
-  version: 0.4.0
-  resolution: "@xencelabs-quick-keys/core@npm:0.4.0"
+"@xencelabs-quick-keys/core@npm:1.0.0":
+  version: 1.0.0
+  resolution: "@xencelabs-quick-keys/core@npm:1.0.0"
   dependencies:
     eventemitter3: "npm:^4.0.7"
-  checksum: f1bd1e7b5787e535a9e95f014c1562aef75a6b6f77ef59ca01f546533bd824b934d33d4096d46b187760dbf66d44e948cbecabde442e4cae03895d5fa53b91d3
+    tslib: "npm:^2.6.2"
+  checksum: 76a99f9f6219a61ebb979583c09c0ec81b1d8655f9e14a972347e4a4d3007eb9bd5cee444f4de11d4562ac771ce0b85f6b8db4a681e58577b983256cca93a786
   languageName: node
   linkType: hard
 
-"@xencelabs-quick-keys/node@npm:^0.4.0":
-  version: 0.4.0
-  resolution: "@xencelabs-quick-keys/node@npm:0.4.0"
+"@xencelabs-quick-keys/node@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@xencelabs-quick-keys/node@npm:1.0.0"
   dependencies:
-    "@xencelabs-quick-keys/core": "npm:0.4.0"
-    node-hid: "npm:^2.1.1"
-    usb: "npm:^2.0.3"
-  checksum: 68407c0fa9b7242738244e474c28e225d11501f3d8cd4a4d8ad540b764f344249a927c645c3fa472eeb2916a443d4a5c26a40e1aec0d6e8719d78b9721f5f982
+    "@xencelabs-quick-keys/core": "npm:1.0.0"
+    node-hid: "npm:^3.0.0"
+    tslib: "npm:^2.6.2"
+    usb: "npm:^2.11.0"
+  checksum: b31a17037e2222d5e4555927c9bed67407d4e10ddbe4708143e685c746dc7b2ece1639a72bfd999bb8ea3bab2fa38e33ab5582241d23e2340ff46d93b66dec46
   languageName: node
   linkType: hard
 
@@ -2052,7 +2054,7 @@ __metadata:
     "@types/node": "npm:^18.18.14"
     "@types/node-hid": "npm:^1.3.4"
     "@types/semver": "npm:^7.5.6"
-    "@xencelabs-quick-keys/node": "npm:^0.4.0"
+    "@xencelabs-quick-keys/node": "npm:^1.0.0"
     cross-env: "npm:^7.0.3"
     electron: "npm:^25.9.6"
     electron-about-window: "npm:^1.15.2"
@@ -4846,15 +4848,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-addon-api@npm:^6.0.0":
-  version: 6.1.0
-  resolution: "node-addon-api@npm:6.1.0"
-  dependencies:
-    node-gyp: "npm:latest"
-  checksum: d2699c4ad15740fd31482a3b6fca789af7723ab9d393adc6ac45250faaee72edad8f0b10b2b9d087df0de93f1bdc16d97afdd179b26b9ebc9ed68b569faa4bac
-  languageName: node
-  linkType: hard
-
 "node-addon-api@npm:^7.0.0":
   version: 7.0.0
   resolution: "node-addon-api@npm:7.0.0"
@@ -6805,18 +6798,6 @@ __metadata:
   version: 4.0.1
   resolution: "url-join@npm:4.0.1"
   checksum: ac65e2c7c562d7b49b68edddcf55385d3e922bc1dd5d90419ea40b53b6de1607d1e45ceb71efb9d60da02c681d13c6cb3a1aa8b13fc0c989dfc219df97ee992d
-  languageName: node
-  linkType: hard
-
-"usb@npm:^2.0.3":
-  version: 2.9.0
-  resolution: "usb@npm:2.9.0"
-  dependencies:
-    "@types/w3c-web-usb": "npm:^1.0.6"
-    node-addon-api: "npm:^6.0.0"
-    node-gyp: "npm:latest"
-    node-gyp-build: "npm:^4.5.0"
-  checksum: 0b19f094e6c85aa77b74f69c3cbea9ced1426de30234ad513f8ecb777a00ab6bfd3fb04323bf24ca499633f41871438304930ccf9f44b958460f0112e2c446eb
   languageName: node
   linkType: hard
 
