@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.6.0](https://github.com/bitfocus/companion-satellite/compare/v1.5.6...v1.6.0) (Tue Jan 09 2024)
+
+
+### Fixes
+
+* adjust timeouts [07caa86](https://github.com/bitfocus/companion-satellite/commit/07caa8600c5389cbaeb1bf3d928bd2dd75d6dd62)
+
+### Features
+
+* use node-hid 3.0.0 (#104) [6ce9a0f](https://github.com/bitfocus/companion-satellite/commit/6ce9a0f03e55a0f5beceece92fbcc87e17baaba7)
+
 ## [1.5.6](https://github.com/bitfocus/companion-satellite/compare/v1.5.5...v1.5.6) (Sat Nov 18 2023)
 
 
