@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.6.0](https://github.com/bitfocus/companion-satellite/compare/v1.5.6...v1.6.0) (Tue Jan 09 2024)
+
+
+### Fixes
+
+* adjust timeouts [07caa86](https://github.com/bitfocus/companion-satellite/commit/07caa8600c5389cbaeb1bf3d928bd2dd75d6dd62)
+
+### Features
+
+* use node-hid 3.0.0 (#104) [6ce9a0f](https://github.com/bitfocus/companion-satellite/commit/6ce9a0f03e55a0f5beceece92fbcc87e17baaba7)
+
+## [1.5.6](https://github.com/bitfocus/companion-satellite/compare/v1.5.5...v1.5.6) (Sat Nov 18 2023)
+
+
+### Fixes
+
+* align streamdeck plus lcd strip drawing [515cf4a](https://github.com/bitfocus/companion-satellite/commit/515cf4acd74e0de55bbff21f979345c9ac678afb)
+* scaling is not being setup correctly, when devices are added before the connection is fully open [4a2a30a](https://github.com/bitfocus/companion-satellite/commit/4a2a30a3b468072d93bcc9792d8d90363b5bb9b6)
+* streamdeck plus lcd strip not blanking [ed56920](https://github.com/bitfocus/companion-satellite/commit/ed5692077d651bcacfe3824f2e295e7526ff321d)
+
 ## [1.5.5](https://github.com/bitfocus/companion-satellite/compare/v1.5.3...v1.5.5) (Wed Oct 11 2023)
 
 
