@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.6.1](https://github.com/bitfocus/companion-satellite/compare/v1.6.0...v1.6.1) (Mon Feb 05 2024)
+
+
+### Fixes
+
+* ensure config file exists at boot [c410c65](https://github.com/bitfocus/companion-satellite/commit/c410c6588494b765d8fcd23a6bb5fcff63ce4744)
+
 ## [1.6.0](https://github.com/bitfocus/companion-satellite/compare/v1.5.6...v1.6.0) (Tue Jan 09 2024)
 
 
