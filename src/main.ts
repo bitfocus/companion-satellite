@@ -3,10 +3,8 @@ import meow from 'meow'
 import { CompanionSatelliteClient } from './client'
 import { DeviceManager } from './devices'
 import { DEFAULT_PORT } from './lib'
-import Conf from 'conf'
-import path from 'path'
 import { RestServer } from './rest'
-import { SatelliteConfig, ensureFieldsPopulated, satelliteConfigSchema } from './config'
+import { openHeadlessConfig } from './config'
 
 const cli = meow(
 	`
@@ -25,15 +23,7 @@ if (cli.input.length === 0) {
 }
 
 const rawConfigPath = cli.input[0]
-const absoluteConfigPath = path.isAbsolute(rawConfigPath) ? rawConfigPath : path.join(process.cwd(), rawConfigPath)
-
-const appConfig = new Conf<SatelliteConfig>({
-	schema: satelliteConfigSchema,
-	configName: path.parse(absoluteConfigPath).name,
-	projectName: 'companion-satellite',
-	cwd: path.dirname(absoluteConfigPath),
-})
-ensureFieldsPopulated(appConfig)
+const appConfig = openHeadlessConfig(rawConfigPath)
 
 console.log('Starting', appConfig.path)
 

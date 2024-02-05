@@ -1,4 +1,5 @@
 import Conf, { Schema } from 'conf'
+import path from 'path'
 
 export interface SatelliteConfig {
 	remoteIp: string
@@ -43,4 +44,17 @@ export function ensureFieldsPopulated(store: Conf<SatelliteConfig>): void {
 			store.set(key, schema.default)
 		}
 	}
+}
+
+export function openHeadlessConfig(rawConfigPath: string): Conf<SatelliteConfig> {
+	const absoluteConfigPath = path.isAbsolute(rawConfigPath) ? rawConfigPath : path.join(process.cwd(), rawConfigPath)
+
+	const appConfig = new Conf<SatelliteConfig>({
+		schema: satelliteConfigSchema,
+		configName: path.parse(absoluteConfigPath).name,
+		projectName: 'companion-satellite',
+		cwd: path.dirname(absoluteConfigPath),
+	})
+	ensureFieldsPopulated(appConfig)
+	return appConfig
 }
