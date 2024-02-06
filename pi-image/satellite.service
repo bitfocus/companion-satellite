@@ -6,9 +6,9 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=satellite
-WorkingDirectory=/usr/local/src/companion-satellite
-ExecStartPre=+/opt/fnm/aliases/default/bin/node /usr/local/src/companion-satellite/dist/fixup-pi-config.js /home/satellite/satellite-config.json
-ExecStart=/opt/fnm/aliases/default/bin/node /usr/local/src/companion-satellite/dist/main.js /home/satellite/satellite-config.json
+WorkingDirectory=/opt/companion-satellite
+ExecStartPre=+/opt/fnm/aliases/default/bin/node /opt/companion-satellite/dist/fixup-pi-config.js /home/satellite/satellite-config.json
+ExecStart=/opt/fnm/aliases/default/bin/node /opt/companion-satellite/dist/main.js /home/satellite/satellite-config.json
 Restart=on-failure
 KillSignal=SIGINT
 TimeoutStopSec=60

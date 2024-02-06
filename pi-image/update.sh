@@ -3,6 +3,15 @@
 # this is the bulk of the update script
 # It is a separate file, so that the freshly cloned copy is invoked, not the old copy
 
+# fail if this happens, to avoid breaking existing arm installations
+CURRENT_ARCH=$(dpkg --print-architecture)
+if [[ "$CURRENT_ARCH" != "x64" && "$CURRENT_ARCH" != "amd64" && "$CURRENT_ARCH" != "arm64" ]]; then
+    echo "$CURRENT_ARCH is not a supported cpu architecture for running Companion Satellite."
+    echo "If you are running on an arm device (such as a Raspberry Pi), make sure to use an arm64 image."
+	echo "YOUR INSTALLATION HAS NOT BEEN CHANGED. You must reinstall a new satellite image to update."
+    exit 0
+fi
+
 # imitiate the fnm setup done in .bashrc
 export FNM_DIR=/opt/fnm
 export PATH=/opt/fnm:$PATH
@@ -15,20 +24,57 @@ fnm use --install-if-missing
 fnm default $(fnm current)
 corepack enable
 
-# install dependencies
-yarn config set httpTimeout 100000
-yarn
+# ensure some dependencies are installed
+ensure_installed() {
+  if ! dpkg --verify "$1" 2>/dev/null; then
+    # Future: batch the installs, if there are multiple
+    apt-get install $1
+  fi
+}
+ensure_installed "wget"
 
-# build typescript
-yarn build
+# Run interactive version picker
+yarn --cwd "pi-image/update-prompt" install
+node "pi-image/update-prompt/main.js" $1 $2
 
-# build webui
-cd webui
-yarn
-yarn build
+# Get result
+if [ -f /tmp/satellite-version-selection ]; then
+	SELECTED_URL=$(cat /tmp/satellite-version-selection)
+	SELECTED_NAME=$(cat /tmp/satellite-version-selection-name)
+	rm -f /tmp/satellite-version-selection
+	rm -f /tmp/satellite-version-selection-name
+fi
 
-# back to the main part
-cd ..
+if [ -n "$SELECTED_URL" ]; then 
+	echo "Installing from $SELECTED_URL"
+
+	# download it
+	wget "$SELECTED_URL" -O /tmp/satellite-update.tar.gz -q  --show-progress
+
+	# extract download
+	echo "Extracting..."
+	rm -R -f /tmp/satellite-update
+	mkdir /tmp/satellite-update
+	tar -xzf /tmp/satellite-update.tar.gz --strip-components=1 -C /tmp/satellite-update
+	rm /tmp/satellite-update.tar.gz
+
+	# copy across the useful files
+	rm -R -f /opt/companion-satellite
+	npx --yes @electron/asar e /tmp/satellite-update/resources/app.asar /tmp/satellite-update/resources/app
+	mv /tmp/satellite-update/resources/app /opt/companion-satellite
+	# mv /tmp/satellite-update/*.rules /opt/companion-satellite/
+	rm -R /tmp/satellite-update
+
+	echo "$SELECTED_NAME" > /opt/companion-satellite/BUILD
+
+	# remove the old dependencies
+	rm -R -f node_modules || true
+	rm -R -f webui/node_modules || true
+
+	echo "Finishing"
+else
+	echo "Skipping update"
+fi
 
 # update some tooling
 cp assets/linux/50-satellite.rules /etc/udev/rules.d/

@@ -1,0 +1,15 @@
+{
+  "name": "update-prompt",
+  "version": "1.0.0",
+  "main": "main.js",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "inquirer": "^9.2.14",
+    "semver": "^7.6.0"
+  },
+  "packageManager": "yarn@4.1.0",
+  "engines": {
+    "node": ">=18.18"
+  }
+}
