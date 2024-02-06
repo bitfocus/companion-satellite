@@ -54,12 +54,11 @@ git config --global pull.rebase false
 
 
 # run the update script
-if [ "$SATELLITE_BUILD" == "beta" ] || [ "$SATELLITE_BUILD" == "experimental" ]; then
-    ./pi-image/update.sh beta
+if [ "$SATELLITE_BRANCH" == "main" ]; then
+    ./pi-image/update.sh beta "$SATELLITE_BUILD"
 else
     ./pi-image/update.sh stable "$SATELLITE_BUILD"
 fi
-# ./pi-image/update.sh $SATELLITE_BRANCH
 
 # install update script dependencies, as they were ignored
 yarn --cwd "/usr/local/src/companion-satellite/update-prompt" install

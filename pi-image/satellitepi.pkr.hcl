@@ -12,6 +12,11 @@ variable "branch" {
   default = "main"
 }
 
+variable "build" {
+  type    = string
+  default = "beta"
+}
+
 source "arm-image" "satellitepi" {
   iso_checksum              = "sha256:9ce5e2c8c6c7637cd2227fdaaf0e34633e6ebedf05f1c88e00f833cbb644db4b"
   iso_url                   = "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2023-12-11/2023-12-11-raspios-bookworm-arm64-lite.img.xz"
@@ -48,6 +53,7 @@ build {
       
 			# run the script
       "export SATELLITE_BRANCH=${var.branch}",
+      "export SATELLITE_BUILD=${var.build}",
       "chmod +x /tmp/install.sh",
       "/tmp/install.sh"
     ]
