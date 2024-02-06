@@ -7,11 +7,9 @@ Wants=network-online.target
 Type=simple
 User=satellite
 WorkingDirectory=/usr/local/src/companion-satellite
-EnvironmentFile=-/boot/satellite-config
-Environment=SATELLITE_CONFIG_PATH=/boot/satellite-config
-ExecStartPre=+/usr/local/src/companion-satellite/pi-image/fixup-config.sh
-ExecStart=/opt/fnm/aliases/default/bin/node /usr/local/src/companion-satellite/dist/main.js $COMPANION_IP $COMPANION_PORT $REST_PORT
-Restart=always
+ExecStartPre=+/opt/fnm/aliases/default/bin/node /usr/local/src/companion-satellite/dist/fixup-pi-config.js /home/satellite/satellite-config.json
+ExecStart=/opt/fnm/aliases/default/bin/node /usr/local/src/companion-satellite/dist/main.js /home/satellite/satellite-config.json
+Restart=on-failure
 KillSignal=SIGINT
 TimeoutStopSec=60
 

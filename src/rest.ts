@@ -1,36 +1,52 @@
-import * as Koa from 'koa'
-import * as Router from 'koa-router'
+import Koa from 'koa'
+import Router from 'koa-router'
 import koaBody from 'koa-body'
+import serve from 'koa-static'
+import path from 'path'
 import http = require('http')
+import type Conf from 'conf'
 import type { CompanionSatelliteClient } from './client'
 import type { DeviceManager } from './devices'
+import type { SatelliteConfig } from './config'
+import { ApiConfigData, compileConfig, compileStatus, updateConfig } from './apiTypes'
 
 export class RestServer {
+	private readonly appConfig: Conf<SatelliteConfig>
 	private readonly client: CompanionSatelliteClient
 	private readonly devices: DeviceManager
 	private readonly app: Koa
 	private readonly router: Router
 	private server: http.Server | undefined
 
-	constructor(client: CompanionSatelliteClient, devices: DeviceManager) {
+	constructor(appConfig: Conf<SatelliteConfig>, client: CompanionSatelliteClient, devices: DeviceManager) {
+		this.appConfig = appConfig
 		this.client = client
 		this.devices = devices
 
+		// Monitor for config changes
+		this.appConfig.onDidChange('restEnabled', this.open.bind(this))
+		this.appConfig.onDidChange('restPort', this.open.bind(this))
+
 		this.app = new Koa()
+		this.app.use(serve(path.join(__dirname, '../webui/dist')))
+
 		this.router = new Router()
 
 		//GET
 		this.router.get('/api/host', async (ctx) => {
-			ctx.body = this.client.host
+			ctx.body = this.appConfig.get('remoteIp')
 		})
 		this.router.get('/api/port', (ctx) => {
-			ctx.body = this.client.port
+			ctx.body = this.appConfig.get('remotePort')
 		})
 		this.router.get('/api/connected', (ctx) => {
 			ctx.body = this.client.connected
 		})
 		this.router.get('/api/config', (ctx) => {
-			ctx.body = { host: this.client.host, port: this.client.port }
+			ctx.body = compileConfig(this.appConfig)
+		})
+		this.router.get('/api/status', (ctx) => {
+			ctx.body = compileStatus(this.client)
 		})
 
 		//POST
@@ -43,9 +59,8 @@ export class RestServer {
 			}
 
 			if (host) {
-				this.client.connect(host, this.client.port).catch((e) => {
-					console.log('set host failed:', e)
-				})
+				this.appConfig.set('remoteIp', host)
+
 				ctx.body = 'OK'
 			} else {
 				ctx.status = 400
@@ -61,9 +76,8 @@ export class RestServer {
 			}
 
 			if (!isNaN(newPort) && newPort > 0 && newPort <= 65535) {
-				this.client.connect(this.client.host, newPort).catch((e) => {
-					console.log('set port failed:', e)
-				})
+				this.appConfig.set('remotePOrt', newPort)
+
 				ctx.body = 'OK'
 			} else {
 				ctx.status = 400
@@ -72,21 +86,34 @@ export class RestServer {
 		})
 		this.router.post('/api/config', koaBody(), async (ctx) => {
 			if (ctx.request.type == 'application/json') {
-				const host = ctx.request.body['host']
-				const port = Number(ctx.request.body['port'])
+				const body = ctx.request.body as Partial<ApiConfigData>
 
-				if (!host) {
-					ctx.status = 400
-					ctx.body = 'Invalid host'
-				} else if (isNaN(port) || port <= 0 || port > 65535) {
+				const partialConfig: Partial<ApiConfigData> = {}
+
+				const host = body.host
+				if (host !== undefined) {
+					if (typeof host === 'string') {
+						partialConfig.host = host
+					} else {
+						ctx.status = 400
+						ctx.body = 'Invalid host'
+					}
+				}
+
+				const port = Number(body.port)
+				if (isNaN(port) || port <= 0 || port > 65535) {
 					ctx.status = 400
 					ctx.body = 'Invalid port'
 				} else {
-					this.client.connect(host, port).catch((e) => {
-						console.log('update config failed:', e)
-					})
+					partialConfig.port = port
 				}
-				ctx.body = 'OK'
+
+				// Ensure some fields cannot be changed
+				delete partialConfig.httpEnabled
+				delete partialConfig.httpPort
+
+				updateConfig(this.appConfig, partialConfig)
+				ctx.body = compileConfig(this.appConfig)
 			}
 		})
 
@@ -99,10 +126,13 @@ export class RestServer {
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())
 	}
 
-	public open(port: number): void {
+	public open(): void {
 		this.close()
 
-		if (port != 0) {
+		const enabled = this.appConfig.get('restEnabled')
+		const port = this.appConfig.get('restPort')
+
+		if (enabled && port) {
 			this.server = this.app.listen(port)
 			console.log(`REST server starting: port: ${port}`)
 		} else {
