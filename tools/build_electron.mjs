@@ -41,6 +41,9 @@ if (!platform) {
 	} else if (platform === 'linux-arm7') {
 		electronBuilderArgs.push('--armv7l', '--linux')
 		nodePreGypArgs = ['--target_platform=linux', '--target_arch=arm', '--target_libc=glibc']
+	} else if (platform === 'linux-arm64') {
+		electronBuilderArgs.push('--arm64', '--linux')
+		nodePreGypArgs = ['--target_platform=linux', '--target_arch=arm64', '--target_libc=glibc']
 	} else {
 		console.error('Unknown platform')
 		process.exit(1)
@@ -48,13 +51,13 @@ if (!platform) {
 }
 
 if (platform === 'win-x64' || process.platform === 'win32') {
-	const localRedistPath = ".cache/vc_redist.x64.exe"
+	const localRedistPath = '.cache/vc_redist.x64.exe'
 	if (!(await fs.pathExists(localRedistPath))) {
 		await fs.mkdirp('.cache')
 
 		const response = await fetch('https://aka.ms/vs/17/release/vc_redist.x64.exe')
 		if (!response.ok) throw new Error(`unexpected response ${response.statusText}`)
-		await streamPipeline(response.body, createWriteStream(".cache/vc_redist.x64.exe"))
+		await streamPipeline(response.body, createWriteStream('.cache/vc_redist.x64.exe'))
 	}
 }
 
