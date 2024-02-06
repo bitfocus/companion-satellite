@@ -52,7 +52,7 @@ jobs:
         uses: bitfocus/actions/upload-and-notify@main
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: master
+          beta-branch: main
 
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
@@ -104,7 +104,7 @@ jobs:
         uses: bitfocus/actions/upload-and-notify@main
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: master
+          beta-branch: main
 
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
@@ -162,7 +162,7 @@ jobs:
         uses: bitfocus/actions/upload-and-notify@main
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: master
+          beta-branch: main
 
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
@@ -220,7 +220,7 @@ jobs:
         uses: bitfocus/actions/upload-and-notify@main
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: master
+          beta-branch: main
 
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
@@ -289,7 +289,7 @@ jobs:
         uses: bitfocus/actions/upload-and-notify@main
         with:
           long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: master
+          beta-branch: main
 
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}

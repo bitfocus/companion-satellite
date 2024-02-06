@@ -1,6 +1,6 @@
 ## Companion Satellite
 
-[![License](https://img.shields.io/github/license/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/blob/main/LICENSE)
 [![Version](https://img.shields.io/github/v/release/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/releases)
 
 A small application to allow for connecting a streamdeck to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
@@ -49,7 +49,7 @@ No images are provided for this, but the process has been written to be a single
 As root, run the following:
 
 ```
-curl https://raw.githubusercontent.com/bitfocus/companion-satellite/master/pi-image/install.sh | sh
+curl https://raw.githubusercontent.com/bitfocus/companion-satellite/main/pi-image/install.sh | sh
 ```
 
 After this, you can use `sudo satellite-update` to change the version it has installed. Note: this is currently not fully implemented.

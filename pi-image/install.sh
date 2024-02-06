@@ -10,7 +10,7 @@ if [ $(/usr/bin/id -u) -ne 0 ]; then
     exit 1
 fi
 
-SATELLITE_BRANCH="${SATELLITE_BRANCH:-master}"
+SATELLITE_BRANCH="${SATELLITE_BRANCH:-main}"
 
 # add a system user
 adduser --disabled-password satellite --gecos ""
