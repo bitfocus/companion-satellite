@@ -19,7 +19,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "prepare": "husky install",
+    "install": "./node_modules/.bin/husky install",
     "dev": "ts-node src/main.ts config.json",
     "dev-electron": "run build:main && electron dist/electron.js",
     "build": "rimraf dist && run build:main",
