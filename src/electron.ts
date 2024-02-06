@@ -89,7 +89,7 @@ trayMenu.append(
 					})
 			} else {
 				configWindow
-					.loadURL('http://localhost:5174/electron.html')
+					.loadURL('http://localhost:5173/electron.html')
 					.then(() => {
 						configWindow?.show()
 					})
