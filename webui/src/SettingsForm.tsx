@@ -32,7 +32,7 @@ export function SettingsForm({ currentConfig, loadError, saveConfig, includeApiE
 			<h3>Settings</h3>
 			{loadError ? <p>{loadError.toString()}</p> : ''}
 
-			{fullModifiedConfig ? (
+			{fullModifiedConfig && !loadError && (
 				<SettingsFormInner
 					fullConfig={fullModifiedConfig}
 					hasChanges={Object.keys(modifiedConfig).length > 0}
@@ -40,9 +40,9 @@ export function SettingsForm({ currentConfig, loadError, saveConfig, includeApiE
 					saveConfig={mySaveConfig}
 					includeApiEnable={includeApiEnable}
 				/>
-			) : (
-				'Loading...'
 			)}
+
+			{!fullModifiedConfig && !loadError && 'Loading...'}
 		</>
 	)
 }
