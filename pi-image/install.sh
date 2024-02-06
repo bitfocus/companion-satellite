@@ -60,9 +60,6 @@ else
     ./pi-image/update.sh stable "$SATELLITE_BUILD"
 fi
 
-# install update script dependencies, as they were ignored
-yarn --cwd "/usr/local/src/companion-satellite/update-prompt" install
-
 # enable start on boot
 systemctl enable satellite
 
