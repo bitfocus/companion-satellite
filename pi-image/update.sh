@@ -22,6 +22,14 @@ yarn
 # build typescript
 yarn build
 
+# build webui
+cd webui
+yarn
+yarn build
+
+# back to the main part
+cd ..
+
 # update some tooling
 cp assets/linux/50-satellite.rules /etc/udev/rules.d/
 udevadm control --reload-rules || true

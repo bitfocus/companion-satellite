@@ -1,28 +1,24 @@
 import exitHook = require('exit-hook')
-import meow from 'meow'
 import { CompanionSatelliteClient } from './client'
 import { DeviceManager } from './devices'
 import { DEFAULT_PORT } from './lib'
 import { RestServer } from './rest'
 import { openHeadlessConfig } from './config'
 
-const cli = meow(
-	`
+const rawConfigPath = process.argv[2]
+if (!rawConfigPath) {
+	console.log(`
 	Usage
 	  $ companion-satellite <configuration-path>
 
 	Examples
 	  $ companion-satellite config.json
 	  $ companion-satellite /home/satellite/.config/companion-satellite.json
-`,
-	{}
-)
-
-if (cli.input.length === 0) {
-	cli.showHelp(0)
+`)
+	// eslint-disable-next-line no-process-exit
+	process.exit(1)
 }
 
-const rawConfigPath = cli.input[0]
 const appConfig = openHeadlessConfig(rawConfigPath)
 
 console.log('Starting', appConfig.path)

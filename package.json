@@ -69,7 +69,6 @@
     "koa-body": "^6.0.1",
     "koa-router": "^12.0.1",
     "koa-static": "^5.0.0",
-    "meow": "^9.0.0",
     "node-hid": "^3.0.0",
     "semver": "^7.6.0",
     "tslib": "^2.6.2",
