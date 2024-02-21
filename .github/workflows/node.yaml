@@ -34,6 +34,7 @@ jobs:
           yarn config set httpTimeout 100000
 
           yarn
+          yarn --cwd webui install
           yarn dist
 
       - name: Determine files to upload
@@ -91,6 +92,7 @@ jobs:
           yarn config set httpTimeout 100000
 
           yarn
+          yarn --cwd webui install
           yarn dist linux-arm64
 
       - name: Determine files to upload
@@ -143,6 +145,7 @@ jobs:
           yarn config set httpTimeout 100000
 
           yarn
+          yarn --cwd webui install
           yarn dist
 
       - name: Determine files to upload
@@ -195,6 +198,7 @@ jobs:
           yarn config set httpTimeout 100000
 
           yarn
+          yarn --cwd webui install
           yarn dist
         env:
           CSC_LINK: ${{ secrets.OSX_CSC_LINK }}
@@ -253,6 +257,7 @@ jobs:
           yarn config set httpTimeout 100000
 
           yarn
+          yarn --cwd webui install
           yarn dist mac-arm64
         env:
           CSC_LINK: ${{ secrets.OSX_CSC_LINK }}
