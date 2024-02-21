@@ -4855,16 +4855,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-hid@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "node-hid@npm:3.0.0"
+"node-hid@npm:@julusian/hid@3.0.1-0":
+  version: 3.0.1-0
+  resolution: "@julusian/hid@npm:3.0.1-0"
   dependencies:
     node-addon-api: "npm:^3.2.1"
     node-gyp: "npm:latest"
     pkg-prebuilds: "npm:^0.2.1"
   bin:
     hid-showdevices: src/show-devices.js
-  checksum: 43c534e9b549648742798ed8ec423b64a23d55cbcfd8bcb5f8c507bafedcc4d94f422069243f10721f9c16576ef0e92887135c99aab19739efeb4d00e2a6347c
+  checksum: 5d47fc56b7998a7eecdd0895e7158c47ec20c1b05696f5386e5bfa33eabe703e416d25d25832ae86c4ca7772ded5765058429c06862100fcfc06f4ff8049d3ea
   languageName: node
   linkType: hard
 
