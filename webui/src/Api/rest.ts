@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { SaveApiConfigData } from './types'
-import type { ApiConfigData } from '../../../src/apiTypes'
+import type { ApiConfigData } from '../../../satellite/src/apiTypes'
 import { usePoller } from '../Util/usePoller'
 
 const POLL_INTERVAL = 5000

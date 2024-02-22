@@ -2,7 +2,6 @@ import Koa from 'koa'
 import Router from 'koa-router'
 import koaBody from 'koa-body'
 import serve from 'koa-static'
-import path from 'path'
 import http = require('http')
 import type Conf from 'conf'
 import type { CompanionSatelliteClient } from './client'
@@ -18,7 +17,12 @@ export class RestServer {
 	private readonly router: Router
 	private server: http.Server | undefined
 
-	constructor(appConfig: Conf<SatelliteConfig>, client: CompanionSatelliteClient, devices: DeviceManager) {
+	constructor(
+		webRoot: string,
+		appConfig: Conf<SatelliteConfig>,
+		client: CompanionSatelliteClient,
+		devices: DeviceManager
+	) {
 		this.appConfig = appConfig
 		this.client = client
 		this.devices = devices
@@ -28,7 +32,7 @@ export class RestServer {
 		this.appConfig.onDidChange('restPort', this.open.bind(this))
 
 		this.app = new Koa()
-		this.app.use(serve(path.join(__dirname, '../webui/dist')))
+		this.app.use(serve(webRoot))
 
 		this.router = new Router()
 

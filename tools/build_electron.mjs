@@ -74,4 +74,4 @@ if (nodePreGypArgs.length) {
 
 // perform the electron build
 await fs.remove('./electron-output')
-await $withoutEscaping` electron-builder --publish=never ${electronBuilderArgs.join(' ')} `
+await $withoutEscaping`yarn workspace satellite build:electron ${electronBuilderArgs.join(' ')} `
