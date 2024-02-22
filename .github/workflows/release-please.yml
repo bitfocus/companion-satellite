@@ -13,8 +13,11 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@v4
+      - uses: google-github-actions/release-please-action@v3
         with:
           # use a token so that git pushes trigger subsequent workflow runs
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-          config-file: .github/release-please-config.json
+          release-type: node
+          extra-files:
+            - satellite/package.json
+            - webui/package.json
