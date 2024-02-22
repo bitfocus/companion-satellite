@@ -49,7 +49,7 @@ No images are provided for this, but the process has been written to be a single
 As root, run the following:
 
 ```
-curl https://raw.githubusercontent.com/bitfocus/companion-satellite/main/pi-image/install.sh | sh
+curl https://raw.githubusercontent.com/bitfocus/companion-satellite/main/pi-image/install.sh | bash
 ```
 
 After this, you can use `sudo satellite-update` to change the version it has installed. Note: this is currently not fully implemented.

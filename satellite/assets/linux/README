@@ -5,7 +5,7 @@
    If you want to run satellite on a headless machine, consider using the install script
 
    This can be run with:
-   $ curl https://raw.githubusercontent.com/bitfocus/companion-satellite/main/pi-image/install.sh | sh
+   $ curl https://raw.githubusercontent.com/bitfocus/companion-satellite/main/pi-image/install.sh | bash
 
    The benefit of this approach is that it will setup and manage any required dependencies, udev rules for you, and provide you with an easy script to run to perform an update.
 
