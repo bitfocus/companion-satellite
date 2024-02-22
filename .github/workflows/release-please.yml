@@ -19,5 +19,5 @@ jobs:
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: node
           extra-files: |
-            satellite/package.json
-            webui/package.json
+            {"type": "json","path": "satellite/package.json","jsonpath": "$.version"}
+            {"type": "json","path": "webui/package.json","jsonpath": "$.version"}
