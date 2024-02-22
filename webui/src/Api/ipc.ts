@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react'
-import { ApiConfigData } from '../../../src/apiTypes'
+import { ApiConfigData } from '../../../satellite/src/apiTypes'
 import { usePoller } from '../Util/usePoller'
 import { SaveApiConfigData } from './types'
 

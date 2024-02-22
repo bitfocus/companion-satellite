@@ -7,7 +7,7 @@ import { ConnectionStatus } from './ConnectionStatus'
 import { MyErrorBoundary } from './Util/ErrorBoundary'
 import { useRestConfigApi } from './Api/rest'
 import { useCallback } from 'react'
-import type { ApiStatusResponse } from '../../src/apiTypes'
+import type { ApiStatusResponse } from '../../satellite/src/apiTypes'
 import { usePoller } from './Util/usePoller'
 
 const STATUS_POLL_INTERVAL = 2000

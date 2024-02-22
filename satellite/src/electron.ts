@@ -27,9 +27,11 @@ app.on('window-all-closed', () => {
 
 console.log('Starting')
 
+const webRoot = path.join(__dirname, app.isPackaged ? '../../webui' : '../../webui/dist')
+
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
-const server = new RestServer(appConfig, client, devices)
+const server = new RestServer(webRoot, appConfig, client, devices)
 
 appConfig.onDidChange('remoteIp', () => tryConnect())
 appConfig.onDidChange('remotePort', () => tryConnect())
@@ -55,7 +57,7 @@ trayMenu.append(
 	new MenuItem({
 		label: 'Scan devices',
 		click: trayScanDevices,
-	})
+	}),
 )
 trayMenu.append(
 	new MenuItem({
@@ -80,7 +82,7 @@ trayMenu.append(
 			if (isProduction) {
 				configWindow.removeMenu()
 				configWindow
-					.loadFile(path.join(__dirname, '../webui/dist/electron.html'))
+					.loadFile(path.join(webRoot, 'electron.html'))
 					.then(() => {
 						configWindow?.show()
 					})
@@ -98,19 +100,19 @@ trayMenu.append(
 					})
 			}
 		},
-	})
+	}),
 )
 trayMenu.append(
 	new MenuItem({
 		label: 'About',
 		click: trayAbout,
-	})
+	}),
 )
 trayMenu.append(
 	new MenuItem({
 		label: 'Quit',
 		click: trayQuit,
-	})
+	}),
 )
 
 app.whenReady()

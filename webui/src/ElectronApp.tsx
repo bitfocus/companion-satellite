@@ -7,7 +7,7 @@ import { ConnectionStatus } from './ConnectionStatus'
 import { MyErrorBoundary } from './Util/ErrorBoundary'
 import { useCallback } from 'react'
 import { usePoller } from './Util/usePoller'
-import type { ApiStatusResponse } from '../../src/apiTypes'
+import type { ApiStatusResponse } from '../../satellite/src/apiTypes'
 import { useIpcConfigApi } from './Api/ipc'
 
 const STATUS_POLL_INTERVAL = 2000

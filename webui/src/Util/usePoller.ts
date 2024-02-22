@@ -68,7 +68,6 @@ export function usePoller<T = unknown>(interval: number, doPoll: (() => Promise<
 		return () => {
 			cancelRequest.current = true
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [doPoll, refreshToken])
 
 	return state

@@ -6,7 +6,7 @@ export function assertNever(_v: never): void {
 
 export function wrapAsync<TArgs extends any[]>(
 	fn: (...args: TArgs) => Promise<void>,
-	catcher: (e: any) => void
+	catcher: (e: any) => void,
 ): (...args: TArgs) => void {
 	return (...args) => {
 		fn(...args).catch(catcher)

@@ -30,7 +30,7 @@ export class CardGenerator {
 		height: number,
 		pixelFormat: imageRs.PixelFormat,
 		remoteIp: string,
-		status: string
+		status: string,
 	): Promise<Buffer> {
 		const iconImage = await this.loadIcon()
 
@@ -55,7 +55,7 @@ export class CardGenerator {
 			iconTargetX,
 			iconTargetY,
 			iconTargetSize,
-			iconTargetSize
+			iconTargetSize,
 		)
 
 		// draw text

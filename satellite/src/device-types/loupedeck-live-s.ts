@@ -1,10 +1,16 @@
-import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
+import {
+	LoupedeckDevice,
+	LoupedeckDisplayId,
+	LoupedeckBufferFormat,
+	LoupedeckModelId,
+	LoupedeckControlType,
+} from '@loupedeck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
 import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
-export class RazerStreamControllerXWrapper implements WrappedDevice {
+export class LoupedeckLiveSWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
 	readonly #deviceId: string
@@ -14,6 +20,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 	#queue: ImageWriteQueue
 
 	#companionSupportsScaling = false
+	#companionSupportsCombinedEncoders = false
 
 	public get deviceId(): string {
 		return this.#deviceId
@@ -27,8 +34,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		this.#deviceId = deviceId
 		this.#cardGenerator = cardGenerator
 
-		if (device.modelId !== LoupedeckModelId.RazerStreamControllerX)
-			throw new Error('Incorrect model passed to wrapper!')
+		if (device.modelId !== LoupedeckModelId.LoupedeckLiveS) throw new Error('Incorrect model passed to wrapper!')
 
 		this.#queueOutputId = 0
 
@@ -74,8 +80,8 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
-			keysTotal: 15,
-			keysPerRow: 5,
+			keysTotal: 21,
+			keysPerRow: 7,
 			bitmapSize: this.#deck.lcdKeySize,
 			colours: true,
 			text: false,
@@ -89,7 +95,24 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button') {
-				return id
+				// return 24 + id
+				switch (id) {
+					case 0:
+						return 14
+					case 1:
+						return 6
+					case 2:
+						return 13
+					case 3:
+						return 20
+				}
+			} else if (type === 'rotary') {
+				switch (id) {
+					case 0:
+						return 0
+					case 1:
+						return 7
+				}
 			}
 
 			// Discard
@@ -98,6 +121,45 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		console.log('Registering key events for ' + this.deviceId)
 		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index)))
 		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('rotate', (info, delta) => {
+			if (info.type !== LoupedeckControlType.Rotary) return
+
+			const id2 = convertButtonId(info.type, info.index)
+			if (id2 < 90) {
+				if (delta < 0) {
+					if (this.#companionSupportsCombinedEncoders) {
+						client.rotateLeft(this.deviceId, id2)
+					} else {
+						client.keyUp(this.deviceId, id2)
+					}
+				} else if (delta > 0) {
+					if (this.#companionSupportsCombinedEncoders) {
+						client.rotateRight(this.deviceId, id2)
+					} else {
+						client.keyDown(this.deviceId, id2)
+					}
+				}
+			}
+		})
+		const translateKeyIndex = (key: number): number => {
+			const x = key % 5
+			const y = Math.floor(key / 5)
+			return y * 7 + x + 1
+		}
+		this.#deck.on('touchstart', (data) => {
+			for (const touch of data.changedTouches) {
+				if (touch.target.key !== undefined) {
+					client.keyDown(this.deviceId, translateKeyIndex(touch.target.key))
+				}
+			}
+		})
+		this.#deck.on('touchend', (data) => {
+			for (const touch of data.changedTouches) {
+				if (touch.target.key !== undefined) {
+					client.keyUp(this.deviceId, translateKeyIndex(touch.target.key))
+				}
+			}
+		})
 
 		// Start with blanking it
 		await this.blankDevice()
@@ -107,6 +169,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 
 	updateCapabilities(capabilities: ClientCapabilities): void {
 		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
+		this.#companionSupportsCombinedEncoders = capabilities.useCombinedEncoders
 	}
 
 	async deviceAdded(): Promise<void> {
@@ -119,10 +182,46 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 		await this.#deck.blankDevice(true, !skipButtons)
 	}
 	async draw(d: DeviceDrawProps): Promise<void> {
-		if (d.image) {
-			this.#queue.queue(d.keyIndex, d.image)
-		} else {
-			throw new Error(`Cannot draw for Loupedeck without image`)
+		let buttonIndex: number | undefined
+		switch (d.keyIndex) {
+			case 14:
+				buttonIndex = 0
+				break
+			case 6:
+				buttonIndex = 1
+				break
+			case 13:
+				buttonIndex = 2
+				break
+			case 20:
+				buttonIndex = 3
+				break
+		}
+		if (buttonIndex !== undefined) {
+			const red = d.color ? parseInt(d.color.substr(1, 2), 16) : 0
+			const green = d.color ? parseInt(d.color.substr(3, 2), 16) : 0
+			const blue = d.color ? parseInt(d.color.substr(5, 2), 16) : 0
+
+			await this.#deck.setButtonColor({
+				id: buttonIndex,
+				red,
+				green,
+				blue,
+			})
+
+			return
+		}
+
+		const x = (d.keyIndex % 7) - 1
+		const y = Math.floor(d.keyIndex / 7)
+
+		if (x >= 0 && x < 5) {
+			const keyIndex = x + y * 5
+			if (d.image) {
+				this.#queue.queue(keyIndex, d.image)
+			} else {
+				throw new Error(`Cannot draw for Loupedeck without image`)
+			}
 		}
 	}
 	showStatus(hostname: string, status: string): void {
@@ -147,7 +246,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 						width,
 						height,
 						0,
-						0
+						0,
 					)
 				}
 			})

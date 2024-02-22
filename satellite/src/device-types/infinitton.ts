@@ -38,8 +38,8 @@ export class InfinittonWrapper implements WrappedDevice {
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
-		this.#panel.on('down', (key) => client.keyDown(this.deviceId, key))
-		this.#panel.on('up', (key) => client.keyUp(this.deviceId, key))
+		this.#panel.on('down', (key: number) => client.keyDown(this.deviceId, key))
+		this.#panel.on('up', (key: number) => client.keyUp(this.deviceId, key))
 
 		// Start with blanking it
 		await this.blankDevice()

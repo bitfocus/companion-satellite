@@ -115,7 +115,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 	}
 	async setBrightness(percent: number): Promise<void> {
 		const opts = Object.values<XencelabsQuickKeysDisplayBrightness | string>(
-			XencelabsQuickKeysDisplayBrightness
+			XencelabsQuickKeysDisplayBrightness,
 		).filter((k): k is XencelabsQuickKeysDisplayBrightness => typeof k === 'number')
 
 		const perStep = 100 / (opts.length - 1)

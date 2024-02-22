@@ -15,134 +15,34 @@
     "url": "https://github.com/bitfocus/companion-satellite/issues"
   },
   "homepage": "https://github.com/bitfocus/companion-satellite#readme",
-  "main": "dist/electron.js",
   "license": "MIT",
   "private": true,
+  "workspaces": [
+    "satellite",
+    "webui"
+  ],
   "scripts": {
-    "install": "./node_modules/.bin/husky install",
-    "dev": "ts-node src/main.ts config.json",
-    "dev-electron": "run build:main && electron dist/electron.js",
-    "build": "rimraf dist && run build:main",
-    "build:main": "tsc -p tsconfig.build.json",
-    "lint:raw": "run eslint --ext .ts --ext .js --ext .tsx --ext .jsx",
-    "lint": "run lint:raw .",
+    "postinstall": "husky",
+    "dev": "yarn workspace satellite dev",
+    "dev:electron": "yarn workspace satellite dev-electron",
+    "dev:webui": "yarn workspace webui dev",
+    "build": "yarn workspaces foreach --all run build",
     "license-validate": "sofie-licensecheck",
-    "dist": "run build && zx tools/build_electron.mjs",
-    "eslint": "./node_modules/.bin/eslint",
-    "prettier": "./node_modules/.bin/prettier",
-    "lint-staged": "./node_modules/.bin/lint-staged"
+    "dist": "run build && zx tools/build_electron.mjs"
   },
   "devDependencies": {
-    "@electron/notarize": "^2.2.1",
-    "@sofie-automation/code-standard-preset": "~2.5.2",
-    "@types/koa": "^2.14.0",
-    "@types/koa-router": "^7.4.8",
-    "@types/koa-static": "^4.0.4",
-    "@types/node": "^18.19.14",
-    "@types/node-hid": "^1.3.4",
-    "@types/semver": "^7.5.6",
-    "cross-env": "^7.0.3",
-    "electron": "^25.9.8",
-    "electron-builder": "^24.12.0",
-    "rimraf": "^5.0.5",
-    "ts-node": "^10.9.2",
-    "typescript": "~4.9.5",
+    "@tsconfig/node18": "^18.2.2",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "typescript": "~5.2.2",
     "zx": "^7.2.3"
   },
   "engines": {
-    "node": "^18.15"
-  },
-  "dependencies": {
-    "@elgato-stream-deck/node": "^6.0.0",
-    "@julusian/image-rs": "^0.2.1",
-    "@julusian/jpeg-turbo": "^2.1.0",
-    "@julusian/skia-canvas": "^1.0.5",
-    "@loupedeck/node": "^1.0.0",
-    "@xencelabs-quick-keys/node": "^1.0.0",
-    "conf": "^10.2.0",
-    "electron-about-window": "^1.15.2",
-    "electron-store": "^8.1.0",
-    "eventemitter3": "^4.0.7",
-    "exit-hook": "^2.2.1",
-    "infinitton-idisplay": "^1.1.2",
-    "koa": "^2.15.0",
-    "koa-body": "^6.0.1",
-    "koa-router": "^12.0.1",
-    "koa-static": "^5.0.0",
-    "node-hid": "^3.0.0",
-    "semver": "^7.6.0",
-    "tslib": "^2.6.2",
-    "usb": "^2.11.0"
+    "node": "^18.18"
   },
   "resolutions": {
-    "node-hid": "^3.0.0"
+    "node-hid": "npm:@julusian/hid@3.0.1-0"
   },
-  "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
-  "lint-staged": {
-    "*.{css,json,md,scss}": [
-      "prettier --write"
-    ],
-    "*.{ts,tsx,js,jsx}": [
-      "yarn lint --fix"
-    ]
-  },
-  "build": {
-    "productName": "Companion Satellite",
-    "appId": "remote.companion.bitfocus.no",
-    "afterSign": "tools/notarize.cjs",
-    "npmRebuild": false,
-    "directories": {
-      "buildResources": "assets/",
-      "output": "electron-output/"
-    },
-    "mac": {
-      "category": "no.bitfocus.companion.remote",
-      "target": "dmg",
-      "extendInfo": {
-        "LSBackgroundOnly": 1,
-        "LSUIElement": 1
-      },
-      "hardenedRuntime": "true",
-      "gatekeeperAssess": "false",
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist"
-    },
-    "dmg": {
-      "artifactName": "companion-satellite-${arch}.dmg",
-      "sign": true
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "nsis": {
-      "createStartMenuShortcut": true,
-      "perMachine": true,
-      "oneClick": false,
-      "allowElevation": true,
-      "artifactName": "companion-satellite-x64.exe",
-      "include": "tools/windows/installer.nsi"
-    },
-    "linux": {
-      "target": "tar.gz",
-      "artifactName": "companion-satellite-${arch}.tar.gz",
-      "extraFiles": [
-        {
-          "from": "assets/linux",
-          "to": "."
-        }
-      ]
-    },
-    "files": [
-      "**/*",
-      "assets/*",
-      "!.nvmrc",
-      "!.node_version",
-      "!docs",
-      "!samples",
-      "!src",
-      "!tools",
-      "!pi-image"
-    ]
-  },
-  "packageManager": "yarn@4.0.1"
+  "packageManager": "yarn@4.1.0"
 }

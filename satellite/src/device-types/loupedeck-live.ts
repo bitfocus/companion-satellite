@@ -1,10 +1,16 @@
-import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
+import {
+	LoupedeckDevice,
+	LoupedeckDisplayId,
+	LoupedeckBufferFormat,
+	LoupedeckModelId,
+	LoupedeckControlType,
+} from '@loupedeck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
 import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
 
-export class LoupedeckLiveSWrapper implements WrappedDevice {
+export class LoupedeckLiveWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
 	readonly #deviceId: string
@@ -14,7 +20,7 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 	#queue: ImageWriteQueue
 
 	#companionSupportsScaling = false
-	#companionSupportsCombinedEncoders = false
+	#companionSupportsCombinedEncoders = true
 
 	public get deviceId(): string {
 		return this.#deviceId
@@ -28,7 +34,11 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 		this.#deviceId = deviceId
 		this.#cardGenerator = cardGenerator
 
-		if (device.modelId !== LoupedeckModelId.LoupedeckLiveS) throw new Error('Incorrect model passed to wrapper!')
+		if (
+			device.modelId !== LoupedeckModelId.LoupedeckLive &&
+			device.modelId !== LoupedeckModelId.RazerStreamController
+		)
+			throw new Error('Incorrect model passed to wrapper!')
 
 		this.#queueOutputId = 0
 
@@ -74,8 +84,8 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
-			keysTotal: 21,
-			keysPerRow: 7,
+			keysTotal: 32,
+			keysPerRow: 8,
 			bitmapSize: this.#deck.lcdKeySize,
 			colours: true,
 			text: false,
@@ -87,25 +97,40 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 		await this.#deck.close()
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
-		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
-			if (type === 'button') {
-				// return 24 + id
-				switch (id) {
-					case 0:
-						return 14
-					case 1:
-						return 6
-					case 2:
-						return 13
-					case 3:
-						return 20
-				}
+		const convertButtonId = (type: 'button' | 'rotary', id: number, rotarySecondary: boolean): number => {
+			if (type === 'button' && id >= 0 && id < 8) {
+				return 24 + id
 			} else if (type === 'rotary') {
-				switch (id) {
-					case 0:
-						return 0
-					case 1:
-						return 7
+				if (!this.#companionSupportsCombinedEncoders && rotarySecondary) {
+					switch (id) {
+						case 0:
+							return 1
+						case 1:
+							return 9
+						case 2:
+							return 17
+						case 3:
+							return 6
+						case 4:
+							return 14
+						case 5:
+							return 22
+					}
+				} else {
+					switch (id) {
+						case 0:
+							return 0
+						case 1:
+							return 8
+						case 2:
+							return 16
+						case 3:
+							return 7
+						case 4:
+							return 15
+						case 5:
+							return 23
+					}
 				}
 			}
 
@@ -113,12 +138,12 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 			return 99
 		}
 		console.log('Registering key events for ' + this.deviceId)
-		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index, true)))
+		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index, true)))
 		this.#deck.on('rotate', (info, delta) => {
-			if (info.type !== 'rotary') return
+			if (info.type !== LoupedeckControlType.Rotary) return
 
-			const id2 = convertButtonId(info.type, info.index)
+			const id2 = convertButtonId(info.type, info.index, false)
 			if (id2 < 90) {
 				if (delta < 0) {
 					if (this.#companionSupportsCombinedEncoders) {
@@ -136,9 +161,9 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 			}
 		})
 		const translateKeyIndex = (key: number): number => {
-			const x = key % 5
-			const y = Math.floor(key / 5)
-			return y * 7 + x + 1
+			const x = key % 4
+			const y = Math.floor(key / 4)
+			return y * 8 + x + 2
 		}
 		this.#deck.on('touchstart', (data) => {
 			for (const touch of data.changedTouches) {
@@ -176,28 +201,15 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 		await this.#deck.blankDevice(true, !skipButtons)
 	}
 	async draw(d: DeviceDrawProps): Promise<void> {
-		let buttonIndex: number | undefined
-		switch (d.keyIndex) {
-			case 14:
-				buttonIndex = 0
-				break
-			case 6:
-				buttonIndex = 1
-				break
-			case 13:
-				buttonIndex = 2
-				break
-			case 20:
-				buttonIndex = 3
-				break
-		}
-		if (buttonIndex !== undefined) {
+		if (d.keyIndex >= 24 && d.keyIndex < 32) {
+			const index = d.keyIndex - 24
+
 			const red = d.color ? parseInt(d.color.substr(1, 2), 16) : 0
 			const green = d.color ? parseInt(d.color.substr(3, 2), 16) : 0
 			const blue = d.color ? parseInt(d.color.substr(5, 2), 16) : 0
 
 			await this.#deck.setButtonColor({
-				id: buttonIndex,
+				id: index,
 				red,
 				green,
 				blue,
@@ -205,12 +217,11 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 
 			return
 		}
+		const x = (d.keyIndex % 8) - 2
+		const y = Math.floor(d.keyIndex / 8)
 
-		const x = (d.keyIndex % 7) - 1
-		const y = Math.floor(d.keyIndex / 7)
-
-		if (x >= 0 && x < 5) {
-			const keyIndex = x + y * 5
+		if (x >= 0 && x < 4) {
+			const keyIndex = x + y * 4
 			if (d.image) {
 				this.#queue.queue(keyIndex, d.image)
 			} else {
@@ -230,7 +241,6 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 			.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
 			.then(async (buffer) => {
 				if (outputId === this.#queueOutputId) {
-					console.log('draw buffer')
 					this.#isShowingCard = true
 					// still valid
 					await this.#deck.drawBuffer(
@@ -240,7 +250,7 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 						width,
 						height,
 						0,
-						0
+						0,
 					)
 				}
 			})
