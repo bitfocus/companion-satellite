@@ -1,4 +1,10 @@
-import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
+import {
+	LoupedeckDevice,
+	LoupedeckDisplayId,
+	LoupedeckBufferFormat,
+	LoupedeckModelId,
+	LoupedeckControlType,
+} from '@loupedeck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
@@ -116,7 +122,7 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index)))
 		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index)))
 		this.#deck.on('rotate', (info, delta) => {
-			if (info.type !== 'rotary') return
+			if (info.type !== LoupedeckControlType.Rotary) return
 
 			const id2 = convertButtonId(info.type, info.index)
 			if (id2 < 90) {
@@ -240,7 +246,7 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 						width,
 						height,
 						0,
-						0
+						0,
 					)
 				}
 			})

@@ -147,7 +147,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 						width,
 						height,
 						0,
-						0
+						0,
 					)
 				}
 			})

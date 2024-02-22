@@ -57,7 +57,7 @@ trayMenu.append(
 	new MenuItem({
 		label: 'Scan devices',
 		click: trayScanDevices,
-	})
+	}),
 )
 trayMenu.append(
 	new MenuItem({
@@ -100,19 +100,19 @@ trayMenu.append(
 					})
 			}
 		},
-	})
+	}),
 )
 trayMenu.append(
 	new MenuItem({
 		label: 'About',
 		click: trayAbout,
-	})
+	}),
 )
 trayMenu.append(
 	new MenuItem({
 		label: 'Quit',
 		click: trayQuit,
-	})
+	}),
 )
 
 app.whenReady()

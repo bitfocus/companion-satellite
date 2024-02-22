@@ -73,7 +73,7 @@ export class StreamDeckWrapper implements WrappedDevice {
 						buffer,
 						inputRes,
 						inputRes,
-						imageRs.PixelFormat.Rgb
+						imageRs.PixelFormat.Rgb,
 					)
 						.scale(encoderSize.height, encoderSize.height)
 						.toBuffer(imageRs.PixelFormat.Rgb)

@@ -21,7 +21,7 @@ export class RestServer {
 		webRoot: string,
 		appConfig: Conf<SatelliteConfig>,
 		client: CompanionSatelliteClient,
-		devices: DeviceManager
+		devices: DeviceManager,
 	) {
 		this.appConfig = appConfig
 		this.client = client

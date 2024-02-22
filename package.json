@@ -22,37 +22,27 @@
     "webui"
   ],
   "scripts": {
-    "postinstall": "./node_modules/.bin/husky install",
+    "postinstall": "husky",
     "dev": "yarn workspace satellite dev",
     "dev:electron": "yarn workspace satellite dev-electron",
     "dev:webui": "yarn workspace webui dev",
     "build": "yarn workspaces foreach --all run build",
-    "lint:raw": "run eslint --ext .ts --ext .js --ext .tsx --ext .jsx",
-    "lint": "run lint:raw .",
     "license-validate": "sofie-licensecheck",
-    "dist": "run build && zx tools/build_electron.mjs",
-    "eslint": "./node_modules/.bin/eslint",
-    "prettier": "./node_modules/.bin/prettier",
-    "lint-staged": "./node_modules/.bin/lint-staged"
+    "dist": "run build && zx tools/build_electron.mjs"
   },
   "devDependencies": {
-    "@sofie-automation/code-standard-preset": "~2.5.2",
+    "@tsconfig/node18": "^18.2.2",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "typescript": "~5.2",
     "zx": "^7.2.3"
   },
   "engines": {
-    "node": "^18.15"
+    "node": "^18.18"
   },
   "resolutions": {
     "node-hid": "npm:@julusian/hid@3.0.1-0"
-  },
-  "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
-  "lint-staged": {
-    "*.{css,json,md,scss}": [
-      "prettier --write"
-    ],
-    "*.{ts,tsx,js,jsx}": [
-      "yarn lint --fix"
-    ]
   },
   "packageManager": "yarn@4.0.1"
 }

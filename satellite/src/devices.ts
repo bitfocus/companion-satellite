@@ -114,8 +114,8 @@ export class DeviceManager {
 				},
 				(e) => {
 					console.error(`Set brightness: ${e}`)
-				}
-			)
+				},
+			),
 		)
 		client.on(
 			'clearDeck',
@@ -126,8 +126,8 @@ export class DeviceManager {
 				},
 				(e) => {
 					console.error(`Clear deck: ${e}`)
-				}
-			)
+				},
+			),
 		)
 		client.on(
 			'draw',
@@ -138,8 +138,8 @@ export class DeviceManager {
 				},
 				(e) => {
 					console.error(`Draw: ${e}`)
-				}
-			)
+				},
+			),
 		)
 		client.on(
 			'newDevice',
@@ -154,8 +154,8 @@ export class DeviceManager {
 				},
 				(e) => {
 					console.error(`Setup device: ${e}`)
-				}
-			)
+				},
+			),
 		)
 		client.on(
 			'deviceErrored',
@@ -173,8 +173,8 @@ export class DeviceManager {
 				},
 				(e) => {
 					console.error(`Failed device: ${e}`)
-				}
-			)
+				},
+			),
 		)
 	}
 
@@ -264,7 +264,7 @@ export class DeviceManager {
 		this.scanIsRunning = true
 		this.scanPending = false
 
-		Promise.allSettled([
+		void Promise.allSettled([
 			HID.devicesAsync()
 				.then(async (devices) => {
 					for (const device of devices) {
@@ -321,7 +321,7 @@ export class DeviceManager {
 	private tryAddLoupedeck(
 		path: string,
 		serial: string,
-		wrapperClass: new (deviceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) => WrappedDevice
+		wrapperClass: new (deviceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) => WrappedDevice,
 	) {
 		if (this.canAddDevice(serial)) {
 			console.log(`adding new device: ${path}`)
