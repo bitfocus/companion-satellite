@@ -61,7 +61,9 @@ if [ -n "$SELECTED_URL" ]; then
 	# copy across the useful files
 	rm -R -f /opt/companion-satellite
 	npx --yes @electron/asar e /tmp/satellite-update/resources/app.asar /tmp/satellite-update/resources/app
-	mv /tmp/satellite-update/resources/app /opt/companion-satellite
+    mkdir /opt/companion-satellite
+	mv /tmp/satellite-update/resources/app /opt/companion-satellite/satellite
+    mv /tmp/satellite-update/resources/webui /opt/companion-satellite/webui
 	# mv /tmp/satellite-update/*.rules /opt/companion-satellite/
 	rm -R /tmp/satellite-update
 
