@@ -24,7 +24,7 @@ yarn --cwd webui install
 yarn build
 
 # update some tooling
-cp assets/linux/50-satellite.rules /etc/udev/rules.d/
+cp satellite/assets/linux/50-satellite.rules /etc/udev/rules.d/
 udevadm control --reload-rules || true
 
 # update startup script
