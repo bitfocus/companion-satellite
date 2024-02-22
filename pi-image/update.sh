@@ -6,10 +6,10 @@
 # fail if this happens, to avoid breaking existing arm installations
 CURRENT_ARCH=$(dpkg --print-architecture)
 if [[ "$CURRENT_ARCH" != "x64" && "$CURRENT_ARCH" != "amd64" && "$CURRENT_ARCH" != "arm64" ]]; then
-    echo "$CURRENT_ARCH is not a supported cpu architecture for running Companion Satellite."
-    echo "If you are running on an arm device (such as a Raspberry Pi), make sure to use an arm64 image."
+	echo "$CURRENT_ARCH is not a supported cpu architecture for running Companion Satellite."
+	echo "If you are running on an arm device (such as a Raspberry Pi), make sure to use an arm64 image."
 	echo "YOUR INSTALLATION HAS NOT BEEN CHANGED. You must reinstall a new satellite image to update."
-    exit 0
+	exit 0
 fi
 
 # imitiate the fnm setup done in .bashrc
@@ -27,8 +27,8 @@ corepack enable
 # ensure some dependencies are installed
 ensure_installed() {
   if ! dpkg --verify "$1" 2>/dev/null; then
-    # Future: batch the installs, if there are multiple
-    apt-get install $1
+	# Future: batch the installs, if there are multiple
+	apt-get install $1
   fi
 }
 ensure_installed "wget"
@@ -61,10 +61,10 @@ if [ -n "$SELECTED_URL" ]; then
 	# copy across the useful files
 	rm -R -f /opt/companion-satellite
 	npx --yes @electron/asar e /tmp/satellite-update/resources/app.asar /tmp/satellite-update/resources/app
-    mkdir /opt/companion-satellite
+	mkdir /opt/companion-satellite
 	mv /tmp/satellite-update/resources/app /opt/companion-satellite/satellite
-    mkdir /opt/companion-satellite/webui
-    mv /tmp/satellite-update/resources/webui /opt/companion-satellite/webui/dist
+	mkdir /opt/companion-satellite/webui
+	mv /tmp/satellite-update/resources/webui /opt/companion-satellite/webui/dist
 	# mv /tmp/satellite-update/*.rules /opt/companion-satellite/
 	rm -R /tmp/satellite-update
 
@@ -88,14 +88,14 @@ cp pi-image/satellite.service /etc/systemd/system
 
 # ADD REST_PORT to old config files
 if [ -f /boot/satellite-config ]; then
-    if grep -q REST_PORT /boot/satellite-config; then
-    echo "config ok"
-    else
-    echo "
-    # Port for the REST server (0 to disable)
-    REST_PORT=9999" >> /boot/satellite-config
-    fi
-    chmod 666 /boot/satellite-config
+	if grep -q REST_PORT /boot/satellite-config; then
+	echo "config ok"
+	else
+	echo "
+	# Port for the REST server (0 to disable)
+	REST_PORT=9999" >> /boot/satellite-config
+	fi
+	chmod 666 /boot/satellite-config
 fi
 
 systemctl daemon-reload
