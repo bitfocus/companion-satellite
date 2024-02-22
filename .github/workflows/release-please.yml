@@ -18,6 +18,6 @@ jobs:
           # use a token so that git pushes trigger subsequent workflow runs
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: node
-          extra-files:
-            - satellite/package.json
-            - webui/package.json
+          extra-files: |
+            satellite/package.json
+            webui/package.json
