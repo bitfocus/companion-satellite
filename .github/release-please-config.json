@@ -1,4 +1,6 @@
 {
+    "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+    "release-type": "node",
     "extra-files": [
         "satellite/package.json",
         "webui/package.json"
