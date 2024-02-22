@@ -16,7 +16,7 @@ async function getLatestBuildsForBranch(branch, targetCount) {
 	targetCount *= 10 // HACK until the api changes
 	// eslint-disable-next-line no-undef
 	const data = await fetch(
-		`https://api.bitfocus.io/v1/product/companion-satellite/packages?branch=${branch}&limit=${targetCount}`
+		`https://api.bitfocus.io/v1/product/companion-satellite/packages?branch=${branch}&limit=${targetCount}`,
 	)
 	const jsonData = await data.json()
 
@@ -31,7 +31,7 @@ async function getLatestBuildsForBranch(branch, targetCount) {
 	for (const pkg of jsonData.packages) {
 		if (pkg.target === target) {
 			try {
-				if (semver.satisfies(pkg.version, ALLOWED_VERSIONS)) {
+				if (semver.satisfies(pkg.version, ALLOWED_VERSIONS, { includePrerelease: true })) {
 					result.push({
 						name: pkg.version,
 						uri: pkg.uri,
@@ -133,7 +133,7 @@ async function runPrompt() {
 
 	if (answer.ref === 'custom-url') {
 		console.log(
-			'Warning: This must be an linux build of Companion for the correct architecture, or companion will not be able to launch afterwards'
+			'Warning: This must be an linux build of Companion for the correct architecture, or companion will not be able to launch afterwards',
 		)
 		const answer = await inquirer.prompt([
 			{
