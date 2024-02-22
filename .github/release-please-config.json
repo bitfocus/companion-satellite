@@ -1,0 +1,6 @@
+{
+    "extra-files": [
+        "satellite/package.json",
+        "webui/package.json"
+    ]
+}
