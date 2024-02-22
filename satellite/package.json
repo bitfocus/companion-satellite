@@ -109,7 +109,7 @@
             "oneClick": false,
             "allowElevation": true,
             "artifactName": "companion-satellite-x64.exe",
-            "include": "tools/windows/installer.nsi"
+            "include": "../tools/windows/installer.nsi"
         },
         "linux": {
             "target": "tar.gz",
