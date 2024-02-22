@@ -18,17 +18,10 @@ corepack enable
 # install dependencies
 yarn config set httpTimeout 100000
 yarn
+yarn --cwd webui install
 
-# build typescript
+# build typescript & webui
 yarn build
-
-# build webui
-cd webui
-yarn
-yarn build
-
-# back to the main part
-cd ..
 
 # update some tooling
 cp assets/linux/50-satellite.rules /etc/udev/rules.d/
