@@ -35,4 +35,4 @@ WORKDIR /app
 COPY --from=0 /app/	/app/
 
 USER node
-ENTRYPOINT ["node", "/app/dist/main.js"]
+ENTRYPOINT ["node", "/app/satellite/dist/main.js"]
