@@ -299,6 +299,9 @@ jobs:
     runs-on: ubuntu-latest
     name: build image
 
+    # only run for main
+    if: github.ref == 'refs/heads/main'
+
     needs:
       - Linux-arm64
 
