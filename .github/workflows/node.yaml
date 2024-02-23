@@ -326,6 +326,7 @@ jobs:
           echo "sourcename=pi-image/output-satellitepi/image.gz" >> $GITHUB_OUTPUT
           echo "targetname=companion-satellite-pi-${COUNT}-${HASH}.img.gz" >> $GITHUB_OUTPUT
           echo "longversion=${VERSION}+${COUNT}-${HASH}" >> $GITHUB_OUTPUT
+          echo "shortversion=${VERSION}" >> $GITHUB_OUTPUT
 
       - name: install packer
         run: |
@@ -335,11 +336,21 @@ jobs:
 
       - name: build image
         run: |
+          echo "BUILD_IS_TAG=${BUILD_IS_TAG}"
+          if [[ "$BUILD_IS_TAG" == "true" ]]; then
+            export BUILD_BRANCH=main
+            export BUILD_VERSION="${{ steps.filenames.outputs.shortversion }}"
+          else
+            export BUILD_BRANCH=${GITHUB_REF_NAME}
+            export BUILD_VERSION="${{ steps.filenames.outputs.longversion }}"
+          fi
+
           cd pi-image
           sudo packer init satellitepi.pkr.hcl
-          sudo packer build --var branch=${GITHUB_REF_NAME} --var "build=${{ steps.filenames.outputs.longversion }}" satellitepi.pkr.hcl
+          sudo packer build --var branch=${BUILD_BRANCH} --var "build=$BUILD_VERSION" satellitepi.pkr.hcl
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
       - name: compress image
         shell: bash
