@@ -45,6 +45,12 @@ curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir /opt/fnm
 export PATH=/opt/fnm:$PATH
 eval "`fnm env --shell bash`"
 
+BUILD_BRANCH=beta
+if [ "$SATELLITE_BRANCH" == "stable" ]; then
+    BUILD_BRANCH=stable
+    SATELLITE_BRANCH=main
+fi
+
 # clone the repository
 git clone https://github.com/bitfocus/companion-satellite.git -b $SATELLITE_BRANCH /usr/local/src/companion-satellite
 cd /usr/local/src/companion-satellite
@@ -52,13 +58,8 @@ cd /usr/local/src/companion-satellite
 # configure git for future updates
 git config --global pull.rebase false
 
-
 # run the update script
-if [ "$SATELLITE_BRANCH" == "stable" ]; then
-    SATELLITE_BUILD=main ./pi-image/update.sh stable "$SATELLITE_BUILD"
-else
-    ./pi-image/update.sh beta "$SATELLITE_BUILD"
-fi
+./pi-image/update.sh "$BUILD_BRANCH" "$SATELLITE_BUILD"
 
 # enable start on boot
 systemctl enable satellite
