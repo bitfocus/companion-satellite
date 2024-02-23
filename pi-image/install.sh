@@ -54,10 +54,10 @@ git config --global pull.rebase false
 
 
 # run the update script
-if [ "$SATELLITE_BRANCH" == "main" ]; then
-    ./pi-image/update.sh beta "$SATELLITE_BUILD"
-else
+if [ "$SATELLITE_BRANCH" == "stable" ]; then
     ./pi-image/update.sh stable "$SATELLITE_BUILD"
+else
+    ./pi-image/update.sh beta "$SATELLITE_BUILD"
 fi
 
 # enable start on boot

@@ -338,7 +338,7 @@ jobs:
         run: |
           echo "BUILD_IS_TAG=${BUILD_IS_TAG}"
           if [[ "$BUILD_IS_TAG" == "true" ]]; then
-            export BUILD_BRANCH=main
+            export BUILD_BRANCH=stable
             export BUILD_VERSION="${{ steps.filenames.outputs.shortversion }}"
           else
             export BUILD_BRANCH=${GITHUB_REF_NAME}
