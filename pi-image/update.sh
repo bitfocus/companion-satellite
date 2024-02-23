@@ -28,10 +28,10 @@ corepack enable
 ensure_installed() {
   if ! dpkg --verify "$1" 2>/dev/null; then
 	# Future: batch the installs, if there are multiple
-	apt-get install $1
+	apt-get install -y $1
   fi
 }
-ensure_installed "wget"
+ensure_installed "wget unattended-upgrades"
 
 # Run interactive version picker
 yarn --cwd "pi-image/update-prompt" install
