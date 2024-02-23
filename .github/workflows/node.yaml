@@ -326,7 +326,7 @@ jobs:
           echo "sourcename=pi-image/output-satellitepi/image.gz" >> $GITHUB_OUTPUT
           echo "targetname=companion-satellite-pi-${COUNT}-${HASH}.img.gz" >> $GITHUB_OUTPUT
           echo "longversion=${VERSION}+${COUNT}-${HASH}" >> $GITHUB_OUTPUT
-          echo "shortversion=${VERSION}" >> $GITHUB_OUTPUT
+          echo "shortversion=v${VERSION}" >> $GITHUB_OUTPUT
 
       - name: install packer
         run: |
