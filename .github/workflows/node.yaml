@@ -300,7 +300,7 @@ jobs:
     name: build image
 
     # only run for main
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || startsWith(github.event.ref, 'refs/tags/v')
 
     needs:
       - Linux-arm64
