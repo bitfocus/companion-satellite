@@ -79,4 +79,6 @@ then
 fi
 
 echo "Companion Satellite is installed!"
-echo "You should edit the configuration file at \"/boot/satellite-config\" then can start it with \"sudo systemctl start satellite\" or \"sudo satellite-update\""
+echo "You can edit a subset of the configuration at \"/boot/satellite-config\" then can start it with \"sudo systemctl start satellite\" or \"sudo satellite-update\""
+echo "A http server will be started on port 9999 which gives access to the full configuration"
+
