@@ -55,7 +55,7 @@ git config --global pull.rebase false
 
 # run the update script
 if [ "$SATELLITE_BRANCH" == "stable" ]; then
-    ./pi-image/update.sh stable "$SATELLITE_BUILD"
+    SATELLITE_BUILD=main ./pi-image/update.sh stable "$SATELLITE_BUILD"
 else
     ./pi-image/update.sh beta "$SATELLITE_BUILD"
 fi
