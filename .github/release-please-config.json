@@ -3,21 +3,13 @@
 
     "bootstrap-sha": "ed43061b96cc7a02f442533a40c4c731d9125bd7",
 
+    "plugins": ["node-workspace"],
+
+    "include-component-in-tag": false,
+
     "packages": {
         ".": {
-            "release-type": "node",
-            "extra-files": [
-                {
-                    "type": "json",
-                    "path": "satellite/package.json",
-                    "jsonpath": "$.version"
-                },
-                {
-                    "type": "json",
-                    "path": "webui/package.json",
-                    "jsonpath": "$.version"
-                }
-            ]
+            "release-type": "node"
         }
     }
 }
