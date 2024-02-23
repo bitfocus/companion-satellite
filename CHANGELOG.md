@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.7.0](https://github.com/bitfocus/companion-satellite/compare/companion-satellite-v1.6.1...companion-satellite-v1.7.0) (2024-02-23)
+
+
+### Features
+
+* expand rest api to serve minimal interface ([#103](https://github.com/bitfocus/companion-satellite/issues/103)) ([2074eac](https://github.com/bitfocus/companion-satellite/commit/2074eac5df22a86bb0ff6323d934ad2684fd8c56))
+* install headless satellite by extracting electron builds ([#113](https://github.com/bitfocus/companion-satellite/issues/113)) ([2a60e94](https://github.com/bitfocus/companion-satellite/commit/2a60e94cef2b1f0c756de8df7fa81c2a205cad0f))
+
+
+### Bug Fixes
+
+* building ([4f79681](https://github.com/bitfocus/companion-satellite/commit/4f79681e2b10fb0a801a660b80191497b674b7bb))
+* syntax ([4892ff1](https://github.com/bitfocus/companion-satellite/commit/4892ff16bc79043bba58cb2f72f13699cb14dc68))
+* webui not being built ([49f9eb4](https://github.com/bitfocus/companion-satellite/commit/49f9eb4d87beea80424e187ea0e49fd2b34f9e5c))
+
 ## [1.6.1](https://github.com/bitfocus/companion-satellite/compare/v1.6.0...v1.6.1) (Mon Feb 05 2024)
 
 
