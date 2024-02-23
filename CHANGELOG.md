@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.7.4](https://github.com/bitfocus/companion-satellite/compare/v1.7.3...v1.7.4) (2024-02-23)
+
+
+### Bug Fixes
+
+* try again at pi image ([2afb867](https://github.com/bitfocus/companion-satellite/commit/2afb867404f298abd8ba53a92da6b069ba263950))
+
 ## [1.7.3](https://github.com/bitfocus/companion-satellite/compare/v1.7.2...v1.7.3) (2024-02-23)
 
 
