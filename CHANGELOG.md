@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.8.0](https://github.com/bitfocus/companion-satellite/compare/v1.7.5...v1.8.0) (2024-05-22)
+
+
+### Features
+
+* add support for streamdeck neo ([c60862c](https://github.com/bitfocus/companion-satellite/commit/c60862cc10c704c64dd34183980085a50c28388b))
+
 ## [1.7.5](https://github.com/bitfocus/companion-satellite/compare/v1.7.4...v1.7.5) (2024-02-23)
 
 
