@@ -15,7 +15,7 @@ Note: This connects over the satellite device api which uses port TCP 16622.
 
 ## Getting started
 
-You can find installers on the [releases](https://github.com/bitfocus/companion-satellite/releases) page
+You can find installers on the [BitFocus website](https://user.bitfocus.io/download)
 
 ### Raspberry Pi
 
