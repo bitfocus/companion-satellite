@@ -9,3 +9,17 @@ updates:
     directory: /
     schedule:
       interval: weekly
+
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    # Disable version updates for npm dependencies (we only want security updates)
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: 'npm'
+    directory: '/pi-image/update-prompt'
+    schedule:
+      interval: 'daily'
+    # Disable version updates for npm dependencies (we only want security updates)
+    open-pull-requests-limit: 0
