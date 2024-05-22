@@ -1,7 +1,8 @@
-import { contextBridge, ipcRenderer } from 'electron'
+const { contextBridge, ipcRenderer } = require('electron')
+// @ts-expect-error
 import type { ApiConfigData, ApiStatusResponse } from './apiTypes.js'
 
-export const electronApi = {
+const electronApi = {
 	rescanSurfaces: (): void => ipcRenderer.send('rescan'),
 	getStatus: async (): Promise<ApiStatusResponse> => ipcRenderer.invoke('getStatus'),
 	getConfig: async (): Promise<ApiConfigData> => ipcRenderer.invoke('getConfig'),
@@ -10,3 +11,5 @@ export const electronApi = {
 }
 
 contextBridge.exposeInMainWorld('electronApi', electronApi)
+
+export type { electronApi }

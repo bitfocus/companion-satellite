@@ -1,3 +1,3 @@
 /// <reference types="vite/client" />
 
-declare const electronApi: typeof import('../../dist/electronPreload').electronApi
+declare const electronApi: typeof import('../../satellite/dist/electronPreload.cjs').electronApi

@@ -74,7 +74,7 @@ trayMenu.append(
 				height: 720,
 				autoHideMenuBar: isProduction,
 				webPreferences: {
-					preload: fileURLToPath(new URL('../dist/electronPreload.js', import.meta.url)),
+					preload: fileURLToPath(new URL('../dist/electronPreload.cjs', import.meta.url)),
 				},
 			})
 			configWindow.on('close', () => {
