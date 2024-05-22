@@ -9,6 +9,7 @@ import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
 import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { parseColor } from './lib'
 
 export class LoupedeckLiveWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -204,15 +205,13 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 		if (d.keyIndex >= 24 && d.keyIndex < 32) {
 			const index = d.keyIndex - 24
 
-			const red = d.color ? parseInt(d.color.substr(1, 2), 16) : 0
-			const green = d.color ? parseInt(d.color.substr(3, 2), 16) : 0
-			const blue = d.color ? parseInt(d.color.substr(5, 2), 16) : 0
+			const color = parseColor(d.color)
 
 			await this.#deck.setButtonColor({
 				id: index,
-				red,
-				green,
-				blue,
+				red: color.r,
+				green: color.g,
+				blue: color.b,
 			})
 
 			return

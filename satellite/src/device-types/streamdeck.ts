@@ -3,6 +3,7 @@ import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards'
 import { ImageWriteQueue } from '../writeQueue'
 import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { parseColor } from './lib'
 
 export class StreamDeckWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
@@ -105,12 +106,14 @@ export class StreamDeckWrapper implements WrappedDevice {
 			keysTotal: this.#deck.NUM_KEYS,
 			keysPerRow: this.#deck.KEY_COLUMNS,
 			bitmapSize: this.#deck.ICON_SIZE,
-			colours: false,
+			colours: true,
 			text: false,
 		}
 
 		if (this.#deck.MODEL === DeviceModelId.PLUS) {
 			info.keysTotal += this.#deck.NUM_ENCODERS * 2
+		} else if (this.#deck.MODEL === DeviceModelId.NEO) {
+			info.keysTotal += this.#deck.KEY_COLUMNS
 		}
 
 		return info
@@ -122,8 +125,22 @@ export class StreamDeckWrapper implements WrappedDevice {
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
-		this.#deck.on('down', (key) => client.keyDown(this.deviceId, key))
-		this.#deck.on('up', (key) => client.keyUp(this.deviceId, key))
+		this.#deck.on('down', (key) => {
+			if (this.#deck.MODEL === DeviceModelId.NEO && key === 9) {
+				// pad around the lcd
+				key += 2
+			}
+
+			client.keyDown(this.deviceId, key)
+		})
+		this.#deck.on('up', (key) => {
+			if (this.#deck.MODEL === DeviceModelId.NEO && key === 9) {
+				// pad around the lcd
+				key += 2
+			}
+
+			client.keyUp(this.deviceId, key)
+		})
 
 		if (this.#deck.MODEL === DeviceModelId.PLUS) {
 			this.#deck.on('encoderDown', (encoder) => {
@@ -183,6 +200,20 @@ export class StreamDeckWrapper implements WrappedDevice {
 		await this.#deck.clearPanel()
 	}
 	async draw(d: DeviceDrawProps): Promise<void> {
+		if (this.#deck.MODEL === DeviceModelId.NEO && d.keyIndex >= this.#deck.NUM_KEYS) {
+			const color = parseColor(d.color)
+
+			if (d.keyIndex === this.#deck.NUM_KEYS) {
+				this.#deck.fillKeyColor(this.#deck.NUM_KEYS, color.r, color.g, color.b).catch((e) => {
+					console.log(`color failed: ${e}`)
+				})
+			} else if (d.keyIndex === this.#deck.NUM_KEYS + 3) {
+				this.#deck.fillKeyColor(this.#deck.NUM_KEYS + 1, color.r, color.g, color.b).catch((e) => {
+					console.log(`color failed: ${e}`)
+				})
+			}
+		}
+
 		if (this.#deck.ICON_SIZE !== 0) {
 			if (d.image) {
 				if (d.keyIndex < this.#deck.NUM_KEYS) {
