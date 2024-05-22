@@ -44,5 +44,5 @@
   "resolutions": {
     "node-hid": "npm:@julusian/hid@3.0.1-0"
   },
-  "packageManager": "yarn@4.1.0"
+  "packageManager": "yarn@4.2.2"
 }
