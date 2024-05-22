@@ -18,8 +18,8 @@ variable "build" {
 }
 
 source "arm-image" "satellitepi" {
-  iso_checksum              = "sha256:9ce5e2c8c6c7637cd2227fdaaf0e34633e6ebedf05f1c88e00f833cbb644db4b"
-  iso_url                   = "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2023-12-11/2023-12-11-raspios-bookworm-arm64-lite.img.xz"
+  iso_checksum              = "sha256:58a3ec57402c86332e67789a6b8f149aeeb4e7bb0a16c9388a66ea6e07012e45"
+  iso_url                   = "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2024-03-15/2024-03-15-raspios-bookworm-arm64-lite.img.xz"
   last_partition_extra_size = 2147483648
   qemu_binary               = "qemu-aarch64-static"
 }
