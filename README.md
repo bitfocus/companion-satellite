@@ -69,7 +69,7 @@ a POST request to `http://Satellite-IP:9999/api/config` with `{"host": "newhosti
 
 ## Development
 
-NodeJS 16 is required
+NodeJS 18 is required
 
 ### Electron
 
