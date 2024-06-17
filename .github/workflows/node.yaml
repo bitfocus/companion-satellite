@@ -199,7 +199,7 @@ jobs:
 
           yarn
           yarn --cwd webui install
-          yarn dist
+          yarn dist mac-x64
         env:
           CSC_LINK: ${{ secrets.OSX_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.OSX_CSC_KEY_PASSWORD }}
