@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.8.1](https://github.com/bitfocus/companion-satellite/compare/v1.8.0...v1.8.1) (2024-06-17)
+
+
+### Bug Fixes
+
+* force rebuild ([c0504b0](https://github.com/bitfocus/companion-satellite/commit/c0504b0912f41b1b5f58dc9c7228b18a176a1c7c))
+* update nodejs version ([40f95a1](https://github.com/bitfocus/companion-satellite/commit/40f95a14d8c8244a0205033901ce3bc54d8565a0))
+
 ## [1.8.0](https://github.com/bitfocus/companion-satellite/compare/v1.7.5...v1.8.0) (2024-05-22)
 
 
