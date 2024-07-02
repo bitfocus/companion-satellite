@@ -61,11 +61,6 @@ if (platform === 'win-x64' || process.platform === 'win32') {
 	}
 }
 
-// Force reinstall @julusian/skia-canvas, so that it is the correct arch
-if (nodePreGypArgs.length) {
-	await $`yarn --cwd node_modules/@julusian/skia-canvas run install --update-binary ${nodePreGypArgs}`
-}
-
 // HACK: skip this as it is trying to rebuild everything from source and failing
 // if (!platform) {
 // 	// If for our own platform, make sure the correct deps are installed
