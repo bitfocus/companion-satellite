@@ -66,6 +66,13 @@ jobs:
           api-target: 'linux-tgz'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: ${{ steps.filenames.outputs.sourcename }}
+          retention-days: 1
+
   Linux-arm64:
     runs-on: ubuntu-latest
     steps:
@@ -124,6 +131,13 @@ jobs:
           api-target: 'linux-arm64-tgz'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64
+          path: ${{ steps.filenames.outputs.sourcename }}
+          retention-days: 1
+
   Windows-x64:
     runs-on: windows-latest
     steps:
@@ -176,6 +190,13 @@ jobs:
           api-product: companion-satellite
           api-target: 'win-x64'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64
+          path: ${{ steps.filenames.outputs.sourcename }}
+          retention-days: 1
 
   Mac-x64:
     runs-on: macos-latest
@@ -236,6 +257,13 @@ jobs:
           api-target: 'mac-intel'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-intel
+          path: ${{ steps.filenames.outputs.sourcename }}
+          retention-days: 1
+
   Mac-arm64:
     runs-on: macos-latest
     steps:
@@ -294,6 +322,13 @@ jobs:
           api-product: companion-satellite
           api-target: 'mac-arm'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mac-arm
+          path: ${{ steps.filenames.outputs.sourcename }}
+          retention-days: 1
 
   pi-img:
     runs-on: ubuntu-latest
