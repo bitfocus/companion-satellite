@@ -12,6 +12,9 @@ if [[ "$CURRENT_ARCH" != "x64" && "$CURRENT_ARCH" != "amd64" && "$CURRENT_ARCH" 
 	exit 0
 fi
 
+# don't prompt before downloading yarn
+export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
 # imitiate the fnm setup done in .bashrc
 export FNM_DIR=/opt/fnm
 export PATH=/opt/fnm:$PATH
