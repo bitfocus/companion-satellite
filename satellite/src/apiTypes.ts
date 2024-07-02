@@ -1,6 +1,6 @@
 import Conf from 'conf'
-import { CompanionSatelliteClient } from './client'
-import { SatelliteConfig } from './config'
+import { CompanionSatelliteClient } from './client.js'
+import { SatelliteConfig } from './config.js'
 
 export interface ApiStatusResponse {
 	connected: boolean

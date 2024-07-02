@@ -1,7 +1,7 @@
 import { EventEmitter } from 'eventemitter3'
 import { Socket } from 'net'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api'
-import { DEFAULT_PORT } from './lib'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
+import { DEFAULT_PORT } from './lib.js'
 import * as semver from 'semver'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number

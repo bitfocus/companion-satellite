@@ -1,8 +1,8 @@
 import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CardGenerator } from '../cards'
-import { ImageWriteQueue } from '../writeQueue'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
+import { CardGenerator } from '../cards.js'
+import { ImageWriteQueue } from '../writeQueue.js'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
 
 export class RazerStreamControllerXWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator

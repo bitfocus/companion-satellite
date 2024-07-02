@@ -5,8 +5,8 @@
  */
 
 import { stat, readFile, copyFile, chown } from 'fs/promises'
-import { openHeadlessConfig } from './config'
-import path from 'path'
+import { openHeadlessConfig } from './config.js'
+import { fileURLToPath } from 'url'
 
 const configFilePath = process.argv[2]
 if (!configFilePath) throw new Error(`Missing config file path parameter`)
@@ -16,7 +16,7 @@ const appConfig = openHeadlessConfig(configFilePath)
 // Ensure the satellite user owns the file. This is a bit dodgey guessing the ids like this..
 chown(appConfig.path, 1000, 1000).catch(() => null)
 
-const templatePathName = path.join(__dirname, '../pi-image/satellite-config')
+const templatePathName = fileURLToPath(new URL('../pi-image/satellite-config', import.meta.url))
 
 const importFromPaths = [
 	// Paths to search for a config file to 'import' from

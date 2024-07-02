@@ -1,7 +1,7 @@
-import { CardGenerator } from '../cards'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
-import Infinitton = require('infinitton-idisplay')
+import { CardGenerator } from '../cards.js'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
 import * as imageRs from '@julusian/image-rs'
+import Infinitton from 'infinitton-idisplay'
 
 export class InfinittonWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator

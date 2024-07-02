@@ -1,18 +1,14 @@
-import * as path from 'path'
-import { promisify } from 'util'
-import { readFile } from 'fs'
+import { readFile } from 'fs/promises'
 import { Canvas, Image, loadImage } from '@napi-rs/canvas'
 import * as imageRs from '@julusian/image-rs'
 import { networkInterfaces } from 'os'
-
-const readFileP = promisify(readFile)
 
 export class CardGenerator {
 	private iconImage: Image | undefined
 
 	async loadIcon(): Promise<Image> {
 		if (!this.iconImage) {
-			const rawData = await readFileP(path.join(__dirname, '../assets/icon.png'))
+			const rawData = await readFile(new URL('../assets/icon.png', import.meta.url))
 
 			this.iconImage = await loadImage(rawData)
 		}

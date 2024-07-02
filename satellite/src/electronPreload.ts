@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { ApiConfigData, ApiStatusResponse } from './apiTypes'
+import type { ApiConfigData, ApiStatusResponse } from './apiTypes.js'
 
 export const electronApi = {
 	rescanSurfaces: (): void => ipcRenderer.send('rescan'),

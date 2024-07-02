@@ -1,19 +1,19 @@
-import { CompanionSatelliteClient } from './client'
+import { CompanionSatelliteClient } from './client.js'
 import { getStreamDeckDeviceInfo, openStreamDeck } from '@elgato-stream-deck/node'
 import { usb } from 'usb'
-import { CardGenerator } from './cards'
+import { CardGenerator } from './cards.js'
 import {
 	XencelabsQuickKeysManagerInstance,
 	XencelabsQuickKeys,
 	VENDOR_ID as VendorIdXencelabs,
 } from '@xencelabs-quick-keys/node'
-import { DeviceId, WrappedDevice } from './device-types/api'
-import { StreamDeckWrapper } from './device-types/streamdeck'
-import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys'
-import Infinitton = require('infinitton-idisplay')
-import { InfinittonWrapper } from './device-types/infinitton'
-import { LoupedeckLiveWrapper } from './device-types/loupedeck-live'
-import { LoupedeckLiveSWrapper } from './device-types/loupedeck-live-s'
+import { DeviceId, WrappedDevice } from './device-types/api.js'
+import { StreamDeckWrapper } from './device-types/streamdeck.js'
+import { QuickKeysWrapper } from './device-types/xencelabs-quick-keys.js'
+import Infinitton from 'infinitton-idisplay'
+import { InfinittonWrapper } from './device-types/infinitton.js'
+import { LoupedeckLiveWrapper } from './device-types/loupedeck-live.js'
+import { LoupedeckLiveSWrapper } from './device-types/loupedeck-live-s.js'
 import * as HID from 'node-hid'
 import {
 	openLoupedeck,
@@ -23,10 +23,10 @@ import {
 	VendorIdLoupedeck,
 	VendorIdRazer,
 } from '@loupedeck/node'
-import { RazerStreamControllerXWrapper } from './device-types/razer-stream-controller-x'
+import { RazerStreamControllerXWrapper } from './device-types/razer-stream-controller-x.js'
 // eslint-disable-next-line node/no-extraneous-import
 import { VENDOR_ID as VendorIdElgato } from '@elgato-stream-deck/core'
-import { wrapAsync } from './lib'
+import { wrapAsync } from './lib.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')

@@ -1,9 +1,9 @@
 import { DeviceModelId, StreamDeck } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CardGenerator } from '../cards'
-import { ImageWriteQueue } from '../writeQueue'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api'
-import { parseColor } from './lib'
+import { CardGenerator } from '../cards.js'
+import { ImageWriteQueue } from '../writeQueue.js'
+import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
+import { parseColor } from './lib.js'
 
 export class StreamDeckWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator

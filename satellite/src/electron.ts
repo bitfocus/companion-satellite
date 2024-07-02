@@ -5,12 +5,13 @@ import * as path from 'path'
 import electronStore from 'electron-store'
 // eslint-disable-next-line node/no-unpublished-import
 import openAboutWindow from 'electron-about-window'
-import { DeviceManager } from './devices'
-import { CompanionSatelliteClient } from './client'
-import { DEFAULT_PORT } from './lib'
-import { RestServer } from './rest'
-import { SatelliteConfig, ensureFieldsPopulated } from './config'
-import { ApiConfigData, ApiStatusResponse, compileConfig, compileStatus, updateConfig } from './apiTypes'
+import { DeviceManager } from './devices.js'
+import { CompanionSatelliteClient } from './client.js'
+import { DEFAULT_PORT } from './lib.js'
+import { RestServer } from './rest.js'
+import { SatelliteConfig, ensureFieldsPopulated } from './config.js'
+import { ApiConfigData, ApiStatusResponse, compileConfig, compileStatus, updateConfig } from './apiTypes.js'
+import { fileURLToPath } from 'url'
 
 const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
@@ -27,7 +28,7 @@ app.on('window-all-closed', () => {
 
 console.log('Starting')
 
-const webRoot = path.join(__dirname, app.isPackaged ? '../../webui' : '../../webui/dist')
+const webRoot = fileURLToPath(new URL(app.isPackaged ? '../../webui' : '../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
@@ -73,7 +74,7 @@ trayMenu.append(
 				height: 720,
 				autoHideMenuBar: isProduction,
 				webPreferences: {
-					preload: path.join(__dirname, '../dist/electronPreload.js'),
+					preload: fileURLToPath(new URL('../dist/electronPreload.js', import.meta.url)),
 				},
 			})
 			configWindow.on('close', () => {
@@ -122,20 +123,20 @@ app.whenReady()
 		tryConnect()
 		restartRestApi()
 
-		let trayImagePath = path.join(__dirname, '../assets', 'tray.png')
-		let trayImageOfflinePath = path.join(__dirname, '../assets', 'tray-offline.png')
+		let trayImagePath = new URL('../assets/tray.png', import.meta.url)
+		let trayImageOfflinePath = new URL('../assets/tray-offline.png', import.meta.url)
 		switch (process.platform) {
 			case 'darwin':
-				trayImagePath = path.join(__dirname, '../assets', 'trayTemplate.png')
-				trayImageOfflinePath = path.join(__dirname, '../assets', 'trayOfflineTemplate.png')
+				trayImagePath = new URL('../assets/trayTemplate.png', import.meta.url)
+				trayImageOfflinePath = new URL('../assets/trayOfflineTemplate.png', import.meta.url)
 				break
 			case 'win32':
-				trayImagePath = path.join(__dirname, '../assets', 'tray.ico')
-				trayImageOfflinePath = path.join(__dirname, '../assets', 'tray-offline.ico')
+				trayImagePath = new URL('../assets/tray.ico', import.meta.url)
+				trayImageOfflinePath = new URL('../assets/tray-offline.ico', import.meta.url)
 				break
 		}
-		const trayImage = nativeImage.createFromPath(trayImagePath)
-		const trayImageOffline = nativeImage.createFromPath(trayImageOfflinePath)
+		const trayImage = nativeImage.createFromPath(fileURLToPath(trayImagePath))
+		const trayImageOffline = nativeImage.createFromPath(fileURLToPath(trayImageOfflinePath))
 
 		tray = new Tray(trayImageOffline)
 
@@ -184,8 +185,8 @@ function trayScanDevices() {
 
 function trayAbout() {
 	console.log('about click')
-	openAboutWindow({
-		icon_path: path.join(__dirname, '../assets', 'icon.png'),
+	openAboutWindow.default({
+		icon_path: fileURLToPath(new URL('../assets/icon.png', import.meta.url)),
 		product_name: 'Companion Satellite',
 		use_inner_html: true,
 		description: 'Satellite Streamdeck connector for Bitfocus Companion <br />Supports 2.2.0 and newer',

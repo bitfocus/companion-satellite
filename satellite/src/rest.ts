@@ -1,13 +1,13 @@
 import Koa from 'koa'
 import Router from 'koa-router'
-import koaBody from 'koa-body'
+import { koaBody } from 'koa-body'
 import serve from 'koa-static'
-import http = require('http')
+import http from 'http'
 import type Conf from 'conf'
-import type { CompanionSatelliteClient } from './client'
-import type { DeviceManager } from './devices'
-import type { SatelliteConfig } from './config'
-import { ApiConfigData, compileConfig, compileStatus, updateConfig } from './apiTypes'
+import type { CompanionSatelliteClient } from './client.js'
+import type { DeviceManager } from './devices.js'
+import type { SatelliteConfig } from './config.js'
+import { ApiConfigData, compileConfig, compileStatus, updateConfig } from './apiTypes.js'
 
 export class RestServer {
 	private readonly appConfig: Conf<SatelliteConfig>
