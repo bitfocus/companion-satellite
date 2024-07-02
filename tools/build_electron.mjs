@@ -53,7 +53,7 @@ if (!platform) {
 	}
 }
 
-if (platform === 'win-x64' || process.platform === 'win32') {
+if (platform === 'win-x64' || (process.platform === 'win32' && process.arch === 'x64')) {
 	const localRedistPath = '.cache/vc_redist.x64.exe'
 	if (!(await fs.pathExists(localRedistPath))) {
 		await fs.mkdirp('.cache')
