@@ -1,7 +1,7 @@
 import * as path from 'path'
 import { promisify } from 'util'
 import { readFile } from 'fs'
-import { Canvas, Image, loadImage } from '@julusian/skia-canvas'
+import { Canvas, Image, loadImage } from '@napi-rs/canvas'
 import * as imageRs from '@julusian/image-rs'
 import { networkInterfaces } from 'os'
 
@@ -9,11 +9,6 @@ const readFileP = promisify(readFile)
 
 export class CardGenerator {
 	private iconImage: Image | undefined
-
-	constructor() {
-		// Ensure skia-canvas is loaded at startup
-		new Canvas()
-	}
 
 	async loadIcon(): Promise<Image> {
 		if (!this.iconImage) {

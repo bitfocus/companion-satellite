@@ -14,7 +14,7 @@
         "dev": "ts-node src/main.ts config.json",
         "dev-electron": "run build:main && electron dist/electron.js",
         "build": "rimraf dist && run build:main",
-        "build:main": "tsc -p tsconfig.build.json",
+        "build:main": "run -T tsc -p tsconfig.build.json",
         "build:electron": "electron-builder --publish=never",
         "lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx",
         "lint": "run lint:raw ."
@@ -48,9 +48,9 @@
     "dependencies": {
         "@elgato-stream-deck/node": "^6.2.0",
         "@julusian/image-rs": "^0.2.1",
-        "@julusian/jpeg-turbo": "^2.1.0",
-        "@julusian/skia-canvas": "^1.0.5",
+        "@julusian/jpeg-turbo": "^2.2.0-1",
         "@loupedeck/node": "^1.1.2",
+        "@napi-rs/canvas": "^0.1.53",
         "@xencelabs-quick-keys/node": "^1.0.0",
         "conf": "^10.2.0",
         "electron-about-window": "^1.15.2",
