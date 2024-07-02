@@ -32,7 +32,7 @@
     "dist": "run build && zx tools/build_electron.mjs"
   },
   "devDependencies": {
-    "@tsconfig/node18": "^18.2.4",
+    "@tsconfig/node20": "^20.1.4",
     "husky": "^9.0.11",
     "lint-staged": "^15.2.7",
     "prettier": "^3.3.2",
@@ -40,7 +40,7 @@
     "zx": "^7.2.3"
   },
   "engines": {
-    "node": "^18.18"
+    "node": "^20.14"
   },
   "resolutions": {
     "node-hid": "^3.1.0"

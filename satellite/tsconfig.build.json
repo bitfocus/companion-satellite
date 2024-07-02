@@ -1,5 +1,5 @@
 {
-	"extends": "@tsconfig/node18/tsconfig.json",
+	"extends": "@tsconfig/node20/tsconfig.json",
 	"include": ["src/**/*.ts"],
 	"exclude": ["node_modules/**", "src/**/*spec.ts", "src/**/__tests__/*", "src/**/__mocks__/*"],
 	"compilerOptions": {
@@ -13,11 +13,6 @@
 		"lib": ["dom"],
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
-		"esModuleInterop": true,
-		"declaration": true,
-
-		"module": "Node16",
-		"moduleResolution": "Node16",
-		"target": "ES2022"
+		"declaration": true
 	}
 }
