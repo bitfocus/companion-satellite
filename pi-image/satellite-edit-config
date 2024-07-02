@@ -8,9 +8,21 @@ fi
 # stop satellite
 systemctl stop satellite
 
+# check default path
+SATELLITE_CONFIG_PATH=/boot/satellite-config
+SATELLITE_CONFIG_PATH=$(realpath $SATELLITE_CONFIG_PATH)
+
+# may not exist, try alternate path
+if ! [ -f "$SATELLITE_CONFIG_PATH" ]; then
+    SATELLITE_CONFIG_PATH=/boot/firmware/satellite-config
+fi
+
 # open config editor
-nano /boot/satellite-config
+if [ -f "$SATELLITE_CONFIG_PATH" ]; then
+  nano "$SATELLITE_CONFIG_PATH"
+else
+  echo "Failed to find config file to edit. Something looks wrong with your installation"
+fi
 
 # restart satellite
-# reboot
 systemctl start satellite
