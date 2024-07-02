@@ -35,6 +35,9 @@ if (!platform) {
 	} else if (platform === 'win-x64') {
 		electronBuilderArgs.push('--x64', '--win')
 		nodePreGypArgs = ['--target_platform=win32', '--target_arch=x64', '--target_libc=unknown']
+	} else if (platform === 'win-arm64') {
+		electronBuilderArgs.push('--arm64', '--win')
+		nodePreGypArgs = ['--target_platform=win32', '--target_arch=arm64', '--target_libc=unknown']
 	} else if (platform === 'linux-x64') {
 		electronBuilderArgs.push('--x64', '--linux')
 		nodePreGypArgs = ['--target_platform=linux', '--target_arch=x64', '--target_libc=glibc']

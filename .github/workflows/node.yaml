@@ -35,7 +35,7 @@ jobs:
 
           yarn
           yarn --cwd webui install
-          yarn dist
+          yarn dist linux-x64
 
       - name: Determine files to upload
         id: filenames
@@ -160,7 +160,7 @@ jobs:
 
           yarn
           yarn --cwd webui install
-          yarn dist
+          yarn dist win-x64
 
       - name: Determine files to upload
         id: filenames
@@ -220,7 +220,7 @@ jobs:
 
           yarn
           yarn --cwd webui install
-          yarn dist
+          yarn dist win-arm64
 
       - name: Determine files to upload
         id: filenames
