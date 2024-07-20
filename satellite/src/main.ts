@@ -5,6 +5,7 @@ import { DEFAULT_PORT } from './lib.js'
 import { RestServer } from './rest.js'
 import { openHeadlessConfig } from './config.js'
 import { fileURLToPath } from 'url'
+import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 
 const rawConfigPath = process.argv[2]
 if (!rawConfigPath) {
@@ -29,6 +30,7 @@ const webRoot = fileURLToPath(new URL('../../webui/dist', import.meta.url))
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
 const server = new RestServer(webRoot, appConfig, client, devices)
+const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
@@ -51,3 +53,4 @@ appConfig.onDidChange('remotePort', () => tryConnect())
 
 tryConnect()
 server.open()
+mdnsAnnouncer.start()

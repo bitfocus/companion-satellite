@@ -47,6 +47,7 @@
     },
     "dependencies": {
         "@elgato-stream-deck/node": "^6.2.2",
+        "@julusian/bonjour-service": "^1.3.0-0",
         "@julusian/image-rs": "^0.4.0",
         "@julusian/jpeg-turbo": "^2.2.0-1",
         "@loupedeck/node": "^1.1.2",

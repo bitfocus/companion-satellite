@@ -7,6 +7,8 @@ export interface SatelliteConfig {
 
 	restEnabled: boolean
 	restPort: number
+
+	mdnsEnabled: boolean
 }
 
 export const satelliteConfigSchema: Schema<SatelliteConfig> = {
@@ -34,6 +36,11 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 		minimum: 1,
 		maximum: 65535,
 		default: 9999,
+	},
+	mdnsEnabled: {
+		type: 'boolean',
+		description: 'Enable mDNS announcement',
+		default: true,
 	},
 }
 

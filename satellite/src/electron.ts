@@ -12,6 +12,7 @@ import { RestServer } from './rest.js'
 import { SatelliteConfig, ensureFieldsPopulated } from './config.js'
 import { ApiConfigData, ApiStatusResponse, compileConfig, compileStatus, updateConfig } from './apiTypes.js'
 import { fileURLToPath } from 'url'
+import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 
 const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
@@ -33,6 +34,7 @@ const webRoot = fileURLToPath(new URL(app.isPackaged ? '../../webui' : '../../we
 const client = new CompanionSatelliteClient({ debug: true })
 const devices = new DeviceManager(client)
 const server = new RestServer(webRoot, appConfig, client, devices)
+const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 appConfig.onDidChange('remoteIp', () => tryConnect())
 appConfig.onDidChange('remotePort', () => tryConnect())
@@ -122,6 +124,7 @@ app.whenReady()
 
 		tryConnect()
 		restartRestApi()
+		mdnsAnnouncer.start()
 
 		let trayImagePath = new URL('../assets/tray.png', import.meta.url)
 		let trayImageOfflinePath = new URL('../assets/tray-offline.png', import.meta.url)
