@@ -6,6 +6,7 @@ import {
 	WheelEvent,
 } from '@xencelabs-quick-keys/node'
 import { WrappedDevice, DeviceRegisterProps, DeviceDrawProps, ClientCapabilities, CompanionClient } from './api.js'
+import { parseColor } from './lib.js'
 
 function keyToCompanion(k: number): number | null {
 	if (k >= 0 && k < 4) return k + 1
@@ -149,9 +150,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 
 		const wheelIndex = this.#companionSupportsCombinedEncoders ? 5 : 11
 		if (data.color && data.keyIndex === wheelIndex) {
-			const r = parseInt(data.color.substr(1, 2), 16)
-			const g = parseInt(data.color.substr(3, 2), 16)
-			const b = parseInt(data.color.substr(5, 2), 16)
+			const { r, g, b } = parseColor(data.color)
 
 			await this.#surface.setWheelColor(r, g, b)
 		}
