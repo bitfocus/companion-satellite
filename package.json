@@ -33,9 +33,9 @@
   },
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",
-    "husky": "^9.0.11",
+    "husky": "^9.1.1",
     "lint-staged": "^15.2.7",
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "typescript": "~5.2.2",
     "zx": "^7.2.3"
   },
@@ -45,5 +45,5 @@
   "resolutions": {
     "node-hid": "^3.1.0"
   },
-  "packageManager": "yarn@4.2.2"
+  "packageManager": "yarn@4.3.1"
 }
