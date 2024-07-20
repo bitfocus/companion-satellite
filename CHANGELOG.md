@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.9.0](https://github.com/bitfocus/companion-satellite/compare/v1.8.1...v1.9.0) (2024-07-20)
+
+
+### Features
+
+* replace canvas library ([7b5202a](https://github.com/bitfocus/companion-satellite/commit/7b5202a1dca2a7e224c961847c9461a8a18c1705))
+* update electron to 30 and switch to esm ([57e6e55](https://github.com/bitfocus/companion-satellite/commit/57e6e5536423cd84bbaee1e439236a1886906897))
+* update nodejs to 20 ([6ee2259](https://github.com/bitfocus/companion-satellite/commit/6ee225955891c7e272b3ca447d8f7d68dd06cfd1))
+
+
+### Bug Fixes
+
+* electron preload script ([beed579](https://github.com/bitfocus/companion-satellite/commit/beed579d66f65dda2dc86be2b142846430384d85))
+
 ## [1.8.1](https://github.com/bitfocus/companion-satellite/compare/v1.8.0...v1.8.1) (2024-06-17)
 
 
