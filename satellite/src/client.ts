@@ -290,8 +290,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		const body = i === -1 ? '' : line.slice(i + 1)
 		const params = parseLineParameters(body)
 
-		console.log(line, params)
-
 		switch (cmd.toUpperCase()) {
 			case 'PING':
 				this.socket?.write(`PONG ${body}\n`)
@@ -459,7 +457,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				`ADD-DEVICE DEVICEID=${deviceId} PRODUCT_NAME="${productName}" KEYS_TOTAL=${
 					props.keysTotal
 				} KEYS_PER_ROW=${props.keysPerRow} BITMAPS=${
-					this._supportsBitmapResolution ? props.bitmapSize ?? 0 : props.bitmapSize ? 1 : 0
+					this._supportsBitmapResolution ? (props.bitmapSize ?? 0) : props.bitmapSize ? 1 : 0
 				} COLORS=${props.colours ? 1 : 0} TEXT=${props.text ? 1 : 0}\n`,
 			)
 		}
