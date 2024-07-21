@@ -1,6 +1,7 @@
 import type Conf from 'conf'
 import type { SatelliteConfig } from './config.js'
 import { Bonjour, Service } from '@julusian/bonjour-service'
+import os from 'os'
 
 export class MdnsAnnouncer {
 	readonly #appConfig: Conf<SatelliteConfig>
@@ -29,16 +30,22 @@ export class MdnsAnnouncer {
 			const restEnabled = this.#appConfig.get('restEnabled')
 			const restPort = this.#appConfig.get('restPort')
 
-			this.#bonjourService = this.#bonjour.publish({
-				name: 'Companion Satellite', // TODO - something customisable?
-				type: 'companion-satellite',
-				protocol: 'tcp',
-				port: this.#appConfig.get('restPort') || 9999,
-				txt: {
-					restEnabled: restEnabled,
-					restPort: restPort,
+			this.#bonjourService = this.#bonjour.publish(
+				{
+					// TODO - this name needs to be unique for each installation
+					name: os.hostname(), // TODO - something customisable?
+					type: 'companion-satellite',
+					protocol: 'tcp',
+					port: restPort || 9999,
+					txt: {
+						restEnabled: restEnabled,
+					},
+					ttl: 150,
 				},
-			})
+				{
+					announceOnInterval: 60 * 1000,
+				},
+			)
 		} catch (e) {
 			console.error('Failed to setup mdns publisher', e)
 		}

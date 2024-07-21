@@ -701,13 +701,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@julusian/bonjour-service@npm:^1.3.0-0":
-  version: 1.3.0-0
-  resolution: "@julusian/bonjour-service@npm:1.3.0-0"
+"@julusian/bonjour-service@npm:^1.3.0-2":
+  version: 1.3.0-2
+  resolution: "@julusian/bonjour-service@npm:1.3.0-2"
   dependencies:
     fast-deep-equal: "npm:^3.1.3"
     multicast-dns: "npm:^7.2.5"
-  checksum: 10c0/eda196405331c2932a762a687c50174cdc0b6090866b89b538150275a6905c3e0d1f473038bea6ebf6c19f261177003bdc5af14f4413c32a345877a42352c068
+  checksum: 10c0/efb004b4c4d3214a166bdd81e04f39dcee6055a2a991192c40059bda302377d909176a3967baeac3714681e88a2b3274763e19897e1ed00e27298f602f90fffd
   languageName: node
   linkType: hard
 
@@ -6409,7 +6409,7 @@ __metadata:
   dependencies:
     "@electron/notarize": "npm:^2.3.2"
     "@elgato-stream-deck/node": "npm:^6.2.2"
-    "@julusian/bonjour-service": "npm:^1.3.0-0"
+    "@julusian/bonjour-service": "npm:^1.3.0-2"
     "@julusian/image-rs": "npm:^0.4.0"
     "@julusian/jpeg-turbo": "npm:^2.2.0-1"
     "@loupedeck/node": "npm:^1.1.2"
