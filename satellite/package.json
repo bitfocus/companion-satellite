@@ -17,6 +17,8 @@
         "build": "rimraf dist && run build:main",
         "build:main": "run -T tsc -p tsconfig.build.json",
         "build:electron": "electron-builder --publish=never",
+        "check-types": "run build:main --noEmit",
+        "watch-types": "run build:main --noEmit --watch",
         "lint:raw": "eslint --ext .ts --ext .js --ext .tsx --ext .jsx",
         "lint": "run lint:raw ."
     },

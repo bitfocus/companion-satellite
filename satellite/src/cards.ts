@@ -61,9 +61,16 @@ export class CardGenerator {
 		// return result
 		const rawImage = Buffer.from(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
 
-		return await imageRs.ImageTransformer.fromBuffer(rawImage, canvasWidth, canvasHeight, imageRs.PixelFormat.Rgba)
-			.scale(width, height)
+		const computedImage = await imageRs.ImageTransformer.fromBuffer(
+			rawImage,
+			canvasWidth,
+			canvasHeight,
+			imageRs.PixelFormat.Rgba,
+		)
+			.scale(width, height, imageRs.ResizeMode.Exact)
 			.toBuffer(pixelFormat)
+
+		return computedImage.buffer
 	}
 }
 

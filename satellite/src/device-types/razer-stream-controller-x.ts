@@ -45,9 +45,11 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 			let newbuffer: Buffer = buffer
 			if (!this.#companionSupportsScaling) {
 				try {
-					newbuffer = await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
-						.scale(width, height)
-						.toBuffer(imageRs.PixelFormat.Rgb)
+					newbuffer = (
+						await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
+							.scale(width, height)
+							.toBuffer(imageRs.PixelFormat.Rgb)
+					).buffer
 				} catch (e) {
 					console.log(`device(${deviceId}): scale image failed: ${e}`)
 					return
