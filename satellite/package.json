@@ -54,6 +54,7 @@
         "@napi-rs/canvas": "^0.1.53",
         "@xencelabs-quick-keys/node": "^1.0.0",
         "conf": "^13.0.1",
+        "debounce-fn": "^6.0.0",
         "electron-about-window": "^1.15.2",
         "electron-store": "^10.0.0",
         "eventemitter3": "^5.0.1",

@@ -6426,6 +6426,7 @@ __metadata:
     "@xencelabs-quick-keys/node": "npm:^1.0.0"
     conf: "npm:^13.0.1"
     cross-env: "npm:^7.0.3"
+    debounce-fn: "npm:^6.0.0"
     electron: "npm:31.2.1"
     electron-about-window: "npm:^1.15.2"
     electron-builder: "npm:^24.13.3"

@@ -2,6 +2,7 @@ import type Conf from 'conf'
 import type { SatelliteConfig } from './config.js'
 import { Bonjour, Service } from '@julusian/bonjour-service'
 import os from 'os'
+import debounceFn from 'debounce-fn'
 
 export class MdnsAnnouncer {
 	readonly #appConfig: Conf<SatelliteConfig>
@@ -12,15 +13,23 @@ export class MdnsAnnouncer {
 	constructor(appConfig: Conf<SatelliteConfig>) {
 		this.#appConfig = appConfig
 
-		this.#appConfig.onDidChange('mdnsEnabled', () => this.restart())
-		this.#appConfig.onDidChange('restPort', () => this.restart())
-		this.#appConfig.onDidChange('restEnabled', () => this.restart())
+		this.#appConfig.onDidChange('mdnsEnabled', () => this.#restart())
+		this.#appConfig.onDidChange('installationName', () => this.#restart())
+		this.#appConfig.onDidChange('restPort', () => this.#restart())
+		this.#appConfig.onDidChange('restEnabled', () => this.#restart())
 	}
 
-	restart() {
-		this.stop()
-		this.start()
-	}
+	readonly #restart = debounceFn(
+		() => {
+			this.stop()
+			this.start()
+		},
+		{
+			wait: 50,
+			before: false,
+			after: true,
+		},
+	)
 
 	start() {
 		if (!this.#appConfig.get('mdnsEnabled')) return
