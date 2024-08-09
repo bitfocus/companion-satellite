@@ -70,7 +70,7 @@ function SettingsFormInner({
 				host: value,
 			}))
 		},
-		[setModifiedConfig]
+		[setModifiedConfig],
 	)
 	const setPort = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,7 +81,7 @@ function SettingsFormInner({
 				port: value,
 			}))
 		},
-		[setModifiedConfig]
+		[setModifiedConfig],
 	)
 	const setHttpEnabled = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,7 +92,7 @@ function SettingsFormInner({
 				httpEnabled: value,
 			}))
 		},
-		[setModifiedConfig]
+		[setModifiedConfig],
 	)
 
 	const setHttpPort = useCallback(
@@ -104,7 +104,29 @@ function SettingsFormInner({
 				httpPort: value,
 			}))
 		},
-		[setModifiedConfig]
+		[setModifiedConfig],
+	)
+	const setMdnsEnabled = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			const value = !!e.currentTarget.checked
+
+			setModifiedConfig((oldConfig) => ({
+				...oldConfig,
+				mdnsEnabled: value,
+			}))
+		},
+		[setModifiedConfig],
+	)
+	const setInstallationName = useCallback(
+		(e: React.ChangeEvent<HTMLInputElement>) => {
+			const value = e.currentTarget.value
+
+			setModifiedConfig((oldConfig) => ({
+				...oldConfig,
+				installationName: value,
+			}))
+		},
+		[setModifiedConfig],
 	)
 
 	const saveConfigFull = useCallback(
@@ -113,7 +135,7 @@ function SettingsFormInner({
 
 			saveConfig()
 		},
-		[saveConfig]
+		[saveConfig],
 	)
 
 	return (
@@ -143,6 +165,25 @@ function SettingsFormInner({
 				<Form.Text className="text-muted">
 					Only change this if you know what you are doing. In almost all cases this should be left at the default.
 				</Form.Text>
+			</Form.Group>
+
+			<Form.Group className="mb-3" controlId="formCompanionPort">
+				<Form.Label>MDNS Announce</Form.Label>
+				<Form.Check type="switch" label="Enabled" checked={fullConfig.mdnsEnabled} onChange={setMdnsEnabled} />
+				<Form.Text className="text-muted">
+					Announce this Satellite installation to the network. This allows for easy setup from inside Companion.
+				</Form.Text>
+			</Form.Group>
+
+			<Form.Group className="mb-3" controlId="formCompanionAddress">
+				<Form.Label>Installation name</Form.Label>
+				<Form.Control
+					type="text"
+					placeholder="Installation name"
+					value={fullConfig.installationName}
+					onChange={setInstallationName}
+				/>
+				<Form.Text className="text-muted">Name to use for this installation in MDNS announcements</Form.Text>
 			</Form.Group>
 
 			{includeApiEnable && (

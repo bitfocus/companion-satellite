@@ -112,6 +112,26 @@ export class RestServer {
 					partialConfig.port = port
 				}
 
+				const installationName = body.installationName
+				if (installationName !== undefined) {
+					if (typeof installationName === 'string') {
+						partialConfig.installationName = installationName
+					} else {
+						ctx.status = 400
+						ctx.body = 'Invalid installationName'
+					}
+				}
+
+				const mdnsEnabled = body.mdnsEnabled
+				if (mdnsEnabled !== undefined) {
+					if (typeof mdnsEnabled === 'boolean') {
+						partialConfig.mdnsEnabled = mdnsEnabled
+					} else {
+						ctx.status = 400
+						ctx.body = 'Invalid mdnsEnabled'
+					}
+				}
+
 				// Ensure some fields cannot be changed
 				delete partialConfig.httpEnabled
 				delete partialConfig.httpPort

@@ -5,6 +5,8 @@ export interface SatelliteConfig {
 	remoteIp: string
 	remotePort: number
 
+	installationName: string
+
 	restEnabled: boolean
 	restPort: number
 
@@ -23,6 +25,12 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 		minimum: 1,
 		maximum: 65535,
 		default: 16622,
+	},
+
+	installationName: {
+		type: 'string',
+		description: 'Name for this Satellite installation',
+		default: 'TODO - something here',
 	},
 
 	restEnabled: {

@@ -12,8 +12,12 @@ export interface ApiConfigData {
 	host: string
 	port: number
 
+	installationName: string
+
 	httpEnabled: boolean
 	httpPort: number
+
+	mdnsEnabled: boolean
 }
 
 export function compileStatus(client: CompanionSatelliteClient): ApiStatusResponse {
@@ -29,8 +33,12 @@ export function compileConfig(appConfig: Conf<SatelliteConfig>): ApiConfigData {
 		host: appConfig.get('remoteIp'),
 		port: appConfig.get('remotePort'),
 
+		installationName: appConfig.get('installationName'),
+
 		httpEnabled: appConfig.get('restEnabled'),
 		httpPort: appConfig.get('restPort'),
+
+		mdnsEnabled: appConfig.get('mdnsEnabled'),
 	}
 }
 
@@ -40,4 +48,7 @@ export function updateConfig(appConfig: Conf<SatelliteConfig>, newConfig: Partia
 
 	if (newConfig.httpEnabled !== undefined) appConfig.set('restEnabled', newConfig.httpEnabled)
 	if (newConfig.httpPort !== undefined) appConfig.set('restPort', newConfig.httpPort)
+
+	if (newConfig.mdnsEnabled !== undefined) appConfig.set('mdnsEnabled', newConfig.mdnsEnabled)
+	if (newConfig.installationName !== undefined) appConfig.set('installationName', newConfig.installationName)
 }
