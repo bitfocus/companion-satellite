@@ -364,10 +364,20 @@ jobs:
           echo "shortversion=v${VERSION}" >> $GITHUB_OUTPUT
 
       - name: install packer
+        id: install-packer
         run: |
           curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo apt-key add -
           sudo apt-add-repository "deb [arch=amd64] https://apt.releases.hashicorp.com $(lsb_release -cs) main"
           sudo apt-get update && sudo apt-get install -y packer
+
+          CACHE_KEY=$(grep iso_checksum pi-image/satellitepi.pkr.hcl)
+          echo "CACHE_KEY=${CACHE_KEY}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore image cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/packer_cache
+          key: ${{ steps.install-packer.outputs.CACHE_KEY }}
 
       - name: build image
         run: |
@@ -385,6 +395,7 @@ jobs:
           sudo packer build --var branch=${BUILD_BRANCH} --var "build=$BUILD_VERSION" satellitepi.pkr.hcl
         env:
           PACKER_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKER_CACHE_DIR: /tmp/packer_cache
           BUILD_IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
       - name: compress image
