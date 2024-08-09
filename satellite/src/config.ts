@@ -1,5 +1,9 @@
 import Conf, { Schema } from 'conf'
 import path from 'path'
+import os from 'os'
+import { nanoid, customAlphabet } from 'nanoid'
+
+const nanoidHex = customAlphabet('0123456789abcdef')
 
 export interface SatelliteConfig {
 	remoteIp: string
@@ -30,7 +34,7 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 	installationName: {
 		type: 'string',
 		description: 'Name for this Satellite installation',
-		default: 'TODO - something here',
+		default: `Satellite ${os.hostname()} (${nanoidHex(8)})`,
 	},
 
 	restEnabled: {
@@ -53,12 +57,16 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 }
 
 export function ensureFieldsPopulated(store: Conf<SatelliteConfig>): void {
+	// Note: This doesn't appear to do anything, as Conf is populated with defaults
 	for (const [key, schema] of Object.entries<any>(satelliteConfigSchema)) {
 		if (store.get(key) === undefined && schema.default !== undefined) {
 			// Ensure values are written to disk
 			store.set(key, schema.default)
 		}
 	}
+
+	// Ensure that the store with the filled in defaults is written to disk
+	store.store = store.store
 }
 
 export function openHeadlessConfig(rawConfigPath: string): Conf<SatelliteConfig> {

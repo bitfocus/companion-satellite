@@ -38,11 +38,11 @@ export class MdnsAnnouncer {
 		try {
 			const restEnabled = this.#appConfig.get('restEnabled')
 			const restPort = this.#appConfig.get('restPort')
+			const installationName = this.#appConfig.get('installationName') || os.hostname() || 'Unnamed Satellite'
 
 			this.#bonjourService = this.#bonjour.publish(
 				{
-					// TODO - this name needs to be unique for each installation
-					name: os.hostname(), // TODO - something customisable?
+					name: installationName,
 					type: 'companion-satellite',
 					protocol: 'tcp',
 					port: restPort || 9999,
