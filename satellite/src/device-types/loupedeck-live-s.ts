@@ -237,7 +237,6 @@ export class LoupedeckLiveSWrapper implements WrappedDevice {
 			.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
 			.then(async (buffer) => {
 				if (outputId === this.#queueOutputId) {
-					console.log('draw buffer')
 					this.#isShowingCard = true
 					// still valid
 					await this.#deck.drawBuffer(
