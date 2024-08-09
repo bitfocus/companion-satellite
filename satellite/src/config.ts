@@ -1,7 +1,7 @@
 import Conf, { Schema } from 'conf'
 import path from 'path'
 import os from 'os'
-import { nanoid, customAlphabet } from 'nanoid'
+import { customAlphabet } from 'nanoid'
 
 const nanoidHex = customAlphabet('0123456789abcdef')
 
