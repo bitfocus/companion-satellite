@@ -86,7 +86,7 @@ fi
 if [ -d "/etc/udev/rules.d/" ]; then
 	cp satellite/assets/linux/50-satellite.rules /etc/udev/rules.d/
 	udevadm control --reload-rules || true
-else
+fi
 
 # update startup script
 cp pi-image/satellite.service /etc/systemd/system
