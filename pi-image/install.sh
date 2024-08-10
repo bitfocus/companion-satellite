@@ -28,20 +28,20 @@ SATELLITE_BUILD="${SATELLITE_BUILD:-beta}"
 # Development only: Allow building using a testing branch of this updater
 SATELLITE_BRANCH="${SATELLITE_BRANCH:-main}"
 
-# add a system user
-adduser --disabled-password satellite --gecos ""
-
 # install some dependencies
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y git zip unzip curl libusb-1.0-0-dev libudev-dev cmake libfontconfig1 nano
+apt-get install -yq git zip unzip curl libusb-1.0-0-dev libudev-dev cmake libfontconfig1 nano adduser wget
 apt-get clean
+
+# add a system user
+id -u satellite &>/dev/null || adduser --disabled-password satellite --gecos ""
 
 # install fnm to manage node version
 # we do this to /opt/fnm, so that the satellite user can use the same installation
 export FNM_DIR=/opt/fnm
 echo "export FNM_DIR=/opt/fnm" >> /root/.bashrc
-curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir /opt/fnm
+curl -fsSL https://fnm.vercel.app/install | bash -s -- --install-dir /opt/fnm &>/dev/null
 export PATH=/opt/fnm:$PATH
 eval "`fnm env --shell bash`"
 
@@ -52,6 +52,7 @@ if [ "$SATELLITE_BRANCH" == "stable" ]; then
 fi
 
 # clone the repository
+rm -R /usr/local/src/companion-satellite &>/dev/null || true
 git clone https://github.com/bitfocus/companion-satellite.git -b $SATELLITE_BRANCH /usr/local/src/companion-satellite
 cd /usr/local/src/companion-satellite
 
