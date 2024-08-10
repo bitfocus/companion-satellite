@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.9.0](https://github.com/bitfocus/companion-satellite/compare/v1.8.1...v1.9.0) (2024-08-10)
+
+
+### Features
+
+* add mdns and installname to api and webui ([6b9b4a1](https://github.com/bitfocus/companion-satellite/commit/6b9b4a10e80872680002f2b91602b18548cbf328))
+* mdns announce ([f0a1cfd](https://github.com/bitfocus/companion-satellite/commit/f0a1cfd9ef4ab5e9c6a430429aac58754f2d169c))
+* mdns announce ([8bf2ab8](https://github.com/bitfocus/companion-satellite/commit/8bf2ab8efb5ee9002199bf61ea84c959f97eaae2))
+* replace canvas library ([7b5202a](https://github.com/bitfocus/companion-satellite/commit/7b5202a1dca2a7e224c961847c9461a8a18c1705))
+* update electron to 30 and switch to esm ([57e6e55](https://github.com/bitfocus/companion-satellite/commit/57e6e5536423cd84bbaee1e439236a1886906897))
+* update nodejs to 20 ([6ee2259](https://github.com/bitfocus/companion-satellite/commit/6ee225955891c7e272b3ca447d8f7d68dd06cfd1))
+* use unique installation name in mdns ([3958a2f](https://github.com/bitfocus/companion-satellite/commit/3958a2fab92d274b7fd04674e0a1e81e2d779c30))
+
+
+### Bug Fixes
+
+* debounce mdns restart ([c52f8a0](https://github.com/bitfocus/companion-satellite/commit/c52f8a0480a4c7c4e5bd06084dab67b659f20402))
+* electron preload script ([beed579](https://github.com/bitfocus/companion-satellite/commit/beed579d66f65dda2dc86be2b142846430384d85))
+* type errors ([1837e1a](https://github.com/bitfocus/companion-satellite/commit/1837e1a4320490ca2c4c2af7e2c98d1eaa7a2459))
+
 ## [1.8.1](https://github.com/bitfocus/companion-satellite/compare/v1.8.0...v1.8.1) (2024-06-17)
 
 
