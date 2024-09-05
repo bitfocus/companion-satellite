@@ -45,5 +45,8 @@
   "resolutions": {
     "node-hid": "^3.1.0"
   },
-  "packageManager": "yarn@4.4.0"
+  "packageManager": "yarn@4.4.0",
+  "dependencies": {
+    "@blackmagic-controller/node": "^0.1.0"
+  }
 }

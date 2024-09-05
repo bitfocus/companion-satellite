@@ -27,6 +27,8 @@ import { RazerStreamControllerXWrapper } from './device-types/razer-stream-contr
 // eslint-disable-next-line node/no-extraneous-import
 import { VENDOR_ID as VendorIdElgato } from '@elgato-stream-deck/core'
 import { wrapAsync } from './lib.js'
+import { getBlackmagicControllerDeviceInfo, openBlackmagicController } from '@blackmagic-controller/node'
+import { BlackmagicControllerWrapper } from './device-types/blackmagic-panel.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -271,13 +273,23 @@ export class DeviceManager {
 						const sdInfo = getStreamDeckDeviceInfo(device)
 						if (sdInfo && sdInfo.serialNumber) {
 							this.tryAddStreamdeck(sdInfo.path, sdInfo.serialNumber)
-						} else if (
+							continue
+						}
+
+						const bmdInfo = getBlackmagicControllerDeviceInfo(device)
+						if (bmdInfo && bmdInfo.serialNumber) {
+							this.tryAddBlackmagicPanel(bmdInfo.path, bmdInfo.serialNumber)
+							continue
+						}
+
+						if (
 							device.path &&
 							device.serialNumber &&
 							device.vendorId === Infinitton.VENDOR_ID &&
 							Infinitton.PRODUCT_IDS.includes(device.productId)
 						) {
 							this.tryAddInfinitton(device.path, device.serialNumber)
+							continue
 						}
 					}
 
@@ -380,6 +392,37 @@ export class DeviceManager {
 					this.pendingDevices.delete(serial)
 				})
 		}
+	}
+
+	private tryAddBlackmagicPanel(path: string, serial: string) {
+		const deviceId = `blackmagic:${serial}`
+
+		if (!this.canAddDevice(deviceId)) return
+		console.log(`adding new device: ${path}`)
+		console.log(`existing = ${JSON.stringify(Array.from(this.devices.keys()))}`)
+
+		this.pendingDevices.add(deviceId)
+		openBlackmagicController(path)
+			.then(async (panel) => {
+				try {
+					panel.on('error', (e) => {
+						console.error('device error', e)
+						this.cleanupDeviceById(deviceId)
+					})
+
+					const devInfo = new BlackmagicControllerWrapper(deviceId, panel)
+					await this.tryAddDeviceInner(deviceId, devInfo)
+				} catch (e) {
+					console.log(`Open "${path}" failed: ${e}`)
+					panel.close().catch(() => null)
+				}
+			})
+			.catch((e) => {
+				console.log(`Open "${path}" failed: ${e}`)
+			})
+			.finally(() => {
+				this.pendingDevices.delete(deviceId)
+			})
 	}
 
 	// private getAutoId(path: string, prefix: string): string {

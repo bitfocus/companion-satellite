@@ -429,6 +429,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${keyIndex} PRESSED=0\n`)
 		}
 	}
+	public keyDownXY(deviceId: string, x: number, y: number): void {
+		if (this._connected && this.socket) {
+			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${y}/${x} PRESSED=1\n`)
+		}
+	}
+	public keyUpXY(deviceId: string, x: number, y: number): void {
+		if (this._connected && this.socket) {
+			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${y}/${x} PRESSED=0\n`)
+		}
+	}
 	public rotateLeft(deviceId: string, keyIndex: number): void {
 		if (this._connected && this.socket) {
 			this.socket.write(`KEY-ROTATE DEVICEID=${deviceId} KEY=${keyIndex} DIRECTION=0\n`)

@@ -12,7 +12,7 @@
     "license": "MIT",
     "private": true,
     "scripts": {
-        "dev": "tsx src/main.ts config.json",
+        "dev": "tsx watch src/main.ts config.json",
         "dev-electron": "run build:main && electron dist/electron.js",
         "build": "rimraf dist && run build:main",
         "build:main": "run -T tsc -p tsconfig.build.json",
