@@ -2977,7 +2977,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "companion-satellite@workspace:."
   dependencies:
-    "@blackmagic-controller/node": "npm:^0.1.0"
     "@tsconfig/node20": "npm:^20.1.4"
     husky: "npm:^9.1.5"
     lint-staged: "npm:^15.2.10"
@@ -6760,6 +6759,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "satellite@workspace:satellite"
   dependencies:
+    "@blackmagic-controller/node": "npm:^0.1.0"
     "@electron/notarize": "npm:^2.4.0"
     "@elgato-stream-deck/node": "npm:^6.2.2"
     "@julusian/bonjour-service": "npm:^1.3.0-2"
