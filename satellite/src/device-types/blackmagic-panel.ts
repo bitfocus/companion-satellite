@@ -1,5 +1,8 @@
-import { DeviceModelId, BlackmagicController } from '@blackmagic-controller/node'
-import { BlackmagicControllerSetButtonColorValue } from '@blackmagic-controller/core'
+import { BlackmagicController } from '@blackmagic-controller/node'
+import {
+	BlackmagicControllerSetButtonColorValue,
+	BlackmagicControllerTBarControlDefinition,
+} from '@blackmagic-controller/core'
 import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
 import { parseColor } from './lib.js'
 import debounceFn from 'debounce-fn'
@@ -33,12 +36,28 @@ export class BlackmagicControllerWrapper implements WrappedDevice {
 	}
 
 	getRegisterProps(): DeviceRegisterProps {
-		const info = {
+		const info: DeviceRegisterProps = {
 			keysTotal: this.#columnCount * this.#rowCount,
 			keysPerRow: this.#columnCount,
 			bitmapSize: 0,
 			colours: true,
 			text: false,
+			transferVariables: [
+				{
+					id: 'tbarValueVariable',
+					type: 'input',
+					name: 'Variable to store T-bar value to',
+					description:
+						'This produces a value between 0 and 1. You can use an expression to convert it into a different range.',
+				},
+				{
+					id: 'tbarLeds',
+					type: 'output',
+					name: 'T-bar LED pattern',
+					description:
+						'Set the pattern of LEDs on the T-bar. Use numbers -16 to 16, positive numbers light up from the bottom, negative from the top.',
+				},
+			],
 		}
 
 		return info
@@ -58,8 +77,8 @@ export class BlackmagicControllerWrapper implements WrappedDevice {
 		this.#device.on('batteryLevel', (level) => {
 			// TODO
 		})
-		this.#device.on('tbar', (level) => {
-			// TODO
+		this.#device.on('tbar', (_control, level) => {
+			client.sendVariableValue(this.deviceId, 'tbarValueVariable', level.toString())
 		})
 
 		// Start with blanking it
@@ -96,6 +115,38 @@ export class BlackmagicControllerWrapper implements WrappedDevice {
 
 		this.#triggerRedraw()
 	}
+
+	onVariableValue(name: string, value: string): void {
+		if (name === 'tbarLeds') {
+			const tbarControl = this.#device.CONTROLS.find(
+				(control): control is BlackmagicControllerTBarControlDefinition =>
+					control.type === 'tbar' && control.id === 0,
+			)
+			if (!tbarControl) {
+				console.error(`T-bar control not found`)
+				return
+			}
+
+			let ledValues = new Array(tbarControl.ledSegments).fill(false)
+			const fillLedCount = Number(value)
+			if (isNaN(fillLedCount)) {
+				return // Future: allow patterns
+			}
+
+			if (fillLedCount > 0) {
+				ledValues.fill(true, Math.max(ledValues.length - fillLedCount, 0))
+			} else if (fillLedCount < 0) {
+				ledValues.fill(true, 0, Math.min(-fillLedCount, ledValues.length))
+			}
+
+			this.#device.setTbarLeds(ledValues).catch((e) => {
+				console.error(`write failed: ${e}`)
+			})
+		} else {
+			console.error('Unknown variable', name)
+		}
+	}
+
 	showStatus(hostname: string, status: string): void {
 		// nocommit: decide what to do here
 		// if (this.#deck.ICON_SIZE !== 0) {

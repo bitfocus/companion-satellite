@@ -13,6 +13,20 @@ export interface DeviceRegisterProps {
 	bitmapSize: number | null
 	colours: boolean
 	text: boolean
+	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
+}
+
+export interface DeviceRegisterInputVariable {
+	id: string
+	type: 'input'
+	name: string
+	description?: string
+}
+export interface DeviceRegisterOutputVariable {
+	id: string
+	type: 'output'
+	name: string
+	description?: string
 }
 
 export interface WrappedDevice {
@@ -34,6 +48,8 @@ export interface WrappedDevice {
 	blankDevice(): Promise<void>
 
 	draw(data: DeviceDrawProps): Promise<void>
+
+	onVariableValue?(name: string, value: string): void
 
 	showStatus(hostname: string, status: string): void
 }
@@ -62,4 +78,6 @@ export interface CompanionClient {
 
 	rotateLeft(deviceId: string, keyIndex: number): void
 	rotateRight(deviceId: string, keyIndex: number): void
+
+	sendVariableValue(deviceId: string, variable: string, value: any): void
 }

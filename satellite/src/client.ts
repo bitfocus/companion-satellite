@@ -84,6 +84,7 @@ export type CompanionSatelliteClientEvents = {
 	brightness: [{ deviceId: string; percent: number }]
 	newDevice: [{ deviceId: string }]
 	clearDeck: [{ deviceId: string }]
+	variableValue: [{ deviceId: string; name: string; value: string }]
 	deviceErrored: [{ deviceId: string; message: string }]
 }
 
@@ -304,6 +305,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case 'KEYS-CLEAR':
 				this.handleClear(params)
 				break
+			case 'VARIABLE-VALUE':
+				this.handleVariableValue(params)
+				break
 			case 'BRIGHTNESS':
 				this.handleBrightness(params)
 				break
@@ -319,6 +323,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				break
 			case 'KEY-PRESS':
 			case 'KEY-ROTATE':
+			case 'SET-VARIABLE-VALUE':
 				// Ignore
 				break
 			default:
@@ -378,6 +383,26 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 
 		this.emit('clearDeck', { deviceId: params.DEVICEID })
+	}
+	private handleVariableValue(params: Record<string, string | boolean>) {
+		if (typeof params.DEVICEID !== 'string') {
+			console.log('Mising DEVICEID in VARIABLE-VALUE response')
+			return
+		}
+		if (typeof params.VARIABLE !== 'string') {
+			console.log('Missing VARIABLE in VARIABLE-VALUE response')
+			return
+		}
+		if (typeof params.VALUE !== 'string') {
+			console.log('Missing VALUE in VARIABLE-VALUE response')
+			return
+		}
+
+		this.emit('variableValue', {
+			deviceId: params.DEVICEID,
+			name: params.VARIABLE,
+			value: Buffer.from(params.VALUE, 'base64').toString(),
+		})
 	}
 
 	private handleBrightness(params: Record<string, string | boolean>): void {
@@ -449,6 +474,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this.socket.write(`KEY-ROTATE DEVICEID=${deviceId} KEY=${keyIndex} DIRECTION=1\n`)
 		}
 	}
+	public sendVariableValue(deviceId: string, variable: string, value: string): void {
+		if (this._connected && this.socket) {
+			const encodedValue = Buffer.from(value).toString('base64')
+			this.socket.write(
+				`SET-VARIABLE-VALUE DEVICEID=${deviceId} VARIABLE="${variable}" VALUE="${encodedValue}"\n`,
+			)
+		}
+	}
 
 	public addDevice(deviceId: string, productName: string, props: DeviceRegisterProps): void {
 		if (this._registeredDevices.has(deviceId)) {
@@ -463,12 +496,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._connected && this.socket) {
 			this._pendingDevices.set(deviceId, Date.now())
 
+			const transferVariables = Buffer.from(JSON.stringify(props.transferVariables ?? [])).toString('base64')
+
 			this.socket.write(
 				`ADD-DEVICE DEVICEID=${deviceId} PRODUCT_NAME="${productName}" KEYS_TOTAL=${
 					props.keysTotal
 				} KEYS_PER_ROW=${props.keysPerRow} BITMAPS=${
 					this._supportsBitmapResolution ? (props.bitmapSize ?? 0) : props.bitmapSize ? 1 : 0
-				} COLORS=${props.colours ? 1 : 0} TEXT=${props.text ? 1 : 0}\n`,
+				} COLORS=${props.colours ? 1 : 0} TEXT=${props.text ? 1 : 0} VARIABLES=${transferVariables}\n`,
 			)
 		}
 	}

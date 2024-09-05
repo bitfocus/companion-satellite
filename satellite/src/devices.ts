@@ -144,6 +144,22 @@ export class DeviceManager {
 			),
 		)
 		client.on(
+			'variableValue',
+			wrapAsync(
+				async (d) => {
+					const dev = this.getDeviceInfo(d.deviceId)
+					if (dev.onVariableValue) {
+						dev.onVariableValue(d.name, d.value)
+					} else {
+						console.warn(`Variable value not supported: ${d.deviceId}`)
+					}
+				},
+				(e) => {
+					console.error(`Clear deck: ${e}`)
+				},
+			),
+		)
+		client.on(
 			'newDevice',
 			wrapAsync(
 				async (d) => {
