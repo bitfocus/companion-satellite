@@ -101,7 +101,8 @@ export class StreamDeckWrapper implements WrappedDevice {
 	}
 
 	getRegisterProps(): DeviceRegisterProps {
-		const info = {
+		const info: DeviceRegisterProps = {
+			brightness: true,
 			keysTotal: this.#deck.NUM_KEYS,
 			keysPerRow: this.#deck.KEY_COLUMNS,
 			bitmapSize: this.#deck.ICON_SIZE,

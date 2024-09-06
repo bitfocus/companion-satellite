@@ -87,6 +87,7 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
+			brightness: true,
 			keysTotal: 32,
 			keysPerRow: 8,
 			bitmapSize: this.#deck.lcdKeySize,
