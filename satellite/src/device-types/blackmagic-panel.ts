@@ -37,6 +37,7 @@ export class BlackmagicControllerWrapper implements WrappedDevice {
 
 	getRegisterProps(): DeviceRegisterProps {
 		const info: DeviceRegisterProps = {
+			brightness: false,
 			keysTotal: this.#columnCount * this.#rowCount,
 			keysPerRow: this.#columnCount,
 			bitmapSize: 0,

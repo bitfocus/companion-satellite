@@ -8,6 +8,7 @@ export interface DeviceDrawProps {
 	text?: string
 }
 export interface DeviceRegisterProps {
+	brightness: boolean
 	keysTotal: number
 	keysPerRow: number
 	bitmapSize: number | null

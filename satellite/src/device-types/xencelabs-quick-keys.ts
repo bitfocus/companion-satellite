@@ -38,6 +38,7 @@ export class QuickKeysWrapper implements WrappedDevice {
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
+			brightness: true,
 			keysTotal: 12,
 			keysPerRow: 6,
 			bitmapSize: null,

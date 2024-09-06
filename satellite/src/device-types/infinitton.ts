@@ -25,6 +25,7 @@ export class InfinittonWrapper implements WrappedDevice {
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
+			brightness: true,
 			keysTotal: 15,
 			keysPerRow: 5,
 			bitmapSize: 72,

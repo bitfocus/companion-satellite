@@ -76,6 +76,7 @@ export class RazerStreamControllerXWrapper implements WrappedDevice {
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
+			brightness: true,
 			keysTotal: 15,
 			keysPerRow: 5,
 			bitmapSize: this.#deck.lcdKeySize,
