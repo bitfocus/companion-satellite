@@ -24,7 +24,7 @@
   "scripts": {
     "postinstall": "husky",
     "dev": "yarn workspace satellite dev",
-    "dev:electron": "yarn workspace satellite dev-electron",
+    "dev:electron": "yarn workspace satellite dev:electron",
     "dev:webui": "yarn workspace webui dev",
     "build": "yarn workspaces foreach --all run build",
     "lint": "yarn workspaces foreach --all run lint",

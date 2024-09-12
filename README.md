@@ -69,18 +69,20 @@ a POST request to `http://Satellite-IP:9999/api/config` with `{"host": "newhosti
 
 ## Development
 
-NodeJS 18 is required
+NodeJS 20 is required
+
+### Headless
+
+1. Install the dependencies `yarn install`
+1. Run it `yarn dev` substituting in your companion instance ip address
+1. In another terminal run `yarn dev:webui` to serve the web interface
+1. Access the web interface at http://127.0.0.1:5173
 
 ### Electron
 
 1. Install the dependencies `yarn install`
-1. Ensure the electron dependencies are installed `yarn electron-rebuild`
+1. In one terminal run `yarn dev:webui` to serve the web interface
 1. Run it `yarn dev-electron`
 
 You can package for electron with `yarn dist`.  
 Building for another platform has not been tested.
-
-### Headless
-
-1. If you are running this after either running in electron, or packaging for electron, it is best to remove the node_modules folder and rerun `yarn install`
-1. Run it `yarn dev 127.0.0.1` substituting in your companion instance ip address
