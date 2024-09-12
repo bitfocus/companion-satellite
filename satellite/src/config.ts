@@ -66,6 +66,7 @@ export function ensureFieldsPopulated(store: Conf<SatelliteConfig>): void {
 	}
 
 	// Ensure that the store with the filled in defaults is written to disk
+	// eslint-disable-next-line no-self-assign
 	store.store = store.store
 }
 
