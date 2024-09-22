@@ -954,16 +954,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@napi-rs/canvas-darwin-arm64@npm:0.1.56":
-  version: 0.1.56
-  resolution: "@napi-rs/canvas-darwin-arm64@npm:0.1.56"
+"@napi-rs/canvas-darwin-arm64@npm:@julusian/napi-rs-canvas-darwin-arm64@0.1.55-c":
+  version: 0.1.55-c
+  resolution: "@julusian/napi-rs-canvas-darwin-arm64@npm:0.1.55-c"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@napi-rs/canvas-darwin-x64@npm:0.1.56":
-  version: 0.1.56
-  resolution: "@napi-rs/canvas-darwin-x64@npm:0.1.56"
+"@napi-rs/canvas-darwin-x64@npm:@julusian/napi-rs-canvas-darwin-x64@0.1.55-c":
+  version: 0.1.55-c
+  resolution: "@julusian/napi-rs-canvas-darwin-x64@npm:0.1.55-c"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
@@ -1010,7 +1010,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@napi-rs/canvas@npm:^0.1.56":
+"@napi-rs/canvas@npm:0.1.56":
   version: 0.1.56
   resolution: "@napi-rs/canvas@npm:0.1.56"
   dependencies:
@@ -5819,7 +5819,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-hid@npm:^3.1.0":
+"node-hid@npm:^3.0.0, node-hid@npm:^3.1.0":
   version: 3.1.0
   resolution: "node-hid@npm:3.1.0"
   dependencies:
@@ -6726,7 +6726,7 @@ __metadata:
     "@julusian/image-rs": "npm:^1.1.1"
     "@julusian/jpeg-turbo": "npm:^2.2.0"
     "@loupedeck/node": "npm:^1.2.0"
-    "@napi-rs/canvas": "npm:^0.1.56"
+    "@napi-rs/canvas": "npm:0.1.56"
     "@sofie-automation/eslint-plugin": "npm:^0.1.1"
     "@types/eslint": "npm:^8.56.12"
     "@types/koa": "npm:^2.15.0"
