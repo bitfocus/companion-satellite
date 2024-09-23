@@ -157,8 +157,12 @@ export class RestServer {
 		const port = this.appConfig.get('restPort')
 
 		if (enabled && port) {
-			this.server = this.app.listen(port)
-			console.log(`REST server starting: port: ${port}`)
+			try {
+				this.server = this.app.listen(port)
+				console.log(`REST server starting: port: ${port}`)
+			} catch (error) {
+				console.error('Error starting REST server:', error)
+			}
 		} else {
 			console.log('REST server not starting: port 0')
 		}
