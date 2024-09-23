@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.9.2](https://github.com/bitfocus/companion-satellite/compare/v1.9.1...v1.9.2) (2024-09-23)
+
+
+### Bug Fixes
+
+* gracefully handle when satellite cannot bind REST port ([#152](https://github.com/bitfocus/companion-satellite/issues/152)) ([014562a](https://github.com/bitfocus/companion-satellite/commit/014562a5ed2e6d924dac3c62b680d374709a5bdf))
+* use macos 10.15 compatible canvas library ([a3428c3](https://github.com/bitfocus/companion-satellite/commit/a3428c3d9e1adbb316f57ee59323504f956ff9a1))
+
 ## [1.9.1](https://github.com/bitfocus/companion-satellite/compare/v1.9.0...v1.9.1) (2024-09-06)
 
 
