@@ -44,7 +44,7 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 	},
 	restPort: {
 		type: 'integer',
-		description: 'Port number of run HTTP server on',
+		description: 'Port number to run HTTP server on',
 		minimum: 1,
 		maximum: 65535,
 		default: 9999,
