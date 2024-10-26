@@ -1,3 +1,5 @@
+import '@julusian/segfault-raub'
+
 import exitHook from 'exit-hook'
 import { CompanionSatelliteClient } from './client.js'
 import { DeviceManager } from './devices.js'

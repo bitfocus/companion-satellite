@@ -1,3 +1,5 @@
+import '@julusian/segfault-raub'
+
 // eslint-disable-next-line node/no-unpublished-import
 import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain } from 'electron'
 import * as path from 'path'
