@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.9.3](https://github.com/bitfocus/companion-satellite/compare/v1.9.2...v1.9.3) (2024-10-26)
+
+
+### Bug Fixes
+
+* add `@julusian/segfault-raub` to try and produce better logging for segfaults ([d30b952](https://github.com/bitfocus/companion-satellite/commit/d30b952215328ad837ae4471892fb7dfce7eb18c))
+* update canvas lib ([1e79ff8](https://github.com/bitfocus/companion-satellite/commit/1e79ff85428aa4668cd2493a01ab647100a9c726))
+
 ## [1.9.2](https://github.com/bitfocus/companion-satellite/compare/v1.9.1...v1.9.2) (2024-09-23)
 
 
