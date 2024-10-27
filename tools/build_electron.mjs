@@ -50,17 +50,6 @@ if (!platform) {
 	}
 }
 
-if (platform === 'win-x64' || process.platform === 'win32') {
-	const localRedistPath = '.cache/vc_redist.x64.exe'
-	if (!(await fs.pathExists(localRedistPath))) {
-		await fs.mkdirp('.cache')
-
-		const response = await fetch('https://aka.ms/vs/17/release/vc_redist.x64.exe')
-		if (!response.ok) throw new Error(`unexpected response ${response.statusText}`)
-		await streamPipeline(response.body, createWriteStream('.cache/vc_redist.x64.exe'))
-	}
-}
-
 // HACK: skip this as it is trying to rebuild everything from source and failing
 // if (!platform) {
 // 	// If for our own platform, make sure the correct deps are installed
