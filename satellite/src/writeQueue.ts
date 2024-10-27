@@ -15,23 +15,23 @@
  *
  */
 
-export class ImageWriteQueue {
+export class ImageWriteQueue<TArgs extends unknown[] = [buffer: Buffer]> {
 	private readonly maxConcurrent = 3
-	private readonly pendingImages: Array<{ key: number; buffer: Buffer }> = []
+	private readonly pendingImages: Array<{ key: number; args: TArgs }> = []
 	private inProgress: number[] = []
 
-	constructor(private readonly fillImage: (key: number, buffer: Buffer) => Promise<void>) {}
+	constructor(private readonly fillImage: (key: number, ...args: TArgs) => Promise<void>) {}
 
 	public abort(): void {
 		this.pendingImages.splice(0, this.pendingImages.length)
 	}
 
-	public queue(key: number, buffer: Buffer): void {
+	public queue(key: number, ...args: TArgs): void {
 		let updated = false
 		// Try and replace an existing queued image first
 		for (const img of this.pendingImages) {
 			if (img.key === key) {
-				img.buffer = buffer
+				img.args = args
 				updated = true
 				break
 			}
@@ -39,7 +39,7 @@ export class ImageWriteQueue {
 
 		// If key isnt queued, then append
 		if (!updated) {
-			this.pendingImages.push({ key: key, buffer: buffer })
+			this.pendingImages.push({ key: key, args: args })
 		}
 
 		this.tryDequeue()
@@ -63,7 +63,7 @@ export class ImageWriteQueue {
 			// Track which key is being processed
 			this.inProgress.push(nextImage.key)
 
-			this.fillImage(nextImage.key, nextImage.buffer)
+			this.fillImage(nextImage.key, ...nextImage.args)
 				.catch((e) => {
 					// Ensure it doesnt error out
 					console.error('fillImage error:', e)

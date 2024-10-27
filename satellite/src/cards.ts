@@ -72,6 +72,94 @@ export class CardGenerator {
 
 		return computedImage.buffer
 	}
+
+	async generateLcdStripCard(
+		width: number,
+		height: number,
+		pixelFormat: imageRs.PixelFormat,
+		remoteIp: string,
+		status: string,
+	): Promise<Buffer> {
+		const iconImage = await this.loadIcon()
+
+		const overSampling = 2 // Must be 1 or greater
+
+		const canvasWidth = width * overSampling
+		const canvasHeight = height * overSampling
+		const canvas = new Canvas(canvasWidth, canvasHeight)
+		const context2d = canvas.getContext('2d')
+		context2d.scale(overSampling, overSampling)
+
+		// draw icon
+		const iconBoundingSize = Math.min(width, height)
+		const iconTargetSize = Math.round(iconBoundingSize * 0.8)
+		const iconTargetX = width - iconBoundingSize
+		const iconTargetY = (height - iconTargetSize) / 2
+		context2d.drawImage(
+			iconImage,
+			0,
+			0,
+			iconImage.width,
+			iconImage.height,
+			iconTargetX,
+			iconTargetY,
+			iconTargetSize,
+			iconTargetSize,
+		)
+
+		// draw text
+		context2d.font = `normal normal normal ${12}px sans-serif`
+		context2d.textAlign = 'left'
+		context2d.fillStyle = '#ffffff'
+
+		context2d.fillText(`Remote: ${remoteIp}`, 10, height - 10)
+		context2d.fillText(`Local: ${getIPAddress()}`, 10, height - 30)
+		context2d.fillText(`Status: ${status}`, 10, height - 50)
+
+		// return result
+		const rawImage = Buffer.from(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
+
+		const computedImage = await imageRs.ImageTransformer.fromBuffer(
+			rawImage,
+			canvasWidth,
+			canvasHeight,
+			imageRs.PixelFormat.Rgba,
+		)
+			.scale(width, height, imageRs.ResizeMode.Exact)
+			.toBuffer(pixelFormat)
+
+		return computedImage.buffer
+	}
+
+	async generateLogoCard(width: number, height: number): Promise<Buffer> {
+		const iconImage = await this.loadIcon()
+
+		const canvasWidth = width
+		const canvasHeight = height
+		const canvas = new Canvas(canvasWidth, canvasHeight)
+		const context2d = canvas.getContext('2d')
+
+		// draw icon
+		const iconTargetSize = Math.round(Math.min(width, height) * 0.8)
+		const iconTargetX = (width - iconTargetSize) / 2
+		const iconTargetY = (height - iconTargetSize) / 2
+		context2d.drawImage(
+			iconImage,
+			0,
+			0,
+			iconImage.width,
+			iconImage.height,
+			iconTargetX,
+			iconTargetY,
+			iconTargetSize,
+			iconTargetSize,
+		)
+
+		// return result
+		const rawImage = Buffer.from(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
+
+		return rawImage
+	}
 }
 
 function getIPAddress() {

@@ -1,19 +1,54 @@
-import { DeviceModelId, StreamDeck } from '@elgato-stream-deck/node'
+import { DeviceModelId, StreamDeck, StreamDeckLcdSegmentControlDefinition } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards.js'
 import { ImageWriteQueue } from '../writeQueue.js'
 import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
-import { parseColor } from './lib.js'
+import { parseColor, transformButtonImage } from './lib.js'
+import util from 'util'
+
+const setTimeoutPromise = util.promisify(setTimeout)
+
+function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
+	let minX = 0
+	let minY = 0
+	let maxX = 0
+	let maxY = 0
+
+	let needsBitmaps: number | null = null
+
+	for (const control of deck.CONTROLS) {
+		minX = Math.min(minX, control.column)
+		maxX = Math.max(maxX, control.column + ('columnSpan' in control ? control.columnSpan - 1 : 0))
+		minY = Math.min(minY, control.row)
+		maxY = Math.max(maxY, control.row + ('rowSpan' in control ? control.rowSpan - 1 : 0))
+
+		if (control.type === 'button' && control.feedbackType === 'lcd') {
+			needsBitmaps = Math.max(control.pixelSize.width, control.pixelSize.height, needsBitmaps ?? 0)
+		} else if (control.type === 'lcd-segment') {
+			// TODO - this should be considered
+		}
+	}
+
+	const rows = maxY - minY + 1
+	const cols = maxX - minX + 1
+
+	return {
+		keysTotal: cols * rows,
+		keysPerRow: cols,
+		bitmapSize: needsBitmaps,
+		colours: true,
+		text: false,
+	}
+}
 
 export class StreamDeckWrapper implements WrappedDevice {
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: StreamDeck
 	readonly #deviceId: string
+	readonly #registerProps: DeviceRegisterProps
 
-	#queueOutputId: number
-	#queue: ImageWriteQueue | undefined
-	#queueLcdStrip: ImageWriteQueue | undefined
-	#hasDrawnLcdStrip = false
+	#drawAbort: AbortController
+	#queue: ImageWriteQueue<[abort: AbortSignal, drawProps: DeviceDrawProps]>
 
 	#companionSupportsScaling = false
 
@@ -29,93 +64,133 @@ export class StreamDeckWrapper implements WrappedDevice {
 		this.#deviceId = deviceId
 		this.#cardGenerator = cardGenerator
 
-		this.#queueOutputId = 0
+		this.#drawAbort = new AbortController()
 
-		if (this.#deck.ICON_SIZE !== 0) {
-			this.#queue = new ImageWriteQueue(async (key: number, buffer: Buffer) => {
-				const outputId = this.#queueOutputId
+		this.#registerProps = compileRegisterProps(deck)
 
-				let newbuffer: Buffer = buffer
-				if (this.#deck.ICON_SIZE !== 72 && !this.#companionSupportsScaling) {
-					// scale if necessary
-					try {
-						newbuffer = (
-							await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
-								.scale(this.#deck.ICON_SIZE, this.#deck.ICON_SIZE)
-								.toBuffer(imageRs.PixelFormat.Rgb)
-						).buffer
-					} catch (e) {
-						console.log(`device(${deviceId}): scale image failed: ${e}`)
-						return
-					}
-				}
+		this.#queue = new ImageWriteQueue(async (key: number, abort: AbortSignal, drawProps: DeviceDrawProps) => {
+			if (abort.aborted) return
 
-				// Check if generated image is still valid
-				if (this.#queueOutputId === outputId) {
-					try {
-						await this.#deck.fillKeyBuffer(key, newbuffer)
-					} catch (e_1) {
-						console.error(`device(${deviceId}): fillImage failed: ${e_1}`)
-					}
-				}
+			const x = key % this.#registerProps.keysPerRow
+			const y = Math.floor(key / this.#registerProps.keysPerRow)
+
+			const control = this.#deck.CONTROLS.find((control) => {
+				if (control.row !== y) return false
+
+				if (control.column === x) return true
+
+				if (control.type === 'lcd-segment' && x >= control.column && x < control.column + control.columnSpan)
+					return true
+
+				return false
 			})
-		}
+			if (!control) return
 
-		if (this.#deck.LCD_ENCODER_SIZE) {
-			const encoderSize = this.#deck.LCD_ENCODER_SIZE
-			const xPad = 25
-			const xProgression = 216.666
-			this.#queueLcdStrip = new ImageWriteQueue(async (key: number, buffer: Buffer) => {
-				const outputId = this.#queueOutputId
+			const bufferSize = this.#companionSupportsScaling ? this.#registerProps.bitmapSize : 72
 
-				let newbuffer: Buffer
-				// scale if necessary
+			if (control.type === 'button') {
+				if (control.feedbackType === 'lcd') {
+					let newbuffer: Buffer | undefined
+					if (control.pixelSize.width === 0 || control.pixelSize.height === 0) {
+						return
+					} else {
+						try {
+							newbuffer = await transformButtonImage(
+								drawProps.image,
+								bufferSize,
+								bufferSize,
+								control.pixelSize.width,
+								control.pixelSize.height,
+								imageRs.PixelFormat.Rgb,
+							)
+						} catch (e: any) {
+							console.error(`scale image failed: ${e}\n${e.stack}`)
+							return
+						}
+					}
+
+					const maxAttempts = 3
+					for (let attempts = 1; attempts <= maxAttempts; attempts++) {
+						try {
+							if (abort.aborted) return
+
+							await this.#deck.fillKeyBuffer(control.index, newbuffer)
+							return
+						} catch (e) {
+							if (attempts == maxAttempts) {
+								console.log(`fillImage failed after ${attempts} attempts: ${e}`)
+								return
+							}
+							await setTimeoutPromise(20)
+						}
+					}
+				} else if (control.feedbackType === 'rgb') {
+					const color = parseColor(drawProps.color)
+
+					if (abort.aborted) return
+
+					this.#deck.fillKeyColor(control.index, color.r, color.g, color.b).catch((e) => {
+						console.log(`color failed: ${e}`)
+					})
+				}
+			} else if (control.type === 'lcd-segment' && control.drawRegions) {
+				const drawColumn = x - control.column
+
+				const columnWidth = control.pixelSize.width / control.columnSpan
+				let drawX = drawColumn * columnWidth
+				if (this.#deck.MODEL === DeviceModelId.PLUS) {
+					// Position aligned with the buttons/encoders
+					drawX = drawColumn * 216.666 + 25
+				}
+
+				const targetSize = control.pixelSize.height
+
+				let newbuffer: Buffer | undefined
 				try {
-					const inputRes = this.#companionSupportsScaling ? this.#deck.ICON_SIZE : 72
-					newbuffer = (
-						await imageRs.ImageTransformer.fromBuffer(buffer, inputRes, inputRes, imageRs.PixelFormat.Rgb)
-							.scale(encoderSize.height, encoderSize.height)
-							.toBuffer(imageRs.PixelFormat.Rgb)
-					).buffer
+					newbuffer = await transformButtonImage(
+						drawProps.image,
+						bufferSize,
+						bufferSize,
+						targetSize,
+						targetSize,
+						imageRs.PixelFormat.Rgb,
+					)
 				} catch (e) {
-					console.log(`device(${deviceId}): scale image failed: ${e}`)
+					console.log(`scale image failed: ${e}`)
 					return
 				}
 
-				// Check if generated image is still valid
-				if (this.#queueOutputId === outputId) {
-					this.#hasDrawnLcdStrip = true
-
+				const maxAttempts = 3
+				for (let attempts = 1; attempts <= maxAttempts; attempts++) {
 					try {
-						await this.#deck.fillLcdRegion(key * xProgression + xPad, 0, newbuffer, {
+						if (abort.aborted) return
+
+						await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
 							format: 'rgb',
-							width: encoderSize.height,
-							height: encoderSize.height,
+							width: targetSize,
+							height: targetSize,
 						})
-					} catch (e_1) {
-						console.error(`device(${deviceId}): fillImage failed: ${e_1}`)
+						return
+					} catch (e) {
+						if (attempts == maxAttempts) {
+							console.error(`fillImage failed after ${attempts}: ${e}`)
+							return
+						}
+						await setTimeoutPromise(20)
 					}
 				}
-			})
-		}
+			} else if (control.type === 'encoder' && control.hasLed) {
+				const color = parseColor(drawProps.color)
+
+				if (abort.aborted) return
+
+				await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
+			}
+		})
 	}
 
 	getRegisterProps(): DeviceRegisterProps {
-		const info = {
-			keysTotal: this.#deck.NUM_KEYS,
-			keysPerRow: this.#deck.KEY_COLUMNS,
-			bitmapSize: this.#deck.ICON_SIZE,
-			colours: true,
-			text: false,
-		}
-
-		if (this.#deck.MODEL === DeviceModelId.PLUS) {
-			info.keysTotal += this.#deck.NUM_ENCODERS * 2
-		} else if (this.#deck.MODEL === DeviceModelId.NEO) {
-			info.keysTotal += this.#deck.KEY_COLUMNS
-		}
-
-		return info
+		return this.#registerProps
 	}
 
 	async close(): Promise<void> {
@@ -124,60 +199,46 @@ export class StreamDeckWrapper implements WrappedDevice {
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.deviceId)
-		this.#deck.on('down', (key) => {
-			if (this.#deck.MODEL === DeviceModelId.NEO && key === 9) {
-				// pad around the lcd
-				key += 2
-			}
+		this.#deck.on('down', (control) => {
+			const key = control.column + control.row * this.#registerProps.keysPerRow
 
 			client.keyDown(this.deviceId, key)
 		})
-		this.#deck.on('up', (key) => {
-			if (this.#deck.MODEL === DeviceModelId.NEO && key === 9) {
-				// pad around the lcd
-				key += 2
-			}
+		this.#deck.on('up', (control) => {
+			const key = control.column + control.row * this.#registerProps.keysPerRow
 
 			client.keyUp(this.deviceId, key)
 		})
+		this.#deck.on('rotate', (control, delta) => {
+			const key = control.column + control.row * this.#registerProps.keysPerRow
+			if (delta < 0) {
+				client.rotateLeft(this.deviceId, key)
+			} else if (delta > 0) {
+				client.rotateRight(this.deviceId, key)
+			}
+		})
+		this.#deck.on('lcdShortPress', (control, position) => {
+			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
 
-		if (this.#deck.MODEL === DeviceModelId.PLUS) {
-			this.#deck.on('encoderDown', (encoder) => {
-				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
-				client.keyDown(this.deviceId, index)
-			})
-			this.#deck.on('encoderUp', (encoder) => {
-				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
-				client.keyUp(this.deviceId, index)
-			})
-			this.#deck.on('rotateLeft', (encoder) => {
-				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
-				client.rotateLeft(this.deviceId, index)
-			})
-			this.#deck.on('rotateRight', (encoder) => {
-				const index = this.#deck.NUM_KEYS + this.#deck.NUM_ENCODERS + encoder
-				client.rotateRight(this.deviceId, index)
-			})
+			const key = control.column + columnOffset + control.row * this.#registerProps.keysPerRow
 
-			this.#deck.on('lcdShortPress', (encoder) => {
-				const index = this.#deck.NUM_KEYS + encoder
+			client.keyDown(this.deviceId, key)
 
-				client.keyDown(this.deviceId, index)
+			setTimeout(() => {
+				client.keyUp(this.deviceId, key)
+			}, 20)
+		})
+		this.#deck.on('lcdLongPress', (control, position) => {
+			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
 
-				setTimeout(() => {
-					client.keyUp(this.deviceId, index)
-				}, 20)
-			})
-			this.#deck.on('lcdLongPress', (encoder) => {
-				const index = this.#deck.NUM_KEYS + encoder
+			const key = control.column + columnOffset + control.row * this.#registerProps.keysPerRow
 
-				client.keyDown(this.deviceId, index)
+			client.keyDown(this.deviceId, key)
 
-				setTimeout(() => {
-					client.keyUp(this.deviceId, index)
-				}, 20)
-			})
-		}
+			setTimeout(() => {
+				client.keyUp(this.deviceId, key)
+			}, 20)
+		})
 
 		// Start with blanking it
 		await this.blankDevice()
@@ -189,75 +250,83 @@ export class StreamDeckWrapper implements WrappedDevice {
 		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
 	}
 
+	#discardDraws() {
+		this.#drawAbort.abort()
+		this.#drawAbort = new AbortController()
+
+		this.#queue.abort()
+	}
+
 	async deviceAdded(): Promise<void> {
-		this.#queueOutputId++
+		this.#discardDraws()
 	}
 	async setBrightness(percent: number): Promise<void> {
 		await this.#deck.setBrightness(percent)
 	}
 	async blankDevice(): Promise<void> {
+		this.#discardDraws()
+
 		await this.#deck.clearPanel()
 	}
-	async draw(d: DeviceDrawProps): Promise<void> {
-		if (this.#deck.MODEL === DeviceModelId.NEO && d.keyIndex >= this.#deck.NUM_KEYS) {
-			const color = parseColor(d.color)
-
-			if (d.keyIndex === this.#deck.NUM_KEYS) {
-				this.#deck.fillKeyColor(this.#deck.NUM_KEYS, color.r, color.g, color.b).catch((e) => {
-					console.log(`color failed: ${e}`)
-				})
-			} else if (d.keyIndex === this.#deck.NUM_KEYS + 3) {
-				this.#deck.fillKeyColor(this.#deck.NUM_KEYS + 1, color.r, color.g, color.b).catch((e) => {
-					console.log(`color failed: ${e}`)
-				})
-			}
-		}
-
-		if (this.#deck.ICON_SIZE !== 0) {
-			if (d.image) {
-				if (d.keyIndex < this.#deck.NUM_KEYS) {
-					if (this.#queue) {
-						this.#queue.queue(d.keyIndex, d.image)
-					} else {
-						await this.#deck.fillKeyBuffer(d.keyIndex, d.image)
-					}
-				} else if (this.#deck.MODEL === DeviceModelId.PLUS && d.keyIndex < this.#deck.NUM_KEYS + 4) {
-					const index = d.keyIndex - this.#deck.NUM_KEYS
-					this.#queueLcdStrip?.queue(index, d.image)
-				}
-			} else {
-				throw new Error(`Cannot draw for Streamdeck without image`)
-			}
-		}
+	async draw(drawProps: DeviceDrawProps): Promise<void> {
+		this.#queue.queue(drawProps.keyIndex, this.#drawAbort.signal, drawProps)
 	}
 	showStatus(hostname: string, status: string): void {
-		if (this.#deck.ICON_SIZE !== 0) {
-			// abort and discard current operations
-			this.#queue?.abort()
-			this.#queueOutputId++
+		this.#discardDraws()
 
-			const outputId = this.#queueOutputId
-			const width = this.#deck.ICON_SIZE * this.#deck.KEY_COLUMNS
-			const height = this.#deck.ICON_SIZE * this.#deck.KEY_ROWS
-			this.#cardGenerator
-				.generateBasicCard(width, height, imageRs.PixelFormat.Rgba, hostname, status)
+		const signal = this.#drawAbort.signal
+
+		const fillPanelDimensions = this.#deck.calculateFillPanelDimensions()
+		const lcdSegments = this.#deck.CONTROLS.filter(
+			(c): c is StreamDeckLcdSegmentControlDefinition => c.type === 'lcd-segment',
+		)
+
+		if (fillPanelDimensions) {
+			const fillCard =
+				lcdSegments.length > 0
+					? this.#cardGenerator.generateLogoCard(fillPanelDimensions.width, fillPanelDimensions.height)
+					: this.#cardGenerator.generateBasicCard(
+							fillPanelDimensions.width,
+							fillPanelDimensions.height,
+							imageRs.PixelFormat.Rgba,
+							hostname,
+							status,
+						)
+
+			fillCard
 				.then(async (buffer) => {
-					if (outputId === this.#queueOutputId) {
-						if (this.#hasDrawnLcdStrip) {
-							// Blank everything first, to ensure the strip is cleared
-							this.#hasDrawnLcdStrip = false
-							await this.#deck.clearPanel()
-						}
+					if (signal.aborted) return
 
-						// still valid
-						await this.#deck.fillPanelBuffer(buffer, {
-							format: 'rgba',
-						})
-					}
+					// still valid
+					await this.#deck.fillPanelBuffer(buffer, {
+						format: 'rgba',
+					})
 				})
 				.catch((e) => {
 					console.error(`Failed to fill device`, e)
 				})
+
+			for (const lcdStrip of lcdSegments) {
+				this.#cardGenerator
+					.generateLcdStripCard(
+						lcdStrip.pixelSize.width,
+						lcdStrip.pixelSize.height,
+						imageRs.PixelFormat.Rgba,
+						hostname,
+						status,
+					)
+					.then(async (buffer) => {
+						if (signal.aborted) return
+
+						// still valid
+						await this.#deck.fillLcd(lcdStrip.id, buffer, {
+							format: 'rgba',
+						})
+					})
+					.catch((e) => {
+						console.error(`Failed to fill device`, e)
+					})
+			}
 		}
 	}
 }
