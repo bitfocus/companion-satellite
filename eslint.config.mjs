@@ -104,6 +104,7 @@ export default [
 			'**/node_modules/*',
 			'**/electron-output/*',
 			'webui/vite.config.ts',
+			'pi-image/**/*',
 		],
 	},
 	{
