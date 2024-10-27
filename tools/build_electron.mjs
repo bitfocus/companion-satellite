@@ -1,10 +1,10 @@
 #!/usr/bin/env zx
 
-import { fetch, fs } from 'zx'
-import { createWriteStream } from 'node:fs'
-import { pipeline } from 'node:stream'
-import { promisify } from 'node:util'
-const streamPipeline = promisify(pipeline)
+import { fs } from 'zx'
+
+if (process.platform === 'win32') {
+	usePowerShell() // to enable powershell
+}
 
 function $withoutEscaping(pieces, ...args) {
 	const origQuote = $.quote
