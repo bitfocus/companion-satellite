@@ -7,14 +7,14 @@ import Navbar from 'react-bootstrap/Navbar'
 interface SatelliteHeaderProps {
 	rescanSurfaces: () => void
 }
-export function SatelliteHeader({ rescanSurfaces }: SatelliteHeaderProps) {
+export function SatelliteHeader({ rescanSurfaces }: SatelliteHeaderProps): JSX.Element {
 	const rescanUSB = useCallback(
 		(e: React.MouseEvent<HTMLElement>) => {
 			e.preventDefault()
 
 			rescanSurfaces()
 		},
-		[rescanSurfaces]
+		[rescanSurfaces],
 	)
 
 	return (

@@ -1,10 +1,10 @@
 import Container from 'react-bootstrap/Container'
 import Row from 'react-bootstrap/Row'
 import Col from 'react-bootstrap/Col'
-import { SatelliteHeader } from './Header'
-import { SettingsForm } from './SettingsForm'
-import { ConnectionStatus } from './ConnectionStatus'
-import { MyErrorBoundary } from './Util/ErrorBoundary'
+import { SatelliteHeader } from './Header.js'
+import { SettingsForm } from './SettingsForm.js'
+import { ConnectionStatus } from './ConnectionStatus.js'
+import { MyErrorBoundary } from './Util/ErrorBoundary.js'
 import { useRestConfigApi } from './Api/rest'
 import { useCallback } from 'react'
 import type { ApiStatusResponse } from '../../satellite/src/apiTypes'
@@ -12,7 +12,7 @@ import { usePoller } from './Util/usePoller'
 
 const STATUS_POLL_INTERVAL = 2000
 
-export function WebApp() {
+export function WebApp(): JSX.Element {
 	const restApi = useRestConfigApi()
 
 	const fetchStatus = useCallback(async () => {

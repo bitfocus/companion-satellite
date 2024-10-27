@@ -10,7 +10,12 @@ interface SettingsFormProps {
 	saveConfig: SaveApiConfigData
 	includeApiEnable: boolean
 }
-export function SettingsForm({ currentConfig, loadError, saveConfig, includeApiEnable }: SettingsFormProps) {
+export function SettingsForm({
+	currentConfig,
+	loadError,
+	saveConfig,
+	includeApiEnable,
+}: SettingsFormProps): JSX.Element {
 	const [modifiedConfig, setModifiedConfig] = useState<Partial<ApiConfigData>>({})
 	const fullModifiedConfig: ApiConfigData | undefined = useMemo(() => {
 		return currentConfig ? { ...currentConfig, ...modifiedConfig } : undefined

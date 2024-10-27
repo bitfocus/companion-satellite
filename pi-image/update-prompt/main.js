@@ -8,13 +8,14 @@ const ALLOWED_VERSIONS = '^1.5.0'
 let currentVersion
 try {
 	currentVersion = fs.readFileSync('/opt/companion-satellite/BUILD').toString().trim()
-} catch (e) {
+} catch (_e) {
 	// Assume none installed
 }
 
 async function getLatestBuildsForBranch(branch, targetCount) {
 	targetCount *= 10 // HACK until the api changes
-	// eslint-disable-next-line no-undef
+
+	// eslint-disable-next-line n/no-unsupported-features/node-builtins
 	const data = await fetch(
 		`https://api.bitfocus.io/v1/product/companion-satellite/packages?branch=${branch}&limit=${targetCount}`,
 	)
@@ -38,7 +39,7 @@ async function getLatestBuildsForBranch(branch, targetCount) {
 						published: new Date(pkg.published),
 					})
 				}
-			} catch (e) {
+			} catch (_e) {
 				// Not a semver tag, so ignore
 			}
 		}

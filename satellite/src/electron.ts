@@ -1,11 +1,8 @@
 import '@julusian/segfault-raub'
 
-// eslint-disable-next-line node/no-unpublished-import
 import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain } from 'electron'
 import * as path from 'path'
-// eslint-disable-next-line node/no-unpublished-import
 import electronStore from 'electron-store'
-// eslint-disable-next-line node/no-unpublished-import
 import openAboutWindow from 'electron-about-window'
 import { DeviceManager } from './devices.js'
 import { CompanionSatelliteClient } from './client.js'

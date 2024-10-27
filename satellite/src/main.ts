@@ -1,3 +1,4 @@
+/* eslint-disable n/no-process-exit */
 import '@julusian/segfault-raub'
 
 import exitHook from 'exit-hook'
@@ -19,7 +20,7 @@ if (!rawConfigPath) {
 	  $ companion-satellite config.json
 	  $ companion-satellite /home/satellite/.config/companion-satellite.json
 `)
-	// eslint-disable-next-line no-process-exit
+
 	process.exit(1)
 }
 

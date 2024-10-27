@@ -216,7 +216,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this.emit('log', 'ping timeout')
 				try {
 					this.socket.destroy()
-				} catch (e) {
+				} catch (_e) {
 					// ignore
 				}
 				return

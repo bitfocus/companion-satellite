@@ -1,6 +1,5 @@
-#!/usr/bin/env zx
-
-import { fs } from 'zx'
+/* eslint-disable n/no-process-exit */
+import { fs, $, usePowerShell, argv } from 'zx'
 
 if (process.platform === 'win32') {
 	usePowerShell() // to enable powershell
@@ -55,6 +54,7 @@ if (!platform) {
 // 	// If for our own platform, make sure the correct deps are installed
 // 	await $`electron-builder install-app-deps`
 // }
+console.log('pregyp args:', nodePreGypArgs)
 
 // perform the electron build
 await fs.remove('./electron-output')

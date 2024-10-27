@@ -31,7 +31,7 @@ export class MdnsAnnouncer {
 		},
 	)
 
-	start() {
+	start(): void {
 		if (!this.#appConfig.get('mdnsEnabled')) return
 		if (this.#bonjourService) return
 
@@ -60,7 +60,7 @@ export class MdnsAnnouncer {
 		}
 	}
 
-	stop() {
+	stop(): void {
 		if (this.#bonjourService) {
 			this.#bonjourService.stop?.()
 			this.#bonjourService = null

@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const { contextBridge, ipcRenderer } = require('electron')
-// @ts-expect-error
+// @ts-expect-error weird interop between cjs and mjs
 import type { ApiConfigData, ApiStatusResponse } from './apiTypes.js'
 
 const electronApi = {

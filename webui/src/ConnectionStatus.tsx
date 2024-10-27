@@ -5,7 +5,7 @@ interface ConnectionStatusProps {
 	error: Error | undefined
 }
 
-export function ConnectionStatus({ status, error }: ConnectionStatusProps) {
+export function ConnectionStatus({ status, error }: ConnectionStatusProps): JSX.Element {
 	return (
 		<>
 			<h3>Status</h3>

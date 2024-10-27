@@ -27,16 +27,26 @@
     "dev:electron": "yarn workspace satellite dev:electron",
     "dev:webui": "yarn workspace webui dev",
     "build": "yarn workspaces foreach --all run build",
-    "lint": "yarn workspaces foreach --all run lint",
+    "lint:raw": "eslint",
+    "lint": "eslint .",
     "license-validate": "sofie-licensecheck",
     "dist": "run build && zx tools/build_electron.mjs"
   },
   "devDependencies": {
+    "@sofie-automation/eslint-plugin": "^0.1.1",
     "@tsconfig/node20": "^20.1.4",
+    "eslint": "^9.13.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-n": "^17.11.1",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
     "prettier": "^3.3.3",
     "typescript": "~5.2.2",
+    "typescript-eslint": "^8.11.0",
     "zx": "^8.1.9"
   },
   "engines": {

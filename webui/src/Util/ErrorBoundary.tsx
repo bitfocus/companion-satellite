@@ -15,6 +15,6 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 	)
 }
 
-export function MyErrorBoundary({ children }: PropsWithChildren) {
+export function MyErrorBoundary({ children }: PropsWithChildren): JSX.Element {
 	return <ErrorBoundary FallbackComponent={ErrorFallback}>{children}</ErrorBoundary>
 }

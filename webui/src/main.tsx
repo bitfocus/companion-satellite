@@ -8,5 +8,5 @@ import { WebApp } from './WebApp.tsx'
 ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
 		<WebApp />
-	</React.StrictMode>
+	</React.StrictMode>,
 )

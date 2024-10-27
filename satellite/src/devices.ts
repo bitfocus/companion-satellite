@@ -1,5 +1,5 @@
 import { CompanionSatelliteClient } from './client.js'
-import { getStreamDeckDeviceInfo, openStreamDeck } from '@elgato-stream-deck/node'
+import { getStreamDeckDeviceInfo, openStreamDeck, VENDOR_ID as VendorIdElgato } from '@elgato-stream-deck/node'
 import { usb } from 'usb'
 import { CardGenerator } from './cards.js'
 import {
@@ -24,8 +24,6 @@ import {
 	VendorIdRazer,
 } from '@loupedeck/node'
 import { RazerStreamControllerXWrapper } from './device-types/razer-stream-controller-x.js'
-// eslint-disable-next-line node/no-extraneous-import
-import { VENDOR_ID as VendorIdElgato } from '@elgato-stream-deck/core'
 import { wrapAsync } from './lib.js'
 
 // Force into hidraw mode
@@ -230,7 +228,7 @@ export class DeviceManager {
 				dev2.close().catch(() => {
 					// Ignore
 				})
-			} catch (e) {
+			} catch (_e) {
 				// Ignore
 			}
 		}
