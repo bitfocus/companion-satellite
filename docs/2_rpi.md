@@ -1,0 +1,1 @@
+This section contains details which are specific to the Raspberry Pi edition of companion satellite.
