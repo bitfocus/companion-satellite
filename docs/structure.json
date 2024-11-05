@@ -20,5 +20,19 @@
 				"file": "1_gettingstarted/scan_for_surfaces.md"
 			}
 		]
+	},
+	{
+		"label": "Raspberry Pi Setup",
+		"file:": "2_rpi.md",
+		"children":[
+			{
+				"label": "Static IP Configuration",
+				"file": "2_raspberrypi/static_ip.md"
+			},
+			{
+				"label": "Reverting to DHCP",
+				"file": "2_raspberrypi/revert_to_dhcp.md"
+			}		
+		]
 	}
 ]
