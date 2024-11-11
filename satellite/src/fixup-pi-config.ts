@@ -16,7 +16,9 @@ const appConfig = openHeadlessConfig(configFilePath)
 // Ensure the satellite user owns the file. This is a bit dodgey guessing the ids like this..
 chown(appConfig.path, 1000, 1000).catch(() => null)
 
-const templatePathName = fileURLToPath(new URL('../pi-image/satellite-config', import.meta.url))
+const templatePathName = fileURLToPath(
+	new URL('/usr/local/src/companion-satellite/pi-image/satellite-config', import.meta.url),
+)
 
 const importFromPaths = [
 	// Paths to search for a config file to 'import' from
