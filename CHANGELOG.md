@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.10.0](https://github.com/bitfocus/companion-satellite/compare/v1.9.3...v1.10.0) (2024-11-11)
+
+
+### Features
+
+* update eslint and rebuild config ([11104e1](https://github.com/bitfocus/companion-satellite/commit/11104e16f921a0ef339a48c8a260438bfbfdeb0e))
+* update streamdeck library to v7 ([17384b8](https://github.com/bitfocus/companion-satellite/commit/17384b859bb7a5abc861e87dcf4264942297868d))
+
+
+### Bug Fixes
+
+* incorrect path to template `satellite-config` file on pi ([881c62a](https://github.com/bitfocus/companion-satellite/commit/881c62a358a8645bfaca383161e63232e7a72515))
+* remove reliance on vc_redist ([40aef4a](https://github.com/bitfocus/companion-satellite/commit/40aef4a0ddb1627283ce51540166117bdfdbe860))
+
 ## [1.9.3](https://github.com/bitfocus/companion-satellite/compare/v1.9.2...v1.9.3) (2024-10-26)
 
 
