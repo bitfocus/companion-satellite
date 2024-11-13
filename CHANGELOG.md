@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.10.1](https://github.com/bitfocus/companion-satellite/compare/v1.10.0...v1.10.1) (2024-11-13)
+
+
+### Bug Fixes
+
+* add missing streamdeck udev rules ([ec07cee](https://github.com/bitfocus/companion-satellite/commit/ec07cee0f5cc8a8f7c08ece6f84e07639be015f3))
+
 ## [1.10.0](https://github.com/bitfocus/companion-satellite/compare/v1.9.3...v1.10.0) (2024-11-11)
 
 
