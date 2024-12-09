@@ -6213,12 +6213,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^5.0.7":
-  version: 5.0.7
-  resolution: "nanoid@npm:5.0.7"
+"nanoid@npm:^5.0.9":
+  version: 5.0.9
+  resolution: "nanoid@npm:5.0.9"
   bin:
     nanoid: bin/nanoid.js
-  checksum: 10c0/a3fb1c157e3e35378f44e5a7130c70f80c9037f66c9a37285e5e3d8298e8405fcb2399baaa420980b0fe5fd9c2e4186a6a31c3526f21de03cf34c1b459871401
+  checksum: 10c0/a2d9710525d4998a8a1610bbe6eb9a92c254ebab7c567c1ab429046fe7eed9c4df3508b59fb44c58ffdc98edb28dd6f953715c14b64ea0a3a2ce37420cdfeefd
   languageName: node
   linkType: hard
 
@@ -7346,7 +7346,7 @@ __metadata:
     koa-body: "npm:^6.0.1"
     koa-router: "npm:^13.0.1"
     koa-static: "npm:^5.0.0"
-    nanoid: "npm:^5.0.7"
+    nanoid: "npm:^5.0.9"
     node-hid: "npm:^3.1.2"
     rimraf: "npm:^6.0.1"
     semver: "npm:^7.6.3"
