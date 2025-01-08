@@ -1,7 +1,7 @@
 /* eslint-disable n/no-extraneous-import */
 // @ts-check
 
-import eslintPluginPrettierRecommended, { files } from 'eslint-plugin-prettier/recommended'
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 import eslint from '@eslint/js'
 import neslint from 'eslint-plugin-n'
 import tseslint from 'typescript-eslint'
