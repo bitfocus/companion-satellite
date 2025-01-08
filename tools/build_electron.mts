@@ -71,10 +71,83 @@ const options: electronBuilder.Configuration = {
 	},
 	dmg: {
 		artifactName: 'companion-satellite-${arch}.dmg',
-		sign: true,
+		sign: !!process.env.CSC_LINK, // Only sign in ci
 	},
 	win: {
 		target: 'nsis',
+		signingHashAlgorithms: ['sha256'],
+
+		sign: async function sign(config, packager) {
+			// const path = require('path')
+			// const { signWindows } = await import('app-builder-lib/out/codeSign/windowsCodeSign')
+
+			// Do not sign if no certificate is provided.
+			if (!config.cscInfo) {
+				return
+			}
+
+			if (!packager) throw new Error('Packager is required')
+
+			const targetPath = config.path
+			// Do not sign elevate file, because that prompts virus warning?
+			if (targetPath.endsWith('elevate.exe')) {
+				return
+			}
+
+			const toolPath = 'C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64\\signtool.exe'
+
+			if (!process.env.BF_CODECERT_KEY) throw new Error('BF_CODECERT_KEY not set')
+
+			const vm = await packager.vm.value
+			// const args = configuration.computeSignToolArgs(isWin)
+
+			const args = [
+				`sign`,
+				'/fd',
+				'SHA256',
+				'/td',
+				'SHA256',
+				'/tr',
+				'http://timestamp.digicert.com',
+				'/d',
+				'$Description',
+				'/du',
+				'https://bitfocus.io',
+				'/f',
+				'c:\\actions-runner-bitfocusas\\codesign.cer',
+				'/csp',
+				'eToken Base Cryptographic Provider',
+				'/k',
+				process.env.BF_CODECERT_KEY,
+				targetPath,
+			]
+
+			// await retry(
+			// 	() =>
+			await vm.exec(toolPath, args, {
+				timeout: 10 * 60 * 1000,
+				env: process.env,
+			})
+			// 2,
+			// 15000,
+			// 10000,
+			// 0,
+			// (e: any) => {
+			// 	if (
+			// 		e.message.includes('The file is being used by another process') ||
+			// 		e.message.includes('The specified timestamp server either could not be reached') ||
+			// 		e.message.includes('No certificates were found that met all the given criteria.')
+			// 	) {
+			// 		log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
+			// 		return true
+			// 	}
+			// 	return false
+			// }
+			// )
+			//
+
+			// await signWindows(config, packager)
+		},
 	},
 	nsis: {
 		createStartMenuShortcut: true,
