@@ -48,7 +48,7 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 await fs.remove('./electron-output')
 
 const options: electronBuilder.Configuration = {
-	publish: null,
+	publish: [],
 	productName: 'Companion Satellite',
 	appId: 'remote.companion.bitfocus.no',
 	afterSign: 'tools/notarize.cjs',
