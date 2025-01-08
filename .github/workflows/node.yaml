@@ -206,6 +206,7 @@ jobs:
         env:
           CI: 1
           CSC_LINK: c:\\actions-runner-bitfocusas\\codesign.cer
+          BF_CODECERT_KEY: ${{ secrets.BF_CODECERT_KEY }}
 
       - name: Determine files to upload
         id: filenames
