@@ -1,25 +1,15 @@
 /* eslint-disable n/no-process-exit */
-import { fs, $, usePowerShell, argv } from 'zx'
+import { fs, usePowerShell, argv } from 'zx'
+// eslint-disable-next-line n/no-extraneous-import
 import electronBuilder from 'electron-builder'
 
 if (process.platform === 'win32') {
 	usePowerShell() // to enable powershell
 }
 
-function $withoutEscaping(pieces, ...args) {
-	const origQuote = $.quote
-	try {
-		$.quote = (unescapedCmd) => unescapedCmd
-		return $(pieces, args)
-	} finally {
-		$.quote = origQuote
-	}
-}
-
 const platform = argv._[0] || `${process.platform}-${process.arch}`
 
 let platformInfo: { platform: string; arch: electronBuilder.Arch }
-// let electronBuilderArgs: string[] = []
 // let nodePreGypArgs: string[] = []
 
 console.log(`Building for platform: ${platform}`)
