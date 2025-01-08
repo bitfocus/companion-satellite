@@ -14,13 +14,13 @@ let platformInfo: { platform: string; arch: electronBuilder.Arch }
 
 console.log(`Building for platform: ${platform}`)
 
-if (platform === 'mac-x64') {
+if (platform === 'mac-x64' || platform === 'darwin-x64') {
 	platformInfo = { platform: 'mac', arch: electronBuilder.Arch.x64 }
 	// nodePreGypArgs = ['--target_platform=darwin', '--target_arch=x64', '--target_libc=unknown']
-} else if (platform === 'mac-arm64') {
+} else if (platform === 'mac-arm64' || platform === 'darwin-arm64') {
 	platformInfo = { platform: 'mac', arch: electronBuilder.Arch.arm64 }
 	// nodePreGypArgs = ['--target_platform=darwin', '--target_arch=arm64', '--target_libc=unknown']
-} else if (platform === 'win-x64') {
+} else if (platform === 'win-x64' || platform === 'win32-x64') {
 	platformInfo = { platform: 'win', arch: electronBuilder.Arch.x64 }
 	// nodePreGypArgs = ['--target_platform=win32', '--target_arch=x64', '--target_libc=unknown']
 } else if (platform === 'linux-x64') {
@@ -51,7 +51,7 @@ const options: electronBuilder.Configuration = {
 	publish: null,
 	productName: 'Companion Satellite',
 	appId: 'remote.companion.bitfocus.no',
-	afterSign: '../tools/notarize.cjs',
+	afterSign: 'tools/notarize.cjs',
 	npmRebuild: false,
 	directories: {
 		buildResources: 'assets/',
