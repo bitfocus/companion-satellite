@@ -3060,6 +3060,7 @@ __metadata:
     husky: "npm:^9.1.6"
     lint-staged: "npm:^15.2.10"
     prettier: "npm:^3.3.3"
+    tsx: "npm:^4.19.2"
     typescript: "npm:~5.6.3"
     typescript-eslint: "npm:^8.11.0"
     zx: "npm:^8.1.9"

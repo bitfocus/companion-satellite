@@ -16,7 +16,6 @@
 		"dev:electron": "run build:main && electron dist/electron.js",
 		"build": "rimraf dist && run build:main",
 		"build:main": "run -T tsc -p tsconfig.build.json",
-		"build:electron": "electron-builder --publish=never",
 		"check-types": "run build:main --noEmit",
 		"watch-types": "run build:main --noEmit --watch"
 	},
@@ -69,69 +68,6 @@
 		],
 		"*.{ts,tsx,js,jsx}": [
 			"run -T lint:raw --fix"
-		]
-	},
-	"build": {
-		"productName": "Companion Satellite",
-		"appId": "remote.companion.bitfocus.no",
-		"afterSign": "../tools/notarize.cjs",
-		"npmRebuild": false,
-		"directories": {
-			"buildResources": "assets/",
-			"output": "../electron-output/"
-		},
-		"mac": {
-			"category": "no.bitfocus.companion.remote",
-			"target": "dmg",
-			"extendInfo": {
-				"LSBackgroundOnly": 1,
-				"LSUIElement": 1
-			},
-			"hardenedRuntime": "true",
-			"gatekeeperAssess": "false",
-			"entitlements": "entitlements.mac.plist",
-			"entitlementsInherit": "entitlements.mac.plist"
-		},
-		"dmg": {
-			"artifactName": "companion-satellite-${arch}.dmg",
-			"sign": true
-		},
-		"win": {
-			"target": "nsis"
-		},
-		"nsis": {
-			"createStartMenuShortcut": true,
-			"perMachine": true,
-			"oneClick": false,
-			"allowElevation": true,
-			"artifactName": "companion-satellite-x64.exe"
-		},
-		"linux": {
-			"target": "tar.gz",
-			"artifactName": "companion-satellite-${arch}.tar.gz",
-			"extraFiles": [
-				{
-					"from": "assets/linux",
-					"to": "."
-				}
-			]
-		},
-		"files": [
-			"**/*",
-			"assets/*",
-			"!.nvmrc",
-			"!.node_version",
-			"!docs",
-			"!samples",
-			"!src",
-			"!tools",
-			"!pi-image"
-		],
-		"extraResources": [
-			{
-				"from": "../webui/dist",
-				"to": "webui"
-			}
 		]
 	}
 }

@@ -1,7 +1,7 @@
 /* eslint-disable n/no-extraneous-import */
 // @ts-check
 
-import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
+import eslintPluginPrettierRecommended, { files } from 'eslint-plugin-prettier/recommended'
 import eslint from '@eslint/js'
 import neslint from 'eslint-plugin-n'
 import tseslint from 'typescript-eslint'
@@ -47,6 +47,7 @@ export default [
 			'no-warning-comments': ['error', { terms: ['nocommit', '@nocommit', '@no-commit'] }],
 			// 'jest/no-mocks-import': 'off',
 		},
+		files: ['**/*.ts', '**/*.cts', '**/*.mts'],
 	},
 	...tseslint.configs.recommendedTypeChecked,
 	{
