@@ -94,57 +94,14 @@ const options: electronBuilder.Configuration = {
 			if (!process.env.BF_CODECERT_KEY) throw new Error('BF_CODECERT_KEY variable is not set')
 
 			const vm = await packager.vm.value
-			// const args = configuration.computeSignToolArgs(isWin)
-
-			const args = [
-				// `sign`,
-				// '/fd',
-				// 'SHA256',
-				// '/td',
-				// 'SHA256',
-				// '/tr',
-				// 'http://timestamp.digicert.com',
-				// '/d',
-				// '$Description',
-				// '/du',
-				// 'https://bitfocus.io',
-				// '/f',
-				// 'c:\\actions-runner-bitfocusas\\codesign.cer',
-				// '/csp',
-				// 'eToken Base Cryptographic Provider',
-				// '/k',
-				// process.env.BF_CODECERT_KEY,
-				'c:\\actions-runner-bitfocus\\sign.ps1',
-				targetPath,
-				`-Description`,
-				'Bitfocus Companion Satellite',
-			]
-
-			// await retry(
-			// 	() =>
-			await vm.exec('powershell.exe', args, {
-				timeout: 10 * 60 * 1000,
-				env: process.env,
-			})
-			// 2,
-			// 15000,
-			// 10000,
-			// 0,
-			// (e: any) => {
-			// 	if (
-			// 		e.message.includes('The file is being used by another process') ||
-			// 		e.message.includes('The specified timestamp server either could not be reached') ||
-			// 		e.message.includes('No certificates were found that met all the given criteria.')
-			// 	) {
-			// 		log.warn(`Attempt to code sign failed, another attempt will be made in 15 seconds: ${e.message}`)
-			// 		return true
-			// 	}
-			// 	return false
-			// }
-			// )
-			//
-
-			// await signWindows(config, packager)
+			await vm.exec(
+				'powershell.exe',
+				['c:\\actions-runner-bitfocus\\sign.ps1', targetPath, `-Description`, 'Bitfocus Companion Satellite'],
+				{
+					timeout: 10 * 60 * 1000,
+					env: process.env,
+				},
+			)
 		},
 	},
 	nsis: {
