@@ -3,6 +3,7 @@
 	"references": [
 		//
 		{ "path": "satellite" },
-		{ "path": "webui" }
+		{ "path": "webui" },
+		{ "path": "tools" }
 	]
 }

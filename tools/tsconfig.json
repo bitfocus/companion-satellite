@@ -1,0 +1,16 @@
+{
+	"extends": "@tsconfig/node20/tsconfig.json",
+	"include": ["**/*.ts", "**/*.cts", "**/*.mts"],
+	"compilerOptions": {
+		"outDir": "./dist",
+		"baseUrl": "./",
+		"paths": {
+			"*": ["./node_modules/*"],
+		},
+		"types": ["node"],
+		"lib": ["dom"],
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"declaration": true
+	}
+}

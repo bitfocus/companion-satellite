@@ -47,6 +47,7 @@ export default [
 			'no-warning-comments': ['error', { terms: ['nocommit', '@nocommit', '@no-commit'] }],
 			// 'jest/no-mocks-import': 'off',
 		},
+		files: ['**/*.ts', '**/*.cts', '**/*.mts'],
 	},
 	...tseslint.configs.recommendedTypeChecked,
 	{
