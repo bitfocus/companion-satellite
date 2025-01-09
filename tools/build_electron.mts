@@ -94,7 +94,7 @@ const options: electronBuilder.Configuration = {
 				return
 			}
 
-			const toolPath = 'C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64\\signtool.exe'
+			// const toolPath = 'C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64\\signtool.exe'
 
 			if (!process.env.BF_CODECERT_KEY) throw new Error('BF_CODECERT_KEY not set')
 
@@ -102,29 +102,31 @@ const options: electronBuilder.Configuration = {
 			// const args = configuration.computeSignToolArgs(isWin)
 
 			const args = [
-				`sign`,
-				'/fd',
-				'SHA256',
-				'/td',
-				'SHA256',
-				'/tr',
-				'http://timestamp.digicert.com',
-				'/d',
-				'$Description',
-				'/du',
-				'https://bitfocus.io',
-				'/f',
-				'c:\\actions-runner-bitfocusas\\codesign.cer',
-				'/csp',
-				'eToken Base Cryptographic Provider',
-				'/k',
-				process.env.BF_CODECERT_KEY,
+				// `sign`,
+				// '/fd',
+				// 'SHA256',
+				// '/td',
+				// 'SHA256',
+				// '/tr',
+				// 'http://timestamp.digicert.com',
+				// '/d',
+				// '$Description',
+				// '/du',
+				// 'https://bitfocus.io',
+				// '/f',
+				// 'c:\\actions-runner-bitfocusas\\codesign.cer',
+				// '/csp',
+				// 'eToken Base Cryptographic Provider',
+				// '/k',
+				// process.env.BF_CODECERT_KEY,
 				targetPath,
+				`-Description`,
+				'Bitfocus Companion Satellite',
 			]
 
 			// await retry(
 			// 	() =>
-			await vm.exec(toolPath, args, {
+			await vm.exec('c:\\actions-runner-bitfocus\\sign.ps1', args, {
 				timeout: 10 * 60 * 1000,
 				env: process.env,
 			})
