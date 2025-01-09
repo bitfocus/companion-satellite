@@ -78,9 +78,6 @@ const options: electronBuilder.Configuration = {
 		signingHashAlgorithms: ['sha256'],
 
 		sign: async function sign(config, packager) {
-			// const path = require('path')
-			// const { signWindows } = await import('app-builder-lib/out/codeSign/windowsCodeSign')
-
 			// Do not sign if no certificate is provided.
 			if (!config.cscInfo) {
 				return
@@ -94,9 +91,7 @@ const options: electronBuilder.Configuration = {
 				return
 			}
 
-			// const toolPath = 'C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64\\signtool.exe'
-
-			if (!process.env.BF_CODECERT_KEY) throw new Error('BF_CODECERT_KEY not set')
+			if (!process.env.BF_CODECERT_KEY) throw new Error('BF_CODECERT_KEY variable is not set')
 
 			const vm = await packager.vm.value
 			// const args = configuration.computeSignToolArgs(isWin)
@@ -119,6 +114,7 @@ const options: electronBuilder.Configuration = {
 				// 'eToken Base Cryptographic Provider',
 				// '/k',
 				// process.env.BF_CODECERT_KEY,
+				'c:\\actions-runner-bitfocus\\sign.ps1',
 				targetPath,
 				`-Description`,
 				'Bitfocus Companion Satellite',
@@ -126,7 +122,7 @@ const options: electronBuilder.Configuration = {
 
 			// await retry(
 			// 	() =>
-			await vm.exec('c:\\actions-runner-bitfocus\\sign.ps1', args, {
+			await vm.exec('powershell.exe', args, {
 				timeout: 10 * 60 * 1000,
 				env: process.env,
 			})
