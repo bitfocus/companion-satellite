@@ -1,6 +1,6 @@
 {
 	"name": "satellite",
-	"version": "1.10.1",
+	"version": "1.10.2",
 	"description": "Satellite Streamdeck connector for Bitfocus Companion",
 	"author": {
 		"name": "Julian Waller",
