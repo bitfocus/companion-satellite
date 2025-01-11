@@ -52,6 +52,11 @@ export class StreamDeckWrapper implements WrappedDevice {
 
 	#companionSupportsScaling = false
 
+	/**
+	 * Whether the LCD has been written to outside the button bounds that needs clearing
+	 */
+	#fullLcdDirty = true
+
 	public get deviceId(): string {
 		return this.#deviceId
 	}
@@ -158,6 +163,14 @@ export class StreamDeckWrapper implements WrappedDevice {
 				} catch (e) {
 					console.log(`scale image failed: ${e}`)
 					return
+				}
+
+				// Clear the lcd segment if needed
+				if (this.#fullLcdDirty) {
+					if (abort.aborted) return
+
+					this.#fullLcdDirty = false
+					await this.#deck.clearLcdSegment(control.id)
 				}
 
 				const maxAttempts = 3
@@ -317,6 +330,9 @@ export class StreamDeckWrapper implements WrappedDevice {
 					)
 					.then(async (buffer) => {
 						if (signal.aborted) return
+
+						// Mark the screen as dirty, so the gaps get cleared when the first region draw happens
+						this.#fullLcdDirty = true
 
 						// still valid
 						await this.#deck.fillLcd(lcdStrip.id, buffer, {
