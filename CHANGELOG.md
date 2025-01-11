@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [1.10.2](https://github.com/bitfocus/companion-satellite/compare/v1.10.1...v1.10.2) (2025-01-11)
+
+
+### Features
+
+* reimplement windows signing ([#174](https://github.com/bitfocus/companion-satellite/issues/174)) ([67db6da](https://github.com/bitfocus/companion-satellite/commit/67db6dada718ca328cc322a84bdbebe3f783d69d))
+
+
+### Bug Fixes
+
+* clear full lcd strip on streamdeck+ when drawing first 'button' to it [#176](https://github.com/bitfocus/companion-satellite/issues/176) ([dcdd585](https://github.com/bitfocus/companion-satellite/commit/dcdd5854a87faeca74a5ced707df5c406eed18b2))
+
+
+### Miscellaneous Chores
+
+* force version ([568be36](https://github.com/bitfocus/companion-satellite/commit/568be368007caa994fce5c12557a520d25043098))
+
 ## [1.10.1](https://github.com/bitfocus/companion-satellite/compare/v1.10.0...v1.10.1) (2024-11-13)
 
 
