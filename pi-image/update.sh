@@ -31,13 +31,13 @@ corepack enable
 ensure_installed() {
   if ! dpkg --verify "$1" 2>/dev/null; then
 	# Future: batch the installs, if there are multiple
-	apt-get install -y $1
+	apt-get install -qq -y $1
   fi
 }
 ensure_installed "wget unattended-upgrades"
 
 # Run interactive version picker
-yarn --cwd "pi-image/update-prompt" install
+yarn --cwd "pi-image/update-prompt" install >/dev/null
 node "pi-image/update-prompt/main.js" $1 $2
 
 # Get result
