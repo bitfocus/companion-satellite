@@ -13,17 +13,15 @@ try {
 }
 
 async function getLatestBuildsForBranch(branch, targetCount) {
-	targetCount *= 10 // HACK until the api changes
+	// This is a bit fragile, but is good enough
+	let target = `${process.platform}-${process.arch}-tgz`
+	if (target === 'linux-x64-tgz') target = 'linux-tgz'
 
 	// eslint-disable-next-line n/no-unsupported-features/node-builtins
 	const data = await fetch(
-		`https://api.bitfocus.io/v1/product/companion-satellite/packages?branch=${branch}&limit=${targetCount}`,
+		`https://api.bitfocus.io/v1/product/companion-satellite/packages?branch=${branch}&limit=${targetCount}&target=${target}`,
 	)
 	const jsonData = await data.json()
-
-	// TODO - make sure this is durable
-	let target = `${process.platform}-${process.arch}-tgz`
-	if (target === 'linux-x64-tgz') target = 'linux-tgz'
 
 	// console.log('searching for', target, 'in', data.data.packages)
 
