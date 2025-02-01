@@ -20,7 +20,6 @@
 		"watch-types": "run build:main --noEmit --watch"
 	},
 	"devDependencies": {
-		"@electron/notarize": "^2.5.0",
 		"@types/eslint": "^9.6.1",
 		"@types/koa": "^2.15.0",
 		"@types/koa-router": "^7.4.8",

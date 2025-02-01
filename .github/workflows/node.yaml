@@ -270,9 +270,9 @@ jobs:
         env:
           CSC_LINK: ${{ secrets.OSX_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.OSX_CSC_KEY_PASSWORD }}
-          APPLEID: ${{ secrets.APPLEID }}
-          APPLETEAMID: ${{ secrets.APPLETEAMID }}
-          APPLEIDPASS: ${{ secrets.APPLEIDPASS }}
+          APPLE_ID: ${{ secrets.APPLEID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
 
       - name: Determine files to upload
         id: filenames
@@ -336,9 +336,9 @@ jobs:
         env:
           CSC_LINK: ${{ secrets.OSX_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.OSX_CSC_KEY_PASSWORD }}
-          APPLEID: ${{ secrets.APPLEID }}
-          APPLETEAMID: ${{ secrets.APPLETEAMID }}
-          APPLEIDPASS: ${{ secrets.APPLEIDPASS }}
+          APPLE_ID: ${{ secrets.APPLEID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
 
       - name: Determine files to upload
         id: filenames

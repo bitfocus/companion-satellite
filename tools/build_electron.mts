@@ -51,7 +51,6 @@ const options: electronBuilder.Configuration = {
 	publish: [],
 	productName: 'Companion Satellite',
 	appId: 'remote.companion.bitfocus.no',
-	afterSign: 'tools/notarize.cjs',
 	npmRebuild: false,
 	directories: {
 		buildResources: 'assets/',
