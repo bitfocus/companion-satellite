@@ -7915,7 +7915,6 @@ __metadata:
     electron-about-window: "npm:^1.15.2"
     electron-builder: "npm:^26.0.1"
     electron-store: "npm:^10.0.1"
-    eventemitter3: "npm:^5.0.1"
     exit-hook: "npm:^4.0.0"
     infinitton-idisplay: "npm:^1.2.0"
     koa: "npm:^2.15.3"
