@@ -1,9 +1,8 @@
 import '@julusian/segfault-raub'
 
-import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain } from 'electron'
+import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain, shell } from 'electron'
 import * as path from 'path'
 import electronStore from 'electron-store'
-import openAboutWindow from 'electron-about-window'
 import { DeviceManager } from './devices.js'
 import { CompanionSatelliteClient } from './client.js'
 import { DEFAULT_PORT } from './lib.js'
@@ -21,6 +20,7 @@ ensureFieldsPopulated(appConfig)
 
 let tray: Tray | undefined
 let configWindow: BrowserWindow | undefined
+let aboutWindow: BrowserWindow | undefined
 
 app.on('window-all-closed', () => {
 	// Block default behaviour of exit on close
@@ -186,21 +186,55 @@ function trayScanDevices() {
 }
 
 function trayAbout() {
+	if (aboutWindow?.isVisible()) return
 	console.log('about click')
-	openAboutWindow.default({
-		icon_path: fileURLToPath(new URL('../assets/icon.png', import.meta.url)),
-		product_name: 'Companion Satellite',
-		use_inner_html: true,
-		description: 'Satellite Streamdeck connector for Bitfocus Companion <br />Supports 2.2.0 and newer',
-		adjust_window_size: false,
-		win_options: {
-			resizable: false,
+
+	const isProduction = app.isPackaged
+
+	aboutWindow = new BrowserWindow({
+		show: false,
+		width: 400,
+		height: 400,
+		autoHideMenuBar: isProduction,
+		icon: fileURLToPath(new URL('../assets/icon.png', import.meta.url)),
+		resizable: !isProduction,
+		webPreferences: {
+			preload: fileURLToPath(new URL('../dist/aboutPreload.cjs', import.meta.url)),
 		},
-		bug_report_url: 'https://github.com/bitfocus/companion-satellite/issues',
-		copyright: `${new Date().getFullYear()} Julian Waller`,
-		homepage: 'https://github.com/bitfocus/companion-satellite',
-		license: 'MIT',
 	})
+	aboutWindow.on('close', () => {
+		aboutWindow = undefined
+	})
+	if (isProduction) {
+		aboutWindow.removeMenu()
+		aboutWindow
+			.loadFile(path.join(webRoot, 'about.html'))
+			.then(() => {
+				if (!aboutWindow) return
+
+				aboutWindow.show()
+				aboutWindow.focus()
+
+				aboutWindow.webContents.send('about-version', app.getVersion())
+			})
+			.catch((e) => {
+				console.error('Failed to load file', e)
+			})
+	} else {
+		aboutWindow
+			.loadURL('http://localhost:5173/about.html')
+			.then(() => {
+				if (!aboutWindow) return
+
+				aboutWindow.show()
+				aboutWindow.focus()
+
+				aboutWindow.webContents.send('about-version', app.getVersion())
+			})
+			.catch((e) => {
+				console.error('Failed to load file', e)
+			})
+	}
 }
 
 ipcMain.on('rescan', () => {
@@ -218,4 +252,15 @@ ipcMain.handle('saveConfig', async (_e, newConfig: Partial<ApiConfigData>): Prom
 	console.log('saveConfig', newConfig)
 	updateConfig(appConfig, newConfig)
 	return compileConfig(appConfig)
+})
+
+// about window
+ipcMain.handle('openShell', async (_e, url: string): Promise<void> => {
+	console.log('openShell', url)
+	shell.openExternal(url).catch((e) => {
+		console.error('Failed to open shell', e)
+	})
+})
+ipcMain.handle('getVersion', async (): Promise<string> => {
+	return app.getVersion()
 })

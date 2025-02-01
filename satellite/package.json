@@ -46,7 +46,6 @@
 		"@xencelabs-quick-keys/node": "^1.0.0",
 		"conf": "^13.1.0",
 		"debounce-fn": "^6.0.0",
-		"electron-about-window": "^1.15.2",
 		"electron-store": "^10.0.1",
 		"exit-hook": "^4.0.0",
 		"infinitton-idisplay": "^1.2.0",

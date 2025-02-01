@@ -3793,13 +3793,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-about-window@npm:^1.15.2":
-  version: 1.15.2
-  resolution: "electron-about-window@npm:1.15.2"
-  checksum: 10c0/fdcc9123fb9418a278738b6dca82cc0df050d2bb69a2f6de3c2e336bbb66045310f33fa5d099ef8b4353f9abf2e9b11fad126ccd03527d176d0f831932ded8d0
-  languageName: node
-  linkType: hard
-
 "electron-builder@npm:^26.0.1":
   version: 26.0.1
   resolution: "electron-builder@npm:26.0.1"
@@ -7976,7 +7969,6 @@ __metadata:
     cross-env: "npm:^7.0.3"
     debounce-fn: "npm:^6.0.0"
     electron: "npm:34.0.2"
-    electron-about-window: "npm:^1.15.2"
     electron-builder: "npm:^26.0.1"
     electron-store: "npm:^10.0.1"
     exit-hook: "npm:^4.0.0"
