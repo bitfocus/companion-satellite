@@ -75,33 +75,35 @@ const options: electronBuilder.Configuration = {
 	},
 	win: {
 		target: 'nsis',
-		signingHashAlgorithms: ['sha256'],
+		signtoolOptions: {
+			signingHashAlgorithms: ['sha256'],
 
-		sign: async function sign(config, packager) {
-			// Do not sign if no certificate is provided.
-			if (!config.cscInfo) {
-				return
-			}
+			sign: async function sign(config, packager) {
+				// Do not sign if no certificate is provided.
+				if (!config.cscInfo) {
+					return
+				}
 
-			if (!packager) throw new Error('Packager is required')
+				if (!packager) throw new Error('Packager is required')
 
-			const targetPath = config.path
-			// Do not sign elevate file, because that prompts virus warning?
-			if (targetPath.endsWith('elevate.exe')) {
-				return
-			}
+				const targetPath = config.path
+				// Do not sign elevate file, because that prompts virus warning?
+				if (targetPath.endsWith('elevate.exe')) {
+					return
+				}
 
-			if (!process.env.BF_CODECERT_KEY) throw new Error('BF_CODECERT_KEY variable is not set')
+				if (!process.env.BF_CODECERT_KEY) throw new Error('BF_CODECERT_KEY variable is not set')
 
-			const vm = await packager.vm.value
-			await vm.exec(
-				'powershell.exe',
-				['c:\\actions-runner-bitfocus\\sign.ps1', targetPath, `-Description`, 'Bitfocus Companion Satellite'],
-				{
-					timeout: 10 * 60 * 1000,
-					env: process.env,
-				},
-			)
+				const vm = await packager.vm.value
+				await vm.exec(
+					'powershell.exe',
+					['c:\\actions-runner-bitfocus\\sign.ps1', targetPath, `-Description`, 'Bitfocus Companion Satellite'],
+					{
+						timeout: 10 * 60 * 1000,
+						env: process.env,
+					},
+				)
+			},
 		},
 	},
 	nsis: {
