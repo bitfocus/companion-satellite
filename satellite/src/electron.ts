@@ -131,7 +131,6 @@ trayMenu.append(
 	}),
 )
 trayMenu.append(electronUpdater.menuItem)
-trayMenu.append(electronUpdater.installMenuItem)
 trayMenu.append(
 	new MenuItem({
 		label: 'About',

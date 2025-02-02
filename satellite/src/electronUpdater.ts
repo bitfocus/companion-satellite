@@ -33,7 +33,6 @@ export function isUpdateSupported(): boolean {
 
 export class ElectronUpdater {
 	readonly menuItem: MenuItem
-	readonly installMenuItem: MenuItem
 	#updateNotification: Notification | undefined
 
 	constructor() {
@@ -41,11 +40,6 @@ export class ElectronUpdater {
 			label: 'Check for updates',
 			visible: isUpdateSupported(),
 			click: () => this.check(true),
-		})
-		this.installMenuItem = new MenuItem({
-			label: 'Install pending update',
-			visible: false,
-			click: () => this.installPending(),
 		})
 	}
 
@@ -70,9 +64,6 @@ export class ElectronUpdater {
 		autoUpdater
 			.checkForUpdates()
 			.then((info) => {
-				this.menuItem.visible = !info
-				this.installMenuItem.visible = !!info
-
 				if (notifyWithDialog) {
 					if (info) {
 						dialog
