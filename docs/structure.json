@@ -1,5 +1,5 @@
 [
-	{	
+	{
 		"label": "Getting started",
 		"file": "1_welcome.md",
 		"children": [
@@ -12,8 +12,8 @@
 				"file": "1_gettingstarted/start_the_program.md"
 			},
 			{
-				"label": "Configure Remote Host",
-				"file": "1_gettingstarted/configure_remote_host.md"
+				"label": "Configure Satellite",
+				"file": "1_gettingstarted/configure_satellite.md"
 			},
 			{
 				"label": "Scan for Surfaces",
@@ -24,7 +24,7 @@
 	{
 		"label": "Raspberry Pi Setup",
 		"file:": "2_rpi.md",
-		"children":[
+		"children": [
 			{
 				"label": "Static IP Configuration",
 				"file": "2_raspberrypi/static_ip.md"
@@ -32,7 +32,7 @@
 			{
 				"label": "Reverting to DHCP",
 				"file": "2_raspberrypi/revert_to_dhcp.md"
-			}		
+			}
 		]
 	}
 ]

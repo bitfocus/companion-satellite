@@ -1,6 +1,9 @@
-If you disconnect, reconnect, or add new Satellite surfaces on the local machine, you will need to have the program perform a re-scan to detect those new devices.
+If you disconnect, reconnect, or add new Satellite surfaces on the local machine, Satellite should automatically detect the surfaces as they are attached.
 
-You can do this in the Context menu by right-clicking on the Companion icon and choosing "Scan devices":
+If for some reason it does not detect it by itself, you can instead trigger a rescan from either the tray icon:
 ![Scan](images/scan.png?raw=true 'Scan')
 
-You should then see the new devices connect to the Companion server, and they will show up in the web GUI of the Companion server as surfaces.
+or from the configuration page:
+![Scan](images/scan.png?raw=true 'Scan')
+
+They will then be detected as normal and appear in the 'Connected Surfaces' tab and in Companion.

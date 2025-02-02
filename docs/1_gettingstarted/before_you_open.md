@@ -1,3 +1,4 @@
-- Connect the Stream Deck surfaces that you want to use.
+- Connect the Stream Deck or other surfaces that you want to use.
 - In the Elgato Stream Deck app, make sure to firmware upgrade the Stream Deck to the latest version available.
 - Close the Elgato Stream Deck app. Companion Satellite will not detect your device if the Elgato Stream Deck app is open.
+- Close the application for any other surface types you wish to use.
