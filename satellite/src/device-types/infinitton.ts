@@ -1,9 +1,60 @@
 import { CardGenerator } from '../cards.js'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
+import {
+	ClientCapabilities,
+	CompanionClient,
+	DeviceDrawProps,
+	SurfacePlugin,
+	DeviceRegisterProps,
+	DiscoveredSurfaceInfo,
+	WrappedSurface,
+	WrappedSurfaceEvents,
+	HIDDevice,
+} from './api.js'
 import * as imageRs from '@julusian/image-rs'
 import Infinitton from 'infinitton-idisplay'
+import { EventEmitter } from 'events'
 
-export class InfinittonWrapper implements WrappedDevice {
+export interface InfinittonDeviceInfo {
+	path: string
+}
+
+export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
+	readonly pluginId = 'infinitton'
+
+	async init(): Promise<void> {
+		// Nothing to do
+	}
+	async destroy(): Promise<void> {
+		// Nothing to do
+	}
+
+	checkSupportsHidDevice = (device: HIDDevice): DiscoveredSurfaceInfo<InfinittonDeviceInfo> | null => {
+		if (
+			device.path &&
+			device.serialNumber &&
+			device.vendorId === Infinitton.VENDOR_ID &&
+			Infinitton.PRODUCT_IDS.includes(device.productId)
+		) {
+			return {
+				surfaceId: device.serialNumber,
+				pluginInfo: { path: device.path },
+			}
+		} else {
+			return null
+		}
+	}
+
+	openSurface = async (
+		surfaceId: string,
+		pluginInfo: InfinittonDeviceInfo,
+		cardGenerator: CardGenerator,
+	): Promise<WrappedSurface> => {
+		const infinitton = new Infinitton(pluginInfo.path)
+		return new InfinittonWrapper(surfaceId, infinitton, cardGenerator)
+	}
+}
+
+export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
 	readonly #cardGenerator: CardGenerator
 	readonly #panel: Infinitton
 	readonly #deviceId: string
@@ -18,9 +69,13 @@ export class InfinittonWrapper implements WrappedDevice {
 	}
 
 	public constructor(deviceId: string, panel: Infinitton, cardGenerator: CardGenerator) {
+		super()
+
 		this.#panel = panel
 		this.#deviceId = deviceId
 		this.#cardGenerator = cardGenerator
+
+		this.#panel.on('error', (e) => this.emit('error', e))
 	}
 
 	getRegisterProps(): DeviceRegisterProps {

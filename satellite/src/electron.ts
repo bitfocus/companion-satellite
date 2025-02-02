@@ -38,7 +38,7 @@ console.log('Starting')
 const webRoot = fileURLToPath(new URL(app.isPackaged ? '../../webui' : '../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
-const devices = new DeviceManager(client)
+const devices = await DeviceManager.create(client)
 const server = new RestServer(webRoot, appConfig, client, devices)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 

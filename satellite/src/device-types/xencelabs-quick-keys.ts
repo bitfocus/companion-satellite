@@ -4,9 +4,79 @@ import {
 	XencelabsQuickKeysWheelSpeed,
 	XencelabsQuickKeysDisplayOrientation,
 	WheelEvent,
+	XencelabsQuickKeysManagerInstance,
 } from '@xencelabs-quick-keys/node'
-import { WrappedDevice, DeviceRegisterProps, DeviceDrawProps, ClientCapabilities, CompanionClient } from './api.js'
+import {
+	WrappedSurface,
+	DeviceRegisterProps,
+	DeviceDrawProps,
+	ClientCapabilities,
+	CompanionClient,
+	WrappedSurfaceEvents,
+	SurfacePlugin,
+	SurfacePluginDetectionEvents,
+	SurfacePluginDetection,
+} from './api.js'
 import { parseColor } from './lib.js'
+import { EventEmitter } from 'events'
+import type { CardGenerator } from '../cards.js'
+
+class QuickKeysPluginDetection
+	extends EventEmitter<SurfacePluginDetectionEvents<XencelabsQuickKeys>>
+	implements SurfacePluginDetection<XencelabsQuickKeys>
+{
+	async triggerScan(): Promise<void> {
+		// TODO - or should this go the other route and use openDevicesFromArray?
+		await XencelabsQuickKeysManagerInstance.scanDevices()
+	}
+}
+
+export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
+	readonly pluginId = 'elgato-streamdeck'
+
+	readonly detection = new QuickKeysPluginDetection()
+
+	async init(): Promise<void> {
+		XencelabsQuickKeysManagerInstance.on('connect', this.#connectListener)
+		XencelabsQuickKeysManagerInstance.on('disconnect', this.#disconnectListener)
+	}
+	async destroy(): Promise<void> {
+		XencelabsQuickKeysManagerInstance.off('connect', this.#connectListener)
+		XencelabsQuickKeysManagerInstance.off('disconnect', this.#disconnectListener)
+
+		// Ensure all devices are closed?
+		// await XencelabsQuickKeysManagerInstance.closeAll()
+	}
+
+	#connectListener = (dev: XencelabsQuickKeys) => {
+		if (dev.deviceId) {
+			this.detection.emit('deviceAdded', {
+				surfaceId: dev.deviceId,
+				pluginInfo: dev,
+			})
+		} else {
+			console.warn('Ignoring wired XencelabsQuickKeys device without serial number')
+
+			dev.on('error', (e) => {
+				// Ensure errors don't cause a crash
+				console.error('Error from device:', e)
+			})
+		}
+	}
+	#disconnectListener = (dev: XencelabsQuickKeys) => {
+		if (dev.deviceId) {
+			this.detection.emit('deviceRemoved', dev.deviceId)
+		}
+	}
+
+	openSurface = async (
+		surfaceId: string,
+		quickkeys: XencelabsQuickKeys,
+		_cardGenerator: CardGenerator,
+	): Promise<WrappedSurface> => {
+		return new QuickKeysWrapper(surfaceId, quickkeys)
+	}
+}
 
 function keyToCompanion(k: number): number | null {
 	if (k >= 0 && k < 4) return k + 1
@@ -15,7 +85,8 @@ function keyToCompanion(k: number): number | null {
 	if (k === 9) return 5
 	return null
 }
-export class QuickKeysWrapper implements WrappedDevice {
+
+export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
 	readonly #surface: XencelabsQuickKeys
 	readonly #deviceId: string
 
@@ -32,8 +103,12 @@ export class QuickKeysWrapper implements WrappedDevice {
 	}
 
 	public constructor(deviceId: string, surface: XencelabsQuickKeys) {
+		super()
+
 		this.#surface = surface
 		this.#deviceId = deviceId
+
+		this.#surface.on('error', (e) => this.emit('error', e))
 	}
 
 	getRegisterProps(): DeviceRegisterProps {

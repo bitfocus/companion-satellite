@@ -8,10 +8,18 @@ import {
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards.js'
 import { ImageWriteQueue } from '../writeQueue.js'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
+import {
+	ClientCapabilities,
+	CompanionClient,
+	DeviceDrawProps,
+	DeviceRegisterProps,
+	WrappedSurface,
+	WrappedSurfaceEvents,
+} from './api.js'
 import { parseColor } from './lib.js'
+import { EventEmitter } from 'events'
 
-export class LoupedeckLiveWrapper implements WrappedDevice {
+export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
 	readonly #deviceId: string
@@ -31,9 +39,13 @@ export class LoupedeckLiveWrapper implements WrappedDevice {
 	}
 
 	public constructor(deviceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) {
+		super()
+
 		this.#deck = device
 		this.#deviceId = deviceId
 		this.#cardGenerator = cardGenerator
+
+		this.#deck.on('error', (e) => this.emit('error', e))
 
 		if (
 			device.modelId !== LoupedeckModelId.LoupedeckLive &&

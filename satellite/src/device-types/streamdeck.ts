@@ -1,10 +1,28 @@
-import { DeviceModelId, StreamDeck, StreamDeckLcdSegmentControlDefinition } from '@elgato-stream-deck/node'
+import {
+	DeviceModelId,
+	getStreamDeckDeviceInfo,
+	openStreamDeck,
+	StreamDeck,
+	StreamDeckDeviceInfo,
+	StreamDeckLcdSegmentControlDefinition,
+} from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards.js'
 import { ImageWriteQueue } from '../writeQueue.js'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps, WrappedDevice } from './api.js'
+import {
+	ClientCapabilities,
+	CompanionClient,
+	DeviceDrawProps,
+	SurfacePlugin,
+	DeviceRegisterProps,
+	DiscoveredSurfaceInfo,
+	WrappedSurface,
+	WrappedSurfaceEvents,
+	HIDDevice,
+} from './api.js'
 import { parseColor, transformButtonImage } from './lib.js'
 import util from 'util'
+import EventEmitter from 'events'
 
 const setTimeoutPromise = util.promisify(setTimeout)
 
@@ -41,7 +59,37 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 	}
 }
 
-export class StreamDeckWrapper implements WrappedDevice {
+export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
+	readonly pluginId = 'elgato-streamdeck'
+
+	async init(): Promise<void> {
+		// Nothing to do
+	}
+	async destroy(): Promise<void> {
+		// Nothing to do
+	}
+
+	checkSupportsHidDevice = (device: HIDDevice): DiscoveredSurfaceInfo<StreamDeckDeviceInfo> | null => {
+		const sdInfo = getStreamDeckDeviceInfo(device)
+		if (!sdInfo || !sdInfo.serialNumber) return null
+
+		return {
+			surfaceId: sdInfo.serialNumber,
+			pluginInfo: sdInfo,
+		}
+	}
+
+	openSurface = async (
+		surfaceId: string,
+		pluginInfo: StreamDeckDeviceInfo,
+		cardGenerator: CardGenerator,
+	): Promise<WrappedSurface> => {
+		const streamdeck = await openStreamDeck(pluginInfo.path)
+		return new StreamDeckWrapper(surfaceId, streamdeck, cardGenerator)
+	}
+}
+
+export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: StreamDeck
 	readonly #deviceId: string
@@ -65,9 +113,13 @@ export class StreamDeckWrapper implements WrappedDevice {
 	}
 
 	public constructor(deviceId: string, deck: StreamDeck, cardGenerator: CardGenerator) {
+		super()
+
 		this.#deck = deck
 		this.#deviceId = deviceId
 		this.#cardGenerator = cardGenerator
+
+		this.#deck.on('error', (e) => this.emit('error', e))
 
 		this.#drawAbort = new AbortController()
 
