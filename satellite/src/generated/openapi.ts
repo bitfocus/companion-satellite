@@ -63,7 +63,7 @@ export interface components {
         ErrorResponse: {
             error: string;
         };
-        ApiStatusResponse: {
+        StatusResponse: {
             /** @description Whether the client is connected to the Companion Satellite */
             connected: boolean;
             /** @description Version of the Companion Satellite */
@@ -71,7 +71,7 @@ export interface components {
             /** @description API version of the Companion Satellite */
             companionApiVersion: string | null;
         };
-        ApiConfigData: {
+        ConfigData: {
             /** @description Address of the Companion server to connect to */
             host: string;
             /** @description Port number of the Companion server to connect to */
@@ -85,7 +85,7 @@ export interface components {
             /** @description Port number of the HTTP api. This is readonly in the HTTP api */
             httpPort: number;
         };
-        ApiConfigDataUpdate: {
+        ConfigDataUpdate: {
             /** @description Address of the Companion server to connect to */
             host?: string;
             /** @description Port number of the Companion server to connect to */
@@ -94,6 +94,18 @@ export interface components {
             installationName?: string;
             /** @description Enable mDNS announcement to allow automatic discovery of the Companion Satellite */
             mdnsEnabled?: boolean;
+        };
+        SurfaceInfo: {
+            /** @description ID of the surface */
+            surfaceId: string;
+            /** @description Description of the surface */
+            description: string;
+            /** @description Plugin ID of the surface */
+            pluginId: string;
+            /** @description Plugin name of the surface */
+            pluginName: string;
+            /** @description Whether the surface is currently open */
+            isOpen: boolean;
         };
     };
     responses: never;
@@ -119,7 +131,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiStatusResponse"];
+                    "application/json": components["schemas"]["StatusResponse"];
                 };
             };
             /** @description failed operation */
@@ -175,7 +187,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiConfigData"];
+                    "application/json": components["schemas"]["ConfigData"];
                 };
             };
             /** @description failed operation */
@@ -198,7 +210,7 @@ export interface operations {
         };
         requestBody?: {
             content: {
-                "application/json": components["schemas"]["ApiConfigDataUpdate"];
+                "application/json": components["schemas"]["ConfigDataUpdate"];
             };
         };
         responses: {
@@ -208,7 +220,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiConfigData"];
+                    "application/json": components["schemas"]["ConfigData"];
                 };
             };
             /** @description failed operation */

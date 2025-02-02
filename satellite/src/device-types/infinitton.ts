@@ -18,8 +18,11 @@ export interface InfinittonDeviceInfo {
 	path: string
 }
 
+const PLUGIN_ID = 'infinitton'
+
 export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
-	readonly pluginId = 'infinitton'
+	readonly pluginId = PLUGIN_ID
+	readonly pluginName = 'Infinitton'
 
 	async init(): Promise<void> {
 		// Nothing to do
@@ -37,6 +40,7 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 		) {
 			return {
 				surfaceId: device.serialNumber,
+				description: `Infinitton`,
 				pluginInfo: { path: device.path },
 			}
 		} else {
@@ -55,13 +59,15 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 }
 
 export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+	readonly pluginId = PLUGIN_ID
+
 	readonly #cardGenerator: CardGenerator
 	readonly #panel: Infinitton
 	readonly #deviceId: string
 
 	#currentStatus: string | null = null
 
-	public get deviceId(): string {
+	public get surfaceId(): string {
 		return this.#deviceId
 	}
 	public get productName(): string {
@@ -92,9 +98,9 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		this.#panel.close()
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
-		console.log('Registering key events for ' + this.deviceId)
-		this.#panel.on('down', (key: number) => client.keyDown(this.deviceId, key))
-		this.#panel.on('up', (key: number) => client.keyUp(this.deviceId, key))
+		console.log('Registering key events for ' + this.surfaceId)
+		this.#panel.on('down', (key: number) => client.keyDown(this.surfaceId, key))
+		this.#panel.on('up', (key: number) => client.keyUp(this.surfaceId, key))
 
 		// Start with blanking it
 		await this.blankDevice()

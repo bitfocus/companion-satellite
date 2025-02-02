@@ -18,8 +18,11 @@ import {
 } from './api.js'
 import { parseColor } from './lib.js'
 import { EventEmitter } from 'events'
+import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 
 export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+	readonly pluginId = LOUPEDECK_PLUGIN_ID
+
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
 	readonly #deviceId: string
@@ -31,7 +34,7 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 	#companionSupportsScaling = false
 	#companionSupportsCombinedEncoders = false
 
-	public get deviceId(): string {
+	public get surfaceId(): string {
 		return this.#deviceId
 	}
 	public get productName(): string {
@@ -133,9 +136,9 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 			// Discard
 			return 99
 		}
-		console.log('Registering key events for ' + this.deviceId)
-		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index)))
+		console.log('Registering key events for ' + this.surfaceId)
+		this.#deck.on('down', (info) => client.keyDown(this.surfaceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('up', (info) => client.keyUp(this.surfaceId, convertButtonId(info.type, info.index)))
 		this.#deck.on('rotate', (info, delta) => {
 			if (info.type !== LoupedeckControlType.Rotary) return
 
@@ -143,15 +146,15 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 			if (id2 < 90) {
 				if (delta < 0) {
 					if (this.#companionSupportsCombinedEncoders) {
-						client.rotateLeft(this.deviceId, id2)
+						client.rotateLeft(this.surfaceId, id2)
 					} else {
-						client.keyUp(this.deviceId, id2)
+						client.keyUp(this.surfaceId, id2)
 					}
 				} else if (delta > 0) {
 					if (this.#companionSupportsCombinedEncoders) {
-						client.rotateRight(this.deviceId, id2)
+						client.rotateRight(this.surfaceId, id2)
 					} else {
-						client.keyDown(this.deviceId, id2)
+						client.keyDown(this.surfaceId, id2)
 					}
 				}
 			}
@@ -164,14 +167,14 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 		this.#deck.on('touchstart', (data) => {
 			for (const touch of data.changedTouches) {
 				if (touch.target.key !== undefined) {
-					client.keyDown(this.deviceId, translateKeyIndex(touch.target.key))
+					client.keyDown(this.surfaceId, translateKeyIndex(touch.target.key))
 				}
 			}
 		})
 		this.#deck.on('touchend', (data) => {
 			for (const touch of data.changedTouches) {
 				if (touch.target.key !== undefined) {
-					client.keyUp(this.deviceId, translateKeyIndex(touch.target.key))
+					client.keyUp(this.surfaceId, translateKeyIndex(touch.target.key))
 				}
 			}
 		})

@@ -11,6 +11,7 @@ import {
 	ApiConfigData,
 	ApiConfigDataUpdate,
 	ApiConfigDataUpdateElectron,
+	ApiSurfaceInfo,
 	compileConfig,
 	compileStatus,
 	updateConfig,
@@ -153,6 +154,10 @@ export class RestServer {
 			this.surfaceManager.scanForSurfaces()
 
 			ctx.body = 'OK'
+		})
+
+		this.router.get('/api/surfaces', async (ctx) => {
+			ctx.body = this.surfaceManager.getKnownSurfaces() satisfies ApiSurfaceInfo[]
 		})
 
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())

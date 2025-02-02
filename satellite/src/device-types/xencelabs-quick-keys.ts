@@ -31,8 +31,11 @@ class QuickKeysPluginDetection
 	}
 }
 
+const PLUGIN_ID = 'xencelabs-quick-keys'
+
 export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
-	readonly pluginId = 'elgato-streamdeck'
+	readonly pluginId = PLUGIN_ID
+	readonly pluginName = 'Xencelabs Quick Keys'
 
 	readonly detection = new QuickKeysPluginDetection()
 
@@ -52,6 +55,7 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 		if (dev.deviceId) {
 			this.detection.emit('deviceAdded', {
 				surfaceId: dev.deviceId,
+				description: `Quick Keys`,
 				pluginInfo: dev,
 			})
 		} else {
@@ -87,6 +91,8 @@ function keyToCompanion(k: number): number | null {
 }
 
 export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+	readonly pluginId = PLUGIN_ID
+
 	readonly #surface: XencelabsQuickKeys
 	readonly #deviceId: string
 
@@ -95,7 +101,7 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 	#statusTimer: NodeJS.Timeout | undefined
 	#unsub: (() => void) | undefined
 
-	public get deviceId(): string {
+	public get surfaceId(): string {
 		return this.#deviceId
 	}
 	public get productName(): string {
@@ -128,34 +134,34 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 		await this.#surface.stopData()
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
-		console.log('Registering key events for ' + this.deviceId)
+		console.log('Registering key events for ' + this.surfaceId)
 
 		const handleDown = (key: number) => {
 			const k = keyToCompanion(key)
 			if (k !== null) {
-				client.keyDown(this.deviceId, k)
+				client.keyDown(this.surfaceId, k)
 			}
 		}
 		const handleUp = (key: number) => {
 			const k = keyToCompanion(key)
 			if (k !== null) {
-				client.keyUp(this.deviceId, k)
+				client.keyUp(this.surfaceId, k)
 			}
 		}
 		const handleWheel = (ev: WheelEvent) => {
 			switch (ev) {
 				case WheelEvent.Left:
 					if (this.#companionSupportsCombinedEncoders) {
-						client.rotateLeft(this.deviceId, 5)
+						client.rotateLeft(this.surfaceId, 5)
 					} else {
-						client.keyUp(this.deviceId, 11)
+						client.keyUp(this.surfaceId, 11)
 					}
 					break
 				case WheelEvent.Right:
 					if (this.#companionSupportsCombinedEncoders) {
-						client.rotateRight(this.deviceId, 5)
+						client.rotateRight(this.surfaceId, 5)
 					} else {
-						client.keyDown(this.deviceId, 11)
+						client.keyDown(this.surfaceId, 11)
 					}
 					break
 			}

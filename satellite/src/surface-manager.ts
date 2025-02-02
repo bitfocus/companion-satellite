@@ -8,10 +8,18 @@ import * as HID from 'node-hid'
 import { wrapAsync } from './lib.js'
 import { InfinittonPlugin } from './device-types/infinitton.js'
 import { LoupedeckPlugin } from './device-types/loupedeck-plugin.js'
+import { ApiSurfaceInfo } from './apiTypes.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
 HID.devices()
+
+const knownPlugins: SurfacePlugin<any>[] = [
+	new StreamDeckPlugin(),
+	new InfinittonPlugin(),
+	new LoupedeckPlugin(),
+	new QuickKeysPlugin(),
+]
 
 export class SurfaceManager {
 	readonly #surfaces: Map<SurfaceId, WrappedSurface>
@@ -20,26 +28,38 @@ export class SurfaceManager {
 	readonly #client: CompanionSatelliteClient
 	readonly #cardGenerator: CardGenerator
 
-	readonly #plugins: SurfacePlugin<any>[] = [
-		new StreamDeckPlugin(),
-		new InfinittonPlugin(),
-		new LoupedeckPlugin(),
-		new QuickKeysPlugin(),
-	]
+	readonly #plugins = new Map<string, SurfacePlugin<any>>()
 
 	#statusString: string
 	#scanIsRunning = false
 	#scanPending = false
 
+	#lastScannedSurfaces: ApiSurfaceInfo[] = []
+
 	public static async create(client: CompanionSatelliteClient): Promise<SurfaceManager> {
 		const manager = new SurfaceManager(client)
 
 		try {
+			for (const plugin of knownPlugins) {
+				manager.#plugins.set(plugin.pluginId, plugin)
+
+				if (plugin.detection) {
+					plugin.detection.on('deviceAdded', (info) => {
+						if (!manager.#tryAddSurfaceFromPlugin(plugin, info)) {
+							console.log('Surface already exists', info.surfaceId)
+						}
+					})
+					plugin.detection.on('deviceRemoved', (surfaceId) => {
+						manager.#cleanupSurfaceById(surfaceId)
+					})
+				}
+			}
+
 			// Initialize all the plugins
-			await Promise.all(manager.#plugins.map(async (p) => p.init()))
+			await Promise.all(Array.from(manager.#plugins.values()).map(async (p) => p.init()))
 		} catch (e) {
 			// Something failed, cleanup
-			await Promise.allSettled(manager.#plugins.map(async (p) => p.destroy()))
+			await Promise.allSettled(Array.from(manager.#plugins.values()).map(async (p) => p.destroy()))
 			throw e
 		}
 
@@ -166,7 +186,14 @@ export class SurfaceManager {
 		await Promise.allSettled(Array.from(this.#surfaces.values()).map(async (surface) => surface.close()))
 
 		// Cleanup all the plugins
-		await Promise.allSettled(this.#plugins.map(async (plugin) => plugin.destroy()))
+		await Promise.allSettled(
+			Array.from(this.#plugins.values()).map(async (plugin) => {
+				await plugin.destroy()
+
+				// Cleanup any listeners
+				plugin.detection?.removeAllListeners()
+			}),
+		)
 	}
 
 	#getWrappedSurface(surfaceId: string): WrappedSurface {
@@ -195,10 +222,11 @@ export class SurfaceManager {
 		const surface = this.#surfaces.get(surfaceId)
 		if (!surface) return
 
-		// cleanup
-		this.#surfaces.delete(surfaceId)
-		this.#client.removeDevice(surfaceId)
 		try {
+			// cleanup
+			this.#surfaces.delete(surfaceId)
+			this.#client.removeDevice(surfaceId)
+
 			surface.close().catch(() => {
 				// Ignore
 			})
@@ -211,7 +239,7 @@ export class SurfaceManager {
 		console.log('registerAll', Array.from(this.#surfaces.keys()))
 		for (const device of this.#surfaces.values()) {
 			// If it is still in the process of initialising skip it
-			if (this.#pendingSurfaces.has(device.deviceId)) continue
+			if (this.#pendingSurfaces.has(device.surfaceId)) continue
 
 			// Indicate on device
 			device.showStatus(this.#client.host, this.#statusString)
@@ -220,7 +248,7 @@ export class SurfaceManager {
 			device.updateCapabilities(this.#client.capabilities)
 
 			// Re-init device
-			this.#client.addDevice(device.deviceId, device.productName, device.getRegisterProps())
+			this.#client.addDevice(device.surfaceId, device.productName, device.getRegisterProps())
 		}
 
 		this.scanForSurfaces()
@@ -238,14 +266,24 @@ export class SurfaceManager {
 		this.#scanIsRunning = true
 		this.#scanPending = false
 
+		const detectedSurfaces: ApiSurfaceInfo[] = []
+
 		void Promise.allSettled([
 			HID.devicesAsync()
 				.then(async (devices) => {
 					await Promise.all(
 						devices.map(async (device) => {
-							for (const plugin of this.#plugins) {
+							for (const plugin of this.#plugins.values()) {
 								const info = plugin.checkSupportsHidDevice?.(device)
 								if (!info) continue
+
+								detectedSurfaces.push({
+									pluginId: plugin.pluginId,
+									pluginName: plugin.pluginName,
+									surfaceId: info.surfaceId,
+									description: info.description,
+									isOpen: false,
+								})
 
 								this.#tryAddSurfaceFromPlugin(plugin, info)
 								return
@@ -257,11 +295,19 @@ export class SurfaceManager {
 					console.error(`HID scan failed: ${e}`)
 				}),
 
-			...this.#plugins.map(async (plugin) => {
+			...Array.from(this.#plugins.values()).map(async (plugin) => {
 				try {
 					if (plugin.scanForSurfaces) {
 						const surfaceInfos = await plugin.scanForSurfaces()
 						for (const surfaceInfo of surfaceInfos) {
+							detectedSurfaces.push({
+								pluginId: plugin.pluginId,
+								pluginName: plugin.pluginName,
+								surfaceId: surfaceInfo.surfaceId,
+								description: surfaceInfo.description,
+								isOpen: false,
+							})
+
 							this.#tryAddSurfaceFromPlugin(plugin, surfaceInfo)
 						}
 					} else if (plugin.detection?.triggerScan) {
@@ -274,10 +320,21 @@ export class SurfaceManager {
 		]).finally(() => {
 			this.#scanIsRunning = false
 
+			this.#lastScannedSurfaces = detectedSurfaces
+
 			if (this.#scanPending) {
 				this.scanForSurfaces()
 			}
 		})
+	}
+
+	public getKnownSurfaces(): ApiSurfaceInfo[] {
+		// TODO - include auto-detected surfaces
+
+		return this.#lastScannedSurfaces.map((surface) => ({
+			...surface,
+			isOpen: this.#surfaces.has(surface.surfaceId),
+		}))
 	}
 
 	// private getAutoId(path: string, prefix: string): string {
@@ -290,8 +347,8 @@ export class SurfaceManager {
 	// 	return val2
 	// }
 
-	#tryAddSurfaceFromPlugin<T>(plugin: SurfacePlugin<T>, pluginInfo: DiscoveredSurfaceInfo<T>): void {
-		if (this.#pendingSurfaces.has(pluginInfo.surfaceId) || this.#surfaces.has(pluginInfo.surfaceId)) return
+	#tryAddSurfaceFromPlugin<T>(plugin: SurfacePlugin<T>, pluginInfo: DiscoveredSurfaceInfo<T>): boolean {
+		if (this.#pendingSurfaces.has(pluginInfo.surfaceId) || this.#surfaces.has(pluginInfo.surfaceId)) return false
 		this.#pendingSurfaces.add(pluginInfo.surfaceId)
 
 		console.log(`adding new surface: ${pluginInfo.surfaceId}`)
@@ -300,14 +357,18 @@ export class SurfaceManager {
 		plugin
 			.openSurface(pluginInfo.surfaceId, pluginInfo.pluginInfo, this.#cardGenerator)
 			.then(async (surface) => {
-				surface.on('error', (e) => {
-					console.error('surface error', e)
-					this.#cleanupSurfaceById(pluginInfo.surfaceId)
-				})
-
-				this.#surfaces.set(pluginInfo.surfaceId, surface)
-
 				try {
+					surface.on('error', (e) => {
+						console.error('surface error', e)
+						this.#cleanupSurfaceById(pluginInfo.surfaceId)
+					})
+
+					if (plugin.pluginId !== surface.pluginId) {
+						throw new Error('Plugin ID mismatch')
+					}
+
+					this.#surfaces.set(pluginInfo.surfaceId, surface)
+
 					await surface.initDevice(this.#client, this.#statusString)
 
 					surface.updateCapabilities(this.#client.capabilities)
@@ -329,6 +390,8 @@ export class SurfaceManager {
 			.finally(() => {
 				this.#pendingSurfaces.delete(pluginInfo.surfaceId)
 			})
+
+		return true
 	}
 
 	#statusCardTimer: NodeJS.Timeout | undefined

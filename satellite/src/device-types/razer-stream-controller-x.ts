@@ -11,8 +11,11 @@ import {
 	WrappedSurfaceEvents,
 } from './api.js'
 import { EventEmitter } from 'events'
+import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 
 export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+	readonly pluginId = LOUPEDECK_PLUGIN_ID
+
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
 	readonly #deviceId: string
@@ -23,7 +26,7 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 
 	#companionSupportsScaling = false
 
-	public get deviceId(): string {
+	public get surfaceId(): string {
 		return this.#deviceId
 	}
 	public get productName(): string {
@@ -109,9 +112,9 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 			// Discard
 			return 99
 		}
-		console.log('Registering key events for ' + this.deviceId)
-		this.#deck.on('down', (info) => client.keyDown(this.deviceId, convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => client.keyUp(this.deviceId, convertButtonId(info.type, info.index)))
+		console.log('Registering key events for ' + this.surfaceId)
+		this.#deck.on('down', (info) => client.keyDown(this.surfaceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('up', (info) => client.keyUp(this.surfaceId, convertButtonId(info.type, info.index)))
 
 		// Start with blanking it
 		await this.blankDevice()

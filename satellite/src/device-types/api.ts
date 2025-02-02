@@ -23,7 +23,7 @@ export interface DeviceRegisterProps {
 
 export interface DiscoveredSurfaceInfo<T> {
 	surfaceId: string
-	// description: string
+	description: string
 	pluginInfo: T
 }
 
@@ -48,6 +48,7 @@ export interface SurfacePluginDetection<TInfo> extends EventEmitter<SurfacePlugi
  */
 export interface SurfacePlugin<TInfo> {
 	readonly pluginId: string
+	readonly pluginName: string
 
 	/**
 	 * Some plugins are forced to use a builtin detection mechanism by their surfaces or inner library
@@ -96,7 +97,9 @@ export interface WrappedSurfaceEvents {
 }
 
 export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
-	readonly deviceId: SurfaceId
+	readonly pluginId: string
+
+	readonly surfaceId: SurfaceId
 	readonly productName: string
 
 	getRegisterProps(): DeviceRegisterProps

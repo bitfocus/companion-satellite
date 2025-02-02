@@ -12,8 +12,11 @@ import { assertNever } from '../lib.js'
 import { LoupedeckLiveSWrapper } from './loupedeck-live-s.js'
 import { RazerStreamControllerXWrapper } from './razer-stream-controller-x.js'
 
+export const LOUPEDECK_PLUGIN_ID = 'loupedeck'
+
 export class LoupedeckPlugin implements SurfacePlugin<LoupedeckDeviceInfo> {
-	readonly pluginId = 'loupedeck'
+	readonly pluginId = LOUPEDECK_PLUGIN_ID
+	readonly pluginName = 'Loupedeck'
 
 	async init(): Promise<void> {
 		// Nothing to do
@@ -31,6 +34,7 @@ export class LoupedeckPlugin implements SurfacePlugin<LoupedeckDeviceInfo> {
 
 			result.push({
 				surfaceId: device.serialNumber,
+				description: device.model, // TODO: Better description
 				pluginInfo: device,
 			})
 		}

@@ -59,8 +59,11 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 	}
 }
 
+const PLUGIN_ID = 'elgato-streamdeck'
+
 export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
-	readonly pluginId = 'elgato-streamdeck'
+	readonly pluginId = PLUGIN_ID
+	readonly pluginName = 'Elgato StreamDeck'
 
 	async init(): Promise<void> {
 		// Nothing to do
@@ -75,6 +78,7 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 
 		return {
 			surfaceId: sdInfo.serialNumber,
+			description: sdInfo.model, // TODO: Better description
 			pluginInfo: sdInfo,
 		}
 	}
@@ -90,6 +94,8 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 }
 
 export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+	readonly pluginId = PLUGIN_ID
+
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: StreamDeck
 	readonly #deviceId: string
@@ -105,7 +111,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	 */
 	#fullLcdDirty = true
 
-	public get deviceId(): string {
+	public get surfaceId(): string {
 		return this.#deviceId
 	}
 	public get productName(): string {
@@ -263,23 +269,23 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		await this.#deck.close()
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
-		console.log('Registering key events for ' + this.deviceId)
+		console.log('Registering key events for ' + this.surfaceId)
 		this.#deck.on('down', (control) => {
 			const key = control.column + control.row * this.#registerProps.keysPerRow
 
-			client.keyDown(this.deviceId, key)
+			client.keyDown(this.surfaceId, key)
 		})
 		this.#deck.on('up', (control) => {
 			const key = control.column + control.row * this.#registerProps.keysPerRow
 
-			client.keyUp(this.deviceId, key)
+			client.keyUp(this.surfaceId, key)
 		})
 		this.#deck.on('rotate', (control, delta) => {
 			const key = control.column + control.row * this.#registerProps.keysPerRow
 			if (delta < 0) {
-				client.rotateLeft(this.deviceId, key)
+				client.rotateLeft(this.surfaceId, key)
 			} else if (delta > 0) {
-				client.rotateRight(this.deviceId, key)
+				client.rotateRight(this.surfaceId, key)
 			}
 		})
 		this.#deck.on('lcdShortPress', (control, position) => {
@@ -287,10 +293,10 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 			const key = control.column + columnOffset + control.row * this.#registerProps.keysPerRow
 
-			client.keyDown(this.deviceId, key)
+			client.keyDown(this.surfaceId, key)
 
 			setTimeout(() => {
-				client.keyUp(this.deviceId, key)
+				client.keyUp(this.surfaceId, key)
 			}, 20)
 		})
 		this.#deck.on('lcdLongPress', (control, position) => {
@@ -298,10 +304,10 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 			const key = control.column + columnOffset + control.row * this.#registerProps.keysPerRow
 
-			client.keyDown(this.deviceId, key)
+			client.keyDown(this.surfaceId, key)
 
 			setTimeout(() => {
-				client.keyUp(this.deviceId, key)
+				client.keyUp(this.surfaceId, key)
 			}, 20)
 		})
 

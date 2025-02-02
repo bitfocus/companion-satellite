@@ -3,9 +3,10 @@ import { CompanionSatelliteClient } from './client.js'
 import { SatelliteConfig } from './config.js'
 import type { components as openapiComponents } from './generated/openapi.js'
 
-export type ApiStatusResponse = openapiComponents['schemas']['ApiStatusResponse']
-export type ApiConfigData = openapiComponents['schemas']['ApiConfigData']
-export type ApiConfigDataUpdate = openapiComponents['schemas']['ApiConfigDataUpdate']
+export type ApiStatusResponse = openapiComponents['schemas']['StatusResponse']
+export type ApiConfigData = openapiComponents['schemas']['ConfigData']
+export type ApiConfigDataUpdate = openapiComponents['schemas']['ConfigDataUpdate']
+export type ApiSurfaceInfo = openapiComponents['schemas']['SurfaceInfo']
 
 export type ApiConfigDataUpdateElectron = ApiConfigDataUpdate & Pick<Partial<ApiConfigData>, 'httpEnabled' | 'httpPort'>
 

@@ -14,7 +14,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiStatusResponse'
+                $ref: '#/components/schemas/StatusResponse'
         '400':
           description: failed operation
           content:
@@ -46,7 +46,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiConfigData'
+                $ref: '#/components/schemas/ConfigData'
         '400':
           description: failed operation
           content:
@@ -60,14 +60,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ApiConfigDataUpdate'
+              $ref: '#/components/schemas/ConfigDataUpdate'
       responses:
         '200':
           description: successful operation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ApiConfigData'
+                $ref: '#/components/schemas/ConfigData'
         '400':
           description: failed operation
           content:
@@ -85,7 +85,7 @@ components:
       required:
         - error
 
-    ApiStatusResponse:
+    StatusResponse:
       type: object
       properties:
         connected:
@@ -106,7 +106,7 @@ components:
         - companionVersion
         - companionApiVersion
 
-    ApiConfigData:
+    ConfigData:
       type: object
       properties:
         host:
@@ -137,7 +137,7 @@ components:
         - httpEnabled
         - httpPort
 
-    ApiConfigDataUpdate:
+    ConfigDataUpdate:
       type: object
       properties:
         host:
@@ -153,3 +153,28 @@ components:
         mdnsEnabled:
           type: boolean
           description: Enable mDNS announcement to allow automatic discovery of the Companion Satellite
+
+    SurfaceInfo:
+      type: object
+      properties:
+        surfaceId:
+          type: string
+          description: ID of the surface
+        description:
+          type: string
+          description: Description of the surface
+        pluginId:
+          type: string
+          description: Plugin ID of the surface
+        pluginName:
+          type: string
+          description: Plugin name of the surface
+        isOpen:
+          type: boolean
+          description: Whether the surface is currently open
+      required:
+        - surfaceId
+        - description
+        - pluginId
+        - pluginName
+        - isOpen
