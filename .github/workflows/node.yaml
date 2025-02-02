@@ -195,6 +195,7 @@ jobs:
 
       - name: build & package (unsigned)
         if: ${{ runner.environment != 'self-hosted' }}
+        shell: bash
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             export EB_UPDATE_CHANNEL=stable
@@ -210,6 +211,7 @@ jobs:
 
       - name: build & package (signed)
         if: ${{ runner.environment == 'self-hosted' }}
+        shell: bash
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             export EB_UPDATE_CHANNEL=stable
