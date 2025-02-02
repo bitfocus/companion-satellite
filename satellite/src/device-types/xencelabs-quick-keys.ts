@@ -51,25 +51,25 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 		// await XencelabsQuickKeysManagerInstance.closeAll()
 	}
 
-	#connectListener = (dev: XencelabsQuickKeys) => {
-		if (dev.deviceId) {
+	#connectListener = (surface: XencelabsQuickKeys) => {
+		if (surface.deviceId) {
 			this.detection.emit('deviceAdded', {
-				surfaceId: dev.deviceId,
+				surfaceId: `quickkeys:${surface.deviceId}`,
 				description: `Quick Keys`,
-				pluginInfo: dev,
+				pluginInfo: surface,
 			})
 		} else {
 			console.warn('Ignoring wired XencelabsQuickKeys device without serial number')
 
-			dev.on('error', (e) => {
+			surface.on('error', (e) => {
 				// Ensure errors don't cause a crash
 				console.error('Error from device:', e)
 			})
 		}
 	}
-	#disconnectListener = (dev: XencelabsQuickKeys) => {
-		if (dev.deviceId) {
-			this.detection.emit('deviceRemoved', dev.deviceId)
+	#disconnectListener = (surface: XencelabsQuickKeys) => {
+		if (surface.deviceId) {
+			this.detection.emit('deviceRemoved', surface.deviceId)
 		}
 	}
 
@@ -94,7 +94,7 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 	readonly pluginId = PLUGIN_ID
 
 	readonly #surface: XencelabsQuickKeys
-	readonly #deviceId: string
+	readonly #surfaceId: string
 
 	#companionSupportsCombinedEncoders = true
 
@@ -102,17 +102,17 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 	#unsub: (() => void) | undefined
 
 	public get surfaceId(): string {
-		return this.#deviceId
+		return this.#surfaceId
 	}
 	public get productName(): string {
 		return 'Xencelabs Quick Keys'
 	}
 
-	public constructor(deviceId: string, surface: XencelabsQuickKeys) {
+	public constructor(surfaceId: string, surface: XencelabsQuickKeys) {
 		super()
 
 		this.#surface = surface
-		this.#deviceId = deviceId
+		this.#surfaceId = surfaceId
 
 		this.#surface.on('error', (e) => this.emit('error', e))
 	}

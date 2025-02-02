@@ -39,7 +39,7 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 			Infinitton.PRODUCT_IDS.includes(device.productId)
 		) {
 			return {
-				surfaceId: device.serialNumber,
+				surfaceId: `infinitton:${device.serialNumber}`,
 				description: `Infinitton`,
 				pluginInfo: { path: device.path },
 			}
@@ -63,22 +63,22 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 	readonly #cardGenerator: CardGenerator
 	readonly #panel: Infinitton
-	readonly #deviceId: string
+	readonly #surfaceId: string
 
 	#currentStatus: string | null = null
 
 	public get surfaceId(): string {
-		return this.#deviceId
+		return this.#surfaceId
 	}
 	public get productName(): string {
 		return `Infinitton`
 	}
 
-	public constructor(deviceId: string, panel: Infinitton, cardGenerator: CardGenerator) {
+	public constructor(surfaceId: string, panel: Infinitton, cardGenerator: CardGenerator) {
 		super()
 
 		this.#panel = panel
-		this.#deviceId = deviceId
+		this.#surfaceId = surfaceId
 		this.#cardGenerator = cardGenerator
 
 		this.#panel.on('error', (e) => this.emit('error', e))

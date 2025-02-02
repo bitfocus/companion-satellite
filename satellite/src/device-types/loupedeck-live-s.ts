@@ -25,7 +25,7 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
-	readonly #deviceId: string
+	readonly #surfaceId: string
 
 	#queueOutputId: number
 	#isShowingCard = true
@@ -35,17 +35,17 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 	#companionSupportsCombinedEncoders = false
 
 	public get surfaceId(): string {
-		return this.#deviceId
+		return this.#surfaceId
 	}
 	public get productName(): string {
 		return this.#deck.modelName
 	}
 
-	public constructor(deviceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) {
+	public constructor(surfaceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) {
 		super()
 
 		this.#deck = device
-		this.#deviceId = deviceId
+		this.#surfaceId = surfaceId
 		this.#cardGenerator = cardGenerator
 
 		this.#deck.on('error', (e) => this.emit('error', e))
@@ -73,7 +73,7 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 							.toBuffer(imageRs.PixelFormat.Rgb)
 					).buffer
 				} catch (e) {
-					console.log(`device(${deviceId}): scale image failed: ${e}`)
+					console.log(`device(${surfaceId}): scale image failed: ${e}`)
 					return
 				}
 			}
@@ -90,7 +90,7 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 
 					await this.#deck.drawKeyBuffer(key, newbuffer, LoupedeckBufferFormat.RGB)
 				} catch (e_1) {
-					console.error(`device(${deviceId}): fillImage failed: ${e_1}`)
+					console.error(`device(${surfaceId}): fillImage failed: ${e_1}`)
 				}
 			}
 		})

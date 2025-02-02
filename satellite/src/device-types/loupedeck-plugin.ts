@@ -26,16 +26,16 @@ export class LoupedeckPlugin implements SurfacePlugin<LoupedeckDeviceInfo> {
 	}
 
 	scanForSurfaces = async (): Promise<DiscoveredSurfaceInfo<LoupedeckDeviceInfo>[]> => {
-		const devices = await listLoupedecks()
+		const surfaceInfos = await listLoupedecks()
 
 		const result: DiscoveredSurfaceInfo<LoupedeckDeviceInfo>[] = []
-		for (const device of devices) {
-			if (!device.serialNumber) continue
+		for (const surfaceInfo of surfaceInfos) {
+			if (!surfaceInfo.serialNumber) continue
 
 			result.push({
-				surfaceId: device.serialNumber,
-				description: device.model, // TODO: Better description
-				pluginInfo: device,
+				surfaceId: `loupedeck:${surfaceInfo.serialNumber}`,
+				description: surfaceInfo.model, // TODO: Better description
+				pluginInfo: surfaceInfo,
 			})
 		}
 

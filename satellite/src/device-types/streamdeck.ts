@@ -77,7 +77,7 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 		if (!sdInfo || !sdInfo.serialNumber) return null
 
 		return {
-			surfaceId: sdInfo.serialNumber,
+			surfaceId: `streamdeck:${sdInfo.serialNumber}`,
 			description: sdInfo.model, // TODO: Better description
 			pluginInfo: sdInfo,
 		}
@@ -98,7 +98,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 	readonly #cardGenerator: CardGenerator
 	readonly #deck: StreamDeck
-	readonly #deviceId: string
+	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
 
 	#drawAbort: AbortController
@@ -112,17 +112,17 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	#fullLcdDirty = true
 
 	public get surfaceId(): string {
-		return this.#deviceId
+		return this.#surfaceId
 	}
 	public get productName(): string {
 		return this.#deck.PRODUCT_NAME
 	}
 
-	public constructor(deviceId: string, deck: StreamDeck, cardGenerator: CardGenerator) {
+	public constructor(surfaceId: string, deck: StreamDeck, cardGenerator: CardGenerator) {
 		super()
 
 		this.#deck = deck
-		this.#deviceId = deviceId
+		this.#surfaceId = surfaceId
 		this.#cardGenerator = cardGenerator
 
 		this.#deck.on('error', (e) => this.emit('error', e))
