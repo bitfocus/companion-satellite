@@ -4,7 +4,7 @@ import EventEmitter from 'events'
 
 export type HIDDevice = HID.Device
 
-export type DeviceId = string
+export type SurfaceId = string
 
 export interface DeviceDrawProps {
 	deviceId: string
@@ -29,7 +29,7 @@ export interface DiscoveredSurfaceInfo<T> {
 
 export interface SurfacePluginDetectionEvents<TInfo> {
 	deviceAdded: [device: DiscoveredSurfaceInfo<TInfo>]
-	deviceRemoved: [deviceId: DeviceId]
+	deviceRemoved: [deviceId: SurfaceId]
 }
 
 /**
@@ -96,7 +96,7 @@ export interface WrappedSurfaceEvents {
 }
 
 export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
-	readonly deviceId: DeviceId
+	readonly deviceId: SurfaceId
 	readonly productName: string
 
 	getRegisterProps(): DeviceRegisterProps

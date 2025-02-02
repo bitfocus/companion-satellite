@@ -5,7 +5,7 @@ import serve from 'koa-static'
 import http from 'http'
 import type Conf from 'conf'
 import type { CompanionSatelliteClient } from './client.js'
-import type { DeviceManager } from './devices.js'
+import type { SurfaceManager } from './surface-manager.js'
 import type { SatelliteConfig } from './config.js'
 import {
 	ApiConfigData,
@@ -19,7 +19,7 @@ import {
 export class RestServer {
 	private readonly appConfig: Conf<SatelliteConfig>
 	private readonly client: CompanionSatelliteClient
-	private readonly devices: DeviceManager
+	private readonly surfaceManager: SurfaceManager
 	private readonly app: Koa
 	private readonly router: Router
 	private server: http.Server | undefined
@@ -28,11 +28,11 @@ export class RestServer {
 		webRoot: string,
 		appConfig: Conf<SatelliteConfig>,
 		client: CompanionSatelliteClient,
-		devices: DeviceManager,
+		surfaceManager: SurfaceManager,
 	) {
 		this.appConfig = appConfig
 		this.client = client
-		this.devices = devices
+		this.surfaceManager = surfaceManager
 
 		// Monitor for config changes
 		this.appConfig.onDidChange('restEnabled', this.open.bind(this))
@@ -150,7 +150,7 @@ export class RestServer {
 		})
 
 		this.router.post('/api/rescan', async (ctx) => {
-			this.devices.scanDevices()
+			this.surfaceManager.scanForSurfaces()
 
 			ctx.body = 'OK'
 		})

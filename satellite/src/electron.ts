@@ -3,7 +3,7 @@ import '@julusian/segfault-raub'
 import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain, shell } from 'electron'
 import * as path from 'path'
 import electronStore from 'electron-store'
-import { DeviceManager } from './devices.js'
+import { SurfaceManager } from './surface-manager.js'
 import { CompanionSatelliteClient } from './client.js'
 import { DEFAULT_PORT } from './lib.js'
 import { RestServer } from './rest.js'
@@ -38,8 +38,8 @@ console.log('Starting')
 const webRoot = fileURLToPath(new URL(app.isPackaged ? '../../webui' : '../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
-const devices = await DeviceManager.create(client)
-const server = new RestServer(webRoot, appConfig, client, devices)
+const surfaceManager = await SurfaceManager.create(client)
+const server = new RestServer(webRoot, appConfig, client, surfaceManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 appConfig.onDidChange('remoteIp', () => tryConnect())
@@ -181,7 +181,7 @@ function trayQuit() {
 				await Promise.allSettled([
 					// cleanup
 					client.disconnect(),
-					devices.close(),
+					surfaceManager.close(),
 				])
 				app.quit()
 			}
@@ -193,7 +193,7 @@ function trayQuit() {
 
 function trayScanDevices() {
 	console.log('do scan')
-	devices.scanDevices()
+	surfaceManager.scanForSurfaces()
 }
 
 function trayAbout() {
@@ -250,7 +250,7 @@ function trayAbout() {
 
 ipcMain.on('rescan', () => {
 	console.log('rescan')
-	devices.scanDevices()
+	surfaceManager.scanForSurfaces()
 })
 ipcMain.handle('getStatus', async (): Promise<ApiStatusResponse> => {
 	// console.log('getStatus')

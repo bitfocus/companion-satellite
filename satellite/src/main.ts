@@ -3,7 +3,7 @@ import '@julusian/segfault-raub'
 
 import exitHook from 'exit-hook'
 import { CompanionSatelliteClient } from './client.js'
-import { DeviceManager } from './devices.js'
+import { SurfaceManager } from './surface-manager.js'
 import { DEFAULT_PORT } from './lib.js'
 import { RestServer } from './rest.js'
 import { openHeadlessConfig } from './config.js'
@@ -31,8 +31,8 @@ console.log('Starting', appConfig.path)
 const webRoot = fileURLToPath(new URL('../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
-const devices = await DeviceManager.create(client)
-const server = new RestServer(webRoot, appConfig, client, devices)
+const surfaceManager = await SurfaceManager.create(client)
+const server = new RestServer(webRoot, appConfig, client, surfaceManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 client.on('log', (l) => console.log(l))
@@ -41,7 +41,7 @@ client.on('error', (e) => console.error(e))
 exitHook(() => {
 	console.log('Exiting')
 	client.disconnect()
-	devices.close().catch(() => null)
+	surfaceManager.close().catch(() => null)
 	server.close()
 })
 
