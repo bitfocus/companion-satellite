@@ -55,5 +55,8 @@
   "engines": {
     "node": "^20.14"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.6.0",
+  "resolutions": {
+    "app-builder-lib@npm:26.0.1": "patch:app-builder-lib@npm%3A26.0.1#~/.yarn/patches/app-builder-lib-npm-26.0.1-df3cd7e47a.patch"
+  }
 }
