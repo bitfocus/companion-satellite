@@ -183,6 +183,7 @@ jobs:
           node-version-file: '.node-version'
 
       - name: Run build
+        shell: bash
         run: |
           corepack enable
 
@@ -266,6 +267,7 @@ jobs:
           node-version-file: '.node-version'
 
       - name: Run build
+        shell: bash
         run: |
           corepack enable
 
@@ -340,6 +342,7 @@ jobs:
           node-version-file: '.node-version'
 
       - name: Run build
+        shell: bash
         run: |
           corepack enable
 
