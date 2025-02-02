@@ -1,14 +1,14 @@
+import { Alert } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { PropsWithChildren } from 'react'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
-import Alert from 'react-bootstrap/Alert'
-import Button from 'react-bootstrap/Button'
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 	return (
-		<Alert variant={'danger'}>
+		<Alert variant="destructive">
 			<p>Something went wrong:</p>
 			<pre>{error?.message ?? ''}</pre>
-			<Button color="primary" size="sm" onClick={resetErrorBoundary}>
+			<Button className="mt-2" variant="outline" size="sm" onClick={resetErrorBoundary}>
 				Try again
 			</Button>
 		</Alert>

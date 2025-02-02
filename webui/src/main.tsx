@@ -1,12 +1,13 @@
-import 'bootstrap/dist/css/bootstrap.min.css'
-import './App.scss'
-
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { WebApp } from './WebApp.tsx'
+import { App } from './app/App.tsx'
+import { SatelliteApiProvider } from './Api/Context.tsx'
+import { SatelliteRestApi } from './Api/rest.ts'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
-		<WebApp />
+		<SatelliteApiProvider api={SatelliteRestApi}>
+			<App />
+		</SatelliteApiProvider>
 	</React.StrictMode>,
 )

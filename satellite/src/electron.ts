@@ -71,12 +71,16 @@ trayMenu.append(
 
 			configWindow = new BrowserWindow({
 				show: false,
-				width: 1024,
-				height: 720,
+				width: 720,
+				minWidth: 500,
+				maxWidth: isProduction ? 720 : undefined,
+				height: 900,
+				minHeight: 500,
 				autoHideMenuBar: isProduction,
 				webPreferences: {
 					preload: fileURLToPath(new URL('../dist/electronPreload.cjs', import.meta.url)),
 				},
+				// resizable: !isProduction,
 			})
 			configWindow.on('close', () => {
 				configWindow = undefined

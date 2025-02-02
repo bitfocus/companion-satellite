@@ -2,6 +2,14 @@ import Conf from 'conf'
 import { CompanionSatelliteClient } from './client.js'
 import { SatelliteConfig } from './config.js'
 
+export interface SatelliteUiApi {
+	includeApiEnable: boolean
+	getConfig: () => Promise<ApiConfigData>
+	saveConfig: (newConfig: Partial<ApiConfigData>) => Promise<ApiConfigData>
+	getStatus: () => Promise<ApiStatusResponse>
+	rescanSurfaces: () => Promise<void>
+}
+
 export interface ApiStatusResponse {
 	connected: boolean
 	companionVersion: string | null
