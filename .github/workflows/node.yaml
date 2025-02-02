@@ -78,7 +78,7 @@ jobs:
 
           yarn
           yarn --cwd webui install
-          yarn dis
+          yarn dist
 
       - name: Upload build
         uses: bitfocus/actions/upload-and-notify@main
