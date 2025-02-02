@@ -149,12 +149,13 @@ export interface CompanionClient {
 
 	keyDown(deviceId: string, keyIndex: number): void
 	keyUp(deviceId: string, keyIndex: number): void
+	rotateLeft(deviceId: string, keyIndex: number): void
+	rotateRight(deviceId: string, keyIndex: number): void
 
 	keyDownXY(deviceId: string, x: number, y: number): void
 	keyUpXY(deviceId: string, x: number, y: number): void
-
-	rotateLeft(deviceId: string, keyIndex: number): void
-	rotateRight(deviceId: string, keyIndex: number): void
+	rotateLeftXY(deviceId: string, x: number, y: number): void
+	rotateRightXY(deviceId: string, x: number, y: number): void
 
 	sendVariableValue(deviceId: string, variable: string, value: any): void
 }

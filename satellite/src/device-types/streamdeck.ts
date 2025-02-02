@@ -273,43 +273,38 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#deck.on('down', (control) => {
-			const key = control.column + control.row * this.#registerProps.keysPerRow
-
-			client.keyDown(this.surfaceId, key)
+			client.keyDownXY(this.surfaceId, control.column, control.row)
 		})
 		this.#deck.on('up', (control) => {
-			const key = control.column + control.row * this.#registerProps.keysPerRow
-
-			client.keyUp(this.surfaceId, key)
+			client.keyUpXY(this.surfaceId, control.column, control.row)
 		})
 		this.#deck.on('rotate', (control, delta) => {
-			const key = control.column + control.row * this.#registerProps.keysPerRow
 			if (delta < 0) {
-				client.rotateLeft(this.surfaceId, key)
+				client.rotateLeftXY(this.surfaceId, control.column, control.row)
 			} else if (delta > 0) {
-				client.rotateRight(this.surfaceId, key)
+				client.rotateRightXY(this.surfaceId, control.column, control.row)
 			}
 		})
 		this.#deck.on('lcdShortPress', (control, position) => {
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
 
-			const key = control.column + columnOffset + control.row * this.#registerProps.keysPerRow
+			const column = control.column + columnOffset
 
-			client.keyDown(this.surfaceId, key)
+			client.keyDownXY(this.surfaceId, column, control.row)
 
 			setTimeout(() => {
-				client.keyUp(this.surfaceId, key)
+				client.keyUpXY(this.surfaceId, column, control.row)
 			}, 20)
 		})
 		this.#deck.on('lcdLongPress', (control, position) => {
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
 
-			const key = control.column + columnOffset + control.row * this.#registerProps.keysPerRow
+			const column = control.column + columnOffset
 
-			client.keyDown(this.surfaceId, key)
+			client.keyDownXY(this.surfaceId, column, control.row)
 
 			setTimeout(() => {
-				client.keyUp(this.surfaceId, key)
+				client.keyUpXY(this.surfaceId, column, control.row)
 			}, 20)
 		})
 
