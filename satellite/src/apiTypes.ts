@@ -16,6 +16,7 @@ export interface SatelliteUiApi {
 	saveConfig: (newConfig: ApiConfigDataUpdate) => Promise<ApiConfigData>
 	getStatus: () => Promise<ApiStatusResponse>
 	rescanSurfaces: () => Promise<void>
+	connectedSurfaces: () => Promise<ApiSurfaceInfo[]>
 }
 
 export function compileStatus(client: CompanionSatelliteClient): ApiStatusResponse {

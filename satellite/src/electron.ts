@@ -12,6 +12,7 @@ import {
 	ApiConfigData,
 	ApiConfigDataUpdateElectron,
 	ApiStatusResponse,
+	ApiSurfaceInfo,
 	compileConfig,
 	compileStatus,
 	updateConfig,
@@ -263,6 +264,9 @@ ipcMain.handle('saveConfig', async (_e, newConfig: ApiConfigDataUpdateElectron):
 	console.log('saveConfig', newConfig)
 	updateConfig(appConfig, newConfig)
 	return compileConfig(appConfig)
+})
+ipcMain.handle('connectedSurfaces', async (): Promise<ApiSurfaceInfo[]> => {
+	return surfaceManager.getOpenSurfacesInfo()
 })
 
 // about window

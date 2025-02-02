@@ -22,7 +22,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /rescan:
+  /surfaces:
+    get:
+      summary: Get Connected surfaces
+      operationId: getConnectedSurfaces
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurfaceInfo'
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /surfaces/rescan:
     post:
       summary: Rescan for connected surfaces
       operationId: postSurfaceesScan

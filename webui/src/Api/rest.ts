@@ -1,4 +1,4 @@
-import type { SatelliteUiApi, ApiConfigData, ApiStatusResponse, ApiConfigDataUpdate } from './types'
+import type { SatelliteUiApi, ApiConfigData, ApiStatusResponse, ApiConfigDataUpdate, ApiSurfaceInfo } from './types'
 import type { paths } from '../../../satellite/src/generated/openapi'
 import createClient from 'openapi-fetch'
 
@@ -24,7 +24,12 @@ export const SatelliteRestApi: SatelliteUiApi = {
 		return data
 	},
 	rescanSurfaces: async function (): Promise<void> {
-		const { data, error } = await client.POST('/rescan', {})
+		const { data, error } = await client.POST('/surfaces/rescan', {})
+		if (error) throw new Error(error.error)
+		return data
+	},
+	connectedSurfaces: async function (): Promise<ApiSurfaceInfo[]> {
+		const { data, error } = await client.GET('/surfaces', {})
 		if (error) throw new Error(error.error)
 		return data
 	},

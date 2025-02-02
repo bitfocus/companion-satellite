@@ -306,7 +306,7 @@ export class SurfaceManager {
 		})
 	}
 
-	public getKnownSurfaces(): ApiSurfaceInfo[] {
+	public getOpenSurfacesInfo(): ApiSurfaceInfo[] {
 		return Array.from(this.#surfaces.values()).map((surface) => ({
 			pluginId: surface.pluginId,
 			pluginName: this.#plugins.get(surface.pluginId)?.pluginName ?? 'Unknown',

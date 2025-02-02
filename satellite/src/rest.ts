@@ -150,14 +150,14 @@ export class RestServer {
 			}
 		})
 
-		this.router.post('/api/rescan', async (ctx) => {
+		this.router.post('/api/surfaces/rescan', async (ctx) => {
 			this.surfaceManager.scanForSurfaces()
 
 			ctx.body = 'OK'
 		})
 
 		this.router.get('/api/surfaces', async (ctx) => {
-			ctx.body = this.surfaceManager.getKnownSurfaces() satisfies ApiSurfaceInfo[]
+			ctx.body = this.surfaceManager.getOpenSurfacesInfo() satisfies ApiSurfaceInfo[]
 		})
 
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())
