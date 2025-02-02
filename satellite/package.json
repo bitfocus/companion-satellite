@@ -49,6 +49,7 @@
 		"conf": "^13.1.0",
 		"debounce-fn": "^6.0.0",
 		"electron-store": "^10.0.1",
+		"electron-updater": "^6.4.1",
 		"exit-hook": "^4.0.0",
 		"infinitton-idisplay": "^1.2.0",
 		"koa": "^2.15.3",

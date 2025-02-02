@@ -27,12 +27,15 @@ import {
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
+import { ElectronUpdater } from './electronUpdater.js'
 
 const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
 	// migrations: satelliteConfigMigrations,
 })
 ensureFieldsPopulated(appConfig)
+
+const electronUpdater = new ElectronUpdater()
 
 let tray: Tray | undefined
 let configWindow: BrowserWindow | undefined
@@ -127,6 +130,8 @@ trayMenu.append(
 		},
 	}),
 )
+trayMenu.append(electronUpdater.menuItem)
+trayMenu.append(electronUpdater.installMenuItem)
 trayMenu.append(
 	new MenuItem({
 		label: 'About',
@@ -140,9 +145,21 @@ trayMenu.append(
 	}),
 )
 
+app.on('before-quit', () => {
+	Promise.allSettled([
+		// cleanup
+		client.disconnect(),
+		surfaceManager.close(),
+	]).catch((e) => {
+		console.error('Failed to do quit', e)
+	})
+})
+
 app.whenReady()
 	.then(async () => {
 		console.log('App ready')
+
+		electronUpdater.check()
 
 		tryConnect()
 		restartRestApi()
@@ -190,11 +207,6 @@ function trayQuit() {
 		.then(async (v) => {
 			console.log('quit: ', v.response)
 			if (v.response === 0) {
-				await Promise.allSettled([
-					// cleanup
-					client.disconnect(),
-					surfaceManager.close(),
-				])
 				app.quit()
 			}
 		})
