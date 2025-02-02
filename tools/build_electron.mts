@@ -48,7 +48,13 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 await fs.remove('./electron-output')
 
 const options: electronBuilder.Configuration = {
-	publish: [],
+	publish: [
+		{
+			provider: 'generic',
+			publishAutoUpdate: false,
+			url: 'https://api.bitfocus.io/v1/product/electron-updater/companion-satellite',
+		},
+	],
 	productName: 'Companion Satellite',
 	appId: 'remote.companion.bitfocus.no',
 	npmRebuild: false,

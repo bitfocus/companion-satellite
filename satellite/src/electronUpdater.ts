@@ -6,17 +6,17 @@ const { autoUpdater } = electronUpdater
 
 // For development testing
 // autoUpdater.forceDevUpdateConfig = true
+// autoUpdater.setFeedURL({
+// 	provider: 'generic',
+// 	publishAutoUpdate: false,
+// 	url: 'https://api-staging.bitfocus.io/v1/product/electron-updater/companion-satellite',
+// })
 
 const require = createRequire(import.meta.url)
 const pkgJson = require('../package.json')
 const updateChannel: string | undefined = app.isPackaged ? pkgJson.updateChannel : 'beta'
 
 // Configure the updater
-autoUpdater.setFeedURL({
-	provider: 'generic',
-	publishAutoUpdate: false,
-	url: 'https://api.bitfocus.io/v1/product/electron-updater/companion-satellite',
-})
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
 autoUpdater.autoRunAppAfterInstall = true
