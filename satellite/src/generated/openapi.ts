@@ -98,14 +98,12 @@ export interface components {
         SurfaceInfo: {
             /** @description ID of the surface */
             surfaceId: string;
-            /** @description Description of the surface */
-            description: string;
+            /** @description Product Name of the surface */
+            productName: string;
             /** @description Plugin ID of the surface */
             pluginId: string;
             /** @description Plugin name of the surface */
             pluginName: string;
-            /** @description Whether the surface is currently open */
-            isOpen: boolean;
         };
     };
     responses: never;

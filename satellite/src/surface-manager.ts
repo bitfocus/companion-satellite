@@ -34,8 +34,6 @@ export class SurfaceManager {
 	#scanIsRunning = false
 	#scanPending = false
 
-	#lastScannedSurfaces: ApiSurfaceInfo[] = []
-
 	public static async create(client: CompanionSatelliteClient): Promise<SurfaceManager> {
 		const manager = new SurfaceManager(client)
 
@@ -266,8 +264,6 @@ export class SurfaceManager {
 		this.#scanIsRunning = true
 		this.#scanPending = false
 
-		const detectedSurfaces: ApiSurfaceInfo[] = []
-
 		void Promise.allSettled([
 			HID.devicesAsync()
 				.then(async (devices) => {
@@ -276,14 +272,6 @@ export class SurfaceManager {
 							for (const plugin of this.#plugins.values()) {
 								const info = plugin.checkSupportsHidDevice?.(device)
 								if (!info) continue
-
-								detectedSurfaces.push({
-									pluginId: plugin.pluginId,
-									pluginName: plugin.pluginName,
-									surfaceId: info.surfaceId,
-									description: info.description,
-									isOpen: false,
-								})
 
 								this.#tryAddSurfaceFromPlugin(plugin, info)
 								return
@@ -300,14 +288,6 @@ export class SurfaceManager {
 					if (plugin.scanForSurfaces) {
 						const surfaceInfos = await plugin.scanForSurfaces()
 						for (const surfaceInfo of surfaceInfos) {
-							detectedSurfaces.push({
-								pluginId: plugin.pluginId,
-								pluginName: plugin.pluginName,
-								surfaceId: surfaceInfo.surfaceId,
-								description: surfaceInfo.description,
-								isOpen: false,
-							})
-
 							this.#tryAddSurfaceFromPlugin(plugin, surfaceInfo)
 						}
 					} else if (plugin.detection?.triggerScan) {
@@ -320,8 +300,6 @@ export class SurfaceManager {
 		]).finally(() => {
 			this.#scanIsRunning = false
 
-			this.#lastScannedSurfaces = detectedSurfaces
-
 			if (this.#scanPending) {
 				this.scanForSurfaces()
 			}
@@ -329,11 +307,11 @@ export class SurfaceManager {
 	}
 
 	public getKnownSurfaces(): ApiSurfaceInfo[] {
-		// TODO - include auto-detected surfaces
-
-		return this.#lastScannedSurfaces.map((surface) => ({
-			...surface,
-			isOpen: this.#surfaces.has(surface.surfaceId),
+		return Array.from(this.#surfaces.values()).map((surface) => ({
+			pluginId: surface.pluginId,
+			pluginName: this.#plugins.get(surface.pluginId)?.pluginName ?? 'Unknown',
+			surfaceId: surface.surfaceId,
+			productName: surface.productName,
 		}))
 	}
 

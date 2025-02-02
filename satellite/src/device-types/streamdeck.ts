@@ -63,7 +63,7 @@ const PLUGIN_ID = 'elgato-streamdeck'
 
 export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 	readonly pluginId = PLUGIN_ID
-	readonly pluginName = 'Elgato StreamDeck'
+	readonly pluginName = 'Elgato Stream Deck'
 
 	async init(): Promise<void> {
 		// Nothing to do
@@ -115,7 +115,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		return this.#deviceId
 	}
 	public get productName(): string {
-		return `Satellite StreamDeck: ${this.#deck.MODEL}`
+		return this.#deck.PRODUCT_NAME
 	}
 
 	public constructor(deviceId: string, deck: StreamDeck, cardGenerator: CardGenerator) {

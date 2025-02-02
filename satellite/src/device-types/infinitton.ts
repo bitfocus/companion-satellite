@@ -71,7 +71,7 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		return this.#deviceId
 	}
 	public get productName(): string {
-		return `Satellite Infinitton`
+		return `Infinitton`
 	}
 
 	public constructor(deviceId: string, panel: Infinitton, cardGenerator: CardGenerator) {

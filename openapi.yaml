@@ -160,21 +160,21 @@ components:
         surfaceId:
           type: string
           description: ID of the surface
-        description:
+        productName:
           type: string
-          description: Description of the surface
+          description: Product Name of the surface
         pluginId:
           type: string
           description: Plugin ID of the surface
         pluginName:
           type: string
           description: Plugin name of the surface
-        isOpen:
-          type: boolean
-          description: Whether the surface is currently open
+        # isOpen:
+        #   type: boolean
+        #   description: Whether the surface is currently open
       required:
         - surfaceId
-        - description
+        - productName
         - pluginId
         - pluginName
-        - isOpen
+        # - isOpen
