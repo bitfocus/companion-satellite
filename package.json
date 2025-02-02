@@ -26,7 +26,7 @@
     "dev": "yarn workspace satellite dev",
     "dev:electron": "yarn workspace satellite dev:electron",
     "dev:webui": "yarn workspace webui dev",
-	"build:openapi": "openapi-typescript ./openapi.yaml -o ./satellite/src/generated/openapi.ts",
+    "build:openapi": "openapi-typescript ./openapi.yaml -o ./satellite/src/generated/openapi.ts",
     "build": "yarn workspaces foreach --all run build",
     "lint:raw": "eslint",
     "lint": "eslint .",
@@ -45,6 +45,7 @@
     "eslint-plugin-react-refresh": "^0.4.18",
     "husky": "^9.1.7",
     "lint-staged": "^15.4.3",
+    "openapi-typescript": "^7.6.1",
     "prettier": "^3.4.2",
     "tsx": "^4.19.2",
     "typescript": "~5.7.3",
@@ -54,8 +55,5 @@
   "engines": {
     "node": "^20.14"
   },
-  "packageManager": "yarn@4.6.0",
-  "dependencies": {
-    "openapi-typescript": "^7.6.1"
-  }
+  "packageManager": "yarn@4.6.0"
 }

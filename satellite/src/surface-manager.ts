@@ -9,6 +9,7 @@ import { wrapAsync } from './lib.js'
 import { InfinittonPlugin } from './device-types/infinitton.js'
 import { LoupedeckPlugin } from './device-types/loupedeck-plugin.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
+import { BlackmagicControllerPlugin } from './device-types/blackmagic-panel.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -19,6 +20,7 @@ const knownPlugins: SurfacePlugin<any>[] = [
 	new InfinittonPlugin(),
 	new LoupedeckPlugin(),
 	new QuickKeysPlugin(),
+	new BlackmagicControllerPlugin(),
 ]
 
 export class SurfaceManager {
@@ -139,6 +141,22 @@ export class SurfaceManager {
 				},
 				(e) => {
 					console.error(`Draw: ${e}`)
+				},
+			),
+		)
+		client.on(
+			'variableValue',
+			wrapAsync(
+				async (msg) => {
+					const surface = this.#getWrappedSurface(msg.deviceId)
+					if (surface.onVariableValue) {
+						surface.onVariableValue(msg.name, msg.value)
+					} else {
+						console.warn(`Variable value not supported: ${msg.deviceId}`)
+					}
+				},
+				(e) => {
+					console.error(`Clear deck: ${e}`)
 				},
 			),
 		)

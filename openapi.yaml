@@ -272,7 +272,9 @@ components:
           type: string
           description: Plugin name of the surface
         pluginComment:
-          type: string
+          type: array
+          items:
+            type: string
           description: Comment about the plugin
       required:
         - pluginId

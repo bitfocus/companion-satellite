@@ -20,6 +20,20 @@ export interface DeviceRegisterProps {
 	bitmapSize: number | null
 	colours: boolean
 	text: boolean
+	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
+}
+
+export interface DeviceRegisterInputVariable {
+	id: string
+	type: 'input'
+	name: string
+	description?: string
+}
+export interface DeviceRegisterOutputVariable {
+	id: string
+	type: 'output'
+	name: string
+	description?: string
 }
 
 export interface DiscoveredSurfaceInfo<T> {
@@ -50,7 +64,7 @@ export interface SurfacePluginDetection<TInfo> extends EventEmitter<SurfacePlugi
 export interface SurfacePlugin<TInfo> {
 	readonly pluginId: string
 	readonly pluginName: string
-	readonly pluginComment?: string
+	readonly pluginComment?: string[]
 
 	/**
 	 * Some plugins are forced to use a builtin detection mechanism by their surfaces or inner library
@@ -120,6 +134,8 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 
 	draw(data: DeviceDrawProps): Promise<void>
 
+	onVariableValue?(name: string, value: string): void
+
 	showStatus(hostname: string, status: string): void
 }
 
@@ -142,6 +158,11 @@ export interface CompanionClient {
 	keyDown(deviceId: string, keyIndex: number): void
 	keyUp(deviceId: string, keyIndex: number): void
 
+	keyDownXY(deviceId: string, x: number, y: number): void
+	keyUpXY(deviceId: string, x: number, y: number): void
+
 	rotateLeft(deviceId: string, keyIndex: number): void
 	rotateRight(deviceId: string, keyIndex: number): void
+
+	sendVariableValue(deviceId: string, variable: string, value: any): void
 }

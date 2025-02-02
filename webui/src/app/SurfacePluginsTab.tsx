@@ -99,7 +99,14 @@ function SurfacePluginsConfig({
 								</div>
 								{plugin.pluginComment && (
 									<div className="col-span-3 col-start-3 -mt-3">
-										<p className="text-sm text-gray-500 p-1">{plugin.pluginComment}</p>
+										<p className="text-sm text-gray-500 p-1">
+											{plugin.pluginComment.map((line) => (
+												<>
+													{line}
+													<br />
+												</>
+											))}
+										</p>
 									</div>
 								)}
 							</>

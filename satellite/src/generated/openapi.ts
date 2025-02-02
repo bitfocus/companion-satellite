@@ -163,7 +163,7 @@ export interface components {
             /** @description Plugin name of the surface */
             pluginName: string;
             /** @description Comment about the plugin */
-            pluginComment?: string;
+            pluginComment?: string[];
         };
     };
     responses: never;
