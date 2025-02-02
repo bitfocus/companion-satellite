@@ -1,12 +1,14 @@
 import Conf from 'conf'
 import { CompanionSatelliteClient } from './client.js'
-import { SatelliteConfig } from './config.js'
+import { SatelliteConfig, SatelliteConfigInstance } from './config.js'
 import type { components as openapiComponents } from './generated/openapi.js'
 
 export type ApiStatusResponse = openapiComponents['schemas']['StatusResponse']
 export type ApiConfigData = openapiComponents['schemas']['ConfigData']
 export type ApiConfigDataUpdate = openapiComponents['schemas']['ConfigDataUpdate']
 export type ApiSurfaceInfo = openapiComponents['schemas']['SurfaceInfo']
+export type ApiSurfacePluginInfo = openapiComponents['schemas']['SurfacePluginInfo']
+export type ApiSurfacePluginsEnabled = Record<string, boolean>
 
 export type ApiConfigDataUpdateElectron = ApiConfigDataUpdate & Pick<Partial<ApiConfigData>, 'httpEnabled' | 'httpPort'>
 
@@ -17,6 +19,9 @@ export interface SatelliteUiApi {
 	getStatus: () => Promise<ApiStatusResponse>
 	rescanSurfaces: () => Promise<void>
 	connectedSurfaces: () => Promise<ApiSurfaceInfo[]>
+	surfacePlugins: () => Promise<ApiSurfacePluginInfo[]>
+	surfacePluginsEnabled: () => Promise<ApiSurfacePluginsEnabled>
+	surfacePluginsEnabledUpdate: (newConfig: ApiSurfacePluginsEnabled) => Promise<ApiSurfacePluginsEnabled>
 }
 
 export function compileStatus(client: CompanionSatelliteClient): ApiStatusResponse {
@@ -41,7 +46,7 @@ export function compileConfig(appConfig: Conf<SatelliteConfig>): ApiConfigData {
 	}
 }
 
-export function updateConfig(appConfig: Conf<SatelliteConfig>, newConfig: ApiConfigDataUpdateElectron): void {
+export function updateConfig(appConfig: SatelliteConfigInstance, newConfig: ApiConfigDataUpdateElectron): void {
 	if (newConfig.host !== undefined) appConfig.set('remoteIp', newConfig.host)
 	if (newConfig.port !== undefined) appConfig.set('remotePort', newConfig.port)
 
@@ -50,4 +55,15 @@ export function updateConfig(appConfig: Conf<SatelliteConfig>, newConfig: ApiCon
 
 	if (newConfig.mdnsEnabled !== undefined) appConfig.set('mdnsEnabled', newConfig.mdnsEnabled)
 	if (newConfig.installationName !== undefined) appConfig.set('installationName', newConfig.installationName)
+}
+
+export function updateSurfacePluginsEnabledConfig(
+	appConfig: SatelliteConfigInstance,
+	newConfig: ApiSurfacePluginsEnabled,
+): void {
+	for (const [pluginId, enabled] of Object.entries(newConfig)) {
+		appConfig.set(`surfacePluginsEnabled.${pluginId}`, !!enabled)
+	}
+
+	console.log('Updated surfacePluginsEnabled:', appConfig.get('surfacePluginsEnabled'))
 }

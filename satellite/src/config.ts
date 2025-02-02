@@ -5,6 +5,8 @@ import { customAlphabet } from 'nanoid'
 
 const nanoidHex = customAlphabet('0123456789abcdef')
 
+export type SatelliteConfigInstance = Conf<SatelliteConfig>
+
 export interface SatelliteConfig {
 	remoteIp: string
 	remotePort: number
@@ -15,6 +17,8 @@ export interface SatelliteConfig {
 	restPort: number
 
 	mdnsEnabled: boolean
+
+	surfacePluginsEnabled: Record<string, boolean>
 }
 
 export const satelliteConfigSchema: Schema<SatelliteConfig> = {
@@ -53,6 +57,21 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 		type: 'boolean',
 		description: 'Enable mDNS announcement',
 		default: true,
+	},
+
+	surfacePluginsEnabled: {
+		type: 'object',
+		patternProperties: {
+			'': {
+				type: 'boolean',
+			},
+		},
+		description: 'Enabled Surface Plugins',
+		default: {
+			'elgato-streamdeck': true,
+			loupedeck: true,
+			infinitton: true,
+		},
 	},
 }
 

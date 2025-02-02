@@ -266,6 +266,9 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 	async close(): Promise<void> {
 		this.#queue?.abort()
+
+		await this.#deck.resetToLogo().catch(() => null)
+
 		await this.#deck.close()
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {

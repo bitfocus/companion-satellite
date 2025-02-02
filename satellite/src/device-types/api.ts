@@ -49,6 +49,7 @@ export interface SurfacePluginDetection<TInfo> extends EventEmitter<SurfacePlugi
 export interface SurfacePlugin<TInfo> {
 	readonly pluginId: string
 	readonly pluginName: string
+	readonly pluginComment?: string
 
 	/**
 	 * Some plugins are forced to use a builtin detection mechanism by their surfaces or inner library

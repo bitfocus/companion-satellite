@@ -13,12 +13,16 @@ import {
 	ApiConfigDataUpdateElectron,
 	ApiStatusResponse,
 	ApiSurfaceInfo,
+	ApiSurfacePluginInfo,
+	ApiSurfacePluginsEnabled,
 	compileConfig,
 	compileStatus,
 	updateConfig,
+	updateSurfacePluginsEnabledConfig,
 } from './apiTypes.js'
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
+import debounceFn from 'debounce-fn'
 
 const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
@@ -39,12 +43,20 @@ console.log('Starting')
 const webRoot = fileURLToPath(new URL(app.isPackaged ? '../../webui' : '../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
-const surfaceManager = await SurfaceManager.create(client)
+const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfacePluginsEnabled'))
 const server = new RestServer(webRoot, appConfig, client, surfaceManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 appConfig.onDidChange('remoteIp', () => tryConnect())
 appConfig.onDidChange('remotePort', () => tryConnect())
+appConfig.onDidChange(
+	'surfacePluginsEnabled',
+	debounceFn(() => surfaceManager.updatePluginsEnabled(appConfig.get('surfacePluginsEnabled')), {
+		wait: 50,
+		after: true,
+		before: false,
+	}),
+)
 
 client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
@@ -268,6 +280,19 @@ ipcMain.handle('saveConfig', async (_e, newConfig: ApiConfigDataUpdateElectron):
 ipcMain.handle('connectedSurfaces', async (): Promise<ApiSurfaceInfo[]> => {
 	return surfaceManager.getOpenSurfacesInfo()
 })
+ipcMain.handle('surfacePlugins', async (): Promise<ApiSurfacePluginInfo[]> => {
+	return surfaceManager.getAvailablePluginsInfo()
+})
+ipcMain.handle('surfacePluginsEnabled', async (): Promise<ApiSurfacePluginsEnabled> => {
+	return appConfig.get('surfacePluginsEnabled')
+})
+ipcMain.handle(
+	'surfacePluginsEnabledUpdate',
+	async (_e, newConfig: ApiSurfacePluginsEnabled): Promise<ApiSurfacePluginsEnabled> => {
+		updateSurfacePluginsEnabledConfig(appConfig, newConfig)
+		return appConfig.get('surfacePluginsEnabled')
+	},
+)
 
 // about window
 ipcMain.handle('openShell', async (_e, url: string): Promise<void> => {

@@ -56,6 +56,71 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /surfaces/plugins/installed:
+    get:
+      summary: Get installed surface plugins
+      operationId: getSurfacePluginsInstalled
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SurfacePluginInfo'
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /surfaces/plugins/enabled:
+    get:
+      summary: Get enabled status of surface plugins
+      operationId: getSurfacePluginsEnabled
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: boolean
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Update enabled status of surface plugins
+      operationId: updateSurfacePluginsEnabled
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: boolean
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: boolean
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /config:
     get:
       summary: Get current configuration
@@ -112,14 +177,12 @@ components:
           type: boolean
           description: Whether the client is connected to the Companion Satellite
         companionVersion:
-          type:
-            - string
-            - null
+          type: string
+          nullable: true
           description: Version of the Companion Satellite
         companionApiVersion:
-          type:
-            - string
-            - null
+          type: string
+          nullable: true
           description: API version of the Companion Satellite
       required:
         - connected
@@ -198,3 +261,19 @@ components:
         - pluginId
         - pluginName
         # - isOpen
+
+    SurfacePluginInfo:
+      type: object
+      properties:
+        pluginId:
+          type: string
+          description: Plugin ID of the surface
+        pluginName:
+          type: string
+          description: Plugin name of the surface
+        pluginComment:
+          type: string
+          description: Comment about the plugin
+      required:
+        - pluginId
+        - pluginName

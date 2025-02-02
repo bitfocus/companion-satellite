@@ -25,7 +25,10 @@ class QuickKeysPluginDetection
 	extends EventEmitter<SurfacePluginDetectionEvents<XencelabsQuickKeys>>
 	implements SurfacePluginDetection<XencelabsQuickKeys>
 {
+	initialised = false
+
 	async triggerScan(): Promise<void> {
+		if (!this.initialised) return
 		// TODO - or should this go the other route and use openDevicesFromArray?
 		await XencelabsQuickKeysManagerInstance.scanDevices()
 	}
@@ -40,15 +43,21 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 	readonly detection = new QuickKeysPluginDetection()
 
 	async init(): Promise<void> {
+		if (this.detection.initialised) return
+
+		this.detection.initialised = true
+
 		XencelabsQuickKeysManagerInstance.on('connect', this.#connectListener)
 		XencelabsQuickKeysManagerInstance.on('disconnect', this.#disconnectListener)
 	}
 	async destroy(): Promise<void> {
+		this.detection.initialised = false
+
 		XencelabsQuickKeysManagerInstance.off('connect', this.#connectListener)
 		XencelabsQuickKeysManagerInstance.off('disconnect', this.#disconnectListener)
 
-		// Ensure all devices are closed?
-		// await XencelabsQuickKeysManagerInstance.closeAll()
+		// Ensure all devices are closed
+		await XencelabsQuickKeysManagerInstance.closeAll()
 	}
 
 	#connectListener = (surface: XencelabsQuickKeys) => {

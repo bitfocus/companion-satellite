@@ -108,6 +108,9 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 
 	async close(): Promise<void> {
 		this.#queue?.abort()
+
+		await this.#deck.blankDevice(true, true).catch(() => null)
+
 		await this.#deck.close()
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {

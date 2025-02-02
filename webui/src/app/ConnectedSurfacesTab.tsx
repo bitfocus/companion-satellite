@@ -2,14 +2,16 @@ import { SurfacesRescan } from './SurfacesRescan'
 import { useQuery } from '@tanstack/react-query'
 import { useSatelliteApi } from '@/Api/Context'
 import { ApiSurfaceInfo } from '@/Api/types'
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table'
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, TableCaption } from '@/components/ui/table'
 import { BarLoader } from 'react-spinners'
+import { CONNECTED_SURFACES_QUERY_KEY } from './constants'
 
 export function ConnectedSurfacesTab(): JSX.Element {
 	const api = useSatelliteApi()
 	const connectedSurfaces = useQuery({
-		queryKey: ['connectedSurfaces'],
+		queryKey: [CONNECTED_SURFACES_QUERY_KEY],
 		queryFn: async () => api.connectedSurfaces(),
+		refetchInterval: 5000,
 	})
 
 	return (
@@ -47,6 +49,10 @@ function ConnectedSurfacesList({ surfaces }: { surfaces: ApiSurfaceInfo[] }): JS
 					</TableRow>
 				))}
 			</TableBody>
+			<TableCaption>
+				{surfaces.length === 0 && <p className="mb-4">No surfaces are connected</p>}
+				You can enable and disable support for different surface types in the Surface Plugins tab.
+			</TableCaption>
 		</Table>
 	)
 }

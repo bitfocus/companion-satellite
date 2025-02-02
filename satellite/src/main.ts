@@ -9,6 +9,7 @@ import { RestServer } from './rest.js'
 import { openHeadlessConfig } from './config.js'
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
+import debounceFn from 'debounce-fn'
 
 const rawConfigPath = process.argv[2]
 if (!rawConfigPath) {
@@ -31,7 +32,7 @@ console.log('Starting', appConfig.path)
 const webRoot = fileURLToPath(new URL('../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
-const surfaceManager = await SurfaceManager.create(client)
+const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfacePluginsEnabled'))
 const server = new RestServer(webRoot, appConfig, client, surfaceManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
@@ -53,6 +54,14 @@ const tryConnect = () => {
 
 appConfig.onDidChange('remoteIp', () => tryConnect())
 appConfig.onDidChange('remotePort', () => tryConnect())
+appConfig.onDidChange(
+	'surfacePluginsEnabled',
+	debounceFn(() => surfaceManager.updatePluginsEnabled(appConfig.get('surfacePluginsEnabled')), {
+		wait: 50,
+		after: true,
+		before: false,
+	}),
+)
 
 tryConnect()
 server.open()

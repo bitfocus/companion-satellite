@@ -12,9 +12,12 @@ import {
 	ApiConfigDataUpdate,
 	ApiConfigDataUpdateElectron,
 	ApiSurfaceInfo,
+	ApiSurfacePluginInfo,
+	ApiSurfacePluginsEnabled,
 	compileConfig,
 	compileStatus,
 	updateConfig,
+	updateSurfacePluginsEnabledConfig,
 } from './apiTypes.js'
 
 export class RestServer {
@@ -158,6 +161,32 @@ export class RestServer {
 
 		this.router.get('/api/surfaces', async (ctx) => {
 			ctx.body = this.surfaceManager.getOpenSurfacesInfo() satisfies ApiSurfaceInfo[]
+		})
+
+		this.router.get('/api/surfaces/plugins/installed', async (ctx) => {
+			ctx.body = this.surfaceManager.getAvailablePluginsInfo() satisfies ApiSurfacePluginInfo[]
+		})
+
+		this.router.get('/api/surfaces/plugins/enabled', async (ctx) => {
+			ctx.body = this.appConfig.get('surfacePluginsEnabled') satisfies ApiSurfacePluginsEnabled
+		})
+		this.router.post('/api/surfaces/plugins/enabled', koaBody(), async (ctx) => {
+			if (ctx.request.type != 'application/json') {
+				ctx.status = 400
+				ctx.body = 'Invalid request'
+				return
+			}
+
+			if (typeof ctx.request.body !== 'object') {
+				ctx.status = 400
+				ctx.body = 'Invalid request'
+				return
+			}
+
+			const newConfig = ctx.request.body as ApiSurfacePluginsEnabled
+			updateSurfacePluginsEnabledConfig(this.appConfig, newConfig)
+
+			ctx.body = 'OK'
 		})
 
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())

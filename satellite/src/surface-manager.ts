@@ -8,7 +8,7 @@ import * as HID from 'node-hid'
 import { wrapAsync } from './lib.js'
 import { InfinittonPlugin } from './device-types/infinitton.js'
 import { LoupedeckPlugin } from './device-types/loupedeck-plugin.js'
-import { ApiSurfaceInfo } from './apiTypes.js'
+import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -30,12 +30,17 @@ export class SurfaceManager {
 
 	readonly #plugins = new Map<string, SurfacePlugin<any>>()
 
+	#enabledPluginsConfig: ApiSurfacePluginsEnabled = {}
+
 	#statusString: string
 	#scanIsRunning = false
 	#scanPending = false
 
-	public static async create(client: CompanionSatelliteClient): Promise<SurfaceManager> {
-		const manager = new SurfaceManager(client)
+	public static async create(
+		client: CompanionSatelliteClient,
+		enabledPluginsConfig: ApiSurfacePluginsEnabled,
+	): Promise<SurfaceManager> {
+		const manager = new SurfaceManager(client, enabledPluginsConfig)
 
 		try {
 			for (const plugin of knownPlugins) {
@@ -54,7 +59,11 @@ export class SurfaceManager {
 			}
 
 			// Initialize all the plugins
-			await Promise.all(Array.from(manager.#plugins.values()).map(async (p) => p.init()))
+			await Promise.all(
+				Array.from(manager.#plugins.values()).map(async (p) => {
+					if (manager.isPluginEnabled(p.pluginId)) await p.init()
+				}),
+			)
 		} catch (e) {
 			// Something failed, cleanup
 			await Promise.allSettled(Array.from(manager.#plugins.values()).map(async (p) => p.destroy()))
@@ -64,8 +73,9 @@ export class SurfaceManager {
 		return manager
 	}
 
-	private constructor(client: CompanionSatelliteClient) {
+	private constructor(client: CompanionSatelliteClient, enabledPluginsConfig: ApiSurfacePluginsEnabled) {
 		this.#client = client
+		this.#enabledPluginsConfig = enabledPluginsConfig
 		this.#surfaces = new Map()
 		this.#pendingSurfaces = new Set()
 		this.#cardGenerator = new CardGenerator()
@@ -271,7 +281,7 @@ export class SurfaceManager {
 						devices.map(async (device) => {
 							for (const plugin of this.#plugins.values()) {
 								const info = plugin.checkSupportsHidDevice?.(device)
-								if (!info) continue
+								if (!info || !this.isPluginEnabled(plugin.pluginId)) continue
 
 								this.#tryAddSurfaceFromPlugin(plugin, info)
 								return
@@ -285,6 +295,8 @@ export class SurfaceManager {
 
 			...Array.from(this.#plugins.values()).map(async (plugin) => {
 				try {
+					if (!this.isPluginEnabled(plugin.pluginId)) return
+
 					if (plugin.scanForSurfaces) {
 						const surfaceInfos = await plugin.scanForSurfaces()
 						for (const surfaceInfo of surfaceInfos) {
@@ -306,13 +318,67 @@ export class SurfaceManager {
 		})
 	}
 
+	/**
+	 * List all of the currently open surfaces
+	 */
 	public getOpenSurfacesInfo(): ApiSurfaceInfo[] {
-		return Array.from(this.#surfaces.values()).map((surface) => ({
-			pluginId: surface.pluginId,
-			pluginName: this.#plugins.get(surface.pluginId)?.pluginName ?? 'Unknown',
-			surfaceId: surface.surfaceId,
-			productName: surface.productName,
-		}))
+		return Array.from(this.#surfaces.values())
+			.map((surface) => ({
+				pluginId: surface.pluginId,
+				pluginName: this.#plugins.get(surface.pluginId)?.pluginName ?? 'Unknown',
+				surfaceId: surface.surfaceId,
+				productName: surface.productName,
+			}))
+			.sort((a, b) => a.surfaceId.localeCompare(b.surfaceId))
+	}
+
+	/**
+	 * List all of the available/installed plugins
+	 */
+	public getAvailablePluginsInfo(): ApiSurfacePluginInfo[] {
+		return Array.from(this.#plugins.values())
+			.map((plugin) => ({
+				pluginId: plugin.pluginId,
+				pluginName: plugin.pluginName,
+				pluginComment: plugin.pluginComment,
+			}))
+			.sort((a, b) => a.pluginName.localeCompare(b.pluginName))
+	}
+
+	private isPluginEnabled(pluginId: string): boolean {
+		return this.#enabledPluginsConfig[pluginId] ?? false
+	}
+
+	public updatePluginsEnabled(enabledPlugins: ApiSurfacePluginsEnabled): void {
+		const oldEnabledPlugins = this.#enabledPluginsConfig
+		this.#enabledPluginsConfig = enabledPlugins
+
+		// call init/destroy as needed
+		for (const plugin of this.#plugins.values()) {
+			const wasEnabled = oldEnabledPlugins[plugin.pluginId] ?? false
+			const isEnabled = this.isPluginEnabled(plugin.pluginId)
+			if (wasEnabled === isEnabled) continue
+
+			if (isEnabled) {
+				plugin.init().catch((e) => {
+					console.error(`Plugin "${plugin.pluginId}" init failed: ${e}`)
+				})
+			} else {
+				plugin.destroy().catch((e) => {
+					console.error(`Plugin "${plugin.pluginId}" destroy failed: ${e}`)
+				})
+			}
+		}
+
+		// Disable any surfaces whose plugin has beendisabled
+		for (const [surfaceId, surface] of this.#surfaces.entries()) {
+			if (this.isPluginEnabled(surface.pluginId)) continue
+
+			this.#cleanupSurfaceById(surfaceId)
+		}
+
+		// Trigger a scan, to pick up anything just enabled
+		this.scanForSurfaces()
 	}
 
 	// private getAutoId(path: string, prefix: string): string {
