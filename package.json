@@ -26,6 +26,7 @@
     "dev": "yarn workspace satellite dev",
     "dev:electron": "yarn workspace satellite dev:electron",
     "dev:webui": "yarn workspace webui dev",
+	"build:openapi": "openapi-typescript ./openapi.yaml -o ./satellite/src/generated/openapi.ts",
     "build": "yarn workspaces foreach --all run build",
     "lint:raw": "eslint",
     "lint": "eslint .",
@@ -53,5 +54,8 @@
   "engines": {
     "node": "^20.14"
   },
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.6.0",
+  "dependencies": {
+    "openapi-typescript": "^7.6.1"
+  }
 }

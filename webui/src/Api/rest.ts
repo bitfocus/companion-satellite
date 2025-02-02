@@ -1,28 +1,31 @@
-import type { SatelliteUiApi, ApiConfigData, ApiStatusResponse } from './types'
+import type { SatelliteUiApi, ApiConfigData, ApiStatusResponse, ApiConfigDataUpdate } from './types'
+import type { paths } from '../../../satellite/src/generated/openapi'
+import createClient from 'openapi-fetch'
+
+const client = createClient<paths>({ baseUrl: '/api/' })
 
 export const SatelliteRestApi: SatelliteUiApi = {
 	includeApiEnable: false,
 	getStatus: async function (): Promise<ApiStatusResponse> {
-		return fetch('/api/status').then(async (res) => res.json())
+		const { data, error } = await client.GET('/status', {})
+		if (error) throw new Error(error.error)
+		return data
 	},
 	getConfig: async function (): Promise<ApiConfigData> {
-		return fetch('/api/config').then(async (res) => res.json())
+		const { data, error } = await client.GET('/config', {})
+		if (error) throw new Error(error.error)
+		return data
 	},
-	saveConfig: async function (newConfig: Partial<ApiConfigData>): Promise<ApiConfigData> {
-		const res = await fetch('/api/config', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify(newConfig),
+	saveConfig: async function (newConfig: ApiConfigDataUpdate): Promise<ApiConfigData> {
+		const { data, error } = await client.POST('/config', {
+			body: newConfig,
 		})
-		console.log('config saved')
-
-		return await res.json()
+		if (error) throw new Error(error.error)
+		return data
 	},
 	rescanSurfaces: async function (): Promise<void> {
-		await fetch('/api/rescan', {
-			method: 'POST',
-		})
+		const { data, error } = await client.POST('/rescan', {})
+		if (error) throw new Error(error.error)
+		return data
 	},
 }

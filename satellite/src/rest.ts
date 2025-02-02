@@ -7,7 +7,14 @@ import type Conf from 'conf'
 import type { CompanionSatelliteClient } from './client.js'
 import type { DeviceManager } from './devices.js'
 import type { SatelliteConfig } from './config.js'
-import { ApiConfigData, compileConfig, compileStatus, updateConfig } from './apiTypes.js'
+import {
+	ApiConfigData,
+	ApiConfigDataUpdate,
+	ApiConfigDataUpdateElectron,
+	compileConfig,
+	compileStatus,
+	updateConfig,
+} from './apiTypes.js'
 
 export class RestServer {
 	private readonly appConfig: Conf<SatelliteConfig>
@@ -92,7 +99,7 @@ export class RestServer {
 			if (ctx.request.type == 'application/json') {
 				const body = ctx.request.body as Partial<ApiConfigData>
 
-				const partialConfig: Partial<ApiConfigData> = {}
+				const partialConfig: ApiConfigDataUpdate = {}
 
 				const host = body.host
 				if (host !== undefined) {
@@ -133,8 +140,9 @@ export class RestServer {
 				}
 
 				// Ensure some fields cannot be changed
-				delete partialConfig.httpEnabled
-				delete partialConfig.httpPort
+				const tmpPartialConfig: ApiConfigDataUpdateElectron = partialConfig
+				delete tmpPartialConfig.httpEnabled
+				delete tmpPartialConfig.httpPort
 
 				updateConfig(this.appConfig, partialConfig)
 				ctx.body = compileConfig(this.appConfig)

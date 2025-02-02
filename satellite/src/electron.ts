@@ -8,7 +8,14 @@ import { CompanionSatelliteClient } from './client.js'
 import { DEFAULT_PORT } from './lib.js'
 import { RestServer } from './rest.js'
 import { SatelliteConfig, ensureFieldsPopulated } from './config.js'
-import { ApiConfigData, ApiStatusResponse, compileConfig, compileStatus, updateConfig } from './apiTypes.js'
+import {
+	ApiConfigData,
+	ApiConfigDataUpdateElectron,
+	ApiStatusResponse,
+	compileConfig,
+	compileStatus,
+	updateConfig,
+} from './apiTypes.js'
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 
@@ -252,7 +259,7 @@ ipcMain.handle('getStatus', async (): Promise<ApiStatusResponse> => {
 ipcMain.handle('getConfig', async (): Promise<ApiConfigData> => {
 	return compileConfig(appConfig)
 })
-ipcMain.handle('saveConfig', async (_e, newConfig: Partial<ApiConfigData>): Promise<ApiConfigData> => {
+ipcMain.handle('saveConfig', async (_e, newConfig: ApiConfigDataUpdateElectron): Promise<ApiConfigData> => {
 	console.log('saveConfig', newConfig)
 	updateConfig(appConfig, newConfig)
 	return compileConfig(appConfig)

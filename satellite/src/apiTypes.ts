@@ -1,31 +1,20 @@
 import Conf from 'conf'
 import { CompanionSatelliteClient } from './client.js'
 import { SatelliteConfig } from './config.js'
+import type { components as openapiComponents } from './generated/openapi.js'
+
+export type ApiStatusResponse = openapiComponents['schemas']['ApiStatusResponse']
+export type ApiConfigData = openapiComponents['schemas']['ApiConfigData']
+export type ApiConfigDataUpdate = openapiComponents['schemas']['ApiConfigDataUpdate']
+
+export type ApiConfigDataUpdateElectron = ApiConfigDataUpdate & Pick<Partial<ApiConfigData>, 'httpEnabled' | 'httpPort'>
 
 export interface SatelliteUiApi {
 	includeApiEnable: boolean
 	getConfig: () => Promise<ApiConfigData>
-	saveConfig: (newConfig: Partial<ApiConfigData>) => Promise<ApiConfigData>
+	saveConfig: (newConfig: ApiConfigDataUpdate) => Promise<ApiConfigData>
 	getStatus: () => Promise<ApiStatusResponse>
 	rescanSurfaces: () => Promise<void>
-}
-
-export interface ApiStatusResponse {
-	connected: boolean
-	companionVersion: string | null
-	companionApiVersion: string | null
-}
-
-export interface ApiConfigData {
-	host: string
-	port: number
-
-	installationName: string
-
-	httpEnabled: boolean
-	httpPort: number
-
-	mdnsEnabled: boolean
 }
 
 export function compileStatus(client: CompanionSatelliteClient): ApiStatusResponse {
@@ -50,7 +39,7 @@ export function compileConfig(appConfig: Conf<SatelliteConfig>): ApiConfigData {
 	}
 }
 
-export function updateConfig(appConfig: Conf<SatelliteConfig>, newConfig: Partial<ApiConfigData>): void {
+export function updateConfig(appConfig: Conf<SatelliteConfig>, newConfig: ApiConfigDataUpdateElectron): void {
 	if (newConfig.host !== undefined) appConfig.set('remoteIp', newConfig.host)
 	if (newConfig.port !== undefined) appConfig.set('remotePort', newConfig.port)
 

@@ -1,0 +1,155 @@
+openapi: 3.0.0
+info:
+  description: This is the public API for the Companion Satellite client.
+  version: 0.1.0
+  title: Bitfocus Companion Satellite Configuration API
+paths:
+  /status:
+    get:
+      summary: Get Connection status to Companion
+      operationId: getConnectionStatus
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiStatusResponse'
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /rescan:
+    post:
+      summary: Rescan for connected surfaces
+      operationId: postSurfaceesScan
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /config:
+    get:
+      summary: Get current configuration
+      operationId: getConfig
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiConfigData'
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Update current configuration
+      operationId: updateConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiConfigDataUpdate'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiConfigData'
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    ApiStatusResponse:
+      type: object
+      properties:
+        connected:
+          type: boolean
+          description: Whether the client is connected to the Companion Satellite
+        companionVersion:
+          type:
+            - string
+            - null
+          description: Version of the Companion Satellite
+        companionApiVersion:
+          type:
+            - string
+            - null
+          description: API version of the Companion Satellite
+      required:
+        - connected
+        - companionVersion
+        - companionApiVersion
+
+    ApiConfigData:
+      type: object
+      properties:
+        host:
+          type: string
+          description: Address of the Companion server to connect to
+        port:
+          type: number
+          description: Port number of the Companion server to connect to
+
+        installationName:
+          type: string
+          description: Name of the installation, reported in the mDNS announcement
+        mdnsEnabled:
+          type: boolean
+          description: Enable mDNS announcement to allow automatic discovery of the Companion Satellite
+
+        httpEnabled:
+          type: boolean
+          description: Enable the HTTP api. This is readonly in the HTTP api
+        httpPort:
+          type: number
+          description: Port number of the HTTP api. This is readonly in the HTTP api
+      required:
+        - host
+        - port
+        - installationName
+        - mdnsEnabled
+        - httpEnabled
+        - httpPort
+
+    ApiConfigDataUpdate:
+      type: object
+      properties:
+        host:
+          type: string
+          description: Address of the Companion server to connect to
+        port:
+          type: number
+          description: Port number of the Companion server to connect to
+
+        installationName:
+          type: string
+          description: Name of the installation, reported in the mDNS announcement
+        mdnsEnabled:
+          type: boolean
+          description: Enable mDNS announcement to allow automatic discovery of the Companion Satellite
