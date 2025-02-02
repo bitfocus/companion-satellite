@@ -10,7 +10,7 @@ const queryClient = new QueryClient()
 export function AppContent(): JSX.Element {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<Tabs defaultValue="surface-plugins">
+			<Tabs defaultValue="connection">
 				<CardHeader className="text-center pb-3">
 					<TabsList>
 						<TabsTrigger value="connection">Connection</TabsTrigger>
