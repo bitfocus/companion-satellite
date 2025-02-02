@@ -1,0 +1,32 @@
+diff --git a/out/AppUpdater.js b/out/AppUpdater.js
+index 48e23fbfbe5ee25aadd98eaa3d7fa035588f4002..93d2b7726dcceff64e92f1831056813aeaec6b4b 100644
+--- a/out/AppUpdater.js
++++ b/out/AppUpdater.js
+@@ -361,6 +361,7 @@ class AppUpdater extends events_1.EventEmitter {
+             this._logger.info(`Update for version ${this.currentVersion.format()} is not available (latest version: ${updateInfo.version}, downgrade is ${this.allowDowngrade ? "allowed" : "disallowed"}).`);
+             this.emit("update-not-available", updateInfo);
+             return {
++                isUpdateAvailable: false,
+                 versionInfo: updateInfo,
+                 updateInfo,
+             };
+@@ -370,6 +371,7 @@ class AppUpdater extends events_1.EventEmitter {
+         const cancellationToken = new builder_util_runtime_1.CancellationToken();
+         //noinspection ES6MissingAwait
+         return {
++            isUpdateAvailable: true,
+             versionInfo: updateInfo,
+             updateInfo,
+             cancellationToken,
+diff --git a/out/main.d.ts b/out/main.d.ts
+index 28c3de7dbe0ccf70d0a1d87be50ea7a7ddd3d210..5c6dce42f4a27f71bb0c722dd547eb72fbb9d0af 100644
+--- a/out/main.d.ts
++++ b/out/main.d.ts
+@@ -20,6 +20,7 @@ export interface ResolvedUpdateFileInfo {
+     packageInfo?: PackageFileInfo;
+ }
+ export interface UpdateCheckResult {
++    readonly isUpdateAvailable: boolean
+     readonly updateInfo: UpdateInfo;
+     readonly downloadPromise?: Promise<Array<string>> | null;
+     readonly cancellationToken?: CancellationToken;

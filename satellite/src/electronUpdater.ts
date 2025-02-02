@@ -64,11 +64,10 @@ export class ElectronUpdater {
 		autoUpdater
 			.checkForUpdates()
 			.then((info) => {
-				// HACK: If there is a cancellation token, it found an update.
-				// This is not a good test, but the only other ways require comparing version numbers the same as electron-updater, or to listen to the emitted events instead
-				const hasUpdate = !!info?.cancellationToken
+				if (!info) return
+
 				if (notifyWithDialog) {
-					if (hasUpdate) {
+					if (info.isUpdateAvailable) {
 						dialog
 							.showMessageBox({
 								title: 'Companion Satellite',
@@ -96,7 +95,7 @@ export class ElectronUpdater {
 					}
 				} else {
 					// Show a system notification instead
-					if (hasUpdate) {
+					if (info.isUpdateAvailable) {
 						if (!this.#updateNotification) {
 							this.#updateNotification = new Notification({
 								title: 'An update is available',

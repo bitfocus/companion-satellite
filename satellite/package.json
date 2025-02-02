@@ -49,7 +49,7 @@
 		"conf": "^13.1.0",
 		"debounce-fn": "^6.0.0",
 		"electron-store": "^10.0.1",
-		"electron-updater": "^6.4.1",
+		"electron-updater": "patch:electron-updater@npm%3A6.4.1#~/.yarn/patches/electron-updater-npm-6.4.1-ef33e6cc39.patch",
 		"exit-hook": "^4.0.0",
 		"infinitton-idisplay": "^1.2.0",
 		"koa": "^2.15.3",
