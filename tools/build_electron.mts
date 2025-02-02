@@ -138,6 +138,8 @@ const satellitePkgJson = JSON.parse(satellitePkgJsonStr.toString())
 satellitePkgJson.updateChannel = process.env.EB_UPDATE_CHANNEL
 console.log('Injecting update channel: ' + satellitePkgJson.updateChannel)
 
+if (process.env.BUILD_VERSION) satellitePkgJson.version = process.env.BUILD_VERSION
+
 await fs.writeFile(satellitePkgJsonPath, JSON.stringify(satellitePkgJson))
 
 try {
