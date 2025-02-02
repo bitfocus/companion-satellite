@@ -105,8 +105,6 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	#drawAbort: AbortController
 	#queue: ImageWriteQueue<[abort: AbortSignal, drawProps: DeviceDrawProps]>
 
-	#companionSupportsScaling = false
-
 	/**
 	 * Whether the LCD has been written to outside the button bounds that needs clearing
 	 */
@@ -150,7 +148,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			})
 			if (!control) return
 
-			const bufferSize = this.#companionSupportsScaling ? this.#registerProps.bitmapSize : 72
+			const bufferSize = this.#registerProps.bitmapSize
 
 			if (control.type === 'button') {
 				if (control.feedbackType === 'lcd') {
@@ -321,8 +319,8 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		this.showStatus(client.host, status)
 	}
 
-	updateCapabilities(capabilities: ClientCapabilities): void {
-		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
+	updateCapabilities(_capabilities: ClientCapabilities): void {
+		// Not used
 	}
 
 	#discardDraws() {

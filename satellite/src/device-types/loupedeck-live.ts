@@ -31,9 +31,6 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 	#isShowingCard = true
 	#queue: ImageWriteQueue
 
-	#companionSupportsScaling = false
-	#companionSupportsCombinedEncoders = true
-
 	public get surfaceId(): string {
 		return this.#surfaceId
 	}
@@ -63,39 +60,17 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 				return
 			}
 
-			const outputId = this.#queueOutputId
+			try {
+				if (this.#isShowingCard) {
+					this.#isShowingCard = false
 
-			const width = this.#deck.lcdKeySize
-			const height = this.#deck.lcdKeySize
-
-			let newbuffer: Buffer = buffer
-			if (!this.#companionSupportsScaling) {
-				try {
-					newbuffer = (
-						await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
-							.scale(width, height)
-							.toBuffer(imageRs.PixelFormat.Rgb)
-					).buffer
-				} catch (e) {
-					console.log(`device(${surfaceId}): scale image failed: ${e}`)
-					return
+					// Do a blank of the whole panel before drawing a button, so that there isnt any bleed
+					await this.blankDevice(true)
 				}
-			}
 
-			// Check if generated image is still valid
-			if (this.#queueOutputId === outputId) {
-				try {
-					if (this.#isShowingCard) {
-						this.#isShowingCard = false
-
-						// Do a blank of the whole panel before drawing a button, so that there isnt any bleed
-						await this.blankDevice(true)
-					}
-
-					await this.#deck.drawKeyBuffer(key, newbuffer, LoupedeckBufferFormat.RGB)
-				} catch (e_1) {
-					console.error(`device(${surfaceId}): fillImage failed: ${e_1}`)
-				}
+				await this.#deck.drawKeyBuffer(key, buffer, LoupedeckBufferFormat.RGB)
+			} catch (e_1) {
+				console.error(`device(${surfaceId}): fillImage failed: ${e_1}`)
 			}
 		})
 	}
@@ -119,40 +94,23 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 		await this.#deck.close()
 	}
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
-		const convertButtonId = (type: 'button' | 'rotary', id: number, rotarySecondary: boolean): number => {
+		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button' && id >= 0 && id < 8) {
 				return 24 + id
 			} else if (type === 'rotary') {
-				if (!this.#companionSupportsCombinedEncoders && rotarySecondary) {
-					switch (id) {
-						case 0:
-							return 1
-						case 1:
-							return 9
-						case 2:
-							return 17
-						case 3:
-							return 6
-						case 4:
-							return 14
-						case 5:
-							return 22
-					}
-				} else {
-					switch (id) {
-						case 0:
-							return 0
-						case 1:
-							return 8
-						case 2:
-							return 16
-						case 3:
-							return 7
-						case 4:
-							return 15
-						case 5:
-							return 23
-					}
+				switch (id) {
+					case 0:
+						return 0
+					case 1:
+						return 8
+					case 2:
+						return 16
+					case 3:
+						return 7
+					case 4:
+						return 15
+					case 5:
+						return 23
 				}
 			}
 
@@ -160,25 +118,17 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 			return 99
 		}
 		console.log('Registering key events for ' + this.surfaceId)
-		this.#deck.on('down', (info) => client.keyDown(this.surfaceId, convertButtonId(info.type, info.index, true)))
-		this.#deck.on('up', (info) => client.keyUp(this.surfaceId, convertButtonId(info.type, info.index, true)))
+		this.#deck.on('down', (info) => client.keyDown(this.surfaceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('up', (info) => client.keyUp(this.surfaceId, convertButtonId(info.type, info.index)))
 		this.#deck.on('rotate', (info, delta) => {
 			if (info.type !== LoupedeckControlType.Rotary) return
 
-			const id2 = convertButtonId(info.type, info.index, false)
+			const id2 = convertButtonId(info.type, info.index)
 			if (id2 < 90) {
 				if (delta < 0) {
-					if (this.#companionSupportsCombinedEncoders) {
-						client.rotateLeft(this.surfaceId, id2)
-					} else {
-						client.keyUp(this.surfaceId, id2)
-					}
+					client.rotateLeft(this.surfaceId, id2)
 				} else if (delta > 0) {
-					if (this.#companionSupportsCombinedEncoders) {
-						client.rotateRight(this.surfaceId, id2)
-					} else {
-						client.keyDown(this.surfaceId, id2)
-					}
+					client.rotateRight(this.surfaceId, id2)
 				}
 			}
 		})
@@ -208,9 +158,8 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 		this.showStatus(client.host, status)
 	}
 
-	updateCapabilities(capabilities: ClientCapabilities): void {
-		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
-		this.#companionSupportsCombinedEncoders = capabilities.useCombinedEncoders
+	updateCapabilities(_capabilities: ClientCapabilities): void {
+		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {

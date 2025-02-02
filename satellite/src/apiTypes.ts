@@ -29,6 +29,7 @@ export function compileStatus(client: CompanionSatelliteClient): ApiStatusRespon
 		connected: client.connected,
 		companionVersion: client.companionVersion,
 		companionApiVersion: client.companionApiVersion,
+		companionUnsupportedApi: client.companionUnsupported,
 	}
 }
 

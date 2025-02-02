@@ -23,7 +23,9 @@ interface ConnectionStatusDataProps {
 	status: ApiStatusResponse
 }
 function ConnectionStatusData({ status }: ConnectionStatusDataProps) {
-	if (status.connected) {
+	if (status.companionUnsupportedApi) {
+		return <p>Companion {status.companionVersion ?? ''} is not supported</p>
+	} else if (status.connected) {
 		return <p>Connected to Companion {status.companionVersion}</p>
 	} else {
 		return <p>Connecting...</p>

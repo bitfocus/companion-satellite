@@ -139,17 +139,9 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 	showStatus(hostname: string, status: string): void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ClientCapabilities {
-	/**
-	 * Until 2.4 of Companion it does not support rotary encoders.
-	 * For these, we can 'simulate' them by use the press/release actions of a button.
-	 */
-	readonly useCombinedEncoders: boolean
-
-	/**
-	 * Until 3.2 of Companion it only supports providing 72x72px bitmaps for buttons.
-	 */
-	readonly useCustomBitmapResolution: boolean
+	// For future use to support new functionality
 }
 
 export interface CompanionClient {

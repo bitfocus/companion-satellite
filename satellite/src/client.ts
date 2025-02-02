@@ -8,6 +8,9 @@ const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
 const PING_INTERVAL = 100
 const RECONNECT_DELAY = 1000
+const RECONNECT_DELAY_UNSUPPORTED = 30000
+
+const MINIMUM_PROTOCOL_VERSION = '1.7.0' // Companion 3.4
 
 function parseLineParameters(line: string): Record<string, string | boolean> {
 	const makeSafe = (index: number): number => {
@@ -102,16 +105,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _retryConnectTimeout: NodeJS.Timeout | undefined = undefined
 	private _host = ''
 	private _port = DEFAULT_PORT
-	private _supportsCombinedEncoders = false
-	private _supportsBitmapResolution = false
 
 	private _registeredDevices = new Set<string>()
 	private _pendingDevices = new Map<string, number>() // Time submitted
 
 	private _companionVersion: string | null = null
 	private _companionApiVersion: string | null = null
-
-	public forceSplitEncoders = false
+	private _companionUnsupported = false
 
 	public get host(): string {
 		return this._host
@@ -128,11 +128,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	public get companionApiVersion(): string | null {
 		return this._companionApiVersion
 	}
+	public get companionUnsupported(): boolean {
+		return this._companionUnsupported
+	}
 
 	public get capabilities(): ClientCapabilities {
 		return {
-			useCombinedEncoders: !this.forceSplitEncoders && this._supportsCombinedEncoders,
-			useCustomBitmapResolution: this._supportsBitmapResolution,
+			// For future use
 		}
 	}
 
@@ -159,6 +161,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 			if (this._connected) {
 				this.emit('disconnected')
+			} else {
+				this._companionUnsupported = false
 			}
 			this._connected = false
 			this.receiveBuffer = ''
@@ -169,11 +173,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			}
 
 			if (!this._retryConnectTimeout && this.socket === socket) {
-				this._retryConnectTimeout = setTimeout(() => {
-					this._retryConnectTimeout = undefined
-					this.emit('log', 'Trying reconnect')
-					this.initSocket()
-				}, RECONNECT_DELAY)
+				this._retryConnectTimeout = setTimeout(
+					() => {
+						this._retryConnectTimeout = undefined
+						this.emit('log', 'Trying reconnect')
+						this.initSocket()
+					},
+					this._companionUnsupported ? RECONNECT_DELAY_UNSUPPORTED : RECONNECT_DELAY,
+				)
 			}
 		})
 
@@ -336,17 +343,29 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this._companionVersion = typeof params.CompanionVersion === 'string' ? params.CompanionVersion : null
 		this._companionApiVersion = typeof params.ApiVersion === 'string' ? params.ApiVersion : null
 
-		const protocolVersion = params.ApiVersion
-		if (typeof protocolVersion === 'string') {
-			if (semver.lte('1.3.0', protocolVersion)) {
-				this._supportsCombinedEncoders = true
-				console.log('Companion supports combined encoders')
-			}
-			if (semver.lte('1.5.0', protocolVersion)) {
-				this._supportsBitmapResolution = true
-				console.log('Companion supports bitmap resolution')
-			}
+		// Check if the companion is supported
+		this._companionUnsupported =
+			!this._companionApiVersion || semver.lt(this._companionApiVersion, MINIMUM_PROTOCOL_VERSION)
+		if (this._companionUnsupported) {
+			console.log(
+				`Connected to unsupported Companion version. Companion ${this._companionVersion}, API ${this._companionApiVersion}`,
+			)
+			this.socket?.end()
+			return
 		}
+
+		// Revive for future checks
+		// const protocolVersion = params.ApiVersion
+		// if (typeof protocolVersion === 'string') {
+		// 	if (semver.lte('1.3.0', protocolVersion)) {
+		// 		this._supportsCombinedEncoders = true
+		// 		console.log('Companion supports combined encoders')
+		// 	}
+		// 	if (semver.lte('1.5.0', protocolVersion)) {
+		// 		this._supportsBitmapResolution = true
+		// 		console.log('Companion supports bitmap resolution')
+		// 	}
+		// }
 
 		// report the connection as ready
 		setImmediate(() => {
@@ -502,7 +521,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				`ADD-DEVICE DEVICEID=${deviceId} PRODUCT_NAME="${productName}" KEYS_TOTAL=${
 					props.keysTotal
 				} KEYS_PER_ROW=${props.keysPerRow} BITMAPS=${
-					this._supportsBitmapResolution ? (props.bitmapSize ?? 0) : props.bitmapSize ? 1 : 0
+					props.bitmapSize ?? 0
 				} COLORS=${props.colours ? 1 : 0} TEXT=${props.text ? 1 : 0} VARIABLES=${transferVariables} BRIGHTNESS=${props.brightness ? 1 : 0}\n`,
 			)
 		}

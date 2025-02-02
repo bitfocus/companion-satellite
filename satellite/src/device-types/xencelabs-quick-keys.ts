@@ -105,8 +105,6 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 	readonly #surface: XencelabsQuickKeys
 	readonly #surfaceId: string
 
-	#companionSupportsCombinedEncoders = true
-
 	#statusTimer: NodeJS.Timeout | undefined
 	#unsub: (() => void) | undefined
 
@@ -161,18 +159,10 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 		const handleWheel = (ev: WheelEvent) => {
 			switch (ev) {
 				case WheelEvent.Left:
-					if (this.#companionSupportsCombinedEncoders) {
-						client.rotateLeft(this.surfaceId, 5)
-					} else {
-						client.keyUp(this.surfaceId, 11)
-					}
+					client.rotateLeft(this.surfaceId, 5)
 					break
 				case WheelEvent.Right:
-					if (this.#companionSupportsCombinedEncoders) {
-						client.rotateRight(this.surfaceId, 5)
-					} else {
-						client.keyDown(this.surfaceId, 11)
-					}
+					client.rotateRight(this.surfaceId, 5)
 					break
 			}
 		}
@@ -198,8 +188,8 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 		this.showStatus(client.host, status)
 	}
 
-	updateCapabilities(capabilities: ClientCapabilities): void {
-		this.#companionSupportsCombinedEncoders = capabilities.useCustomBitmapResolution
+	updateCapabilities(_capabilities: ClientCapabilities): void {
+		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {
@@ -239,7 +229,7 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 			}
 		}
 
-		const wheelIndex = this.#companionSupportsCombinedEncoders ? 5 : 11
+		const wheelIndex = 5
 		if (data.color && data.keyIndex === wheelIndex) {
 			const { r, g, b } = parseColor(data.color)
 

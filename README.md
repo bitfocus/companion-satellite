@@ -5,11 +5,11 @@
 
 A small application to allow for connecting a streamdeck to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
 
-Companion 2.2.0 and newer are supported
+Companion 3.4.0 and newer are supported
 
-Each device will appear in companion as its own 'satellite' device, and can be configured as if they are local.
+Each surface will appear in companion as its own 'satellite' surface, and can be configured as if they are local.
 
-Note: This connects over the satellite device api which uses port TCP 16622.
+Note: This connects over the satellite surface api which uses port TCP 16622.
 
 [![Satellite Getting Started](http://img.youtube.com/vi/eNnUxRl4yP4/0.jpg)](http://www.youtube.com/watch?v=eNnUxRl4yP4 'Remote Stream Deck control with Companion Satellite')
 
@@ -29,7 +29,7 @@ This application can be built with electron to provide a minimal ui and to allow
 You can right click the tray icon to:
 
 - Set the ip address of the companion instance to connect to
-- Force a manual scan for devices. This is done automatically when a new device is detected, but it can sometimes miss some
+- Force a manual scan for surfaces. This is done automatically when a new surface is detected, but it can sometimes miss some
 
 To manually build the latest version for your machine:
 

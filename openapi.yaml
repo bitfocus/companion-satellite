@@ -184,10 +184,14 @@ components:
           type: string
           nullable: true
           description: API version of the Companion Satellite
+        companionUnsupportedApi:
+          type: boolean
+          description: Whether the last successful Companion connection was with an unsupported API version
       required:
         - connected
         - companionVersion
         - companionApiVersion
+        - companionUnsupportedApi
 
     ConfigData:
       type: object

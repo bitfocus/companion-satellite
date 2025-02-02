@@ -122,6 +122,8 @@ export interface components {
             companionVersion: string | null;
             /** @description API version of the Companion Satellite */
             companionApiVersion: string | null;
+            /** @description Whether the last successful Companion connection was with an unsupported API version */
+            companionUnsupportedApi: boolean;
         };
         ConfigData: {
             /** @description Address of the Companion server to connect to */

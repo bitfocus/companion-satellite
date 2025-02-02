@@ -24,8 +24,6 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 	#isShowingCard = true
 	#queue: ImageWriteQueue
 
-	#companionSupportsScaling = false
-
 	public get surfaceId(): string {
 		return this.#surfaceId
 	}
@@ -52,39 +50,17 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 				return
 			}
 
-			const outputId = this.#queueOutputId
+			try {
+				if (this.#isShowingCard) {
+					this.#isShowingCard = false
 
-			const width = this.#deck.lcdKeySize
-			const height = this.#deck.lcdKeySize
-
-			let newbuffer: Buffer = buffer
-			if (!this.#companionSupportsScaling) {
-				try {
-					newbuffer = (
-						await imageRs.ImageTransformer.fromBuffer(buffer, 72, 72, imageRs.PixelFormat.Rgb)
-							.scale(width, height)
-							.toBuffer(imageRs.PixelFormat.Rgb)
-					).buffer
-				} catch (e) {
-					console.log(`device(${surfaceId}): scale image failed: ${e}`)
-					return
+					// Do a blank of the whole panel before drawing a button, so that there isnt any bleed
+					await this.blankDevice(true)
 				}
-			}
 
-			// Check if generated image is still valid
-			if (this.#queueOutputId === outputId) {
-				try {
-					if (this.#isShowingCard) {
-						this.#isShowingCard = false
-
-						// Do a blank of the whole panel before drawing a button, so that there isnt any bleed
-						await this.blankDevice(true)
-					}
-
-					await this.#deck.drawKeyBuffer(key, newbuffer, LoupedeckBufferFormat.RGB)
-				} catch (e_1) {
-					console.error(`device(${surfaceId}): fillImage failed: ${e_1}`)
-				}
+				await this.#deck.drawKeyBuffer(key, buffer, LoupedeckBufferFormat.RGB)
+			} catch (e_1) {
+				console.error(`device(${surfaceId}): fillImage failed: ${e_1}`)
 			}
 		})
 	}
@@ -126,8 +102,8 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 		this.showStatus(client.host, status)
 	}
 
-	updateCapabilities(capabilities: ClientCapabilities): void {
-		this.#companionSupportsScaling = capabilities.useCustomBitmapResolution
+	updateCapabilities(_capabilities: ClientCapabilities): void {
+		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {
