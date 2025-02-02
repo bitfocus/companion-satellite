@@ -48,7 +48,6 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 await fs.remove('./electron-output')
 
 const options: electronBuilder.Configuration = {
-	publish: [],
 	productName: 'Companion Satellite',
 	appId: 'remote.companion.bitfocus.no',
 	npmRebuild: false,
@@ -131,9 +130,22 @@ const options: electronBuilder.Configuration = {
 	],
 }
 
-// perform the electron build
-await electronBuilder.build({
-	targets: electronBuilder.Platform.fromString(platformInfo.platform).createTarget(null, platformInfo.arch),
-	config: options,
-	projectDir: 'satellite',
-})
+const satellitePkgJsonPath = new URL('../satellite/package.json', import.meta.url)
+const satellitePkgJsonStr = await fs.readFile(satellitePkgJsonPath)
+
+const satellitePkgJson = JSON.parse(satellitePkgJsonStr.toString())
+satellitePkgJson.updateChannel = process.env.EB_UPDATE_CHANNEL
+
+await fs.writeFile(satellitePkgJsonPath, JSON.stringify(satellitePkgJson))
+
+try {
+	// perform the electron build
+	await electronBuilder.build({
+		targets: electronBuilder.Platform.fromString(platformInfo.platform).createTarget(null, platformInfo.arch),
+		config: options,
+		projectDir: 'satellite',
+	})
+} finally {
+	// undo the changes made
+	await fs.writeFile(satellitePkgJsonPath, satellitePkgJsonStr)
+}
