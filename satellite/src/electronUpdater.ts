@@ -15,7 +15,7 @@ const updateChannel: string | undefined = app.isPackaged ? pkgJson.updateChannel
 autoUpdater.setFeedURL({
 	provider: 'generic',
 	publishAutoUpdate: false,
-	url: 'https://api-staging.bitfocus.io/v1/product/electron-updater/companion-satellite',
+	url: 'https://api.bitfocus.io/v1/product/electron-updater/companion-satellite',
 })
 autoUpdater.autoDownload = false
 autoUpdater.autoInstallOnAppQuit = true
