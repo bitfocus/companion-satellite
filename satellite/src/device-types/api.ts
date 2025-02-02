@@ -145,7 +145,7 @@ export interface ClientCapabilities {
 }
 
 export interface CompanionClient {
-	get host(): string
+	get displayHost(): string
 
 	keyDown(deviceId: string, keyIndex: number): void
 	keyUp(deviceId: string, keyIndex: number): void

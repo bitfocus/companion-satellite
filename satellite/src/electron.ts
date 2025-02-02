@@ -5,9 +5,13 @@ import * as path from 'path'
 import electronStore from 'electron-store'
 import { SurfaceManager } from './surface-manager.js'
 import { CompanionSatelliteClient } from './client.js'
-import { DEFAULT_PORT } from './lib.js'
 import { RestServer } from './rest.js'
-import { SatelliteConfig, ensureFieldsPopulated } from './config.js'
+import {
+	SatelliteConfig,
+	ensureFieldsPopulated,
+	getConnectionDetailsFromConfig,
+	listenToConnectionConfigChanges,
+} from './config.js'
 import {
 	ApiConfigData,
 	ApiConfigDataUpdateElectron,
@@ -47,8 +51,7 @@ const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfac
 const server = new RestServer(webRoot, appConfig, client, surfaceManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
-appConfig.onDidChange('remoteIp', () => tryConnect())
-appConfig.onDidChange('remotePort', () => tryConnect())
+listenToConnectionConfigChanges(appConfig, tryConnect)
 appConfig.onDidChange(
 	'surfacePluginsEnabled',
 	debounceFn(() => surfaceManager.updatePluginsEnabled(appConfig.get('surfacePluginsEnabled')), {
@@ -62,13 +65,9 @@ client.on('log', (l) => console.log(l))
 client.on('error', (e) => console.error(e))
 
 function tryConnect() {
-	const ip = appConfig.get('remoteIp')
-	const port = appConfig.get('remotePort') ?? DEFAULT_PORT
-	if (ip) {
-		client.connect(ip, port).catch((e) => {
-			console.log('Failed to update connection: ', e)
-		})
-	}
+	client.connect(getConnectionDetailsFromConfig(appConfig)).catch((e) => {
+		console.log('Failed to update connection: ', e)
+	})
 }
 function restartRestApi() {
 	server.open()

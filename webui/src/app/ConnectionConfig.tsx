@@ -9,6 +9,8 @@ import { Switch } from '@/components/ui/switch.js'
 import React from 'react'
 import { CONNECTION_CONFIG_QUERY_KEY, CONNECTION_STATUS_QUERY_KEY } from './constants.js'
 import { BarLoader } from 'react-spinners'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js'
+import { cn } from '@/lib/utils.js'
 
 export function ConnectionConfig(): JSX.Element {
 	const api = useSatelliteApi()
@@ -56,9 +58,28 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 				<legend className="col-span-3 col-start-2 px-1">Companion Connection</legend>
 
 				<form.Field
-					name="host"
+					name="protocol"
 					children={(field) => (
-						<FormRow label="Address" htmlFor={field.name}>
+						<FormRow label="Protocol" htmlFor={field.name} hint="TCP is recommended for most use cases.">
+							<Select value={field.state.value} onValueChange={(value) => field.handleChange(value as 'tcp' | 'ws')}>
+								<SelectTrigger id={field.name} name={field.name}>
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="tcp">TCP (Default)</SelectItem>
+									<SelectItem value="ws">WebSocket (Advanced)</SelectItem>
+								</SelectContent>
+							</Select>
+						</FormRow>
+					)}
+				/>
+				<form.Field
+					name="host"
+					validators={{
+						onChangeListenTo: ['protocol'],
+					}}
+					children={(field) => (
+						<FormRow label="Address" htmlFor={field.name} hidden={form.getFieldValue('protocol') !== 'tcp'}>
 							<Input
 								type="text"
 								id={field.name}
@@ -73,10 +94,14 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 				/>
 				<form.Field
 					name="port"
+					validators={{
+						onChangeListenTo: ['protocol'],
+					}}
 					children={(field) => (
 						<FormRow
 							label="Port"
 							htmlFor={field.name}
+							hidden={form.getFieldValue('protocol') !== 'tcp'}
 							hint="Only change this if you know what you are doing. In almost all cases this should be left at the default."
 						>
 							<Input
@@ -89,6 +114,29 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 								value={field.state.value}
 								onBlur={field.handleBlur}
 								onChange={(e) => field.handleChange(Number(e.target.value))}
+							/>
+						</FormRow>
+					)}
+				/>
+				<form.Field
+					name="wsAddress"
+					validators={{
+						onChangeListenTo: ['protocol'],
+					}}
+					children={(field) => (
+						<FormRow
+							label="Websocket URL"
+							htmlFor={field.name}
+							hidden={form.getFieldValue('protocol') !== 'ws'}
+							hint="This must be a full URL, eg ws://127.0.0.1:16623"
+						>
+							<Input
+								type="text"
+								id={field.name}
+								name={field.name}
+								value={field.state.value}
+								onBlur={field.handleBlur}
+								onChange={(e) => field.handleChange(e.target.value)}
 							/>
 						</FormRow>
 					)}
@@ -202,21 +250,23 @@ function FormRow({
 	label,
 	htmlFor,
 	hint,
+	hidden,
 	children,
 }: {
 	label: string
 	htmlFor: string
 	hint?: string | React.ReactNode
+	hidden?: boolean
 	children: JSX.Element
 }): JSX.Element {
 	return (
 		<>
-			<Label className="text-right content-center" htmlFor={htmlFor}>
+			<Label className={cn('text-right content-center', hidden && 'hidden')} htmlFor={htmlFor}>
 				{label}
 			</Label>
-			<div className="col-span-3">{children}</div>
+			<div className={cn('col-span-3', hidden && 'hidden')}>{children}</div>
 			{hint && (
-				<div className="col-span-3 col-start-2 -mt-3">
+				<div className={cn('col-span-3 col-start-2 -mt-3', hidden && 'hidden')}>
 					<p className="text-sm text-gray-500 p-1">{hint}</p>
 				</div>
 			)}

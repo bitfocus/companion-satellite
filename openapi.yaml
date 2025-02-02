@@ -196,12 +196,19 @@ components:
     ConfigData:
       type: object
       properties:
+        protocol:
+          type: string
+          enum: ['tcp', 'ws']
+          description: Protocol to use for the connection
         host:
           type: string
-          description: Address of the Companion server to connect to
+          description: Address of the Companion server to connect to, for TCP protocol
         port:
           type: number
-          description: Port number of the Companion server to connect to
+          description: Port number of the Companion server to connect to, for TCP protocol
+        wsAddress:
+          type: string
+          description: Address of the Companion server to connect to, for WS protocol
 
         installationName:
           type: string
@@ -217,8 +224,10 @@ components:
           type: number
           description: Port number of the HTTP api. This is readonly in the HTTP api
       required:
+        - protocol
         - host
         - port
+        - wsAddress
         - installationName
         - mdnsEnabled
         - httpEnabled
@@ -227,12 +236,19 @@ components:
     ConfigDataUpdate:
       type: object
       properties:
+        protocol:
+          type: string
+          enum: ['tcp', 'ws']
+          description: Protocol to use for the connection
         host:
           type: string
-          description: Address of the Companion server to connect to
+          description: Address of the Companion server to connect to, for TCP protocol
         port:
           type: number
-          description: Port number of the Companion server to connect to
+          description: Port number of the Companion server to connect to, for TCP protocol
+        wsAddress:
+          type: string
+          description: Address of the Companion server to connect to, for WS protocol
 
         installationName:
           type: string

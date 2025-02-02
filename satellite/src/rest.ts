@@ -105,6 +105,16 @@ export class RestServer {
 
 				const partialConfig: ApiConfigDataUpdate = {}
 
+				const protocol = body.protocol
+				if (protocol !== undefined) {
+					if (typeof protocol === 'string') {
+						partialConfig.protocol = protocol
+					} else {
+						ctx.status = 400
+						ctx.body = 'Invalid protocol'
+					}
+				}
+
 				const host = body.host
 				if (host !== undefined) {
 					if (typeof host === 'string') {
@@ -121,6 +131,16 @@ export class RestServer {
 					ctx.body = 'Invalid port'
 				} else {
 					partialConfig.port = port
+				}
+
+				const wsAddress = body.wsAddress
+				if (wsAddress !== undefined) {
+					if (typeof wsAddress === 'string') {
+						partialConfig.wsAddress = wsAddress
+					} else {
+						ctx.status = 400
+						ctx.body = 'Invalid wsAddress'
+					}
 				}
 
 				const installationName = body.installationName

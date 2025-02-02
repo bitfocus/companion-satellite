@@ -1,8 +1,15 @@
 import { EventEmitter } from 'events'
-import { Socket } from 'net'
 import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
-import { DEFAULT_PORT } from './lib.js'
+import { assertNever, DEFAULT_TCP_PORT } from './lib.js'
 import * as semver from 'semver'
+import {
+	CompanionSatelliteTcpClient,
+	CompanionSatelliteWsClient,
+	formatConnectionUrl,
+	ICompanionSatelliteClient,
+	ICompanionSatelliteClientOptions,
+	SomeConnectionDetails,
+} from './clientImplementations.js'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
@@ -93,7 +100,7 @@ export type CompanionSatelliteClientEvents = {
 
 export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> implements CompanionClient {
 	private readonly debug: boolean
-	private socket: Socket | undefined
+	private socket: ICompanionSatelliteClient | undefined
 
 	private receiveBuffer = ''
 
@@ -103,8 +110,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _connected = false
 	private _connectionActive = false // True when connected/connecting/reconnecting
 	private _retryConnectTimeout: NodeJS.Timeout | undefined = undefined
-	private _host = ''
-	private _port = DEFAULT_PORT
+	private _connectionDetails: SomeConnectionDetails = { mode: 'tcp', host: '', port: DEFAULT_TCP_PORT }
 
 	private _registeredDevices = new Set<string>()
 	private _pendingDevices = new Map<string, number>() // Time submitted
@@ -113,11 +119,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _companionApiVersion: string | null = null
 	private _companionUnsupported = false
 
-	public get host(): string {
-		return this._host
-	}
-	public get port(): number {
-		return this._port
+	public get connectionDetails(): SomeConnectionDetails {
+		return this._connectionDetails
 	}
 	public get connected(): boolean {
 		return this._connected
@@ -130,6 +133,23 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get companionUnsupported(): boolean {
 		return this._companionUnsupported
+	}
+
+	public get displayHost(): string {
+		switch (this._connectionDetails.mode) {
+			case 'tcp':
+				return this._connectionDetails.host
+			case 'ws':
+				try {
+					const url = new URL(this._connectionDetails.url)
+					return url.hostname
+				} catch (_e) {
+					return this._connectionDetails.url
+				}
+			default:
+				assertNever(this._connectionDetails)
+				return ''
+		}
 	}
 
 	public get capabilities(): ClientCapabilities {
@@ -147,74 +167,95 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private initSocket(): void {
-		const socket = (this.socket = new Socket())
-		this.socket.on('error', (e) => {
-			this.emit('error', e)
-		})
-		this.socket.on('close', () => {
-			if (this.debug) {
-				this.emit('log', 'Connection closed')
-			}
-
-			this._registeredDevices.clear()
-			this._pendingDevices.clear()
-
-			if (this._connected) {
-				this.emit('disconnected')
-			} else {
-				this._companionUnsupported = false
-			}
-			this._connected = false
-			this.receiveBuffer = ''
-
-			if (this._pingInterval) {
-				clearInterval(this._pingInterval)
-				this._pingInterval = undefined
-			}
-
-			if (!this._retryConnectTimeout && this.socket === socket) {
-				this._retryConnectTimeout = setTimeout(
-					() => {
-						this._retryConnectTimeout = undefined
-						this.emit('log', 'Trying reconnect')
-						this.initSocket()
-					},
-					this._companionUnsupported ? RECONNECT_DELAY_UNSUPPORTED : RECONNECT_DELAY,
-				)
-			}
-		})
-
-		this.socket.on('data', (d) => this._handleReceivedData(d))
-
-		this.socket.on('connect', () => {
-			if (this.debug) {
-				this.emit('log', 'Connected')
-			}
-
-			this._registeredDevices.clear()
-			this._pendingDevices.clear()
-
-			this._connected = true
-			this._pingUnackedCount = 0
-			this.receiveBuffer = ''
-
-			if (!this._pingInterval) {
-				this._pingInterval = setInterval(() => this.sendPing(), PING_INTERVAL)
-			}
-
-			if (!this.socket) {
-				// should never hit, but just in case
-				this.disconnect()
-				return
-			}
-
-			// 'connected' gets emitted once we receive 'Begin'
-		})
-
-		if (this._host) {
-			this.emit('log', `Connecting to ${this._host}:${this._port}`)
-			this.socket.connect(this._port, this._host)
+		if (this.socket) {
+			this.socket.destroy()
+			this.socket = undefined
 		}
+
+		if (!this._connectionDetails) {
+			this.emit('log', `Missing connection details`)
+			return
+		}
+
+		const socketOptions: ICompanionSatelliteClientOptions = {
+			onError: (e) => {
+				this.emit('error', e)
+			},
+			onClose: () => {
+				if (this.debug) {
+					this.emit('log', 'Connection closed')
+				}
+
+				this._registeredDevices.clear()
+				this._pendingDevices.clear()
+
+				if (this._connected) {
+					this.emit('disconnected')
+				} else {
+					this._companionUnsupported = false
+				}
+				this._connected = false
+				this.receiveBuffer = ''
+
+				if (this._pingInterval) {
+					clearInterval(this._pingInterval)
+					this._pingInterval = undefined
+				}
+
+				if (!this._retryConnectTimeout && this.socket === socket) {
+					this._retryConnectTimeout = setTimeout(
+						() => {
+							this._retryConnectTimeout = undefined
+							this.emit('log', 'Trying reconnect')
+							this.initSocket()
+						},
+						this._companionUnsupported ? RECONNECT_DELAY_UNSUPPORTED : RECONNECT_DELAY,
+					)
+				}
+			},
+			onData: (d) => this._handleReceivedData(d),
+			onConnect: () => {
+				if (this.debug) {
+					this.emit('log', 'Connected')
+				}
+
+				this._registeredDevices.clear()
+				this._pendingDevices.clear()
+
+				this._connected = true
+				this._pingUnackedCount = 0
+				this.receiveBuffer = ''
+
+				if (!this._pingInterval) {
+					this._pingInterval = setInterval(() => this.sendPing(), PING_INTERVAL)
+				}
+
+				if (!this.socket) {
+					// should never hit, but just in case
+					this.disconnect()
+					return
+				}
+
+				// 'connected' gets emitted once we receive 'Begin'
+			},
+		}
+
+		let socket: ICompanionSatelliteClient
+		switch (this._connectionDetails.mode) {
+			case 'tcp':
+				socket = new CompanionSatelliteTcpClient(socketOptions, this._connectionDetails)
+				break
+			case 'ws':
+				socket = new CompanionSatelliteWsClient(socketOptions, this._connectionDetails)
+				break
+			default:
+				assertNever(this._connectionDetails)
+				this.socket = undefined
+				throw new Error('Invalid connection mode')
+		}
+		this.socket = socket
+
+		this.emit('log', `Connecting to ${formatConnectionUrl(this._connectionDetails)}`)
 	}
 
 	private sendPing(): void {
@@ -235,7 +276,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
-	public async connect(host: string, port: number): Promise<void> {
+	public async connect(details: SomeConnectionDetails): Promise<void> {
 		if (this._connected || this._connectionActive) {
 			this.disconnect()
 		}
@@ -245,8 +286,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this.emit('connecting')
 		})
 
-		this._host = host
-		this._port = port
+		this._connectionDetails = { ...details }
 
 		this.initSocket()
 	}
@@ -276,9 +316,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
-	private _handleReceivedData(data: Buffer): void {
+	private _handleReceivedData(data: string): void {
 		this._lastReceivedAt = Date.now()
-		this.receiveBuffer += data.toString()
+		this.receiveBuffer += data
 
 		let i = -1
 		let offset = 0

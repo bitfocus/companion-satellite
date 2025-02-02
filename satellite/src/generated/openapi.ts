@@ -126,10 +126,17 @@ export interface components {
             companionUnsupportedApi: boolean;
         };
         ConfigData: {
-            /** @description Address of the Companion server to connect to */
+            /**
+             * @description Protocol to use for the connection
+             * @enum {string}
+             */
+            protocol: "tcp" | "ws";
+            /** @description Address of the Companion server to connect to, for TCP protocol */
             host: string;
-            /** @description Port number of the Companion server to connect to */
+            /** @description Port number of the Companion server to connect to, for TCP protocol */
             port: number;
+            /** @description Address of the Companion server to connect to, for WS protocol */
+            wsAddress: string;
             /** @description Name of the installation, reported in the mDNS announcement */
             installationName: string;
             /** @description Enable mDNS announcement to allow automatic discovery of the Companion Satellite */
@@ -140,10 +147,17 @@ export interface components {
             httpPort: number;
         };
         ConfigDataUpdate: {
-            /** @description Address of the Companion server to connect to */
+            /**
+             * @description Protocol to use for the connection
+             * @enum {string}
+             */
+            protocol?: "tcp" | "ws";
+            /** @description Address of the Companion server to connect to, for TCP protocol */
             host?: string;
-            /** @description Port number of the Companion server to connect to */
+            /** @description Port number of the Companion server to connect to, for TCP protocol */
             port?: number;
+            /** @description Address of the Companion server to connect to, for WS protocol */
+            wsAddress?: string;
             /** @description Name of the installation, reported in the mDNS announcement */
             installationName?: string;
             /** @description Enable mDNS announcement to allow automatic discovery of the Companion Satellite */

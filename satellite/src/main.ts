@@ -4,9 +4,8 @@ import '@julusian/segfault-raub'
 import exitHook from 'exit-hook'
 import { CompanionSatelliteClient } from './client.js'
 import { SurfaceManager } from './surface-manager.js'
-import { DEFAULT_PORT } from './lib.js'
 import { RestServer } from './rest.js'
-import { openHeadlessConfig } from './config.js'
+import { getConnectionDetailsFromConfig, listenToConnectionConfigChanges, openHeadlessConfig } from './config.js'
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
@@ -47,13 +46,12 @@ exitHook(() => {
 })
 
 const tryConnect = () => {
-	client.connect(appConfig.get('remoteIp') || '127.0.0.1', appConfig.get('remotePort') || DEFAULT_PORT).catch((e) => {
+	client.connect(getConnectionDetailsFromConfig(appConfig)).catch((e) => {
 		console.log(`Failed to connect`, e)
 	})
 }
 
-appConfig.onDidChange('remoteIp', () => tryConnect())
-appConfig.onDidChange('remotePort', () => tryConnect())
+listenToConnectionConfigChanges(appConfig, tryConnect)
 appConfig.onDidChange(
 	'surfacePluginsEnabled',
 	debounceFn(() => surfaceManager.updatePluginsEnabled(appConfig.get('surfacePluginsEnabled')), {

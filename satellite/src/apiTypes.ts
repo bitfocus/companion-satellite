@@ -35,8 +35,10 @@ export function compileStatus(client: CompanionSatelliteClient): ApiStatusRespon
 
 export function compileConfig(appConfig: Conf<SatelliteConfig>): ApiConfigData {
 	return {
+		protocol: appConfig.get('remoteProtocol'),
 		host: appConfig.get('remoteIp'),
 		port: appConfig.get('remotePort'),
+		wsAddress: appConfig.get('remoteWsAddress'),
 
 		installationName: appConfig.get('installationName'),
 
@@ -48,8 +50,10 @@ export function compileConfig(appConfig: Conf<SatelliteConfig>): ApiConfigData {
 }
 
 export function updateConfig(appConfig: SatelliteConfigInstance, newConfig: ApiConfigDataUpdateElectron): void {
+	if (newConfig.protocol !== undefined) appConfig.set('remoteProtocol', newConfig.protocol)
 	if (newConfig.host !== undefined) appConfig.set('remoteIp', newConfig.host)
 	if (newConfig.port !== undefined) appConfig.set('remotePort', newConfig.port)
+	if (newConfig.wsAddress !== undefined) appConfig.set('remoteWsAddress', newConfig.wsAddress)
 
 	if (newConfig.httpEnabled !== undefined) appConfig.set('restEnabled', newConfig.httpEnabled)
 	if (newConfig.httpPort !== undefined) appConfig.set('restPort', newConfig.httpPort)

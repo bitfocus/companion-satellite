@@ -157,7 +157,7 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		// Start with blanking it
 		await this.blankDevice()
 
-		this.showStatus(client.host, status)
+		this.showStatus(client.displayHost, status)
 	}
 
 	updateCapabilities(_capabilities: ClientCapabilities): void {

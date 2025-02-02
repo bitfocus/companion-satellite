@@ -185,7 +185,7 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 		// Start with blanking it
 		await this.blankDevice()
 
-		this.showStatus(client.host, status)
+		this.showStatus(client.displayHost, status)
 	}
 
 	updateCapabilities(_capabilities: ClientCapabilities): void {

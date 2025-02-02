@@ -1,4 +1,5 @@
-export const DEFAULT_PORT = 16622
+export const DEFAULT_TCP_PORT = 16622
+export const DEFAULT_WS_PORT = 16623
 
 export function assertNever(_v: never): void {
 	// Nothing to do

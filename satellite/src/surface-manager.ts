@@ -178,7 +178,7 @@ export class SurfaceManager {
 				async (msg) => {
 					const surface = this.#getWrappedSurface(msg.deviceId)
 
-					surface.showStatus(this.#client.host, msg.message)
+					surface.showStatus(this.#client.displayHost, msg.message)
 
 					// Try again to add the device, in case we can recover
 					this.#delayRetryAddOfDevice(msg.deviceId)
@@ -268,7 +268,7 @@ export class SurfaceManager {
 			if (this.#pendingSurfaces.has(device.surfaceId)) continue
 
 			// Indicate on device
-			device.showStatus(this.#client.host, this.#statusString)
+			device.showStatus(this.#client.displayHost, this.#statusString)
 
 			// Make sure device knows what the client is capable of
 			device.updateCapabilities(this.#client.capabilities)
@@ -480,7 +480,7 @@ export class SurfaceManager {
 
 	#doDrawStatusCard(message: string) {
 		for (const dev of this.#surfaces.values()) {
-			dev.showStatus(this.#client.host, message)
+			dev.showStatus(this.#client.displayHost, message)
 		}
 	}
 }
