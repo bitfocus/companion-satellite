@@ -43,7 +43,7 @@ export class ElectronUpdater {
 		})
 	}
 
-	installPending(): void {
+	private installPending(): void {
 		autoUpdater
 			.downloadUpdate()
 			.then(() => {
@@ -65,7 +65,9 @@ export class ElectronUpdater {
 			.checkForUpdates()
 			.then((info) => {
 				if (notifyWithDialog) {
-					if (info) {
+					// HACK: If there is a cancellation token, it found an update.
+					// This is not a good test, but the only other ways require comparing version numbers the same as electron-updater, or to listen to the emitted events instead
+					if (info?.cancellationToken) {
 						dialog
 							.showMessageBox({
 								title: 'Companion Satellite',
