@@ -67,6 +67,7 @@ export class CompanionSatelliteWsClient implements ICompanionSatelliteClient {
 
 		this.#socket.on('error', (err) => options.onError(err))
 		this.#socket.on('close', () => options.onClose())
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		this.#socket.on('message', (data) => options.onData(data.toString()))
 		this.#socket.on('open', () => options.onConnect())
 	}
