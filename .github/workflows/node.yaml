@@ -190,6 +190,12 @@ jobs:
           # try and avoid timeout errors
           yarn config set httpTimeout 100000
 
+          yarn
+          yarn --cwd webui install
+
+      - name: build & package (unsigned)
+        if: ${{ runner.environment != 'self-hosted' }}
+        run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             export EB_UPDATE_CHANNEL=stable
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
@@ -198,12 +204,6 @@ jobs:
             export EB_UPDATE_CHANNEL=experimental
           fi
 
-          yarn
-          yarn --cwd webui install
-
-      - name: build & package (unsigned)
-        if: ${{ runner.environment != 'self-hosted' }}
-        run: |
           yarn dist win32-x64
         env:
           CI: 1
@@ -211,6 +211,13 @@ jobs:
       - name: build & package (signed)
         if: ${{ runner.environment == 'self-hosted' }}
         run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            export EB_UPDATE_CHANNEL=stable
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            export EB_UPDATE_CHANNEL=beta
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            export EB_UPDATE_CHANNEL=experimental
+          fi
           yarn dist win32-x64
         env:
           CI: 1

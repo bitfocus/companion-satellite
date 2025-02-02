@@ -136,6 +136,7 @@ const satellitePkgJsonStr = await fs.readFile(satellitePkgJsonPath)
 
 const satellitePkgJson = JSON.parse(satellitePkgJsonStr.toString())
 satellitePkgJson.updateChannel = process.env.EB_UPDATE_CHANNEL
+console.log('Injecting update channel: ' + satellitePkgJson.updateChannel)
 
 await fs.writeFile(satellitePkgJsonPath, JSON.stringify(satellitePkgJson))
 
