@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.0.0](https://github.com/bitfocus/companion-satellite/compare/v1.10.2...v2.0.0) (2025-02-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* require companion 3.4 or later
+* conform surface ids to match companion
+
+### Features
+
+* allow opting out of brightness control ([fdfacba](https://github.com/bitfocus/companion-satellite/commit/fdfacba9e6c314dbf0245decd10fce462e07e5dd))
+* api endpoint to list connected/discovered surfaces ([8712618](https://github.com/bitfocus/companion-satellite/commit/87126188485dc935a145c26056e6580bdac2861a))
+* atem micro panel support (requires companion 3.4) ([cd5a034](https://github.com/bitfocus/companion-satellite/commit/cd5a034aeac06e7d3a8f50b48f6e174bd74ad798))
+* config to enable/disable different surface types ([2752c4c](https://github.com/bitfocus/companion-satellite/commit/2752c4c92c579bbea9a9a71c533ce2c8a724fd10))
+* conform surface ids to match companion ([5be0e80](https://github.com/bitfocus/companion-satellite/commit/5be0e8086581bc86fa51b1b9a60f55c596ebcb75))
+* connected surfaces table in ui ([5ddbbd1](https://github.com/bitfocus/companion-satellite/commit/5ddbbd167ba50b59cbc7702d53f5e998eb11b62a))
+* one click update (windows only) ([432e043](https://github.com/bitfocus/companion-satellite/commit/432e043d75794390fd25ff8fb96eaf7028038fad))
+* only include open surfaces in api ([6e0a526](https://github.com/bitfocus/companion-satellite/commit/6e0a526d7a7bcdb4a760fe38047a32b583f7543a))
+* openapi type generation ([48d9e50](https://github.com/bitfocus/companion-satellite/commit/48d9e508429d179fc78d7a4aa00c86601e56bea9))
+* rebuild about window ([ed2373c](https://github.com/bitfocus/companion-satellite/commit/ed2373c6e24b7665bb76acf2180ed70aa9bf3350))
+* rebuild ui in shadcn ([dd7a874](https://github.com/bitfocus/companion-satellite/commit/dd7a874d76e797113ded900ba2dee66ae10a873e))
+* refactor surface integrations to be a little more plugin based ([8fabf47](https://github.com/bitfocus/companion-satellite/commit/8fabf47f6c358dd2ee04188f934668a960c1394d))
+* require companion 3.4 or later ([4fd0d67](https://github.com/bitfocus/companion-satellite/commit/4fd0d6760878a553fa8f62121336556326f8f38d))
+* support websocket connection ([739f583](https://github.com/bitfocus/companion-satellite/commit/739f58320aeea2d4f229344d7435b6dcdb0459af))
+* update electron. This drops support for macos 10.15 ([adc8c70](https://github.com/bitfocus/companion-satellite/commit/adc8c7060649bbc269b3707e51591442f9627008))
+
+
+### Bug Fixes
+
+* only show check for updates tray menu item ([09a082a](https://github.com/bitfocus/companion-satellite/commit/09a082af1eeb850c4fdda5d4ec34339795d68049))
+* use builtin notarization support ([160bfc6](https://github.com/bitfocus/companion-satellite/commit/160bfc67ca1e92cd889bf901a0d273e1a8b4ccd7))
+
 ## [1.10.2](https://github.com/bitfocus/companion-satellite/compare/v1.10.1...v1.10.2) (2025-01-11)
 
 
