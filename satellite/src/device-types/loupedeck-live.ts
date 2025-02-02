@@ -102,6 +102,7 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
+			brightness: true,
 			keysTotal: 32,
 			keysPerRow: 8,
 			bitmapSize: this.#deck.lcdKeySize,

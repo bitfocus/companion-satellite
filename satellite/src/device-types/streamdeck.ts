@@ -51,6 +51,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 	const cols = maxX - minX + 1
 
 	return {
+		brightness: deck.MODEL !== DeviceModelId.PEDAL,
 		keysTotal: cols * rows,
 		keysPerRow: cols,
 		bitmapSize: needsBitmaps,

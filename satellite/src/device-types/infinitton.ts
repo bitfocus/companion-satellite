@@ -86,6 +86,7 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
+			brightness: true,
 			keysTotal: 15,
 			keysPerRow: 5,
 			bitmapSize: 72,

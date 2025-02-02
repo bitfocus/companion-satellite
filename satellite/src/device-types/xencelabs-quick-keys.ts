@@ -128,6 +128,7 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 
 	getRegisterProps(): DeviceRegisterProps {
 		return {
+			brightness: true,
 			keysTotal: 12,
 			keysPerRow: 6,
 			bitmapSize: null,
