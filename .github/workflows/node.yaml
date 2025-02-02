@@ -190,7 +190,7 @@ jobs:
           # try and avoid timeout errors
           yarn config set httpTimeout 100000
 
-          if [[ "${{ github.ref }}" == refs/tags/* ]]
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             export EB_UPDATE_CHANNEL=stable
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             export EB_UPDATE_CHANNEL=beta
@@ -274,7 +274,7 @@ jobs:
           # try and avoid timeout errors
           yarn config set httpTimeout 100000
 
-          if [[ "${{ github.ref }}" == refs/tags/* ]]
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             export EB_UPDATE_CHANNEL=stable
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             export EB_UPDATE_CHANNEL=beta
@@ -349,7 +349,7 @@ jobs:
           # try and avoid timeout errors
           yarn config set httpTimeout 100000
 
-          if [[ "${{ github.ref }}" == refs/tags/* ]]
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             export EB_UPDATE_CHANNEL=stable
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             export EB_UPDATE_CHANNEL=beta
