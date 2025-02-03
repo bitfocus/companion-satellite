@@ -29,7 +29,7 @@
 		"@types/ws": "^8.5.12",
 		"cross-env": "^7.0.3",
 		"electron": "34.0.2",
-		"electron-builder": "^26.0.1",
+		"electron-builder": "^26.0.2",
 		"rimraf": "^6.0.1",
 		"tsx": "^4.19.2"
 	},
@@ -49,7 +49,7 @@
 		"conf": "^13.1.0",
 		"debounce-fn": "^6.0.0",
 		"electron-store": "^10.0.1",
-		"electron-updater": "patch:electron-updater@npm%3A6.4.1#~/.yarn/patches/electron-updater-npm-6.4.1-ef33e6cc39.patch",
+		"electron-updater": "^6.5.0",
 		"exit-hook": "^4.0.0",
 		"infinitton-idisplay": "^1.2.0",
 		"koa": "^2.15.3",
