@@ -80,6 +80,7 @@ const options: electronBuilder.Configuration = {
 	},
 	win: {
 		target: 'nsis',
+		verifyUpdateCodeSignature: false, // Enabling this would need publishedName to be set, not sure if that is possible
 		signtoolOptions: {
 			signingHashAlgorithms: ['sha256'],
 
