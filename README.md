@@ -15,7 +15,7 @@ Note: This connects over the satellite surface api which uses port TCP 16622.
 
 ## Getting started
 
-You can find installers on the [BitFocus website](https://user.bitfocus.io/download)
+You can find installers on the [Bitfocus website](https://user.bitfocus.io/download)
 
 ### Raspberry Pi
 
