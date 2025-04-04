@@ -12,10 +12,16 @@ export function AppContent(): JSX.Element {
 		<QueryClientProvider client={queryClient}>
 			<Tabs defaultValue="connection">
 				<CardHeader className="text-center pb-3">
-					<TabsList>
-						<TabsTrigger value="connection">Connection</TabsTrigger>
-						<TabsTrigger value="connected-surfaces">Connected Surfaces</TabsTrigger>
-						<TabsTrigger value="surface-plugins">Surface Plugins</TabsTrigger>
+					<TabsList className="flex-col sm:flex-row h-auto sm:h-9">
+						<TabsTrigger className="w-full sm:w-auto" value="connection">
+							Connection
+						</TabsTrigger>
+						<TabsTrigger className="w-full sm:w-auto" value="connected-surfaces">
+							Connected Surfaces
+						</TabsTrigger>
+						<TabsTrigger className="w-full sm:w-auto" value="surface-plugins">
+							Surface Plugins
+						</TabsTrigger>
 					</TabsList>
 				</CardHeader>
 				<CardContent>
