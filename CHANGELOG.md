@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.0.2](https://github.com/bitfocus/companion-satellite/compare/v2.0.1...v2.0.2) (2025-04-04)
+
+
+### Bug Fixes
+
+* tabs become vertical on narrow screens ([11d8640](https://github.com/bitfocus/companion-satellite/commit/11d86405dedfc503a1a120198cd2736c4f0008b4))
+
 ## [2.0.1](https://github.com/bitfocus/companion-satellite/compare/v2.0.0...v2.0.1) (2025-02-03)
 
 
