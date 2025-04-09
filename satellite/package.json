@@ -52,7 +52,7 @@
 		"electron-updater": "^6.6.2",
 		"exit-hook": "^4.0.0",
 		"infinitton-idisplay": "^1.2.0",
-		"koa": "^2.16.0",
+		"koa": "^2.16.1",
 		"koa-body": "^6.0.1",
 		"koa-router": "^13.0.1",
 		"koa-static": "^5.0.0",
