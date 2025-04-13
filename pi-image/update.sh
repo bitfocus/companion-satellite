@@ -27,6 +27,10 @@ fnm use --install-if-missing
 fnm default $(fnm current)
 corepack enable
 
+if [ $(getent group dialout) ]; then
+  adduser -q companion dialout # for serial based surfaces
+fi
+
 # ensure some dependencies are installed
 ensure_installed() {
   if ! dpkg --verify "$1" 2>/dev/null; then
