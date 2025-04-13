@@ -40,7 +40,7 @@ jobs:
           yarn lint
 
   Linux-x64:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -105,7 +105,7 @@ jobs:
           retention-days: 1
 
   Linux-arm64:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04-arm
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
