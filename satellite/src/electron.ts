@@ -28,11 +28,13 @@ import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
 import { ElectronUpdater } from './electronUpdater.js'
+import { setMaxListeners } from 'events'
 
 const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
 	// migrations: satelliteConfigMigrations,
 })
+setMaxListeners(0, appConfig.events)
 ensureFieldsPopulated(appConfig)
 
 const electronUpdater = new ElectronUpdater()

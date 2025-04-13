@@ -5,6 +5,7 @@ import { customAlphabet } from 'nanoid'
 import { SomeConnectionDetails } from './clientImplementations.js'
 import { assertNever, DEFAULT_TCP_PORT, DEFAULT_WS_PORT } from './lib.js'
 import debounceFn from 'debounce-fn'
+import { setMaxListeners } from 'events'
 
 const nanoidHex = customAlphabet('0123456789abcdef')
 
@@ -114,6 +115,8 @@ export function openHeadlessConfig(rawConfigPath: string): Conf<SatelliteConfig>
 		projectName: 'companion-satellite',
 		cwd: path.dirname(absoluteConfigPath),
 	})
+	setMaxListeners(0, appConfig.events)
+
 	ensureFieldsPopulated(appConfig)
 	return appConfig
 }
