@@ -28,7 +28,7 @@ fnm default $(fnm current)
 corepack enable
 
 if [ $(getent group dialout) ]; then
-  adduser -q companion dialout # for serial based surfaces
+  adduser -q satellite dialout # for serial based surfaces
 fi
 
 # ensure some dependencies are installed
