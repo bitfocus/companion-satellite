@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.0.3](https://github.com/bitfocus/companion-satellite/compare/v2.0.2...v2.0.3) (2025-04-13)
+
+
+### Bug Fixes
+
+* update udev rules ([1f36d5d](https://github.com/bitfocus/companion-satellite/commit/1f36d5dc8e1529680bb21f3a04a784d476c15ceb))
+
 ## [2.0.2](https://github.com/bitfocus/companion-satellite/compare/v2.0.1...v2.0.2) (2025-04-04)
 
 
