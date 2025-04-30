@@ -36,24 +36,24 @@
   "devDependencies": {
     "@sofie-automation/eslint-plugin": "^0.1.1",
     "@tsconfig/node20": "^20.1.5",
-    "eslint": "^9.24.0",
-    "eslint-config-prettier": "^10.1.1",
+    "eslint": "^9.25.1",
+    "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-n": "^17.17.0",
     "eslint-plugin-prettier": "^5.2.6",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.19",
+    "eslint-plugin-react-refresh": "^0.4.20",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.0",
+    "lint-staged": "^15.5.1",
     "openapi-typescript": "^7.6.1",
     "prettier": "^3.5.3",
-    "tsx": "^4.19.3",
+    "tsx": "^4.19.4",
     "typescript": "~5.7.3",
-    "typescript-eslint": "^8.29.0",
-    "zx": "^8.5.0"
+    "typescript-eslint": "^8.31.1",
+    "zx": "^8.5.3"
   },
   "engines": {
     "node": "^20.14"
   },
-  "packageManager": "yarn@4.8.1"
+  "packageManager": "yarn@4.9.1"
 }
