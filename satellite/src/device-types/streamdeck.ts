@@ -7,7 +7,7 @@ import {
 	StreamDeckLcdSegmentControlDefinition,
 } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../cards.js'
 import {
 	ClientCapabilities,
 	DeviceDrawProps,
@@ -53,8 +53,8 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 
 	return {
 		brightness: deck.MODEL !== DeviceModelId.PEDAL,
-		keysTotal: cols * rows,
-		keysPerRow: cols,
+		rowCount: rows,
+		columnCount: cols,
 		bitmapSize: needsBitmaps,
 		colours: true,
 		text: false,
@@ -86,15 +86,11 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 		}
 	}
 
-	openSurface = async (
-		surfaceId: string,
-		pluginInfo: StreamDeckDeviceInfo,
-		cardGenerator: CardGenerator,
-	): Promise<OpenSurfaceResult> => {
+	openSurface = async (surfaceId: string, pluginInfo: StreamDeckDeviceInfo): Promise<OpenSurfaceResult> => {
 		const streamdeck = await openStreamDeck(pluginInfo.path)
 		const registerProps = compileRegisterProps(streamdeck)
 		return {
-			surface: new StreamDeckWrapper(surfaceId, streamdeck, cardGenerator, registerProps),
+			surface: new StreamDeckWrapper(surfaceId, streamdeck, registerProps),
 			registerProps: registerProps,
 		}
 	}
@@ -103,7 +99,6 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
 	readonly pluginId = PLUGIN_ID
 
-	readonly #cardGenerator: CardGenerator
 	readonly #deck: StreamDeck
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
@@ -134,17 +129,11 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		return this.#deck.PRODUCT_NAME
 	}
 
-	public constructor(
-		surfaceId: string,
-		deck: StreamDeck,
-		cardGenerator: CardGenerator,
-		registerProps: DeviceRegisterProps,
-	) {
+	public constructor(surfaceId: string, deck: StreamDeck, registerProps: DeviceRegisterProps) {
 		super()
 
 		this.#deck = deck
 		this.#surfaceId = surfaceId
-		this.#cardGenerator = cardGenerator
 
 		this.#deck.on('error', (e) => this.emit('error', e))
 
@@ -206,8 +195,8 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	async draw(signal: AbortSignal, drawProps: DeviceDrawProps): Promise<void> {
 		const key = drawProps.keyIndex
 
-		const x = key % this.#registerProps.keysPerRow
-		const y = Math.floor(key / this.#registerProps.keysPerRow)
+		const x = key % this.#registerProps.columnCount
+		const y = Math.floor(key / this.#registerProps.columnCount)
 
 		const control = this.#deck.CONTROLS.find((control) => {
 			if (control.row !== y) return false
@@ -330,7 +319,12 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
 		}
 	}
-	async showStatus(signal: AbortSignal, hostname: string, status: string): Promise<void> {
+	async showStatus(
+		signal: AbortSignal,
+		cardGenerator: CardGenerator,
+		hostname: string,
+		status: string,
+	): Promise<void> {
 		const fillPanelDimensions = this.#deck.calculateFillPanelDimensions()
 		const lcdSegments = this.#deck.CONTROLS.filter(
 			(c): c is StreamDeckLcdSegmentControlDefinition => c.type === 'lcd-segment',
@@ -341,8 +335,8 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		if (fillPanelDimensions) {
 			const fillCard =
 				lcdSegments.length > 0
-					? this.#cardGenerator.generateLogoCard(fillPanelDimensions.width, fillPanelDimensions.height)
-					: this.#cardGenerator.generateBasicCard(
+					? cardGenerator.generateLogoCard(fillPanelDimensions.width, fillPanelDimensions.height)
+					: cardGenerator.generateBasicCard(
 							fillPanelDimensions.width,
 							fillPanelDimensions.height,
 							imageRs.PixelFormat.Rgba,
@@ -366,7 +360,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			)
 
 			for (const lcdStrip of lcdSegments) {
-				const stripCard = this.#cardGenerator.generateLcdStripCard(
+				const stripCard = cardGenerator.generateLcdStripCard(
 					lcdStrip.pixelSize.width,
 					lcdStrip.pixelSize.height,
 					imageRs.PixelFormat.Rgba,

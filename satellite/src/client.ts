@@ -600,8 +600,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 			this.sendMessage('ADD-DEVICE', null, deviceId, {
 				PRODUCT_NAME: productName,
-				KEYS_TOTAL: props.keysTotal,
-				KEYS_PER_ROW: props.keysPerRow,
+				KEYS_TOTAL: props.columnCount * props.rowCount,
+				KEYS_PER_ROW: props.columnCount,
 				BITMAPS: props.bitmapSize ?? 0,
 				COLORS: props.colours,
 				TEXT: props.text,

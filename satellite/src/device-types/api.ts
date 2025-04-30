@@ -15,8 +15,8 @@ export interface DeviceDrawProps {
 }
 export interface DeviceRegisterProps {
 	brightness: boolean
-	keysTotal: number
-	keysPerRow: number
+	rowCount: number
+	columnCount: number
 	bitmapSize: number | null
 	colours: boolean
 	text: boolean
@@ -103,10 +103,9 @@ export interface SurfacePlugin<TInfo> {
 	 * Open a discovered/known surface
 	 * @param surfaceId Id of the surface
 	 * @param pluginInfo Plugin specific info about the surface
-	 * @param cardGenerator Generator for creating status cards
 	 * @returns Instance of the surface
 	 */
-	openSurface: (surfaceId: string, pluginInfo: TInfo, cardGenerator: CardGenerator) => Promise<OpenSurfaceResult>
+	openSurface: (surfaceId: string, pluginInfo: TInfo) => Promise<OpenSurfaceResult>
 }
 
 export interface OpenSurfaceResult {
@@ -175,7 +174,7 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 
 	onLockedStatus?(locked: boolean, characterCount: number): void
 
-	showStatus(signal: AbortSignal, hostname: string, status: string): Promise<void>
+	showStatus(signal: AbortSignal, cardGenerator: CardGenerator, hostname: string, status: string): Promise<void>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

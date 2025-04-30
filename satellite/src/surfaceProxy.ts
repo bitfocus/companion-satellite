@@ -46,10 +46,10 @@ export class SurfaceProxy {
 	}
 
 	#keyIndexToXY(keyIndex: number): [number, number] {
-		const { keysPerRow } = this.#registerProps
+		const { columnCount } = this.#registerProps
 
-		const x = keyIndex % keysPerRow
-		const y = Math.floor(keyIndex / keysPerRow)
+		const x = keyIndex % columnCount
+		const y = Math.floor(keyIndex / columnCount)
 
 		return [x, y]
 	}
@@ -247,7 +247,7 @@ export class SurfaceProxy {
 				).toBufferSync(PixelFormat.Rgb).buffer
 			}
 
-			const keyIndex = pincodeXy[0] + pincodeXy[1] * this.registerProps.keysPerRow
+			const keyIndex = pincodeXy[0] + pincodeXy[1] * this.registerProps.columnCount
 			this.#drawQueue.queueJob(keyIndex, async (key, signal) => {
 				if (signal.aborted) return
 				await this.#surface.draw(signal, {
@@ -286,7 +286,7 @@ export class SurfaceProxy {
 			).toBufferSync(PixelFormat.Rgb).buffer
 		}
 
-		const keyIndex = xy[0] + xy[1] * this.registerProps.keysPerRow
+		const keyIndex = xy[0] + xy[1] * this.registerProps.columnCount
 		this.#drawQueue.queueJob(keyIndex, async (key, signal) => {
 			if (signal.aborted) return
 			await this.#surface.draw(signal, {
@@ -305,7 +305,7 @@ export class SurfaceProxy {
 
 		this.#drawQueue.queueJob(0, async (_key, signal) => {
 			if (signal.aborted) return
-			await this.#surface.showStatus(signal, hostname, status)
+			await this.#surface.showStatus(signal, this.#cardGenerator, hostname, status)
 		})
 	}
 }

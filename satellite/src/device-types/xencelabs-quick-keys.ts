@@ -6,16 +6,16 @@ import {
 	WheelEvent,
 	XencelabsQuickKeysManagerInstance,
 } from '@xencelabs-quick-keys/node'
-import {
+import type {
 	WrappedSurface,
-	DeviceRegisterProps,
 	DeviceDrawProps,
 	ClientCapabilities,
-	CompanionClient,
 	WrappedSurfaceEvents,
 	SurfacePlugin,
 	SurfacePluginDetectionEvents,
 	SurfacePluginDetection,
+	OpenSurfaceResult,
+	CompanionClientInner,
 } from './api.js'
 import { parseColor } from './lib.js'
 import { EventEmitter } from 'events'
@@ -82,12 +82,19 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 		}
 	}
 
-	openSurface = async (
-		surfaceId: string,
-		quickkeys: XencelabsQuickKeys,
-		_cardGenerator: CardGenerator,
-	): Promise<WrappedSurface> => {
-		return new QuickKeysWrapper(surfaceId, quickkeys)
+	openSurface = async (surfaceId: string, quickkeys: XencelabsQuickKeys): Promise<OpenSurfaceResult> => {
+		return {
+			surface: new QuickKeysWrapper(surfaceId, quickkeys),
+			registerProps: {
+				brightness: true,
+				rowCount: 2,
+				columnCount: 6,
+				bitmapSize: null,
+				colours: true,
+				text: true,
+				pincodeMode: false, // TODO - implement?
+			},
+		}
 	}
 }
 
@@ -124,16 +131,6 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 		this.#surface.on('error', (e) => this.emit('error', e))
 	}
 
-	getRegisterProps(): DeviceRegisterProps {
-		return {
-			brightness: true,
-			keysTotal: 12,
-			keysPerRow: 6,
-			bitmapSize: null,
-			colours: true,
-			text: true,
-		}
-	}
 	async close(): Promise<void> {
 		this.#unsub?.()
 
@@ -141,28 +138,28 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 
 		await this.#surface.stopData()
 	}
-	async initDevice(client: CompanionClient, status: string): Promise<void> {
+	async initDevice(client: CompanionClientInner): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 
 		const handleDown = (key: number) => {
 			const k = keyToCompanion(key)
 			if (k !== null) {
-				client.keyDown(this.surfaceId, k)
+				client.keyDown(k)
 			}
 		}
 		const handleUp = (key: number) => {
 			const k = keyToCompanion(key)
 			if (k !== null) {
-				client.keyUp(this.surfaceId, k)
+				client.keyUp(k)
 			}
 		}
 		const handleWheel = (ev: WheelEvent) => {
 			switch (ev) {
 				case WheelEvent.Left:
-					client.rotateLeft(this.surfaceId, 5)
+					client.rotateLeft(5)
 					break
 				case WheelEvent.Right:
-					client.rotateRight(this.surfaceId, 5)
+					client.rotateRight(5)
 					break
 			}
 		}
@@ -184,8 +181,6 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 
 		// Start with blanking it
 		await this.blankDevice()
-
-		this.showStatus(client.displayHost, status)
 	}
 
 	updateCapabilities(_capabilities: ClientCapabilities): void {
@@ -216,8 +211,10 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 			await this.#surface.setKeyText(i, '')
 		}
 	}
-	async draw(data: DeviceDrawProps): Promise<void> {
+	async draw(signal: AbortSignal, data: DeviceDrawProps): Promise<void> {
 		await this.clearStatus()
+
+		if (signal.aborted) return
 
 		if (typeof data.text === 'string') {
 			let keyIndex: number | null = null
@@ -229,6 +226,8 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 			}
 		}
 
+		if (signal.aborted) return
+
 		const wheelIndex = 5
 		if (data.color && data.keyIndex === wheelIndex) {
 			const { r, g, b } = parseColor(data.color)
@@ -236,7 +235,12 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 			await this.#surface.setWheelColor(r, g, b)
 		}
 	}
-	showStatus(_hostname: string, status: string): void {
+	async showStatus(
+		_signal: AbortSignal,
+		_cardGenerator: CardGenerator,
+		_hostname: string,
+		status: string,
+	): Promise<void> {
 		this.stopStatusInterval()
 
 		const newMessage = status
@@ -247,9 +251,7 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 			})
 		}, 3000)
 
-		this.#surface.showOverlayText(5, newMessage).catch((e) => {
-			console.error(`Overlay failed: ${e}`)
-		})
+		await this.#surface.showOverlayText(5, newMessage)
 	}
 
 	private stopStatusInterval(): boolean {

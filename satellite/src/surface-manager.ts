@@ -126,7 +126,7 @@ export class SurfaceManager {
 			wrapAsync(
 				async (msg) => {
 					const surface = this.#getWrappedSurface(msg.deviceId)
-					await surface.blankDevice()
+					surface.blankDevice()
 				},
 				(e) => {
 					console.error(`Clear deck: ${e}`)
@@ -426,7 +426,7 @@ export class SurfaceManager {
 		console.log(`existing = ${JSON.stringify(Array.from(this.#surfaces.keys()))}`)
 
 		plugin
-			.openSurface(pluginInfo.surfaceId, pluginInfo.pluginInfo, this.#cardGenerator)
+			.openSurface(pluginInfo.surfaceId, pluginInfo.pluginInfo)
 			.then(async ({ surface, registerProps }) => {
 				try {
 					surface.on('error', (e) => {
