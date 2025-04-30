@@ -159,7 +159,7 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 
 	close(): Promise<void>
 
-	initDevice(client: CompanionClientInner, status: string): Promise<void>
+	initDevice(client: CompanionClientInner): Promise<void>
 
 	updateCapabilities(capabilities: ClientCapabilities): void
 
@@ -169,13 +169,13 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 
 	blankDevice(): Promise<void>
 
-	draw(data: DeviceDrawProps): Promise<void>
+	draw(signal: AbortSignal, data: DeviceDrawProps): Promise<void>
 
 	onVariableValue?(name: string, value: string): void
 
 	onLockedStatus?(locked: boolean, characterCount: number): void
 
-	showStatus(hostname: string, status: string): void
+	showStatus(signal: AbortSignal, hostname: string, status: string): Promise<void>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -197,7 +197,7 @@ export interface CompanionClient {
 
 export interface CompanionClientInner {
 	get isLocked(): boolean
-	get displayHost(): string
+	// get displayHost(): string
 
 	keyDown(keyIndex: number): void
 	keyUp(keyIndex: number): void

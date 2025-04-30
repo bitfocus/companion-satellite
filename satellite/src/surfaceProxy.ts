@@ -7,11 +7,14 @@ import type {
 	WrappedSurface,
 } from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
+import { DrawingState } from './drawingState.js'
 
 export class SurfaceProxy {
 	readonly #cardGenerator: CardGenerator
 	readonly #surface: WrappedSurface
 	readonly #registerProps: DeviceRegisterProps
+
+	readonly #drawQueue = new DrawingState<number | string>('preinit')
 
 	#isLocked = false
 
@@ -37,6 +40,8 @@ export class SurfaceProxy {
 	}
 
 	async close(): Promise<void> {
+		this.#drawQueue.abortQueued('closed')
+
 		return this.#surface.close()
 	}
 
@@ -59,9 +64,6 @@ export class SurfaceProxy {
 		const clientWrapper: CompanionClientInner = {
 			get isLocked(): boolean {
 				return self.#isLocked
-			},
-			get displayHost() {
-				return client.displayHost
 			},
 
 			keyDown: (keyIndex: number): void => {
@@ -146,7 +148,9 @@ export class SurfaceProxy {
 			},
 		}
 
-		return this.#surface.initDevice(clientWrapper, status)
+		await this.#surface.initDevice(clientWrapper)
+
+		this.showStatus(client.displayHost, status)
 	}
 
 	updateCapabilities(capabilities: ClientCapabilities): void {
@@ -154,6 +158,8 @@ export class SurfaceProxy {
 	}
 
 	async deviceAdded(): Promise<void> {
+		this.#drawQueue.abortQueued('reinit')
+
 		return this.#surface.deviceAdded()
 	}
 
@@ -161,14 +167,29 @@ export class SurfaceProxy {
 		return this.#surface.setBrightness(percent)
 	}
 
-	async blankDevice(): Promise<void> {
-		return this.#surface.blankDevice()
+	blankDevice(): void {
+		if (this.#drawQueue.state === 'blank') return
+
+		this.#drawQueue.abortQueued('blank')
+		this.#drawQueue.queueJob(0, async (_key, signal) => {
+			if (signal.aborted) return
+			await this.#surface.blankDevice()
+		})
 	}
 
 	async draw(data: DeviceDrawProps): Promise<void> {
 		if (this.#isLocked) return
 
-		return this.#surface.draw(data)
+		if (this.#drawQueue.state !== 'draw') {
+			// Abort any other draws and blank the device
+			this.#drawQueue.abortQueued('draw', async () => this.#surface.blankDevice())
+		}
+
+		this.#drawQueue.queueJob(data.keyIndex, async (_key, signal) => {
+			if (signal.aborted) return
+
+			return this.#surface.draw(signal, data)
+		})
 	}
 
 	onVariableValue(name: string, value: string): void {
@@ -184,10 +205,8 @@ export class SurfaceProxy {
 		this.#isLocked = locked
 
 		if (!wasLocked) {
-			// Trigger a blank just to be sure
-			this.#surface.blankDevice().catch((e) => {
-				console.error(`Failed to blank device: ${e}`)
-			})
+			// Always discard the previous draw
+			this.#drawQueue.abortQueued('locked-pending-draw')
 		}
 
 		if (!this.#surface.pincodeMap) {
@@ -229,17 +248,16 @@ export class SurfaceProxy {
 			}
 
 			const keyIndex = pincodeXy[0] + pincodeXy[1] * this.registerProps.keysPerRow
-			this.#surface
-				.draw({
+			this.#drawQueue.queueJob(keyIndex, async (key, signal) => {
+				if (signal.aborted) return
+				await this.#surface.draw(signal, {
 					deviceId: this.surfaceId,
 					keyIndex: keyIndex,
 					image: entryBuffer,
 					color: '#ffffff',
 					text: '*'.repeat(characterCount),
 				})
-				.catch((e) => {
-					console.error(`Failed to draw pincode number: ${e}`)
-				})
+			})
 		}
 
 		if (this.#surface.onLockedStatus) {
@@ -269,20 +287,25 @@ export class SurfaceProxy {
 		}
 
 		const keyIndex = xy[0] + xy[1] * this.registerProps.keysPerRow
-		this.#surface
-			.draw({
+		this.#drawQueue.queueJob(keyIndex, async (key, signal) => {
+			if (signal.aborted) return
+			await this.#surface.draw(signal, {
 				deviceId: this.surfaceId,
 				keyIndex: keyIndex,
 				image: keyBuffer,
 				color: '#ffffff',
 				text: `${key}`,
 			})
-			.catch((e) => {
-				console.error(`Failed to draw pincode number: ${e}`)
-			})
+		})
 	}
 
 	showStatus(hostname: string, status: string): void {
-		this.#surface.showStatus(hostname, status)
+		// Always discard the previous draw
+		this.#drawQueue.abortQueued('status')
+
+		this.#drawQueue.queueJob(0, async (_key, signal) => {
+			if (signal.aborted) return
+			await this.#surface.showStatus(signal, hostname, status)
+		})
 	}
 }

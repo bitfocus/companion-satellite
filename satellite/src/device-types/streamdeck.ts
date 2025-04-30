@@ -8,7 +8,6 @@ import {
 } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards.js'
-import { DrawingState } from '../drawingState.js'
 import {
 	ClientCapabilities,
 	DeviceDrawProps,
@@ -109,8 +108,6 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
 
-	readonly #drawQueue = new DrawingState<number | string>('preinit')
-
 	readonly pincodeMap: SurfacePincodeMapPageSingle = {
 		pincode: [0, 1],
 		0: [4, 1],
@@ -155,13 +152,11 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	}
 
 	async close(): Promise<void> {
-		this.#drawQueue.abortQueued('closed')
-
 		await this.#deck.resetToLogo().catch(() => null)
 
 		await this.#deck.close()
 	}
-	async initDevice(client: CompanionClientInner, status: string): Promise<void> {
+	async initDevice(client: CompanionClientInner): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#deck.on('down', (control) => {
 			client.keyDownXY(control.column, control.row)
@@ -195,132 +190,58 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		// Start with blanking it
 		await this.blankDevice()
-
-		this.showStatus(client.displayHost, status)
 	}
 
 	updateCapabilities(_capabilities: ClientCapabilities): void {
 		// Not used
 	}
 
-	async deviceAdded(): Promise<void> {
-		this.#drawQueue.abortQueued('reinit')
-	}
+	async deviceAdded(): Promise<void> {}
 	async setBrightness(percent: number): Promise<void> {
 		await this.#deck.setBrightness(percent)
 	}
 	async blankDevice(): Promise<void> {
-		if (this.#drawQueue.state === 'blank') return
-
-		this.#drawQueue.abortQueued('blank')
-		this.#drawQueue.queueJob(0, async (_key, signal) => {
-			if (signal.aborted) return
-			await this.#deck.clearPanel()
-		})
+		await this.#deck.clearPanel()
 	}
-	async draw(drawProps: DeviceDrawProps): Promise<void> {
-		if (this.#drawQueue.state !== 'draw') {
-			this.#drawQueue.abortQueued('draw', async () => this.#deck.clearPanel())
-		}
+	async draw(signal: AbortSignal, drawProps: DeviceDrawProps): Promise<void> {
+		const key = drawProps.keyIndex
 
-		this.#drawQueue.queueJob(drawProps.keyIndex, async (key, signal) => {
-			if (signal.aborted) return
+		const x = key % this.#registerProps.keysPerRow
+		const y = Math.floor(key / this.#registerProps.keysPerRow)
 
-			const x = key % this.#registerProps.keysPerRow
-			const y = Math.floor(key / this.#registerProps.keysPerRow)
+		const control = this.#deck.CONTROLS.find((control) => {
+			if (control.row !== y) return false
 
-			const control = this.#deck.CONTROLS.find((control) => {
-				if (control.row !== y) return false
+			if (control.column === x) return true
 
-				if (control.column === x) return true
+			if (control.type === 'lcd-segment' && x >= control.column && x < control.column + control.columnSpan)
+				return true
 
-				if (control.type === 'lcd-segment' && x >= control.column && x < control.column + control.columnSpan)
-					return true
+			return false
+		})
+		if (!control) return
 
-				return false
-			})
-			if (!control) return
+		const bufferSize = this.#registerProps.bitmapSize
 
-			const bufferSize = this.#registerProps.bitmapSize
-
-			if (control.type === 'button') {
-				if (control.feedbackType === 'lcd') {
-					let newbuffer: Buffer | undefined
-					if (control.pixelSize.width === 0 || control.pixelSize.height === 0) {
-						return
-					} else {
-						try {
-							newbuffer = await transformButtonImage(
-								drawProps.image,
-								bufferSize,
-								bufferSize,
-								control.pixelSize.width,
-								control.pixelSize.height,
-								imageRs.PixelFormat.Rgb,
-							)
-						} catch (e: any) {
-							console.error(`scale image failed: ${e}\n${e.stack}`)
-							return
-						}
-					}
-
-					const maxAttempts = 3
-					for (let attempts = 1; attempts <= maxAttempts; attempts++) {
-						try {
-							if (signal.aborted) return
-
-							await this.#deck.fillKeyBuffer(control.index, newbuffer)
-							return
-						} catch (e) {
-							if (attempts == maxAttempts) {
-								console.log(`fillImage failed after ${attempts} attempts: ${e}`)
-								return
-							}
-							await setTimeoutPromise(20)
-						}
-					}
-				} else if (control.feedbackType === 'rgb') {
-					const color = parseColor(drawProps.color)
-
-					if (signal.aborted) return
-
-					this.#deck.fillKeyColor(control.index, color.r, color.g, color.b).catch((e) => {
-						console.log(`color failed: ${e}`)
-					})
-				}
-			} else if (control.type === 'lcd-segment' && control.drawRegions) {
-				const drawColumn = x - control.column
-
-				const columnWidth = control.pixelSize.width / control.columnSpan
-				let drawX = drawColumn * columnWidth
-				if (this.#deck.MODEL === DeviceModelId.PLUS) {
-					// Position aligned with the buttons/encoders
-					drawX = drawColumn * 216.666 + 25
-				}
-
-				const targetSize = control.pixelSize.height
-
+		if (control.type === 'button') {
+			if (control.feedbackType === 'lcd') {
 				let newbuffer: Buffer | undefined
-				try {
-					newbuffer = await transformButtonImage(
-						drawProps.image,
-						bufferSize,
-						bufferSize,
-						targetSize,
-						targetSize,
-						imageRs.PixelFormat.Rgb,
-					)
-				} catch (e) {
-					console.log(`scale image failed: ${e}`)
+				if (control.pixelSize.width === 0 || control.pixelSize.height === 0) {
 					return
-				}
-
-				// Clear the lcd segment if needed
-				if (this.#fullLcdDirty) {
-					if (signal.aborted) return
-
-					this.#fullLcdDirty = false
-					await this.#deck.clearLcdSegment(control.id)
+				} else {
+					try {
+						newbuffer = await transformButtonImage(
+							drawProps.image,
+							bufferSize,
+							bufferSize,
+							control.pixelSize.width,
+							control.pixelSize.height,
+							imageRs.PixelFormat.Rgb,
+						)
+					} catch (e: any) {
+						console.error(`scale image failed: ${e}\n${e.stack}`)
+						return
+					}
 				}
 
 				const maxAttempts = 3
@@ -328,37 +249,94 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 					try {
 						if (signal.aborted) return
 
-						await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
-							format: 'rgb',
-							width: targetSize,
-							height: targetSize,
-						})
+						await this.#deck.fillKeyBuffer(control.index, newbuffer)
 						return
 					} catch (e) {
 						if (attempts == maxAttempts) {
-							console.error(`fillImage failed after ${attempts}: ${e}`)
+							console.log(`fillImage failed after ${attempts} attempts: ${e}`)
 							return
 						}
 						await setTimeoutPromise(20)
 					}
 				}
-			} else if (control.type === 'encoder' && control.hasLed) {
+			} else if (control.feedbackType === 'rgb') {
 				const color = parseColor(drawProps.color)
 
 				if (signal.aborted) return
 
-				await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
+				this.#deck.fillKeyColor(control.index, color.r, color.g, color.b).catch((e) => {
+					console.log(`color failed: ${e}`)
+				})
 			}
-		})
-	}
-	showStatus(hostname: string, status: string): void {
-		// Always discard the previous draw
-		this.#drawQueue.abortQueued('status')
+		} else if (control.type === 'lcd-segment' && control.drawRegions) {
+			const drawColumn = x - control.column
 
+			const columnWidth = control.pixelSize.width / control.columnSpan
+			let drawX = drawColumn * columnWidth
+			if (this.#deck.MODEL === DeviceModelId.PLUS) {
+				// Position aligned with the buttons/encoders
+				drawX = drawColumn * 216.666 + 25
+			}
+
+			const targetSize = control.pixelSize.height
+
+			let newbuffer: Buffer | undefined
+			try {
+				newbuffer = await transformButtonImage(
+					drawProps.image,
+					bufferSize,
+					bufferSize,
+					targetSize,
+					targetSize,
+					imageRs.PixelFormat.Rgb,
+				)
+			} catch (e) {
+				console.log(`scale image failed: ${e}`)
+				return
+			}
+
+			// Clear the lcd segment if needed
+			if (this.#fullLcdDirty) {
+				if (signal.aborted) return
+
+				this.#fullLcdDirty = false
+				await this.#deck.clearLcdSegment(control.id)
+			}
+
+			const maxAttempts = 3
+			for (let attempts = 1; attempts <= maxAttempts; attempts++) {
+				try {
+					if (signal.aborted) return
+
+					await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
+						format: 'rgb',
+						width: targetSize,
+						height: targetSize,
+					})
+					return
+				} catch (e) {
+					if (attempts == maxAttempts) {
+						console.error(`fillImage failed after ${attempts}: ${e}`)
+						return
+					}
+					await setTimeoutPromise(20)
+				}
+			}
+		} else if (control.type === 'encoder' && control.hasLed) {
+			const color = parseColor(drawProps.color)
+
+			if (signal.aborted) return
+
+			await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
+		}
+	}
+	async showStatus(signal: AbortSignal, hostname: string, status: string): Promise<void> {
 		const fillPanelDimensions = this.#deck.calculateFillPanelDimensions()
 		const lcdSegments = this.#deck.CONTROLS.filter(
 			(c): c is StreamDeckLcdSegmentControlDefinition => c.type === 'lcd-segment',
 		)
+
+		const ps: Promise<void>[] = []
 
 		if (fillPanelDimensions) {
 			const fillCard =
@@ -371,21 +349,21 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 							hostname,
 							status,
 						)
-			fillCard.catch(() => null) // Ensure error doesn't go uncaught
 
-			this.#drawQueue.queueJob(0, async (_key, signal) => {
-				const buffer = await fillCard
-				if (signal.aborted) return
+			ps.push(
+				fillCard
+					.then(async (buffer) => {
+						if (signal.aborted) return
 
-				// still valid
-				await this.#deck
-					.fillPanelBuffer(buffer, {
-						format: 'rgba',
+						// still valid
+						await this.#deck.fillPanelBuffer(buffer, {
+							format: 'rgba',
+						})
 					})
 					.catch((e) => {
 						console.error(`Failed to fill device`, e)
-					})
-			})
+					}),
+			)
 
 			for (const lcdStrip of lcdSegments) {
 				const stripCard = this.#cardGenerator.generateLcdStripCard(
@@ -397,24 +375,26 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 				)
 				stripCard.catch(() => null) // Ensure error doesn't go uncaught
 
-				this.#drawQueue.queueJob(lcdStrip.id + 5, async (_key, signal) => {
-					const buffer = await stripCard
+				ps.push(
+					stripCard
+						.then(async (buffer) => {
+							if (signal.aborted) return
 
-					if (signal.aborted) return
+							// Mark the screen as dirty, so the gaps get cleared when the first region draw happens
+							this.#fullLcdDirty = true
 
-					// Mark the screen as dirty, so the gaps get cleared when the first region draw happens
-					this.#fullLcdDirty = true
-
-					// still valid
-					await this.#deck
-						.fillLcd(lcdStrip.id, buffer, {
-							format: 'rgba',
+							// still valid
+							await this.#deck.fillLcd(lcdStrip.id, buffer, {
+								format: 'rgba',
+							})
 						})
 						.catch((e) => {
 							console.error(`Failed to fill device`, e)
-						})
-				})
+						}),
+				)
 			}
 		}
+
+		await Promise.all(ps)
 	}
 }
