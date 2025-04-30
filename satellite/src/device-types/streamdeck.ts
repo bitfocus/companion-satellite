@@ -8,7 +8,7 @@ import {
 } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards.js'
-import { ImageWriteQueue2 } from '../writeQueue.js'
+import { DrawingState } from '../drawingState.js'
 import {
 	ClientCapabilities,
 	CompanionClient,
@@ -95,20 +95,6 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 	}
 }
 
-// type QueuedDraw =
-// 	| {
-// 			type: 'buffer'
-// 			props: DeviceDrawProps
-// 	  }
-// 	| {
-// 			type: 'pincode'
-// 			keyCode: number
-// 	  }
-// 	| {
-// 			type: 'pinentry'
-// 			charCount: number
-// 	  }
-
 export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
 	readonly pluginId = PLUGIN_ID
 
@@ -117,7 +103,6 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
 
-	// #drawAbort: AbortController
 	readonly #drawQueue = new DrawingState<number>('preinit')
 
 	#isLocked = false
@@ -143,14 +128,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		this.#deck.on('error', (e) => this.emit('error', e))
 
-		// this.#drawAbort = new AbortController()
-
 		this.#registerProps = compileRegisterProps(deck)
-
-		// this.#queue = new ImageWriteQueue(async (key: number, abort: AbortSignal, drawProps: QueuedDraw) => {
-		// 	if (abort.aborted) return
-
-		// })
 	}
 
 	getRegisterProps(): DeviceRegisterProps {
@@ -222,13 +200,6 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	updateCapabilities(_capabilities: ClientCapabilities): void {
 		// Not used
 	}
-
-	// #discardDraws() {
-	// 	this.#drawAbort.abort()
-	// 	this.#drawAbort = new AbortController()
-
-	// 	this.#queue.abort()
-	// }
 
 	async deviceAdded(): Promise<void> {
 		this.#drawQueue.abortQueued('reinit')
@@ -498,68 +469,6 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 					})
 				}
 			})
-		}
-	}
-}
-
-export class DrawingState<TKey extends number | string> {
-	#queue: ImageWriteQueue2<TKey>
-	#state: string
-
-	#isAborting = false
-	#execBeforeRunQueue: (() => Promise<void>) | null = null
-
-	get state(): string {
-		return this.#state
-	}
-
-	constructor(state: string) {
-		this.#state = state
-		this.#queue = new ImageWriteQueue2()
-	}
-
-	queueJob(key: TKey, fn: (key: TKey, signal: AbortSignal) => Promise<void>): void {
-		this.#queue.queue(key, fn)
-	}
-
-	abortQueued(newState: string, fnBeforeRunQueue?: () => Promise<void>): void {
-		let abortQueue: ImageWriteQueue2<TKey> | null = null
-		if (!this.#isAborting) {
-			this.#isAborting = true
-			abortQueue = this.#queue
-		}
-
-		console.log(`Aborting queue: ${this.#state} -> ${newState}`, !!abortQueue)
-
-		this.#state = newState
-		this.#queue = new ImageWriteQueue2(false)
-		this.#execBeforeRunQueue = fnBeforeRunQueue ?? null
-
-		if (abortQueue) {
-			abortQueue
-				.abort()
-				.catch((e) => {
-					console.error(`Failed to abort queue: ${e}`)
-				})
-				.then(async () => {
-					if (this.#execBeforeRunQueue) {
-						await this.#execBeforeRunQueue().catch((e) => {
-							console.error(`Failed to run before queue: ${e}`)
-						})
-						this.#execBeforeRunQueue = null
-					}
-				})
-				.finally(() => {
-					this.#isAborting = false
-
-					console.log('aborted')
-
-					// Start execution
-					this.#queue.setRunning()
-				})
-				.catch((e) => {
-					console.error(`Failed to abort queue: ${e}`)
-				})
 		}
 	}
 }

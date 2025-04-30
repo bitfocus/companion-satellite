@@ -125,7 +125,8 @@ export class ImageWriteQueue<TArgs extends unknown[] = [buffer: Buffer]> {
 export class ImageWriteQueue2<TKey extends number | string> {
 	private readonly maxConcurrent = 3
 	private readonly pendingImages: Array<{ key: TKey; fn: (key: TKey, signal: AbortSignal) => Promise<void> }> = []
-	private inProgress = new Map<TKey, AbortController>()
+	private readonly drainAbort = new AbortController()
+	private readonly inProgress = new Set<TKey>()
 	private drainPromise: DrainPromise | null = null
 
 	#running: boolean
@@ -139,6 +140,8 @@ export class ImageWriteQueue2<TKey extends number | string> {
 	}
 
 	public setRunning(): void {
+		if (this.drainAbort.signal.aborted) throw new Error('queue is aborted')
+
 		this.#running = true
 
 		this.tryDequeue()
@@ -146,9 +149,7 @@ export class ImageWriteQueue2<TKey extends number | string> {
 
 	public async abort(): Promise<void> {
 		this.pendingImages.splice(0, this.pendingImages.length)
-		for (const o of this.inProgress.values()) {
-			o.abort()
-		}
+		this.drainAbort.abort()
 
 		if (!this.drainPromise && this.inProgress.size > 0) {
 			let resolve = () => {}
@@ -165,6 +166,8 @@ export class ImageWriteQueue2<TKey extends number | string> {
 	}
 
 	public queue(key: TKey, fn: (key: TKey, signal: AbortSignal) => Promise<void>): void {
+		if (this.drainAbort.signal.aborted) throw new Error('queue is aborted')
+
 		let updated = false
 		// Try and replace an existing queued image first
 		for (const img of this.pendingImages) {
@@ -201,11 +204,10 @@ export class ImageWriteQueue2<TKey extends number | string> {
 			}
 
 			// Track which key is being processed
-			const abortController = new AbortController()
-			this.inProgress.set(nextImage.key, abortController)
+			this.inProgress.add(nextImage.key)
 
 			nextImage
-				.fn(nextImage.key, abortController.signal)
+				.fn(nextImage.key, this.drainAbort.signal)
 				.catch((e) => {
 					// Ensure it doesnt error out
 					console.error('fillImage error:', e)
@@ -224,10 +226,10 @@ export class ImageWriteQueue2<TKey extends number | string> {
 						}
 					}
 
+					if (this.drainAbort.signal.aborted) return
+
 					// Run again
-					setImmediate(() => {
-						this.tryDequeue()
-					})
+					setImmediate(() => this.tryDequeue())
 				})
 		}
 	}
