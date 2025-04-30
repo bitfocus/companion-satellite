@@ -55,61 +55,85 @@ export class SurfaceProxy {
 				return client.displayHost
 			},
 
-			keyDown: (deviceId: string, keyIndex: number): void => {
+			keyDown: (keyIndex: number): void => {
 				if (this.#isLocked) return
 
 				// TODO - test this
 				const xy = this.#keyIndexToXY(keyIndex)
-				client.keyDownXY(deviceId, ...xy)
+				client.keyDownXY(this.surfaceId, ...xy)
 			},
-			keyUp: (deviceId: string, keyIndex: number): void => {
+			keyUp: (keyIndex: number): void => {
 				if (this.#isLocked) return
 
 				const xy = this.#keyIndexToXY(keyIndex)
-				client.keyUpXY(deviceId, ...xy)
+				client.keyUpXY(this.surfaceId, ...xy)
 			},
-			rotateLeft: (deviceId: string, keyIndex: number): void => {
+			keyDownUp: (keyIndex: number): void => {
 				if (this.#isLocked) return
 
 				const xy = this.#keyIndexToXY(keyIndex)
-				client.rotateLeftXY(deviceId, ...xy)
+
+				client.keyDownXY(this.surfaceId, ...xy)
+
+				setTimeout(() => {
+					if (!this.#isLocked) {
+						client.keyUpXY(this.surfaceId, ...xy)
+					}
+				}, 20)
 			},
-			rotateRight: (deviceId: string, keyIndex: number): void => {
+			rotateLeft: (keyIndex: number): void => {
 				if (this.#isLocked) return
 
 				const xy = this.#keyIndexToXY(keyIndex)
-				client.rotateRightXY(deviceId, ...xy)
+				client.rotateLeftXY(this.surfaceId, ...xy)
+			},
+			rotateRight: (keyIndex: number): void => {
+				if (this.#isLocked) return
+
+				const xy = this.#keyIndexToXY(keyIndex)
+				client.rotateRightXY(this.surfaceId, ...xy)
 			},
 
-			keyDownXY: (deviceId: string, x: number, y: number): void => {
+			keyDownXY: (x: number, y: number): void => {
 				// TODO - mirror to the non-XY version
 				if (this.#isLocked) {
 					// TODO - properly
-					client.pincodeKey(deviceId, x)
+					client.pincodeKey(this.surfaceId, x)
 				} else {
-					client.keyDownXY(deviceId, x, y)
+					client.keyDownXY(this.surfaceId, x, y)
 				}
 			},
-			keyUpXY: (deviceId: string, x: number, y: number): void => {
+			keyUpXY: (x: number, y: number): void => {
 				if (this.#isLocked) return
 
-				client.keyUpXY(deviceId, x, y)
+				client.keyUpXY(this.surfaceId, x, y)
 			},
-			rotateLeftXY: (deviceId: string, x: number, y: number): void => {
+			keyDownUpXY: (x: number, y: number): void => {
 				if (this.#isLocked) return
 
-				client.rotateLeftXY(deviceId, x, y)
+				client.keyDownXY(this.surfaceId, x, y)
+
+				setTimeout(() => {
+					if (!this.#isLocked) {
+						client.keyUpXY(this.surfaceId, x, y)
+					}
+				}, 20)
 			},
-			rotateRightXY: (deviceId: string, x: number, y: number): void => {
+			rotateLeftXY: (x: number, y: number): void => {
 				if (this.#isLocked) return
 
-				client.rotateRightXY(deviceId, x, y)
+				client.rotateLeftXY(this.surfaceId, x, y)
+			},
+			rotateRightXY: (x: number, y: number): void => {
+				if (this.#isLocked) return
+
+				client.rotateRightXY(this.surfaceId, x, y)
 			},
 
-			sendVariableValue: (deviceId: string, variable: string, value: any): void => {
+			sendVariableValue: (variable: string, value: any): void => {
 				if (this.#isLocked) return
 
-				client.sendVariableValue(deviceId, variable, value)
+				client.sendVariableValue(this.surfaceId, variable, value)
 			},
 		}
 

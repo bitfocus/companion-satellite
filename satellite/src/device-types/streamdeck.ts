@@ -20,6 +20,7 @@ import {
 	HIDDevice,
 	CompanionClientInner,
 	OpenSurfaceResult,
+	SurfacePincodeMapPageSingle,
 } from './api.js'
 import { parseColor, transformButtonImage } from './lib.js'
 import util from 'util'
@@ -108,7 +109,21 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
 
-	readonly #drawQueue = new DrawingState<number>('preinit')
+	readonly #drawQueue = new DrawingState<number | string>('preinit')
+
+	readonly pincodeMap: SurfacePincodeMapPageSingle = {
+		pincode: [0, 1],
+		0: [4, 1],
+		1: [1, 2],
+		2: [2, 2],
+		3: [3, 2],
+		4: [1, 1],
+		5: [2, 1],
+		6: [3, 1],
+		7: [1, 0],
+		8: [2, 0],
+		9: [3, 0],
+	}
 
 	/**
 	 * Whether the LCD has been written to outside the button bounds that needs clearing
@@ -149,43 +164,33 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	async initDevice(client: CompanionClientInner, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#deck.on('down', (control) => {
-			client.keyDownXY(this.surfaceId, control.column, control.row)
+			client.keyDownXY(control.column, control.row)
 		})
 		this.#deck.on('up', (control) => {
-			client.keyUpXY(this.surfaceId, control.column, control.row)
+			client.keyUpXY(control.column, control.row)
 		})
 		this.#deck.on('rotate', (control, delta) => {
 			if (delta < 0) {
-				client.rotateLeftXY(this.surfaceId, control.column, control.row)
+				client.rotateLeftXY(control.column, control.row)
 			} else if (delta > 0) {
-				client.rotateRightXY(this.surfaceId, control.column, control.row)
+				client.rotateRightXY(control.column, control.row)
 			}
 		})
 		this.#deck.on('lcdShortPress', (control, position) => {
 			if (client.isLocked) return
 
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
-
 			const column = control.column + columnOffset
 
-			client.keyDownXY(this.surfaceId, column, control.row)
-
-			setTimeout(() => {
-				client.keyUpXY(this.surfaceId, column, control.row)
-			}, 20)
+			client.keyDownUpXY(column, control.row)
 		})
 		this.#deck.on('lcdLongPress', (control, position) => {
 			if (client.isLocked) return
 
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
-
 			const column = control.column + columnOffset
 
-			client.keyDownXY(this.surfaceId, column, control.row)
-
-			setTimeout(() => {
-				client.keyUpXY(this.surfaceId, column, control.row)
-			}, 20)
+			client.keyDownUpXY(column, control.row)
 		})
 
 		// Start with blanking it
@@ -422,10 +427,17 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		if (!locked) return
 
+		const pincodeMap = this.pincodeMap
+
 		this.#drawQueue.queueJob(12, async (key, signal) => {
 			if (signal.aborted) return
 
-			const control = this.#deck.CONTROLS.find((control) => control.type === 'button' && control.index === key)
+			const control = this.#deck.CONTROLS.find(
+				(control) =>
+					control.type === 'button' &&
+					control.row === pincodeMap.pincode[1] &&
+					control.column === pincodeMap.pincode[0],
+			)
 			if (!control) return
 
 			if (control.type === 'button' && control.feedbackType === 'lcd') {
@@ -443,13 +455,16 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		if (wasLocked) return
 
-		// Draw the number buttons and other details
-		for (let i = 0; i <= 9; i++) {
+		const drawPincodeNumber = (i: keyof typeof pincodeMap) => {
 			this.#drawQueue.queueJob(i, async (key, signal) => {
 				if (signal.aborted) return
 
+				const mapEntry = pincodeMap[i]
+				if (!mapEntry) return
+
 				const control = this.#deck.CONTROLS.find(
-					(control) => control.type === 'button' && control.index === key,
+					(control) =>
+						control.type === 'button' && control.row === mapEntry[1] && control.column === mapEntry[0],
 				)
 				if (!control) return
 
@@ -457,7 +472,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 					const render = this.#cardGenerator.generatePincodeNumber(
 						control.pixelSize.width,
 						control.pixelSize.height,
-						key,
+						Number(key),
 					)
 
 					await this.#deck.fillKeyBuffer(control.index, render, {
@@ -466,5 +481,17 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 				}
 			})
 		}
+
+		// Draw the number buttons and other details
+		drawPincodeNumber(0)
+		drawPincodeNumber(1)
+		drawPincodeNumber(2)
+		drawPincodeNumber(3)
+		drawPincodeNumber(4)
+		drawPincodeNumber(5)
+		drawPincodeNumber(6)
+		drawPincodeNumber(7)
+		drawPincodeNumber(8)
+		drawPincodeNumber(9)
 	}
 }

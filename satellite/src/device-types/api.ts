@@ -118,7 +118,34 @@ export interface WrappedSurfaceEvents {
 	error: [error: any]
 }
 
-export type SurfacePincodeMap = never[]
+export type SurfacePincodeMap = SurfacePincodeMapPageSingle // | SurfacePincodeMapPageEntry[]
+export interface SurfacePincodeMapPageSingle {
+	pincode: [number, number]
+	0: [number, number]
+	1: [number, number]
+	2: [number, number]
+	3: [number, number]
+	4: [number, number]
+	5: [number, number]
+	6: [number, number]
+	7: [number, number]
+	8: [number, number]
+	9: [number, number]
+}
+export interface SurfacePincodeMapPageEntry {
+	pageChange: [number, number]
+	pincode: [number, number]
+	0: [number, number] | null
+	1: [number, number] | null
+	2: [number, number] | null
+	3: [number, number] | null
+	4: [number, number] | null
+	5: [number, number] | null
+	6: [number, number] | null
+	7: [number, number] | null
+	8: [number, number] | null
+	9: [number, number] | null
+}
 
 export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 	readonly pluginId: string
@@ -173,15 +200,17 @@ export interface CompanionClientInner {
 	get isLocked(): boolean
 	get displayHost(): string
 
-	keyDown(deviceId: string, keyIndex: number): void
-	keyUp(deviceId: string, keyIndex: number): void
-	rotateLeft(deviceId: string, keyIndex: number): void
-	rotateRight(deviceId: string, keyIndex: number): void
+	keyDown(keyIndex: number): void
+	keyUp(keyIndex: number): void
+	keyDownUp(keyIndex: number): void
+	rotateLeft(keyIndex: number): void
+	rotateRight(keyIndex: number): void
 
-	keyDownXY(deviceId: string, x: number, y: number): void
-	keyUpXY(deviceId: string, x: number, y: number): void
-	rotateLeftXY(deviceId: string, x: number, y: number): void
-	rotateRightXY(deviceId: string, x: number, y: number): void
+	keyDownXY(x: number, y: number): void
+	keyUpXY(x: number, y: number): void
+	keyDownUpXY(x: number, y: number): void
+	rotateLeftXY(x: number, y: number): void
+	rotateRightXY(x: number, y: number): void
 
-	sendVariableValue(deviceId: string, variable: string, value: any): void
+	sendVariableValue(variable: string, value: any): void
 }
