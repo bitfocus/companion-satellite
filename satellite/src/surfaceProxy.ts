@@ -234,7 +234,6 @@ export class SurfaceProxy {
 	onLockedStatus(locked: boolean, characterCount: number): void {
 		const wasLocked = this.#isLocked
 		this.#isLocked = locked
-		this.#lockButtonPage = 0
 		this.#pincodeCharacterCount = characterCount
 
 		if (!wasLocked) {
@@ -248,6 +247,7 @@ export class SurfaceProxy {
 		}
 
 		if (!wasLocked) {
+			this.#lockButtonPage = 0
 			this.#drawPincodePage()
 		} else {
 			this.#drawPincodeStatus()
@@ -258,12 +258,14 @@ export class SurfaceProxy {
 		}
 	}
 
+	#lastPincodePageDraw = new Map<string, [number, number]>()
 	#drawPincodePage() {
 		if (!this.#isLocked) return
 
-		// TODO - this needs to clear any buttons which were drawn before and aren't now
-
 		this.#drawPincodeStatus()
+
+		const previousDraw = this.#lastPincodePageDraw
+		this.#lastPincodePageDraw = new Map<string, [number, number]>()
 
 		// Draw the number buttons and other details
 		this.#drawPincodeNumber(0)
@@ -276,6 +278,13 @@ export class SurfaceProxy {
 		this.#drawPincodeNumber(7)
 		this.#drawPincodeNumber(8)
 		this.#drawPincodeNumber(9)
+
+		// Clear any buttons which weren't drawn this time
+		for (const [id, xy] of previousDraw) {
+			if (this.#lastPincodePageDraw.has(id)) continue
+
+			this.#drawPincodeButton(xy, (width, height) => Buffer.alloc(width * height * 4, 0), '#000000', '')
+		}
 
 		if (this.#surface.pincodeMap?.type === 'multiple-page') {
 			const xy = this.#surface.pincodeMap.nextPage
@@ -318,6 +327,8 @@ export class SurfaceProxy {
 
 		const xy = pageInfo?.[key]
 		if (!xy) return
+
+		this.#lastPincodePageDraw.set(`${xy[0]}-${xy[1]}`, xy)
 
 		this.#drawPincodeButton(
 			xy,
