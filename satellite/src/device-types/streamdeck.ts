@@ -57,6 +57,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 		bitmapSize: needsBitmaps,
 		colours: true,
 		text: false,
+		pincodeMode: true,
 	}
 }
 

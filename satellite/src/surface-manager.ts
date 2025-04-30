@@ -161,6 +161,22 @@ export class SurfaceManager {
 			),
 		)
 		client.on(
+			'lockedState',
+			wrapAsync(
+				async (msg) => {
+					const surface = this.#getWrappedSurface(msg.deviceId)
+					if (surface.onLockedStatus) {
+						surface.onLockedStatus(msg.locked, msg.characterCount)
+					} else {
+						console.warn(`Variable value not supported: ${msg.deviceId}`)
+					}
+				},
+				(e) => {
+					console.error(`Clear deck: ${e}`)
+				},
+			),
+		)
+		client.on(
 			'newDevice',
 			wrapAsync(
 				async (msg) => {

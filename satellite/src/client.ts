@@ -95,6 +95,7 @@ export type CompanionSatelliteClientEvents = {
 	newDevice: [{ deviceId: string }]
 	clearDeck: [{ deviceId: string }]
 	variableValue: [{ deviceId: string; name: string; value: string }]
+	lockedState: [{ deviceId: string; locked: boolean; characterCount: number }]
 	deviceErrored: [{ deviceId: string; message: string }]
 }
 
@@ -119,6 +120,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _companionApiVersion: string | null = null
 	private _companionUnsupported = false
 
+	private _supportsLocalLockState = false
+
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
 	}
@@ -133,6 +136,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get companionUnsupported(): boolean {
 		return this._companionUnsupported
+	}
+
+	public get supportsLocalLockState(): boolean {
+		return this._supportsLocalLockState
 	}
 
 	public get displayHost(): string {
@@ -355,6 +362,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case 'VARIABLE-VALUE':
 				this.handleVariableValue(params)
 				break
+			case 'LOCKED-STATE':
+				this.handleLockedState(params)
+				break
 			case 'BRIGHTNESS':
 				this.handleBrightness(params)
 				break
@@ -371,6 +381,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case 'KEY-PRESS':
 			case 'KEY-ROTATE':
 			case 'SET-VARIABLE-VALUE':
+			case 'PINCODE-KEY':
 				// Ignore
 				break
 			default:
@@ -401,10 +412,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		// 		this._supportsCombinedEncoders = true
 		// 		console.log('Companion supports combined encoders')
 		// 	}
-		// 	if (semver.lte('1.5.0', protocolVersion)) {
-		// 		this._supportsBitmapResolution = true
-		// 		console.log('Companion supports bitmap resolution')
-		// 	}
+		if (this._companionApiVersion && semver.lte('1.8.0', this._companionApiVersion)) {
+			this._supportsLocalLockState = true
+			console.log('Companion supports delegating locking drawing')
+		}
 		// }
 
 		// report the connection as ready
@@ -461,6 +472,27 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			deviceId: params.DEVICEID,
 			name: params.VARIABLE,
 			value: Buffer.from(params.VALUE, 'base64').toString(),
+		})
+	}
+
+	private handleLockedState(params: Record<string, string | boolean>) {
+		if (typeof params.DEVICEID !== 'string') {
+			console.log('Mising DEVICEID in LOCKED-STATE response')
+			return
+		}
+		if (typeof params.LOCKED !== 'string') {
+			console.log('Missing LOCKED in LOCKED-STATE response')
+			return
+		}
+		if (typeof params.CHARACTER_COUNT !== 'string') {
+			console.log('Missing CHARACTER_COUNT in LOCKED-STATE response')
+			return
+		}
+
+		this.emit('lockedState', {
+			deviceId: params.DEVICEID,
+			locked: params.LOCKED === '1',
+			characterCount: Number(params.CHARACTER_COUNT),
 		})
 	}
 
@@ -567,6 +599,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			})
 		}
 	}
+	public pincodeKey(deviceId: string, keyCode: number): void {
+		if (this._connected && this.socket) {
+			this.sendMessage('PINCODE-KEY', null, deviceId, {
+				KEY: keyCode,
+			})
+		}
+	}
 	public sendVariableValue(deviceId: string, variable: string, value: string): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('SET-VARIABLE-VALUE', null, deviceId, {
@@ -600,6 +639,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				TEXT: props.text,
 				VARIABLES: transferVariables,
 				BRIGHTNESS: props.brightness,
+				PINCODE_LOCK: props.pincodeMode ? 'FULL' : '',
 			})
 		}
 	}

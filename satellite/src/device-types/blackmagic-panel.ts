@@ -68,6 +68,8 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 	readonly #columnCount: number
 	readonly #rowCount: number
 
+	#isLocked = false
+
 	public get surfaceId(): string {
 		return this.#surfaceId
 	}
@@ -120,6 +122,7 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 				// 	description: 'The battery level of the controller, in range 0-1',
 				// },
 			],
+			pincodeMode: true,
 		}
 
 		return info
@@ -133,15 +136,22 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#device.on('down', (control) => {
-			client.keyDownXY(this.surfaceId, control.column, control.row)
+			if (this.#isLocked) {
+				const keyCode = lockInputKeyIds.indexOf(control.id)
+				if (keyCode != -1) client.pincodeKey(this.surfaceId, keyCode)
+			} else {
+				client.keyDownXY(this.surfaceId, control.column, control.row)
+			}
 		})
 		this.#device.on('up', (control) => {
+			if (this.#isLocked) return
 			client.keyUpXY(this.surfaceId, control.column, control.row)
 		})
 		this.#device.on('batteryLevel', (_level) => {
 			// client.sendVariableValue(this.#surfaceId, 'batteryLevel', level.toString())
 		})
 		this.#device.on('tbar', (_control, level) => {
+			if (this.#isLocked) return
 			client.sendVariableValue(this.#surfaceId, 'tbarValueVariable', level.toString())
 		})
 
@@ -220,6 +230,43 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		}
 	}
 
+	onLockedStatus(locked: boolean, characterCount: number): void {
+		const wasLocked = this.#isLocked
+		this.#isLocked = locked
+
+		if (locked !== wasLocked) {
+			this.#pendingDrawColors = {}
+			this.#device.clearPanel().catch((e) => {
+				console.error(`write failed: ${e}`)
+			})
+		}
+
+		if (locked) {
+			const colors: BlackmagicControllerSetButtonColorValue[] = []
+			for (const keyId of lockInputKeyIds) {
+				colors.push({
+					keyId,
+					red: true,
+					green: true,
+					blue: true,
+				})
+			}
+
+			for (let i = 0; i < characterCount && i < lockInputKeyIds.length; i++) {
+				colors.push({
+					keyId: lockoutputKeyIds[i],
+					red: true,
+					green: true,
+					blue: true,
+				})
+			}
+
+			this.#device.setButtonColors(colors).catch((e) => {
+				console.error(`write failed: ${e}`)
+			})
+		}
+	}
+
 	showStatus(_hostname: string, _status: string): void {
 		// Nothing to display here
 		// TODO - do some flashing lights to indicate each status?
@@ -261,3 +308,30 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 	)
 	#pendingDrawColors: Record<string, string> = {}
 }
+
+const lockInputKeyIds = [
+	// Note: these are in order of value they represent
+	'preview10',
+	'preview1',
+	'preview2',
+	'preview3',
+	'preview4',
+	'preview5',
+	'preview6',
+	'preview7',
+	'preview8',
+	'preview9',
+]
+const lockoutputKeyIds = [
+	// Note: these are in order of value they represent
+	'program1',
+	'program2',
+	'program3',
+	'program4',
+	'program5',
+	'program6',
+	'program7',
+	'program8',
+	'program9',
+	'program10',
+]

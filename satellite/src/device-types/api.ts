@@ -21,6 +21,7 @@ export interface DeviceRegisterProps {
 	colours: boolean
 	text: boolean
 	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
+	pincodeMode: boolean
 }
 
 export interface DeviceRegisterInputVariable {
@@ -136,6 +137,9 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 
 	onVariableValue?(name: string, value: string): void
 
+	// TODO - make required?
+	onLockedStatus?(locked: boolean, characterCount: number): void
+
 	showStatus(hostname: string, status: string): void
 }
 
@@ -156,6 +160,7 @@ export interface CompanionClient {
 	keyUpXY(deviceId: string, x: number, y: number): void
 	rotateLeftXY(deviceId: string, x: number, y: number): void
 	rotateRightXY(deviceId: string, x: number, y: number): void
+	pincodeKey(deviceId: string, keyCode: number): void
 
 	sendVariableValue(deviceId: string, variable: string, value: any): void
 }
