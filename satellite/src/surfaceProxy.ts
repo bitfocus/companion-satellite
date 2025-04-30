@@ -1,7 +1,15 @@
-import type { CompanionClientInner, SurfaceId, WrappedSurface } from './device-types/api.js'
+import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
+import type { CardGenerator } from './cards.js'
+import type {
+	CompanionClientInner,
+	SurfaceId,
+	SurfacePincodeMapPageSingle,
+	WrappedSurface,
+} from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
 
 export class SurfaceProxy {
+	readonly #cardGenerator: CardGenerator
 	readonly #surface: WrappedSurface
 	readonly #registerProps: DeviceRegisterProps
 
@@ -22,7 +30,8 @@ export class SurfaceProxy {
 		return this.#registerProps
 	}
 
-	constructor(surface: WrappedSurface, registerProps: DeviceRegisterProps) {
+	constructor(cardGenerator: CardGenerator, surface: WrappedSurface, registerProps: DeviceRegisterProps) {
+		this.#cardGenerator = cardGenerator
 		this.#surface = surface
 		this.#registerProps = registerProps
 	}
@@ -171,15 +180,106 @@ export class SurfaceProxy {
 	}
 
 	onLockedStatus(locked: boolean, characterCount: number): void {
+		const wasLocked = this.#isLocked
 		this.#isLocked = locked
+
+		if (!wasLocked) {
+			// Trigger a blank just to be sure
+			this.#surface.blankDevice().catch((e) => {
+				console.error(`Failed to blank device: ${e}`)
+			})
+		}
+
+		if (!this.#surface.pincodeMap) {
+			console.warn(`Pincode layout not supported not supported: ${this.surfaceId}`)
+			return
+		}
+
+		if (!wasLocked) {
+			// Draw the number buttons and other details
+			this.#drawPincodeNumber(0)
+			this.#drawPincodeNumber(1)
+			this.#drawPincodeNumber(2)
+			this.#drawPincodeNumber(3)
+			this.#drawPincodeNumber(4)
+			this.#drawPincodeNumber(5)
+			this.#drawPincodeNumber(6)
+			this.#drawPincodeNumber(7)
+			this.#drawPincodeNumber(8)
+			this.#drawPincodeNumber(9)
+		}
+
+		const pincodeXy = this.#surface.pincodeMap.pincode
+		if (pincodeXy) {
+			let entryBuffer: Buffer | undefined
+			if (this.registerProps.bitmapSize) {
+				const entryRender = this.#cardGenerator.generatePincodeValue(
+					this.registerProps.bitmapSize,
+					this.registerProps.bitmapSize,
+					characterCount,
+				)
+
+				// TODO - this is a hack to get the image to draw correctly
+				entryBuffer = ImageTransformer.fromBuffer(
+					Buffer.from(entryRender),
+					this.registerProps.bitmapSize,
+					this.registerProps.bitmapSize,
+					PixelFormat.Rgba,
+				).toBufferSync(PixelFormat.Rgb).buffer
+			}
+
+			const keyIndex = pincodeXy[0] + pincodeXy[1] * this.registerProps.keysPerRow
+			this.#surface
+				.draw({
+					deviceId: this.surfaceId,
+					keyIndex: keyIndex,
+					image: entryBuffer,
+					color: '#ffffff',
+					text: '*'.repeat(characterCount),
+				})
+				.catch((e) => {
+					console.error(`Failed to draw pincode number: ${e}`)
+				})
+		}
 
 		if (this.#surface.onLockedStatus) {
 			this.#surface.onLockedStatus(locked, characterCount)
-		} else if (locked) {
-			console.error(`Locked status not supported: ${this.surfaceId}`)
-		} else {
-			console.warn(`Lock status not supported: ${this.surfaceId}`)
 		}
+	}
+
+	#drawPincodeNumber(key: keyof SurfacePincodeMapPageSingle) {
+		const xy = this.#surface.pincodeMap?.[key]
+		if (!xy) return
+
+		let keyBuffer: Buffer | undefined
+		if (this.registerProps.bitmapSize) {
+			const render = this.#cardGenerator.generatePincodeNumber(
+				this.registerProps.bitmapSize,
+				this.registerProps.bitmapSize,
+				Number(key),
+			)
+
+			// TODO - this is a hack to get the image to draw correctly
+			keyBuffer = ImageTransformer.fromBuffer(
+				Buffer.from(render),
+				this.registerProps.bitmapSize,
+				this.registerProps.bitmapSize,
+				PixelFormat.Rgba,
+			).toBufferSync(PixelFormat.Rgb).buffer
+		}
+
+		const keyIndex = xy[0] + xy[1] * this.registerProps.keysPerRow
+		this.#surface
+			.draw({
+				deviceId: this.surfaceId,
+				keyIndex: keyIndex,
+				image: keyBuffer,
+				color: '#ffffff',
+				text: `${key}`,
+			})
+			.catch((e) => {
+				console.error(`Failed to draw pincode number: ${e}`)
+			})
 	}
 
 	showStatus(hostname: string, status: string): void {

@@ -173,7 +173,6 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 
 	onVariableValue?(name: string, value: string): void
 
-	// TODO - make required?
 	onLockedStatus?(locked: boolean, characterCount: number): void
 
 	showStatus(hostname: string, status: string): void

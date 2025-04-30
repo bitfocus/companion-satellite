@@ -438,7 +438,7 @@ export class SurfaceManager {
 						throw new Error('Plugin ID mismatch')
 					}
 
-					const proxySurface = new SurfaceProxy(surface, registerProps)
+					const proxySurface = new SurfaceProxy(this.#cardGenerator, surface, registerProps)
 
 					this.#surfaces.set(pluginInfo.surfaceId, proxySurface)
 
