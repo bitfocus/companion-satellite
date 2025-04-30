@@ -8,7 +8,7 @@ import {
 } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards.js'
-import { ImageWriteQueue, ImageWriteQueue2 } from '../writeQueue.js'
+import { ImageWriteQueue2 } from '../writeQueue.js'
 import {
 	ClientCapabilities,
 	CompanionClient,
@@ -167,8 +167,11 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#deck.on('down', (control) => {
-			if (this.#isLocked) return
-			client.keyDownXY(this.surfaceId, control.column, control.row)
+			if (this.#isLocked) {
+				client.pincodeKey(this.surfaceId, control.index)
+			} else {
+				client.keyDownXY(this.surfaceId, control.column, control.row)
+			}
 		})
 		this.#deck.on('up', (control) => {
 			if (this.#isLocked) return
@@ -266,35 +269,6 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			if (!control) return
 
 			const bufferSize = this.#registerProps.bitmapSize
-
-			// if (drawProps.type === 'pincode') {
-			// 	if (control.type === 'button' && control.feedbackType === 'lcd') {
-			// 		const render = this.#cardGenerator.generatePincodeNumber(
-			// 			control.pixelSize.width,
-			// 			control.pixelSize.height,
-			// 			drawProps.keyCode,
-			// 		)
-
-			// 		await this.#deck.fillKeyBuffer(control.index, render, {
-			// 			format: 'rgba',
-			// 		})
-			// 	}
-			// 	return
-			// } else if (drawProps.type === 'pinentry') {
-			// 	if (control.type === 'button' && control.feedbackType === 'lcd') {
-			// 		const render = this.#cardGenerator.generatePincodeValue(
-			// 			control.pixelSize.width,
-			// 			control.pixelSize.height,
-			// 			drawProps.charCount,
-			// 		)
-
-			// 		await this.#deck.fillKeyBuffer(control.index, render, {
-			// 			format: 'rgba',
-			// 		})
-			// 	}
-
-			// 	return
-			// }
 
 			if (control.type === 'button') {
 				if (control.feedbackType === 'lcd') {
@@ -472,14 +446,13 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	}
 
 	onLockedStatus(locked: boolean, characterCount: number): void {
-		if (this.#drawQueue.state !== 'locked') {
+		const wasLocked = this.#drawQueue.state === 'locked'
+		if (!wasLocked) {
 			// restart the queue and blank
 			this.#drawQueue.abortQueued('locked', async () => this.#deck.clearPanel())
 		}
 
-		const wasLocked = this.#isLocked
 		this.#isLocked = locked
-
 		if (!locked) return
 
 		this.#drawQueue.queueJob(12, async (key, signal) => {

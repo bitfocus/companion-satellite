@@ -159,10 +159,9 @@ export class ImageWriteQueue2<TKey extends number | string> {
 				resolve,
 				promise,
 			}
-			console.log('drain promise created')
 		}
-		await this.drainPromise.promise
-		console.log('drain promise resolved')
+
+		if (this.drainPromise) await this.drainPromise.promise
 	}
 
 	public queue(key: TKey, fn: (key: TKey, signal: AbortSignal) => Promise<void>): void {
