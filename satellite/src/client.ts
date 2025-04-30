@@ -505,50 +505,74 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	public keyDown(deviceId: string, keyIndex: number): void {
 		if (this._connected && this.socket) {
-			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${keyIndex} PRESSED=1\n`)
+			this.sendMessage('KEY-PRESS', null, deviceId, {
+				KEY: keyIndex,
+				PRESSED: true,
+			})
 		}
 	}
 	public keyUp(deviceId: string, keyIndex: number): void {
 		if (this._connected && this.socket) {
-			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${keyIndex} PRESSED=0\n`)
+			this.sendMessage('KEY-PRESS', null, deviceId, {
+				KEY: keyIndex,
+				PRESSED: false,
+			})
 		}
 	}
 	public rotateLeft(deviceId: string, keyIndex: number): void {
 		if (this._connected && this.socket) {
-			this.socket.write(`KEY-ROTATE DEVICEID=${deviceId} KEY=${keyIndex} DIRECTION=0\n`)
+			this.sendMessage('KEY-ROTATE', null, deviceId, {
+				KEY: keyIndex,
+				DIRECTION: false,
+			})
 		}
 	}
 	public rotateRight(deviceId: string, keyIndex: number): void {
 		if (this._connected && this.socket) {
-			this.socket.write(`KEY-ROTATE DEVICEID=${deviceId} KEY=${keyIndex} DIRECTION=1\n`)
+			this.sendMessage('KEY-ROTATE', null, deviceId, {
+				KEY: keyIndex,
+				DIRECTION: true,
+			})
 		}
 	}
 	public keyDownXY(deviceId: string, x: number, y: number): void {
 		if (this._connected && this.socket) {
-			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${y}/${x} PRESSED=1\n`)
+			this.sendMessage('KEY-PRESS', null, deviceId, {
+				KEY: `${y}/${x}`,
+				PRESSED: true,
+			})
 		}
 	}
 	public keyUpXY(deviceId: string, x: number, y: number): void {
 		if (this._connected && this.socket) {
-			this.socket.write(`KEY-PRESS DEVICEID=${deviceId} KEY=${y}/${x} PRESSED=0\n`)
+			this.sendMessage('KEY-PRESS', null, deviceId, {
+				KEY: `${y}/${x}`,
+				PRESSED: false,
+			})
 		}
 	}
 	public rotateLeftXY(deviceId: string, x: number, y: number): void {
 		if (this._connected && this.socket) {
-			this.socket.write(`KEY-ROTATE DEVICEID=${deviceId} KEY=${y}/${x} DIRECTION=0\n`)
+			this.sendMessage('KEY-ROTATE', null, deviceId, {
+				KEY: `${y}/${x}`,
+				DIRECTION: false,
+			})
 		}
 	}
 	public rotateRightXY(deviceId: string, x: number, y: number): void {
 		if (this._connected && this.socket) {
-			this.socket.write(`KEY-ROTATE DEVICEID=${deviceId} KEY=${y}/${x} DIRECTION=1\n`)
+			this.sendMessage('KEY-ROTATE', null, deviceId, {
+				KEY: `${y}/${x}`,
+				DIRECTION: true,
+			})
 		}
 	}
 	public sendVariableValue(deviceId: string, variable: string, value: string): void {
 		if (this._connected && this.socket) {
-			const encodedValue = Buffer.from(value).toString('base64')
-			this.socket.write(
-				`SET-VARIABLE-VALUE DEVICEID=${deviceId} VARIABLE="${variable}" VALUE="${encodedValue}"\n`,
-			)
+			this.sendMessage('SET-VARIABLE-VALUE', null, deviceId, {
+				VARIABLE: variable,
+				VALUE: Buffer.from(value).toString('base64'),
+			})
 		}
 	}
 
@@ -567,13 +591,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 			const transferVariables = Buffer.from(JSON.stringify(props.transferVariables ?? [])).toString('base64')
 
-			this.socket.write(
-				`ADD-DEVICE DEVICEID=${deviceId} PRODUCT_NAME="${productName}" KEYS_TOTAL=${
-					props.keysTotal
-				} KEYS_PER_ROW=${props.keysPerRow} BITMAPS=${
-					props.bitmapSize ?? 0
-				} COLORS=${props.colours ? 1 : 0} TEXT=${props.text ? 1 : 0} VARIABLES=${transferVariables} BRIGHTNESS=${props.brightness ? 1 : 0}\n`,
-			)
+			this.sendMessage('ADD-DEVICE', null, deviceId, {
+				PRODUCT_NAME: productName,
+				KEYS_TOTAL: props.keysTotal,
+				KEYS_PER_ROW: props.keysPerRow,
+				BITMAPS: props.bitmapSize ?? 0,
+				COLORS: props.colours,
+				TEXT: props.text,
+				VARIABLES: transferVariables,
+				BRIGHTNESS: props.brightness,
+			})
 		}
 	}
 
@@ -582,7 +609,35 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this._registeredDevices.delete(deviceId)
 			this._pendingDevices.delete(deviceId)
 
-			this.socket.write(`REMOVE-DEVICE DEVICEID=${deviceId}\n`)
+			this.sendMessage('REMOVE-DEVICE', null, deviceId, {})
 		}
 	}
+
+	private sendMessage(
+		messageName: string,
+		status: 'OK' | 'ERROR' | null,
+		deviceId: string | null,
+		args: SatelliteMessageArgs,
+	): void {
+		const chunks: string[] = [messageName]
+		if (status) chunks.push(status)
+		if (deviceId) chunks.push(`DEVICEID="${deviceId}"`)
+
+		for (const [key, value] of Object.entries(args)) {
+			let valueStr: string
+			if (typeof value === 'boolean') {
+				valueStr = value ? '1' : '0'
+			} else if (typeof value === 'number') {
+				valueStr = value.toString()
+			} else {
+				valueStr = `"${value}"`
+			}
+			chunks.push(`${key}=${valueStr}`)
+		}
+
+		chunks.push('\n')
+		this.socket?.write(chunks.join(' '))
+	}
 }
+
+type SatelliteMessageArgs = Record<string, string | number | boolean>
