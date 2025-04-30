@@ -106,12 +106,19 @@ export interface SurfacePlugin<TInfo> {
 	 * @param cardGenerator Generator for creating status cards
 	 * @returns Instance of the surface
 	 */
-	openSurface: (surfaceId: string, pluginInfo: TInfo, cardGenerator: CardGenerator) => Promise<WrappedSurface>
+	openSurface: (surfaceId: string, pluginInfo: TInfo, cardGenerator: CardGenerator) => Promise<OpenSurfaceResult>
+}
+
+export interface OpenSurfaceResult {
+	surface: WrappedSurface
+	registerProps: DeviceRegisterProps
 }
 
 export interface WrappedSurfaceEvents {
 	error: [error: any]
 }
+
+export type SurfacePincodeMap = never[]
 
 export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 	readonly pluginId: string
@@ -119,11 +126,13 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 	readonly surfaceId: SurfaceId
 	readonly productName: string
 
-	getRegisterProps(): DeviceRegisterProps
+	readonly pincodeMap?: SurfacePincodeMap
+
+	// getRegisterProps(): DeviceRegisterProps
 
 	close(): Promise<void>
 
-	initDevice(client: CompanionClient, status: string): Promise<void>
+	initDevice(client: CompanionClientInner, status: string): Promise<void>
 
 	updateCapabilities(capabilities: ClientCapabilities): void
 
@@ -151,6 +160,19 @@ export interface ClientCapabilities {
 export interface CompanionClient {
 	get displayHost(): string
 
+	keyDownXY(deviceId: string, x: number, y: number): void
+	keyUpXY(deviceId: string, x: number, y: number): void
+	rotateLeftXY(deviceId: string, x: number, y: number): void
+	rotateRightXY(deviceId: string, x: number, y: number): void
+	pincodeKey(deviceId: string, keyCode: number): void
+
+	sendVariableValue(deviceId: string, variable: string, value: any): void
+}
+
+export interface CompanionClientInner {
+	get isLocked(): boolean
+	get displayHost(): string
+
 	keyDown(deviceId: string, keyIndex: number): void
 	keyUp(deviceId: string, keyIndex: number): void
 	rotateLeft(deviceId: string, keyIndex: number): void
@@ -160,7 +182,6 @@ export interface CompanionClient {
 	keyUpXY(deviceId: string, x: number, y: number): void
 	rotateLeftXY(deviceId: string, x: number, y: number): void
 	rotateRightXY(deviceId: string, x: number, y: number): void
-	pincodeKey(deviceId: string, keyCode: number): void
 
 	sendVariableValue(deviceId: string, variable: string, value: any): void
 }

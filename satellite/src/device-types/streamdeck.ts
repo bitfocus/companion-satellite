@@ -11,7 +11,6 @@ import { CardGenerator } from '../cards.js'
 import { DrawingState } from '../drawingState.js'
 import {
 	ClientCapabilities,
-	CompanionClient,
 	DeviceDrawProps,
 	SurfacePlugin,
 	DeviceRegisterProps,
@@ -19,6 +18,8 @@ import {
 	WrappedSurface,
 	WrappedSurfaceEvents,
 	HIDDevice,
+	CompanionClientInner,
+	OpenSurfaceResult,
 } from './api.js'
 import { parseColor, transformButtonImage } from './lib.js'
 import util from 'util'
@@ -89,9 +90,13 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 		surfaceId: string,
 		pluginInfo: StreamDeckDeviceInfo,
 		cardGenerator: CardGenerator,
-	): Promise<WrappedSurface> => {
+	): Promise<OpenSurfaceResult> => {
 		const streamdeck = await openStreamDeck(pluginInfo.path)
-		return new StreamDeckWrapper(surfaceId, streamdeck, cardGenerator)
+		const registerProps = compileRegisterProps(streamdeck)
+		return {
+			surface: new StreamDeckWrapper(surfaceId, streamdeck, cardGenerator, registerProps),
+			registerProps: registerProps,
+		}
 	}
 }
 
@@ -105,8 +110,6 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 	readonly #drawQueue = new DrawingState<number>('preinit')
 
-	#isLocked = false
-
 	/**
 	 * Whether the LCD has been written to outside the button bounds that needs clearing
 	 */
@@ -119,7 +122,12 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		return this.#deck.PRODUCT_NAME
 	}
 
-	public constructor(surfaceId: string, deck: StreamDeck, cardGenerator: CardGenerator) {
+	public constructor(
+		surfaceId: string,
+		deck: StreamDeck,
+		cardGenerator: CardGenerator,
+		registerProps: DeviceRegisterProps,
+	) {
 		super()
 
 		this.#deck = deck
@@ -128,11 +136,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		this.#deck.on('error', (e) => this.emit('error', e))
 
-		this.#registerProps = compileRegisterProps(deck)
-	}
-
-	getRegisterProps(): DeviceRegisterProps {
-		return this.#registerProps
+		this.#registerProps = registerProps
 	}
 
 	async close(): Promise<void> {
@@ -142,22 +146,15 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		await this.#deck.close()
 	}
-	async initDevice(client: CompanionClient, status: string): Promise<void> {
+	async initDevice(client: CompanionClientInner, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#deck.on('down', (control) => {
-			if (this.#isLocked) {
-				client.pincodeKey(this.surfaceId, control.index)
-			} else {
-				client.keyDownXY(this.surfaceId, control.column, control.row)
-			}
+			client.keyDownXY(this.surfaceId, control.column, control.row)
 		})
 		this.#deck.on('up', (control) => {
-			if (this.#isLocked) return
 			client.keyUpXY(this.surfaceId, control.column, control.row)
 		})
 		this.#deck.on('rotate', (control, delta) => {
-			if (this.#isLocked) return
-
 			if (delta < 0) {
 				client.rotateLeftXY(this.surfaceId, control.column, control.row)
 			} else if (delta > 0) {
@@ -165,7 +162,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			}
 		})
 		this.#deck.on('lcdShortPress', (control, position) => {
-			if (this.#isLocked) return
+			if (client.isLocked) return
 
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
 
@@ -178,7 +175,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			}, 20)
 		})
 		this.#deck.on('lcdLongPress', (control, position) => {
-			if (this.#isLocked) return
+			if (client.isLocked) return
 
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
 
@@ -423,7 +420,6 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			this.#drawQueue.abortQueued('locked', async () => this.#deck.clearPanel())
 		}
 
-		this.#isLocked = locked
 		if (!locked) return
 
 		this.#drawQueue.queueJob(12, async (key, signal) => {

@@ -535,38 +535,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.emit('newDevice', { deviceId: params.DEVICEID })
 	}
 
-	public keyDown(deviceId: string, keyIndex: number): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-PRESS', null, deviceId, {
-				KEY: keyIndex,
-				PRESSED: true,
-			})
-		}
-	}
-	public keyUp(deviceId: string, keyIndex: number): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-PRESS', null, deviceId, {
-				KEY: keyIndex,
-				PRESSED: false,
-			})
-		}
-	}
-	public rotateLeft(deviceId: string, keyIndex: number): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-ROTATE', null, deviceId, {
-				KEY: keyIndex,
-				DIRECTION: false,
-			})
-		}
-	}
-	public rotateRight(deviceId: string, keyIndex: number): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-ROTATE', null, deviceId, {
-				KEY: keyIndex,
-				DIRECTION: true,
-			})
-		}
-	}
 	public keyDownXY(deviceId: string, x: number, y: number): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('KEY-PRESS', null, deviceId, {

@@ -24,44 +24,11 @@ export class ImageWriteQueue<TArgs extends unknown[] = [buffer: Buffer]> {
 	private readonly maxConcurrent = 3
 	private readonly pendingImages: Array<{ key: number; args: TArgs }> = []
 	private inProgress = new Map<number, AbortController>()
-	private drainPromise: DrainPromise | null = null
 
-	#running: boolean
+	constructor(private readonly fillImage: (key: number, signal: AbortSignal, ...args: TArgs) => Promise<void>) {}
 
-	get running(): boolean {
-		return this.#running
-	}
-
-	constructor(
-		private readonly fillImage: (key: number, signal: AbortSignal, ...args: TArgs) => Promise<void>,
-		autostart = true,
-	) {
-		this.#running = autostart
-	}
-
-	public setRunning(): void {
-		this.#running = true
-
-		this.tryDequeue()
-	}
-
-	public async abort(): Promise<void> {
+	public abort(): void {
 		this.pendingImages.splice(0, this.pendingImages.length)
-		for (const o of this.inProgress.values()) {
-			o.abort()
-		}
-
-		if (!this.drainPromise) {
-			let resolve = () => {}
-			const promise = new Promise<void>((resolve_) => {
-				resolve = resolve_
-			})
-			this.drainPromise = {
-				resolve,
-				promise,
-			}
-		}
-		await this.drainPromise.promise
 	}
 
 	public queue(key: number, ...args: TArgs): void {
@@ -84,8 +51,6 @@ export class ImageWriteQueue<TArgs extends unknown[] = [buffer: Buffer]> {
 	}
 
 	private tryDequeue() {
-		if (!this.#running) return
-
 		// Start another if not too many in progress
 		if (this.inProgress.size < this.maxConcurrent && this.pendingImages.length > 0) {
 			// Find first image where key is not being worked on

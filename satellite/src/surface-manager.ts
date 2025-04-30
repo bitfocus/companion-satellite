@@ -1,7 +1,7 @@
 import { CompanionSatelliteClient } from './client.js'
 import { usb } from 'usb'
 import { CardGenerator } from './cards.js'
-import { SurfaceId, SurfacePlugin, DiscoveredSurfaceInfo, WrappedSurface } from './device-types/api.js'
+import { SurfaceId, SurfacePlugin, DiscoveredSurfaceInfo } from './device-types/api.js'
 import { StreamDeckPlugin } from './device-types/streamdeck.js'
 import { QuickKeysPlugin } from './device-types/xencelabs-quick-keys.js'
 import * as HID from 'node-hid'
@@ -10,6 +10,7 @@ import { InfinittonPlugin } from './device-types/infinitton.js'
 import { LoupedeckPlugin } from './device-types/loupedeck-plugin.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 import { BlackmagicControllerPlugin } from './device-types/blackmagic-panel.js'
+import { SurfaceProxy } from './surfaceProxy.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -24,7 +25,7 @@ const knownPlugins: SurfacePlugin<any>[] = [
 ]
 
 export class SurfaceManager {
-	readonly #surfaces: Map<SurfaceId, WrappedSurface>
+	readonly #surfaces: Map<SurfaceId, SurfaceProxy>
 	/** Surfaces which are in the process of being opened */
 	readonly #pendingSurfaces: Set<SurfaceId>
 	readonly #client: CompanionSatelliteClient
@@ -149,11 +150,7 @@ export class SurfaceManager {
 			wrapAsync(
 				async (msg) => {
 					const surface = this.#getWrappedSurface(msg.deviceId)
-					if (surface.onVariableValue) {
-						surface.onVariableValue(msg.name, msg.value)
-					} else {
-						console.warn(`Variable value not supported: ${msg.deviceId}`)
-					}
+					surface.onVariableValue(msg.name, msg.value)
 				},
 				(e) => {
 					console.error(`Clear deck: ${e}`)
@@ -165,11 +162,7 @@ export class SurfaceManager {
 			wrapAsync(
 				async (msg) => {
 					const surface = this.#getWrappedSurface(msg.deviceId)
-					if (surface.onLockedStatus) {
-						surface.onLockedStatus(msg.locked, msg.characterCount)
-					} else {
-						console.warn(`Variable value not supported: ${msg.deviceId}`)
-					}
+					surface.onLockedStatus(msg.locked, msg.characterCount)
 				},
 				(e) => {
 					console.error(`Clear deck: ${e}`)
@@ -216,7 +209,7 @@ export class SurfaceManager {
 			// Make sure device knows what the client is capable of
 			surface.updateCapabilities(this.#client.capabilities)
 
-			this.#client.addDevice(surfaceId, surface.productName, surface.getRegisterProps())
+			this.#client.addDevice(surfaceId, surface.productName, surface.registerProps)
 		}, 1000)
 	}
 
@@ -238,7 +231,7 @@ export class SurfaceManager {
 		)
 	}
 
-	#getWrappedSurface(surfaceId: string): WrappedSurface {
+	#getWrappedSurface(surfaceId: string): SurfaceProxy {
 		const surface = this.#surfaces.get(surfaceId)
 		if (!surface) throw new Error(`Missing device for serial: "${surfaceId}"`)
 		return surface
@@ -279,18 +272,18 @@ export class SurfaceManager {
 
 	public syncCapabilitiesAndRegisterAllDevices(): void {
 		console.log('registerAll', Array.from(this.#surfaces.keys()))
-		for (const device of this.#surfaces.values()) {
+		for (const surface of this.#surfaces.values()) {
 			// If it is still in the process of initialising skip it
-			if (this.#pendingSurfaces.has(device.surfaceId)) continue
+			if (this.#pendingSurfaces.has(surface.surfaceId)) continue
 
 			// Indicate on device
-			device.showStatus(this.#client.displayHost, this.#statusString)
+			surface.showStatus(this.#client.displayHost, this.#statusString)
 
 			// Make sure device knows what the client is capable of
-			device.updateCapabilities(this.#client.capabilities)
+			surface.updateCapabilities(this.#client.capabilities)
 
 			// Re-init device
-			this.#client.addDevice(device.surfaceId, device.productName, device.getRegisterProps())
+			this.#client.addDevice(surface.surfaceId, surface.productName, surface.registerProps)
 		}
 
 		this.scanForSurfaces()
@@ -434,7 +427,7 @@ export class SurfaceManager {
 
 		plugin
 			.openSurface(pluginInfo.surfaceId, pluginInfo.pluginInfo, this.#cardGenerator)
-			.then(async (surface) => {
+			.then(async ({ surface, registerProps }) => {
 				try {
 					surface.on('error', (e) => {
 						console.error('surface error', e)
@@ -445,13 +438,15 @@ export class SurfaceManager {
 						throw new Error('Plugin ID mismatch')
 					}
 
-					this.#surfaces.set(pluginInfo.surfaceId, surface)
+					const proxySurface = new SurfaceProxy(surface, registerProps)
 
-					await surface.initDevice(this.#client, this.#statusString)
+					this.#surfaces.set(pluginInfo.surfaceId, proxySurface)
 
-					surface.updateCapabilities(this.#client.capabilities)
+					await proxySurface.initDevice(this.#client, this.#statusString)
 
-					this.#client.addDevice(pluginInfo.surfaceId, surface.productName, surface.getRegisterProps())
+					proxySurface.updateCapabilities(this.#client.capabilities)
+
+					this.#client.addDevice(pluginInfo.surfaceId, proxySurface.productName, registerProps)
 				} catch (e) {
 					// Remove the failed surface
 					this.#surfaces.delete(pluginInfo.surfaceId)
