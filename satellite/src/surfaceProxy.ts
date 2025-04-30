@@ -1,11 +1,6 @@
 import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
 import type { CardGenerator } from './cards.js'
-import type {
-	CompanionClientInner,
-	SurfaceId,
-	SurfacePincodeMapPageSingle,
-	WrappedSurface,
-} from './device-types/api.js'
+import type { CompanionClientInner, SurfaceId, SurfacePincodeMapPageEntry, WrappedSurface } from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
 import { DrawingState } from './drawingState.js'
 
@@ -17,6 +12,8 @@ export class SurfaceProxy {
 	readonly #drawQueue = new DrawingState<number | string>('preinit')
 
 	#isLocked = false
+	#lockButtonPage = 0
+	#pincodeCharacterCount = 0
 
 	get pluginId(): string {
 		return this.#surface.pluginId
@@ -67,10 +64,14 @@ export class SurfaceProxy {
 			},
 
 			keyDown: (keyIndex: number): void => {
-				if (this.#isLocked) return
+				const xy = this.#keyIndexToXY(keyIndex)
+
+				if (this.#isLocked) {
+					this.#pincodeXYPress(client, ...xy)
+					return
+				}
 
 				// TODO - test this
-				const xy = this.#keyIndexToXY(keyIndex)
 				client.keyDownXY(this.surfaceId, ...xy)
 			},
 			keyUp: (keyIndex: number): void => {
@@ -80,9 +81,12 @@ export class SurfaceProxy {
 				client.keyUpXY(this.surfaceId, ...xy)
 			},
 			keyDownUp: (keyIndex: number): void => {
-				if (this.#isLocked) return
-
 				const xy = this.#keyIndexToXY(keyIndex)
+
+				if (this.#isLocked) {
+					this.#pincodeXYPress(client, ...xy)
+					return
+				}
 
 				client.keyDownXY(this.surfaceId, ...xy)
 
@@ -108,11 +112,11 @@ export class SurfaceProxy {
 			keyDownXY: (x: number, y: number): void => {
 				// TODO - mirror to the non-XY version
 				if (this.#isLocked) {
-					// TODO - properly
-					client.pincodeKey(this.surfaceId, x)
-				} else {
-					client.keyDownXY(this.surfaceId, x, y)
+					this.#pincodeXYPress(client, x, y)
+					return
 				}
+
+				client.keyDownXY(this.surfaceId, x, y)
 			},
 			keyUpXY: (x: number, y: number): void => {
 				if (this.#isLocked) return
@@ -120,7 +124,10 @@ export class SurfaceProxy {
 				client.keyUpXY(this.surfaceId, x, y)
 			},
 			keyDownUpXY: (x: number, y: number): void => {
-				if (this.#isLocked) return
+				if (this.#isLocked) {
+					this.#pincodeXYPress(client, x, y)
+					return
+				}
 
 				client.keyDownXY(this.surfaceId, x, y)
 
@@ -151,6 +158,30 @@ export class SurfaceProxy {
 		await this.#surface.initDevice(clientWrapper)
 
 		this.showStatus(client.displayHost, status)
+	}
+
+	#pincodeXYPress(client: CompanionClient, x: number, y: number): void {
+		const pincodeMap = this.#surface.pincodeMap
+		if (!pincodeMap) return
+
+		const equals = (xy: [number, number]) => x === xy[0] && y === xy[1]
+
+		if (pincodeMap.type === 'multiple-page' && equals(pincodeMap.nextPage)) {
+			this.#lockButtonPage = (this.#lockButtonPage + 1) % pincodeMap.pages.length
+			this.#drawPincodePage()
+			return
+		}
+
+		const pageInfo = pincodeMap.type === 'single-page' ? pincodeMap : pincodeMap.pages[this.#lockButtonPage]
+		if (!pageInfo) return
+
+		const index = Object.entries(pageInfo).find(([, v]) => equals(v))?.[0]
+		if (!index) return
+
+		const indexNumber = Number(index)
+		if (isNaN(indexNumber)) return
+
+		client.pincodeKey(this.surfaceId, indexNumber)
 	}
 
 	updateCapabilities(capabilities: ClientCapabilities): void {
@@ -203,10 +234,12 @@ export class SurfaceProxy {
 	onLockedStatus(locked: boolean, characterCount: number): void {
 		const wasLocked = this.#isLocked
 		this.#isLocked = locked
+		this.#lockButtonPage = 0
+		this.#pincodeCharacterCount = characterCount
 
 		if (!wasLocked) {
 			// Always discard the previous draw
-			this.#drawQueue.abortQueued('locked-pending-draw')
+			this.#drawQueue.abortQueued('locked-pending-draw', async () => this.#surface.blankDevice())
 		}
 
 		if (!this.#surface.pincodeMap) {
@@ -215,49 +248,9 @@ export class SurfaceProxy {
 		}
 
 		if (!wasLocked) {
-			// Draw the number buttons and other details
-			this.#drawPincodeNumber(0)
-			this.#drawPincodeNumber(1)
-			this.#drawPincodeNumber(2)
-			this.#drawPincodeNumber(3)
-			this.#drawPincodeNumber(4)
-			this.#drawPincodeNumber(5)
-			this.#drawPincodeNumber(6)
-			this.#drawPincodeNumber(7)
-			this.#drawPincodeNumber(8)
-			this.#drawPincodeNumber(9)
-		}
-
-		const pincodeXy = this.#surface.pincodeMap.pincode
-		if (pincodeXy) {
-			let entryBuffer: Buffer | undefined
-			if (this.registerProps.bitmapSize) {
-				const entryRender = this.#cardGenerator.generatePincodeValue(
-					this.registerProps.bitmapSize,
-					this.registerProps.bitmapSize,
-					characterCount,
-				)
-
-				// TODO - this is a hack to get the image to draw correctly
-				entryBuffer = ImageTransformer.fromBuffer(
-					Buffer.from(entryRender),
-					this.registerProps.bitmapSize,
-					this.registerProps.bitmapSize,
-					PixelFormat.Rgba,
-				).toBufferSync(PixelFormat.Rgb).buffer
-			}
-
-			const keyIndex = pincodeXy[0] + pincodeXy[1] * this.registerProps.columnCount
-			this.#drawQueue.queueJob(keyIndex, async (key, signal) => {
-				if (signal.aborted) return
-				await this.#surface.draw(signal, {
-					deviceId: this.surfaceId,
-					keyIndex: keyIndex,
-					image: entryBuffer,
-					color: '#ffffff',
-					text: '*'.repeat(characterCount),
-				})
-			})
+			this.#drawPincodePage()
+		} else {
+			this.#drawPincodeStatus()
 		}
 
 		if (this.#surface.onLockedStatus) {
@@ -265,17 +258,84 @@ export class SurfaceProxy {
 		}
 	}
 
-	#drawPincodeNumber(key: keyof SurfacePincodeMapPageSingle) {
-		const xy = this.#surface.pincodeMap?.[key]
+	#drawPincodePage() {
+		if (!this.#isLocked) return
+
+		// TODO - this needs to clear any buttons which were drawn before and aren't now
+
+		this.#drawPincodeStatus()
+
+		// Draw the number buttons and other details
+		this.#drawPincodeNumber(0)
+		this.#drawPincodeNumber(1)
+		this.#drawPincodeNumber(2)
+		this.#drawPincodeNumber(3)
+		this.#drawPincodeNumber(4)
+		this.#drawPincodeNumber(5)
+		this.#drawPincodeNumber(6)
+		this.#drawPincodeNumber(7)
+		this.#drawPincodeNumber(8)
+		this.#drawPincodeNumber(9)
+
+		if (this.#surface.pincodeMap?.type === 'multiple-page') {
+			const xy = this.#surface.pincodeMap.nextPage
+			this.#drawPincodeButton(
+				xy,
+				(width, height) => Buffer.from(this.#cardGenerator.generatePincodeChar(width, height, '+')),
+				'#ffffff',
+				'+',
+			)
+		}
+	}
+
+	#drawPincodeStatus() {
+		const pincodeXy = this.#surface.pincodeMap?.pincode
+		if (!pincodeXy) return
+
+		this.#drawPincodeButton(
+			pincodeXy,
+			(width, height) =>
+				Buffer.from(this.#cardGenerator.generatePincodeValue(width, height, this.#pincodeCharacterCount)),
+			'#ffffff',
+			'*'.repeat(this.#pincodeCharacterCount),
+		)
+	}
+
+	#drawPincodeNumber(key: keyof SurfacePincodeMapPageEntry) {
+		const pincodeMap = this.#surface.pincodeMap
+		if (!pincodeMap) return
+
+		let pageInfo: SurfacePincodeMapPageEntry
+
+		if (pincodeMap.type === 'single-page') {
+			pageInfo = pincodeMap
+		} else {
+			if (this.#lockButtonPage >= pincodeMap.pages.length) {
+				this.#lockButtonPage = 0
+			}
+			pageInfo = pincodeMap.pages[this.#lockButtonPage] as SurfacePincodeMapPageEntry
+		}
+
+		const xy = pageInfo?.[key]
 		if (!xy) return
 
+		this.#drawPincodeButton(
+			xy,
+			(width, height) => Buffer.from(this.#cardGenerator.generatePincodeChar(width, height, key)),
+			'#ffffff',
+			`${key}`,
+		)
+	}
+
+	#drawPincodeButton(
+		xy: [number, number],
+		bitmapFn: (width: number, height: number) => Buffer,
+		color: string,
+		text: string,
+	) {
 		let keyBuffer: Buffer | undefined
 		if (this.registerProps.bitmapSize) {
-			const render = this.#cardGenerator.generatePincodeNumber(
-				this.registerProps.bitmapSize,
-				this.registerProps.bitmapSize,
-				Number(key),
-			)
+			const render = bitmapFn(this.registerProps.bitmapSize, this.registerProps.bitmapSize)
 
 			// TODO - this is a hack to get the image to draw correctly
 			keyBuffer = ImageTransformer.fromBuffer(
@@ -289,12 +349,13 @@ export class SurfaceProxy {
 		const keyIndex = xy[0] + xy[1] * this.registerProps.columnCount
 		this.#drawQueue.queueJob(keyIndex, async (key, signal) => {
 			if (signal.aborted) return
+
 			await this.#surface.draw(signal, {
 				deviceId: this.surfaceId,
 				keyIndex: keyIndex,
 				image: keyBuffer,
-				color: '#ffffff',
-				text: `${key}`,
+				color,
+				text,
 			})
 		})
 	}

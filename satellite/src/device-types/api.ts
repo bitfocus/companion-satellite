@@ -117,9 +117,18 @@ export interface WrappedSurfaceEvents {
 	error: [error: any]
 }
 
-export type SurfacePincodeMap = SurfacePincodeMapPageSingle // | SurfacePincodeMapPageEntry[]
-export interface SurfacePincodeMapPageSingle {
+export type SurfacePincodeMap = SurfacePincodeMapPageSingle | SurfacePincodeMapPageMultiple
+export interface SurfacePincodeMapPageSingle extends SurfacePincodeMapPageEntry {
+	type: 'single-page'
 	pincode: [number, number]
+}
+export interface SurfacePincodeMapPageMultiple {
+	type: 'multiple-page'
+	pincode: [number, number]
+	nextPage: [number, number]
+	pages: Partial<SurfacePincodeMapPageEntry>[]
+}
+export interface SurfacePincodeMapPageEntry {
 	0: [number, number]
 	1: [number, number]
 	2: [number, number]
@@ -130,20 +139,6 @@ export interface SurfacePincodeMapPageSingle {
 	7: [number, number]
 	8: [number, number]
 	9: [number, number]
-}
-export interface SurfacePincodeMapPageEntry {
-	pageChange: [number, number]
-	pincode: [number, number]
-	0: [number, number] | null
-	1: [number, number] | null
-	2: [number, number] | null
-	3: [number, number] | null
-	4: [number, number] | null
-	5: [number, number] | null
-	6: [number, number] | null
-	7: [number, number] | null
-	8: [number, number] | null
-	9: [number, number] | null
 }
 
 export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {

@@ -161,7 +161,7 @@ export class CardGenerator {
 		return rawImage
 	}
 
-	generatePincodeNumber(width: number, height: number, keyCode: number): Uint8ClampedArray {
+	generatePincodeChar(width: number, height: number, keyCode: number | string): Uint8ClampedArray {
 		const canvasWidth = width
 		const canvasHeight = height
 

@@ -19,7 +19,7 @@ import {
 	HIDDevice,
 	CompanionClientInner,
 	OpenSurfaceResult,
-	SurfacePincodeMapPageSingle,
+	SurfacePincodeMap,
 } from './api.js'
 import { parseColor, transformButtonImage } from './lib.js'
 import util from 'util'
@@ -103,18 +103,45 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
 
-	readonly pincodeMap: SurfacePincodeMapPageSingle = {
-		pincode: [0, 1],
-		0: [4, 1],
-		1: [1, 2],
-		2: [2, 2],
-		3: [3, 2],
-		4: [1, 1],
-		5: [2, 1],
-		6: [3, 1],
-		7: [1, 0],
-		8: [2, 0],
-		9: [3, 0],
+	// readonly pincodeMap: SurfacePincodeMap = {
+	// 	type: 'single-page',
+	// 	pincode: [0, 1],
+	// 	0: [4, 1],
+	// 	1: [1, 2],
+	// 	2: [2, 2],
+	// 	3: [3, 2],
+	// 	4: [1, 1],
+	// 	5: [2, 1],
+	// 	6: [3, 1],
+	// 	7: [1, 0],
+	// 	8: [2, 0],
+	// 	9: [3, 0],
+	// }
+
+	readonly pincodeMap: SurfacePincodeMap = {
+		type: 'multiple-page',
+		pincode: [0, 0],
+		nextPage: [0, 1],
+		pages: [
+			{
+				1: [1, 1],
+				2: [2, 1],
+				3: [1, 0],
+				4: [2, 0],
+			},
+			{
+				5: [1, 1],
+				6: [2, 1],
+				7: [1, 0],
+				8: [2, 0],
+			},
+			{
+				9: [1, 1],
+				0: [2, 1],
+				// 7: [1, 0],
+				// 8: [2, 0],
+			},
+		],
 	}
 
 	/**
