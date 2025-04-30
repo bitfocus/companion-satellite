@@ -8,7 +8,7 @@ import {
 } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../cards.js'
-import { ImageWriteQueue } from '../writeQueue.js'
+import { ImageWriteQueue, ImageWriteQueue2 } from '../writeQueue.js'
 import {
 	ClientCapabilities,
 	CompanionClient,
@@ -95,19 +95,19 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 	}
 }
 
-type QueuedDraw =
-	| {
-			type: 'buffer'
-			props: DeviceDrawProps
-	  }
-	| {
-			type: 'pincode'
-			keyCode: number
-	  }
-	| {
-			type: 'pinentry'
-			charCount: number
-	  }
+// type QueuedDraw =
+// 	| {
+// 			type: 'buffer'
+// 			props: DeviceDrawProps
+// 	  }
+// 	| {
+// 			type: 'pincode'
+// 			keyCode: number
+// 	  }
+// 	| {
+// 			type: 'pinentry'
+// 			charCount: number
+// 	  }
 
 export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
 	readonly pluginId = PLUGIN_ID
@@ -117,8 +117,8 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
 
-	#drawAbort: AbortController
-	#queue: ImageWriteQueue<[abort: AbortSignal, drawProps: QueuedDraw]>
+	// #drawAbort: AbortController
+	readonly #drawQueue = new DrawingState<number>('preinit')
 
 	#isLocked = false
 
@@ -143,166 +143,14 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		this.#deck.on('error', (e) => this.emit('error', e))
 
-		this.#drawAbort = new AbortController()
+		// this.#drawAbort = new AbortController()
 
 		this.#registerProps = compileRegisterProps(deck)
 
-		this.#queue = new ImageWriteQueue(async (key: number, abort: AbortSignal, drawProps: QueuedDraw) => {
-			if (abort.aborted) return
+		// this.#queue = new ImageWriteQueue(async (key: number, abort: AbortSignal, drawProps: QueuedDraw) => {
+		// 	if (abort.aborted) return
 
-			const x = key % this.#registerProps.keysPerRow
-			const y = Math.floor(key / this.#registerProps.keysPerRow)
-
-			const control = this.#deck.CONTROLS.find((control) => {
-				if (control.row !== y) return false
-
-				if (control.column === x) return true
-
-				if (control.type === 'lcd-segment' && x >= control.column && x < control.column + control.columnSpan)
-					return true
-
-				return false
-			})
-			if (!control) return
-
-			const bufferSize = this.#registerProps.bitmapSize
-
-			if (drawProps.type === 'pincode') {
-				if (control.type === 'button' && control.feedbackType === 'lcd') {
-					const render = this.#cardGenerator.generatePincodeNumber(
-						control.pixelSize.width,
-						control.pixelSize.height,
-						drawProps.keyCode,
-					)
-
-					await this.#deck.fillKeyBuffer(control.index, render, {
-						format: 'rgba',
-					})
-				}
-				return
-			} else if (drawProps.type === 'pinentry') {
-				if (control.type === 'button' && control.feedbackType === 'lcd') {
-					const render = this.#cardGenerator.generatePincodeValue(
-						control.pixelSize.width,
-						control.pixelSize.height,
-						drawProps.charCount,
-					)
-
-					await this.#deck.fillKeyBuffer(control.index, render, {
-						format: 'rgba',
-					})
-				}
-
-				return
-			}
-
-			if (control.type === 'button') {
-				if (control.feedbackType === 'lcd') {
-					let newbuffer: Buffer | undefined
-					if (control.pixelSize.width === 0 || control.pixelSize.height === 0) {
-						return
-					} else {
-						try {
-							newbuffer = await transformButtonImage(
-								drawProps.props.image,
-								bufferSize,
-								bufferSize,
-								control.pixelSize.width,
-								control.pixelSize.height,
-								imageRs.PixelFormat.Rgb,
-							)
-						} catch (e: any) {
-							console.error(`scale image failed: ${e}\n${e.stack}`)
-							return
-						}
-					}
-
-					const maxAttempts = 3
-					for (let attempts = 1; attempts <= maxAttempts; attempts++) {
-						try {
-							if (abort.aborted) return
-
-							await this.#deck.fillKeyBuffer(control.index, newbuffer)
-							return
-						} catch (e) {
-							if (attempts == maxAttempts) {
-								console.log(`fillImage failed after ${attempts} attempts: ${e}`)
-								return
-							}
-							await setTimeoutPromise(20)
-						}
-					}
-				} else if (control.feedbackType === 'rgb') {
-					const color = parseColor(drawProps.props.color)
-
-					if (abort.aborted) return
-
-					this.#deck.fillKeyColor(control.index, color.r, color.g, color.b).catch((e) => {
-						console.log(`color failed: ${e}`)
-					})
-				}
-			} else if (control.type === 'lcd-segment' && control.drawRegions) {
-				const drawColumn = x - control.column
-
-				const columnWidth = control.pixelSize.width / control.columnSpan
-				let drawX = drawColumn * columnWidth
-				if (this.#deck.MODEL === DeviceModelId.PLUS) {
-					// Position aligned with the buttons/encoders
-					drawX = drawColumn * 216.666 + 25
-				}
-
-				const targetSize = control.pixelSize.height
-
-				let newbuffer: Buffer | undefined
-				try {
-					newbuffer = await transformButtonImage(
-						drawProps.props.image,
-						bufferSize,
-						bufferSize,
-						targetSize,
-						targetSize,
-						imageRs.PixelFormat.Rgb,
-					)
-				} catch (e) {
-					console.log(`scale image failed: ${e}`)
-					return
-				}
-
-				// Clear the lcd segment if needed
-				if (this.#fullLcdDirty) {
-					if (abort.aborted) return
-
-					this.#fullLcdDirty = false
-					await this.#deck.clearLcdSegment(control.id)
-				}
-
-				const maxAttempts = 3
-				for (let attempts = 1; attempts <= maxAttempts; attempts++) {
-					try {
-						if (abort.aborted) return
-
-						await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
-							format: 'rgb',
-							width: targetSize,
-							height: targetSize,
-						})
-						return
-					} catch (e) {
-						if (attempts == maxAttempts) {
-							console.error(`fillImage failed after ${attempts}: ${e}`)
-							return
-						}
-						await setTimeoutPromise(20)
-					}
-				}
-			} else if (control.type === 'encoder' && control.hasLed) {
-				const color = parseColor(drawProps.props.color)
-
-				if (abort.aborted) return
-
-				await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
-			}
-		})
+		// })
 	}
 
 	getRegisterProps(): DeviceRegisterProps {
@@ -310,7 +158,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	}
 
 	async close(): Promise<void> {
-		this.#queue?.abort()
+		this.#drawQueue.abortQueued('closed')
 
 		await this.#deck.resetToLogo().catch(() => null)
 
@@ -372,31 +220,193 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		// Not used
 	}
 
-	#discardDraws() {
-		this.#drawAbort.abort()
-		this.#drawAbort = new AbortController()
+	// #discardDraws() {
+	// 	this.#drawAbort.abort()
+	// 	this.#drawAbort = new AbortController()
 
-		this.#queue.abort()
-	}
+	// 	this.#queue.abort()
+	// }
 
 	async deviceAdded(): Promise<void> {
-		this.#discardDraws()
+		this.#drawQueue.abortQueued('reinit')
 	}
 	async setBrightness(percent: number): Promise<void> {
 		await this.#deck.setBrightness(percent)
 	}
 	async blankDevice(): Promise<void> {
-		this.#discardDraws()
+		if (this.#drawQueue.state === 'blank') return
 
-		await this.#deck.clearPanel()
+		this.#drawQueue.abortQueued('blank')
+		this.#drawQueue.queueJob(0, async (_key, signal) => {
+			if (signal.aborted) return
+			await this.#deck.clearPanel()
+		})
 	}
 	async draw(drawProps: DeviceDrawProps): Promise<void> {
-		this.#queue.queue(drawProps.keyIndex, this.#drawAbort.signal, { type: 'buffer', props: drawProps })
+		if (this.#drawQueue.state !== 'draw') {
+			this.#drawQueue.abortQueued('draw', async () => this.#deck.clearPanel())
+		}
+
+		this.#drawQueue.queueJob(drawProps.keyIndex, async (key, signal) => {
+			if (signal.aborted) return
+
+			const x = key % this.#registerProps.keysPerRow
+			const y = Math.floor(key / this.#registerProps.keysPerRow)
+
+			const control = this.#deck.CONTROLS.find((control) => {
+				if (control.row !== y) return false
+
+				if (control.column === x) return true
+
+				if (control.type === 'lcd-segment' && x >= control.column && x < control.column + control.columnSpan)
+					return true
+
+				return false
+			})
+			if (!control) return
+
+			const bufferSize = this.#registerProps.bitmapSize
+
+			// if (drawProps.type === 'pincode') {
+			// 	if (control.type === 'button' && control.feedbackType === 'lcd') {
+			// 		const render = this.#cardGenerator.generatePincodeNumber(
+			// 			control.pixelSize.width,
+			// 			control.pixelSize.height,
+			// 			drawProps.keyCode,
+			// 		)
+
+			// 		await this.#deck.fillKeyBuffer(control.index, render, {
+			// 			format: 'rgba',
+			// 		})
+			// 	}
+			// 	return
+			// } else if (drawProps.type === 'pinentry') {
+			// 	if (control.type === 'button' && control.feedbackType === 'lcd') {
+			// 		const render = this.#cardGenerator.generatePincodeValue(
+			// 			control.pixelSize.width,
+			// 			control.pixelSize.height,
+			// 			drawProps.charCount,
+			// 		)
+
+			// 		await this.#deck.fillKeyBuffer(control.index, render, {
+			// 			format: 'rgba',
+			// 		})
+			// 	}
+
+			// 	return
+			// }
+
+			if (control.type === 'button') {
+				if (control.feedbackType === 'lcd') {
+					let newbuffer: Buffer | undefined
+					if (control.pixelSize.width === 0 || control.pixelSize.height === 0) {
+						return
+					} else {
+						try {
+							newbuffer = await transformButtonImage(
+								drawProps.image,
+								bufferSize,
+								bufferSize,
+								control.pixelSize.width,
+								control.pixelSize.height,
+								imageRs.PixelFormat.Rgb,
+							)
+						} catch (e: any) {
+							console.error(`scale image failed: ${e}\n${e.stack}`)
+							return
+						}
+					}
+
+					const maxAttempts = 3
+					for (let attempts = 1; attempts <= maxAttempts; attempts++) {
+						try {
+							if (signal.aborted) return
+
+							await this.#deck.fillKeyBuffer(control.index, newbuffer)
+							return
+						} catch (e) {
+							if (attempts == maxAttempts) {
+								console.log(`fillImage failed after ${attempts} attempts: ${e}`)
+								return
+							}
+							await setTimeoutPromise(20)
+						}
+					}
+				} else if (control.feedbackType === 'rgb') {
+					const color = parseColor(drawProps.color)
+
+					if (signal.aborted) return
+
+					this.#deck.fillKeyColor(control.index, color.r, color.g, color.b).catch((e) => {
+						console.log(`color failed: ${e}`)
+					})
+				}
+			} else if (control.type === 'lcd-segment' && control.drawRegions) {
+				const drawColumn = x - control.column
+
+				const columnWidth = control.pixelSize.width / control.columnSpan
+				let drawX = drawColumn * columnWidth
+				if (this.#deck.MODEL === DeviceModelId.PLUS) {
+					// Position aligned with the buttons/encoders
+					drawX = drawColumn * 216.666 + 25
+				}
+
+				const targetSize = control.pixelSize.height
+
+				let newbuffer: Buffer | undefined
+				try {
+					newbuffer = await transformButtonImage(
+						drawProps.image,
+						bufferSize,
+						bufferSize,
+						targetSize,
+						targetSize,
+						imageRs.PixelFormat.Rgb,
+					)
+				} catch (e) {
+					console.log(`scale image failed: ${e}`)
+					return
+				}
+
+				// Clear the lcd segment if needed
+				if (this.#fullLcdDirty) {
+					if (signal.aborted) return
+
+					this.#fullLcdDirty = false
+					await this.#deck.clearLcdSegment(control.id)
+				}
+
+				const maxAttempts = 3
+				for (let attempts = 1; attempts <= maxAttempts; attempts++) {
+					try {
+						if (signal.aborted) return
+
+						await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
+							format: 'rgb',
+							width: targetSize,
+							height: targetSize,
+						})
+						return
+					} catch (e) {
+						if (attempts == maxAttempts) {
+							console.error(`fillImage failed after ${attempts}: ${e}`)
+							return
+						}
+						await setTimeoutPromise(20)
+					}
+				}
+			} else if (control.type === 'encoder' && control.hasLed) {
+				const color = parseColor(drawProps.color)
+
+				if (signal.aborted) return
+
+				await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
+			}
+		})
 	}
 	showStatus(hostname: string, status: string): void {
-		this.#discardDraws()
-
-		const signal = this.#drawAbort.signal
+		// Always discard the previous draw
+		this.#drawQueue.abortQueued('status')
 
 		const fillPanelDimensions = this.#deck.calculateFillPanelDimensions()
 		const lcdSegments = this.#deck.CONTROLS.filter(
@@ -414,96 +424,169 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 							hostname,
 							status,
 						)
+			fillCard.catch(() => null) // Ensure error doesn't go uncaught
 
-			fillCard
-				.then(async (buffer) => {
-					if (signal.aborted) return
+			this.#drawQueue.queueJob(0, async (_key, signal) => {
+				const buffer = await fillCard
+				if (signal.aborted) return
 
-					// still valid
-					await this.#deck.fillPanelBuffer(buffer, {
+				// still valid
+				await this.#deck
+					.fillPanelBuffer(buffer, {
 						format: 'rgba',
-					})
-				})
-				.catch((e) => {
-					console.error(`Failed to fill device`, e)
-				})
-
-			for (const lcdStrip of lcdSegments) {
-				this.#cardGenerator
-					.generateLcdStripCard(
-						lcdStrip.pixelSize.width,
-						lcdStrip.pixelSize.height,
-						imageRs.PixelFormat.Rgba,
-						hostname,
-						status,
-					)
-					.then(async (buffer) => {
-						if (signal.aborted) return
-
-						// Mark the screen as dirty, so the gaps get cleared when the first region draw happens
-						this.#fullLcdDirty = true
-
-						// still valid
-						await this.#deck.fillLcd(lcdStrip.id, buffer, {
-							format: 'rgba',
-						})
 					})
 					.catch((e) => {
 						console.error(`Failed to fill device`, e)
 					})
+			})
+
+			for (const lcdStrip of lcdSegments) {
+				const stripCard = this.#cardGenerator.generateLcdStripCard(
+					lcdStrip.pixelSize.width,
+					lcdStrip.pixelSize.height,
+					imageRs.PixelFormat.Rgba,
+					hostname,
+					status,
+				)
+				stripCard.catch(() => null) // Ensure error doesn't go uncaught
+
+				this.#drawQueue.queueJob(lcdStrip.id + 5, async (_key, signal) => {
+					const buffer = await stripCard
+
+					if (signal.aborted) return
+
+					// Mark the screen as dirty, so the gaps get cleared when the first region draw happens
+					this.#fullLcdDirty = true
+
+					// still valid
+					await this.#deck
+						.fillLcd(lcdStrip.id, buffer, {
+							format: 'rgba',
+						})
+						.catch((e) => {
+							console.error(`Failed to fill device`, e)
+						})
+				})
 			}
 		}
 	}
 
 	onLockedStatus(locked: boolean, characterCount: number): void {
+		if (this.#drawQueue.state !== 'locked') {
+			// restart the queue and blank
+			this.#drawQueue.abortQueued('locked', async () => this.#deck.clearPanel())
+		}
+
 		const wasLocked = this.#isLocked
 		this.#isLocked = locked
 
-		if (locked !== wasLocked) {
-			this.#discardDraws()
+		if (!locked) return
 
-			// this.#pendingDrawColors = {}
-			this.#deck.clearPanel().catch((e) => {
-				console.error(`write failed: ${e}`)
-			})
-		}
+		this.#drawQueue.queueJob(12, async (key, signal) => {
+			if (signal.aborted) return
 
-		if (locked) {
-			if (!wasLocked) {
-				// Draw the buttons
-				for (let i = 0; i <= 9; i++) {
-					this.#queue.queue(i, this.#drawAbort.signal, {
-						type: 'pincode',
-						keyCode: i,
-					})
-				}
+			const control = this.#deck.CONTROLS.find((control) => control.type === 'button' && control.index === key)
+			if (!control) return
 
-				this.#queue.queue(12, this.#drawAbort.signal, {
-					type: 'pinentry',
-					charCount: characterCount,
+			if (control.type === 'button' && control.feedbackType === 'lcd') {
+				const render = this.#cardGenerator.generatePincodeValue(
+					control.pixelSize.width,
+					control.pixelSize.height,
+					characterCount,
+				)
+
+				await this.#deck.fillKeyBuffer(control.index, render, {
+					format: 'rgba',
 				})
 			}
+		})
 
-			// 	const colors: BlackmagicControllerSetButtonColorValue[] = []
-			// 	for (const keyId of lockInputKeyIds) {
-			// 		colors.push({
-			// 			keyId,
-			// 			red: true,
-			// 			green: true,
-			// 			blue: true,
-			// 		})
-			// 	}
-			// 	for (let i = 0; i < characterCount && i < lockInputKeyIds.length; i++) {
-			// 		colors.push({
-			// 			keyId: lockoutputKeyIds[i],
-			// 			red: true,
-			// 			green: true,
-			// 			blue: true,
-			// 		})
-			// 	}
-			// 	this.#device.setButtonColors(colors).catch((e) => {
-			// 		console.error(`write failed: ${e}`)
-			// 	})
+		if (wasLocked) return
+
+		// Draw the number buttons and other details
+		for (let i = 0; i <= 9; i++) {
+			this.#drawQueue.queueJob(i, async (key, signal) => {
+				if (signal.aborted) return
+
+				const control = this.#deck.CONTROLS.find(
+					(control) => control.type === 'button' && control.index === key,
+				)
+				if (!control) return
+
+				if (control.type === 'button' && control.feedbackType === 'lcd') {
+					const render = this.#cardGenerator.generatePincodeNumber(
+						control.pixelSize.width,
+						control.pixelSize.height,
+						key,
+					)
+
+					await this.#deck.fillKeyBuffer(control.index, render, {
+						format: 'rgba',
+					})
+				}
+			})
+		}
+	}
+}
+
+export class DrawingState<TKey extends number | string> {
+	#queue: ImageWriteQueue2<TKey>
+	#state: string
+
+	#isAborting = false
+	#execBeforeRunQueue: (() => Promise<void>) | null = null
+
+	get state(): string {
+		return this.#state
+	}
+
+	constructor(state: string) {
+		this.#state = state
+		this.#queue = new ImageWriteQueue2()
+	}
+
+	queueJob(key: TKey, fn: (key: TKey, signal: AbortSignal) => Promise<void>): void {
+		this.#queue.queue(key, fn)
+	}
+
+	abortQueued(newState: string, fnBeforeRunQueue?: () => Promise<void>): void {
+		let abortQueue: ImageWriteQueue2<TKey> | null = null
+		if (!this.#isAborting) {
+			this.#isAborting = true
+			abortQueue = this.#queue
+		}
+
+		console.log(`Aborting queue: ${this.#state} -> ${newState}`, !!abortQueue)
+
+		this.#state = newState
+		this.#queue = new ImageWriteQueue2(false)
+		this.#execBeforeRunQueue = fnBeforeRunQueue ?? null
+
+		if (abortQueue) {
+			abortQueue
+				.abort()
+				.catch((e) => {
+					console.error(`Failed to abort queue: ${e}`)
+				})
+				.then(async () => {
+					if (this.#execBeforeRunQueue) {
+						await this.#execBeforeRunQueue().catch((e) => {
+							console.error(`Failed to run before queue: ${e}`)
+						})
+						this.#execBeforeRunQueue = null
+					}
+				})
+				.finally(() => {
+					this.#isAborting = false
+
+					console.log('aborted')
+
+					// Start execution
+					this.#queue.setRunning()
+				})
+				.catch((e) => {
+					console.error(`Failed to abort queue: ${e}`)
+				})
 		}
 	}
 }
