@@ -95,6 +95,20 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 	}
 }
 
+type QueuedDraw =
+	| {
+			type: 'buffer'
+			props: DeviceDrawProps
+	  }
+	| {
+			type: 'pincode'
+			keyCode: number
+	  }
+	| {
+			type: 'pinentry'
+			charCount: number
+	  }
+
 export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
 	readonly pluginId = PLUGIN_ID
 
@@ -104,7 +118,9 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	readonly #registerProps: DeviceRegisterProps
 
 	#drawAbort: AbortController
-	#queue: ImageWriteQueue<[abort: AbortSignal, drawProps: DeviceDrawProps]>
+	#queue: ImageWriteQueue<[abort: AbortSignal, drawProps: QueuedDraw]>
+
+	#isLocked = false
 
 	/**
 	 * Whether the LCD has been written to outside the button bounds that needs clearing
@@ -131,7 +147,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		this.#registerProps = compileRegisterProps(deck)
 
-		this.#queue = new ImageWriteQueue(async (key: number, abort: AbortSignal, drawProps: DeviceDrawProps) => {
+		this.#queue = new ImageWriteQueue(async (key: number, abort: AbortSignal, drawProps: QueuedDraw) => {
 			if (abort.aborted) return
 
 			const x = key % this.#registerProps.keysPerRow
@@ -151,6 +167,35 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 			const bufferSize = this.#registerProps.bitmapSize
 
+			if (drawProps.type === 'pincode') {
+				if (control.type === 'button' && control.feedbackType === 'lcd') {
+					const render = this.#cardGenerator.generatePincodeNumber(
+						control.pixelSize.width,
+						control.pixelSize.height,
+						drawProps.keyCode,
+					)
+
+					await this.#deck.fillKeyBuffer(control.index, render, {
+						format: 'rgba',
+					})
+				}
+				return
+			} else if (drawProps.type === 'pinentry') {
+				if (control.type === 'button' && control.feedbackType === 'lcd') {
+					const render = this.#cardGenerator.generatePincodeValue(
+						control.pixelSize.width,
+						control.pixelSize.height,
+						drawProps.charCount,
+					)
+
+					await this.#deck.fillKeyBuffer(control.index, render, {
+						format: 'rgba',
+					})
+				}
+
+				return
+			}
+
 			if (control.type === 'button') {
 				if (control.feedbackType === 'lcd') {
 					let newbuffer: Buffer | undefined
@@ -159,7 +204,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 					} else {
 						try {
 							newbuffer = await transformButtonImage(
-								drawProps.image,
+								drawProps.props.image,
 								bufferSize,
 								bufferSize,
 								control.pixelSize.width,
@@ -188,7 +233,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 						}
 					}
 				} else if (control.feedbackType === 'rgb') {
-					const color = parseColor(drawProps.color)
+					const color = parseColor(drawProps.props.color)
 
 					if (abort.aborted) return
 
@@ -211,7 +256,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 				let newbuffer: Buffer | undefined
 				try {
 					newbuffer = await transformButtonImage(
-						drawProps.image,
+						drawProps.props.image,
 						bufferSize,
 						bufferSize,
 						targetSize,
@@ -251,7 +296,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 					}
 				}
 			} else if (control.type === 'encoder' && control.hasLed) {
-				const color = parseColor(drawProps.color)
+				const color = parseColor(drawProps.props.color)
 
 				if (abort.aborted) return
 
@@ -274,12 +319,16 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#deck.on('down', (control) => {
+			if (this.#isLocked) return
 			client.keyDownXY(this.surfaceId, control.column, control.row)
 		})
 		this.#deck.on('up', (control) => {
+			if (this.#isLocked) return
 			client.keyUpXY(this.surfaceId, control.column, control.row)
 		})
 		this.#deck.on('rotate', (control, delta) => {
+			if (this.#isLocked) return
+
 			if (delta < 0) {
 				client.rotateLeftXY(this.surfaceId, control.column, control.row)
 			} else if (delta > 0) {
@@ -287,6 +336,8 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			}
 		})
 		this.#deck.on('lcdShortPress', (control, position) => {
+			if (this.#isLocked) return
+
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
 
 			const column = control.column + columnOffset
@@ -298,6 +349,8 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 			}, 20)
 		})
 		this.#deck.on('lcdLongPress', (control, position) => {
+			if (this.#isLocked) return
+
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
 
 			const column = control.column + columnOffset
@@ -338,7 +391,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		await this.#deck.clearPanel()
 	}
 	async draw(drawProps: DeviceDrawProps): Promise<void> {
-		this.#queue.queue(drawProps.keyIndex, this.#drawAbort.signal, drawProps)
+		this.#queue.queue(drawProps.keyIndex, this.#drawAbort.signal, { type: 'buffer', props: drawProps })
 	}
 	showStatus(hostname: string, status: string): void {
 		this.#discardDraws()
@@ -399,6 +452,58 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 						console.error(`Failed to fill device`, e)
 					})
 			}
+		}
+	}
+
+	onLockedStatus(locked: boolean, characterCount: number): void {
+		const wasLocked = this.#isLocked
+		this.#isLocked = locked
+
+		if (locked !== wasLocked) {
+			this.#discardDraws()
+
+			// this.#pendingDrawColors = {}
+			this.#deck.clearPanel().catch((e) => {
+				console.error(`write failed: ${e}`)
+			})
+		}
+
+		if (locked) {
+			if (!wasLocked) {
+				// Draw the buttons
+				for (let i = 0; i <= 9; i++) {
+					this.#queue.queue(i, this.#drawAbort.signal, {
+						type: 'pincode',
+						keyCode: i,
+					})
+				}
+
+				this.#queue.queue(12, this.#drawAbort.signal, {
+					type: 'pinentry',
+					charCount: characterCount,
+				})
+			}
+
+			// 	const colors: BlackmagicControllerSetButtonColorValue[] = []
+			// 	for (const keyId of lockInputKeyIds) {
+			// 		colors.push({
+			// 			keyId,
+			// 			red: true,
+			// 			green: true,
+			// 			blue: true,
+			// 		})
+			// 	}
+			// 	for (let i = 0; i < characterCount && i < lockInputKeyIds.length; i++) {
+			// 		colors.push({
+			// 			keyId: lockoutputKeyIds[i],
+			// 			red: true,
+			// 			green: true,
+			// 			blue: true,
+			// 		})
+			// 	}
+			// 	this.#device.setButtonColors(colors).catch((e) => {
+			// 		console.error(`write failed: ${e}`)
+			// 	})
 		}
 	}
 }

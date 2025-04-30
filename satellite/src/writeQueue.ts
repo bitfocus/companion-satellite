@@ -18,7 +18,7 @@
 export class ImageWriteQueue<TArgs extends unknown[] = [buffer: Buffer]> {
 	private readonly maxConcurrent = 3
 	private readonly pendingImages: Array<{ key: number; args: TArgs }> = []
-	private inProgress: number[] = []
+	private inProgress = new Set<number>()
 
 	constructor(private readonly fillImage: (key: number, ...args: TArgs) => Promise<void>) {}
 
@@ -47,9 +47,9 @@ export class ImageWriteQueue<TArgs extends unknown[] = [buffer: Buffer]> {
 
 	private tryDequeue() {
 		// Start another if not too many in progress
-		if (this.inProgress.length < this.maxConcurrent && this.pendingImages.length > 0) {
+		if (this.inProgress.size < this.maxConcurrent && this.pendingImages.length > 0) {
 			// Find first image where key is not being worked on
-			const nextImageIndex = this.pendingImages.findIndex((img) => this.inProgress.indexOf(img.key) === -1)
+			const nextImageIndex = this.pendingImages.findIndex((img) => !this.inProgress.has(img.key))
 			if (nextImageIndex === -1) {
 				return
 			}
@@ -61,7 +61,7 @@ export class ImageWriteQueue<TArgs extends unknown[] = [buffer: Buffer]> {
 			}
 
 			// Track which key is being processed
-			this.inProgress.push(nextImage.key)
+			this.inProgress.add(nextImage.key)
 
 			this.fillImage(nextImage.key, ...nextImage.args)
 				.catch((e) => {
@@ -70,7 +70,7 @@ export class ImageWriteQueue<TArgs extends unknown[] = [buffer: Buffer]> {
 				})
 				.finally(() => {
 					// Stop tracking key
-					this.inProgress = this.inProgress.filter((k) => k !== nextImage.key)
+					this.inProgress.delete(nextImage.key)
 
 					// Run again
 					setImmediate(() => {
