@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.0.4](https://github.com/bitfocus/companion-satellite/compare/v2.0.3...v2.0.4) (2025-05-03)
+
+
+### Bug Fixes
+
+* suppress `MaxListenersExceededWarning` warning ([ffbb48b](https://github.com/bitfocus/companion-satellite/commit/ffbb48b4581ae8b82cc402a4905ff2b94befe399))
+
 ## [2.0.3](https://github.com/bitfocus/companion-satellite/compare/v2.0.2...v2.0.3) (2025-04-13)
 
 
