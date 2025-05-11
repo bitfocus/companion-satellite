@@ -95,7 +95,7 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 				bitmapSize: null,
 				colours: true,
 				text: true,
-				pincodeMode: false, // TODO - implement?
+				pincodeMap: null, // TODO - implement?
 			},
 		}
 	}

@@ -18,9 +18,12 @@ import {
 	HIDDevice,
 	SurfaceContext,
 	OpenSurfaceResult,
+	SurfacePincodeMap,
 } from './api.js'
 import { parseColor } from './lib.js'
 import util from 'util'
+import { assertNever } from '../lib.js'
+import { Pincode4x4, Pincode5x3, Pincode6x2 } from './pincode.js'
 
 const setTimeoutPromise = util.promisify(setTimeout)
 
@@ -55,7 +58,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 		bitmapSize: needsBitmaps,
 		colours: true,
 		text: false,
-		pincodeMode: true,
+		pincodeMap: generatePincodeMap(deck.MODEL),
 	}
 }
 
@@ -93,22 +96,14 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 		return {
 			surface: new StreamDeckWrapper(surfaceId, streamdeck, registerProps, context),
 			registerProps: registerProps,
-			// readonly pincodeMap: SurfacePincodeMap = {
-			// 	type: 'single-page',
-			// 	pincode: [0, 1],
-			// 	0: [4, 1],
-			// 	1: [1, 2],
-			// 	2: [2, 2],
-			// 	3: [3, 2],
-			// 	4: [1, 1],
-			// 	5: [2, 1],
-			// 	6: [3, 1],
-			// 	7: [1, 0],
-			// 	8: [2, 0],
-			// 	9: [3, 0],
-			// }
+		}
+	}
+}
 
-			pincodeMap: {
+function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
+	switch (model) {
+		case DeviceModelId.MINI:
+			return {
 				type: 'multiple-page',
 				pincode: [0, 0],
 				nextPage: [0, 1],
@@ -132,8 +127,51 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 						// 8: [2, 0],
 					},
 				],
-			},
-		}
+			}
+		case DeviceModelId.ORIGINAL:
+		case DeviceModelId.ORIGINALV2:
+		case DeviceModelId.ORIGINALMK2:
+			return Pincode5x3()
+		case DeviceModelId.PEDAL:
+			// Not suitable for a pincode
+			return null
+		case DeviceModelId.NEO:
+			return {
+				type: 'single-page',
+				pincode: [1, 2],
+				0: [3, 2],
+				1: [0, 0],
+				2: [1, 0],
+				3: [2, 0],
+				4: [3, 0],
+				5: [0, 1],
+				6: [1, 1],
+				7: [2, 1],
+				8: [3, 1],
+				9: [0, 2],
+			}
+		case DeviceModelId.PLUS:
+			return {
+				type: 'single-page',
+				pincode: [0, 2],
+				0: [3, 2],
+				1: [0, 0],
+				2: [1, 0],
+				3: [2, 0],
+				4: [3, 0],
+				5: [0, 1],
+				6: [1, 1],
+				7: [2, 1],
+				8: [3, 1],
+				9: [2, 2],
+			}
+		case DeviceModelId.STUDIO:
+			return Pincode6x2(1)
+		case DeviceModelId.XL:
+			return Pincode4x4(2)
+		default:
+			assertNever(model)
+			return null
 	}
 }
 
@@ -143,6 +181,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 	readonly #deck: StreamDeck
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
+	readonly #context: SurfaceContext
 
 	/**
 	 * Whether the LCD has been written to outside the button bounds that needs clearing
@@ -164,10 +203,10 @@ export class StreamDeckWrapper implements SurfaceInstance {
 	) {
 		this.#deck = deck
 		this.#surfaceId = surfaceId
+		this.#registerProps = registerProps
+		this.#context = context
 
 		this.#deck.on('error', (e) => context.disconnect(e as any))
-
-		this.#registerProps = registerProps
 
 		this.#deck.on('down', (control) => {
 			context.keyDownXY(control.column, control.row)
@@ -288,28 +327,9 @@ export class StreamDeckWrapper implements SurfaceInstance {
 					console.log(`color failed: ${e}`)
 				})
 			}
-		} else if (control.type === 'lcd-segment' && control.drawRegions) {
+		} else if (control.type === 'lcd-segment') {
 			if (!drawProps.image) {
 				console.error(`No image provided for lcd-segment`)
-				return
-			}
-
-			const drawColumn = x - control.column
-
-			const columnWidth = control.pixelSize.width / control.columnSpan
-			let drawX = drawColumn * columnWidth
-			if (this.#deck.MODEL === DeviceModelId.PLUS) {
-				// Position aligned with the buttons/encoders
-				drawX = drawColumn * 216.666 + 25
-			}
-
-			const targetSize = control.pixelSize.height
-
-			let newbuffer: Buffer | undefined
-			try {
-				newbuffer = await drawProps.image(targetSize, targetSize, imageRs.PixelFormat.Rgb)
-			} catch (e) {
-				console.log(`scale image failed: ${e}`)
 				return
 			}
 
@@ -321,23 +341,69 @@ export class StreamDeckWrapper implements SurfaceInstance {
 				await this.#deck.clearLcdSegment(control.id)
 			}
 
-			const maxAttempts = 3
-			for (let attempts = 1; attempts <= maxAttempts; attempts++) {
-				try {
-					if (signal.aborted) return
+			if (this.#context.isLocked) {
+				// Special case handling for neo lcd strip
+				if (this.#deck.MODEL === DeviceModelId.NEO) {
+					const image = await drawProps.image(
+						control.pixelSize.width,
+						control.pixelSize.height,
+						imageRs.PixelFormat.Rgb,
+					)
 
-					await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
+					await this.#deck.fillLcd(control.id, image, {
 						format: 'rgb',
-						width: targetSize,
-						height: targetSize,
 					})
 					return
+				} else if (this.#deck.MODEL === DeviceModelId.PLUS && x === 0) {
+					const width = (control.pixelSize.width / control.columnSpan) * 2
+					const image = await drawProps.image(width, control.pixelSize.height, imageRs.PixelFormat.Rgb)
+
+					await this.#deck.fillLcdRegion(control.id, 0, 0, image, {
+						format: 'rgb',
+						width: width,
+						height: control.pixelSize.height,
+					})
+					return
+				}
+			}
+			if (control.drawRegions) {
+				const drawColumn = x - control.column
+
+				const columnWidth = control.pixelSize.width / control.columnSpan
+				let drawX = drawColumn * columnWidth
+				if (this.#deck.MODEL === DeviceModelId.PLUS) {
+					// Position aligned with the buttons/encoders
+					drawX = drawColumn * 216.666 + 25
+				}
+
+				const targetSize = control.pixelSize.height
+
+				let newbuffer: Buffer | undefined
+				try {
+					newbuffer = await drawProps.image(targetSize, targetSize, imageRs.PixelFormat.Rgb)
 				} catch (e) {
-					if (attempts == maxAttempts) {
-						console.error(`fillImage failed after ${attempts}: ${e}`)
+					console.log(`scale image failed: ${e}`)
+					return
+				}
+
+				const maxAttempts = 3
+				for (let attempts = 1; attempts <= maxAttempts; attempts++) {
+					try {
+						if (signal.aborted) return
+
+						await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
+							format: 'rgb',
+							width: targetSize,
+							height: targetSize,
+						})
 						return
+					} catch (e) {
+						if (attempts == maxAttempts) {
+							console.error(`fillImage failed after ${attempts}: ${e}`)
+							return
+						}
+						await setTimeoutPromise(20)
 					}
-					await setTimeoutPromise(20)
 				}
 			}
 		} else if (control.type === 'encoder' && control.hasLed) {

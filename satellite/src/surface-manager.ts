@@ -436,13 +436,13 @@ export class SurfaceManager {
 
 		plugin
 			.openSurface(pluginInfo.surfaceId, pluginInfo.pluginInfo, context)
-			.then(async ({ surface, registerProps, pincodeMap }) => {
+			.then(async ({ surface, registerProps }) => {
 				try {
 					if (plugin.pluginId !== surface.pluginId) {
 						throw new Error('Plugin ID mismatch')
 					}
 
-					const proxySurface = new SurfaceProxy(this.#graphics, context, surface, registerProps, pincodeMap)
+					const proxySurface = new SurfaceProxy(this.#graphics, context, surface, registerProps)
 
 					this.#surfaces.set(pluginInfo.surfaceId, proxySurface)
 

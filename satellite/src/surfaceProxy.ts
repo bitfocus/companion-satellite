@@ -53,7 +53,6 @@ export class SurfaceProxy {
 		context: SurfaceProxyContext,
 		surface: SurfaceInstance,
 		registerProps: DeviceRegisterProps,
-		pincodeMap: SurfacePincodeMap | undefined,
 	) {
 		this.#graphics = graphics
 		this.#context = context
@@ -61,7 +60,7 @@ export class SurfaceProxy {
 		this.#registerProps = registerProps
 
 		// Setup the cyclical reference :(
-		context.storeSurface(this, pincodeMap)
+		context.storeSurface(this, registerProps.pincodeMap)
 	}
 
 	async close(): Promise<void> {
@@ -121,10 +120,10 @@ export class SurfaceProxy {
 					? async (targetWidth, targetHeight, targetPixelFormat) =>
 							transformButtonImage(
 								{
-									width: targetWidth,
-									height: targetHeight,
+									width: bitmapSize,
+									height: bitmapSize,
 									buffer: rawImage,
-									pixelFormat: PixelFormat.Rgba,
+									pixelFormat: PixelFormat.Rgb,
 								},
 								targetWidth,
 								targetHeight,
@@ -296,7 +295,7 @@ export class SurfaceProxyContext implements SurfaceContext {
 	readonly disconnect: SurfaceContext['disconnect']
 
 	#surface: SurfaceProxy | null = null
-	#pincodeMap: SurfacePincodeMap | undefined
+	#pincodeMap: SurfacePincodeMap | null = null
 
 	#isLocked = false
 	#lockButtonPage = 0
@@ -305,7 +304,7 @@ export class SurfaceProxyContext implements SurfaceContext {
 		return this.#isLocked
 	}
 
-	get pincodeMap(): SurfacePincodeMap | undefined {
+	get pincodeMap(): SurfacePincodeMap | null {
 		return this.#pincodeMap
 	}
 
@@ -330,7 +329,7 @@ export class SurfaceProxyContext implements SurfaceContext {
 		this.disconnect = onDisconnect
 	}
 
-	storeSurface(surfaceProxy: SurfaceProxy, pincodeMap: SurfacePincodeMap | undefined): void {
+	storeSurface(surfaceProxy: SurfaceProxy, pincodeMap: SurfacePincodeMap | null): void {
 		if (this.#surface) throw new Error('Surface already set')
 		this.#surface = surfaceProxy
 		this.#pincodeMap = pincodeMap

@@ -608,7 +608,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				TEXT: props.text,
 				VARIABLES: transferVariables,
 				BRIGHTNESS: props.brightness,
-				PINCODE_LOCK: props.pincodeMode ? 'FULL' : '',
+				PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
 			})
 		}
 	}

@@ -33,18 +33,42 @@ export class LockingGraphicsGenerator {
 		context2d.fillStyle = '#000000'
 		context2d.fillRect(0, 0, width, height)
 
-		context2d.textAlign = 'center'
-		context2d.textBaseline = 'middle'
+		if (width > 2 * height) {
+			// Note: this is tuned for the SD Neo, which is 248x58px
+			// This should be made more generic or configurable as needed
 
-		// Draw heading
-		context2d.font = `${Math.floor(height * 0.2)}px`
-		context2d.fillStyle = '#ffc600'
-		context2d.fillText('Lockout', width / 2, height * 0.2)
+			// Custom render when width is much larger than height
+			context2d.textAlign = 'center'
+			context2d.textBaseline = 'middle'
 
-		// Draw progress
-		context2d.fillStyle = '#ffffff'
-		context2d.font = `${Math.floor(height * 0.2)}px`
-		context2d.fillText('*'.repeat(charCount), width / 2, height * 0.65)
+			// Draw heading
+			context2d.font = `${Math.floor(height * 0.4)}px`
+			context2d.fillStyle = '#ffc600'
+			const textWidth = context2d.measureText('Lockout').width
+			if (textWidth > width * 0.5) {
+				context2d.font = `${Math.floor(height * 0.25)}px`
+			}
+
+			context2d.fillText('Lockout', width * 0.25, height * 0.5)
+
+			// Draw progress
+			context2d.fillStyle = '#ffffff'
+			context2d.font = `${Math.floor(height * 0.2)}px`
+			context2d.fillText('*'.repeat(charCount), width * 0.75, height * 0.5)
+		} else {
+			context2d.textAlign = 'center'
+			context2d.textBaseline = 'middle'
+
+			// Draw heading
+			context2d.font = `${Math.floor(height * 0.2)}px`
+			context2d.fillStyle = '#ffc600'
+			context2d.fillText('Lockout', width / 2, height * 0.2)
+
+			// Draw progress
+			context2d.fillStyle = '#ffffff'
+			context2d.font = `${Math.floor(height * 0.2)}px`
+			context2d.fillText('*'.repeat(charCount), width / 2, height * 0.65)
+		}
 
 		return context2d.getImageData(0, 0, canvasWidth, canvasHeight).data
 	}

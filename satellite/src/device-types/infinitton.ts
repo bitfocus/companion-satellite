@@ -11,6 +11,7 @@ import type {
 } from './api.js'
 import * as imageRs from '@julusian/image-rs'
 import Infinitton from 'infinitton-idisplay'
+import { Pincode5x3 } from './pincode.js'
 
 export interface InfinittonDeviceInfo {
 	path: string
@@ -61,7 +62,7 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 				bitmapSize: 72,
 				colours: false,
 				text: false,
-				pincodeMode: true, // TODO - implement?
+				pincodeMap: Pincode5x3(),
 			},
 		}
 	}

@@ -16,6 +16,7 @@ import type {
 } from './api.js'
 import { parseColor } from './lib.js'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
+import { Pincode5x3 } from './pincode.js'
 
 export function compileLoupedeckLiveSProps(device: LoupedeckDevice): DeviceRegisterProps {
 	return {
@@ -25,7 +26,7 @@ export function compileLoupedeckLiveSProps(device: LoupedeckDevice): DeviceRegis
 		bitmapSize: device.lcdKeySize,
 		colours: true,
 		text: false,
-		pincodeMode: false, // TODO: Implement
+		pincodeMap: Pincode5x3(1),
 	}
 }
 

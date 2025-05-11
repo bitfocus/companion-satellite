@@ -5,10 +5,11 @@ import type {
 	ClientCapabilities,
 	SurfaceContext,
 	DeviceDrawProps,
-	DeviceRegisterProps,
 	SurfaceInstance,
+	DeviceRegisterProps,
 } from './api.js'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
+import { Pincode5x3 } from './pincode.js'
 
 export function compileRazerStreamControllerXProps(device: LoupedeckDevice): DeviceRegisterProps {
 	return {
@@ -18,7 +19,7 @@ export function compileRazerStreamControllerXProps(device: LoupedeckDevice): Dev
 		bitmapSize: device.lcdKeySize,
 		colours: true,
 		text: false,
-		pincodeMode: false, // TODO: Implement
+		pincodeMap: Pincode5x3(),
 	}
 }
 

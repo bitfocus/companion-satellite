@@ -5,6 +5,8 @@ import {
 	openBlackmagicController,
 	BlackmagicControllerTBarControlDefinition,
 	BlackmagicControllerSetButtonColorValue,
+	BlackmagicControllerControlDefinition,
+	DeviceModelId,
 } from '@blackmagic-controller/node'
 import type {
 	ClientCapabilities,
@@ -16,10 +18,12 @@ import type {
 	OpenSurfaceResult,
 	SurfacePlugin,
 	SurfaceInstance,
+	SurfacePincodeMap,
 } from './api.js'
 import { parseColor } from './lib.js'
 import debounceFn from 'debounce-fn'
 import type { CardGenerator } from '../graphics/cards.js'
+import { assertNever } from '../lib.js'
 
 const PLUGIN_ID = 'blackmagic-controller'
 
@@ -56,20 +60,22 @@ export class BlackmagicControllerPlugin implements SurfacePlugin<BlackmagicContr
 	): Promise<OpenSurfaceResult> => {
 		const controller = await openBlackmagicController(pluginInfo.path)
 
-		const allRowValues = controller.CONTROLS.map((control) => control.row)
-		const allColumnValues = controller.CONTROLS.map((button) => button.column)
-
-		const columnCount = Math.max(...allColumnValues) + 1
-		const rowCount = Math.max(...allRowValues) + 1
+		const registerProps = compileRegisterProps(controller)
 
 		return {
-			surface: new BlackmagicControllerWrapper(surfaceId, controller, context, rowCount, columnCount),
-			registerProps: compileRegisterProps(rowCount, columnCount),
+			surface: new BlackmagicControllerWrapper(surfaceId, controller, context, registerProps),
+			registerProps,
 		}
 	}
 }
 
-function compileRegisterProps(rowCount: number, columnCount: number): DeviceRegisterProps {
+function compileRegisterProps(controller: BlackmagicController): DeviceRegisterProps {
+	const allRowValues = controller.CONTROLS.map((control) => control.row)
+	const allColumnValues = controller.CONTROLS.map((button) => button.column)
+
+	const columnCount = Math.max(...allColumnValues) + 1
+	const rowCount = Math.max(...allRowValues) + 1
+
 	const info: DeviceRegisterProps = {
 		brightness: false,
 		rowCount: rowCount,
@@ -99,10 +105,66 @@ function compileRegisterProps(rowCount: number, columnCount: number): DeviceRegi
 			// 	description: 'The battery level of the controller, in range 0-1',
 			// },
 		],
-		pincodeMode: true,
+		pincodeMap: generatePincodeMap(controller.MODEL, controller.CONTROLS),
 	}
 
 	return info
+}
+
+function generatePincodeMap(
+	model: DeviceModelId,
+	controls: Readonly<BlackmagicControllerControlDefinition[]>,
+): SurfacePincodeMap | null {
+	const controlMap = new Map(controls.filter((c) => c.type === 'button').map((control) => [control.id, control]))
+
+	switch (model) {
+		case DeviceModelId.AtemMicroPanel: {
+			const preview10 = controlMap.get('preview10')
+			const preview1 = controlMap.get('preview1')
+			const preview2 = controlMap.get('preview2')
+			const preview3 = controlMap.get('preview3')
+			const preview4 = controlMap.get('preview4')
+			const preview5 = controlMap.get('preview5')
+			const preview6 = controlMap.get('preview6')
+			const preview7 = controlMap.get('preview7')
+			const preview8 = controlMap.get('preview8')
+			const preview9 = controlMap.get('preview9')
+
+			if (
+				!preview10 ||
+				!preview1 ||
+				!preview2 ||
+				!preview3 ||
+				!preview4 ||
+				!preview5 ||
+				!preview6 ||
+				!preview7 ||
+				!preview8 ||
+				!preview9
+			) {
+				console.error('Missing controls for pincode map')
+				return null
+			}
+
+			return {
+				type: 'single-page',
+				pincode: [0, 0], // Not used
+				0: [preview10.column, preview10.row],
+				1: [preview1.column, preview1.row],
+				2: [preview2.column, preview2.row],
+				3: [preview3.column, preview3.row],
+				4: [preview4.column, preview4.row],
+				5: [preview5.column, preview5.row],
+				6: [preview6.column, preview6.row],
+				7: [preview7.column, preview7.row],
+				8: [preview8.column, preview8.row],
+				9: [preview9.column, preview9.row],
+			}
+		}
+		default:
+			assertNever(model)
+			return null
+	}
 }
 
 export class BlackmagicControllerWrapper implements SurfaceInstance {
@@ -124,14 +186,13 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 		surfaceId: string,
 		device: BlackmagicController,
 		context: SurfaceContext,
-		_rowCount: number,
-		columnCount: number,
+		registerProps: DeviceRegisterProps,
 	) {
 		this.#device = device
 		this.#surfaceId = surfaceId
 
 		// this.#rowCount = rowCount
-		this.#columnCount = columnCount
+		this.#columnCount = registerProps.columnCount
 
 		this.#device.on('error', (e) => context.disconnect(e as any))
 
@@ -231,43 +292,40 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 		}
 	}
 
-	// TODO - the progress bar..
-	// onLockedStatus(locked: boolean, characterCount: number): void {
-	// 	const wasLocked = this.#isLocked
-	// 	this.#isLocked = locked
+	onLockedStatus(locked: boolean, characterCount: number): void {
+		if (locked && this.#device.MODEL === DeviceModelId.AtemMicroPanel) {
+			// Show a progress bar on the upper row to indicate number of characters entered
 
-	// 	if (locked !== wasLocked) {
-	// 		this.#pendingDrawColors = {}
-	// 		this.#device.clearPanel().catch((e) => {
-	// 			console.error(`write failed: ${e}`)
-	// 		})
-	// 	}
+			const lockOutputKeyIds = [
+				// Note: these are in order of value they represent
+				'program1',
+				'program2',
+				'program3',
+				'program4',
+				'program5',
+				'program6',
+				'program7',
+				'program8',
+				'program9',
+				'program10',
+			]
 
-	// 	if (locked) {
-	// 		const colors: BlackmagicControllerSetButtonColorValue[] = []
-	// 		for (const keyId of lockInputKeyIds) {
-	// 			colors.push({
-	// 				keyId,
-	// 				red: true,
-	// 				green: true,
-	// 				blue: true,
-	// 			})
-	// 		}
+			const colors: BlackmagicControllerSetButtonColorValue[] = []
 
-	// 		for (let i = 0; i < characterCount && i < lockInputKeyIds.length; i++) {
-	// 			colors.push({
-	// 				keyId: lockoutputKeyIds[i],
-	// 				red: true,
-	// 				green: true,
-	// 				blue: true,
-	// 			})
-	// 		}
+			for (let i = 0; i < characterCount && i < lockOutputKeyIds.length; i++) {
+				colors.push({
+					keyId: lockOutputKeyIds[i],
+					red: true,
+					green: true,
+					blue: true,
+				})
+			}
 
-	// 		this.#device.setButtonColors(colors).catch((e) => {
-	// 			console.error(`write failed: ${e}`)
-	// 		})
-	// 	}
-	// }
+			this.#device.setButtonColors(colors).catch((e) => {
+				console.error(`write failed: ${e}`)
+			})
+		}
+	}
 
 	async showStatus(
 		_signal: AbortSignal,
@@ -315,30 +373,3 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 	)
 	#pendingDrawColors: Record<string, string> = {}
 }
-
-// const lockInputKeyIds = [
-// 	// Note: these are in order of value they represent
-// 	'preview10',
-// 	'preview1',
-// 	'preview2',
-// 	'preview3',
-// 	'preview4',
-// 	'preview5',
-// 	'preview6',
-// 	'preview7',
-// 	'preview8',
-// 	'preview9',
-// ]
-// const lockoutputKeyIds = [
-// 	// Note: these are in order of value they represent
-// 	'program1',
-// 	'program2',
-// 	'program3',
-// 	'program4',
-// 	'program5',
-// 	'program6',
-// 	'program7',
-// 	'program8',
-// 	'program9',
-// 	'program10',
-// ]

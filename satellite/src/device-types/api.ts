@@ -30,7 +30,7 @@ export interface DeviceRegisterProps {
 	colours: boolean
 	text: boolean
 	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
-	pincodeMode: boolean
+	pincodeMap: SurfacePincodeMap | null
 }
 
 export interface DeviceRegisterInputVariable {
@@ -121,7 +121,6 @@ export interface SurfacePlugin<TInfo> {
 export interface OpenSurfaceResult {
 	surface: SurfaceInstance
 	registerProps: DeviceRegisterProps
-	pincodeMap?: SurfacePincodeMap
 }
 
 export type SurfacePincodeMap = SurfacePincodeMapPageSingle | SurfacePincodeMapPageMultiple
