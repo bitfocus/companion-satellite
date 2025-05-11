@@ -264,7 +264,7 @@ export class SurfaceProxy {
 			: undefined
 
 		const keyIndex = xy[0] + xy[1] * this.registerProps.columnCount
-		this.#drawQueue.queueJob(keyIndex, async (key, signal) => {
+		this.#drawQueue.queueJob(keyIndex, async (_key, signal) => {
 			if (signal.aborted) return
 
 			await this.#surface.draw(signal, {
