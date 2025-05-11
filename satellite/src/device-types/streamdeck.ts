@@ -134,7 +134,7 @@ function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
 			return Pincode5x3()
 		case DeviceModelId.PEDAL:
 			// Not suitable for a pincode
-			return null
+			return { type: 'custom' }
 		case DeviceModelId.NEO:
 			return {
 				type: 'single-page',

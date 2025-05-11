@@ -123,10 +123,13 @@ export interface OpenSurfaceResult {
 	registerProps: DeviceRegisterProps
 }
 
-export type SurfacePincodeMap = SurfacePincodeMapPageSingle | SurfacePincodeMapPageMultiple
+export type SurfacePincodeMap = SurfacePincodeMapPageSingle | SurfacePincodeMapPageMultiple | SurfacePincodeMapCustom
+export interface SurfacePincodeMapCustom {
+	type: 'custom'
+}
 export interface SurfacePincodeMapPageSingle extends SurfacePincodeMapPageEntry {
 	type: 'single-page'
-	pincode: [number, number]
+	pincode: [number, number] | null
 }
 export interface SurfacePincodeMapPageMultiple {
 	type: 'multiple-page'

@@ -212,7 +212,8 @@ export class SurfaceProxy {
 	}
 
 	#drawPincodeStatus() {
-		const pincodeXy = this.#context.pincodeMap?.pincode
+		if (!this.#context.pincodeMap || this.#context.pincodeMap.type === 'custom') return
+		const pincodeXy = this.#context.pincodeMap.pincode
 		if (!pincodeXy) return
 
 		this.#drawPincodeButton(
@@ -312,14 +313,14 @@ export class SurfaceProxyContext implements SurfaceContext {
 		const pincodeMap = this.#pincodeMap
 		if (!pincodeMap) return undefined
 
-		if (pincodeMap.type === 'single-page') {
-			return pincodeMap
-		} else {
-			if (this.#lockButtonPage >= pincodeMap.pages.length) {
-				this.#lockButtonPage = 0
-			}
-			return pincodeMap.pages[this.#lockButtonPage] as SurfacePincodeMapPageEntry
+		if (pincodeMap.type === 'custom') return undefined
+
+		if (pincodeMap.type === 'single-page') return pincodeMap
+
+		if (this.#lockButtonPage >= pincodeMap.pages.length) {
+			this.#lockButtonPage = 0
 		}
+		return pincodeMap.pages[this.#lockButtonPage] as SurfacePincodeMapPageEntry
 	}
 
 	constructor(client: CompanionClient, surfaceId: SurfaceId, onDisconnect: SurfaceContext['disconnect']) {
@@ -449,6 +450,8 @@ export class SurfaceProxyContext implements SurfaceContext {
 	#pincodeXYPress(x: number, y: number): void {
 		const pincodeMap = this.#pincodeMap
 		if (!pincodeMap) return
+
+		if (pincodeMap.type === 'custom') return
 
 		const equals = (xy: [number, number]) => x === xy[0] && y === xy[1]
 
