@@ -12,7 +12,7 @@ import type {
 	SurfaceContext,
 	DeviceDrawProps,
 	DeviceRegisterProps,
-	WrappedSurface,
+	SurfaceInstance,
 	WrappedSurfaceEvents,
 } from './api.js'
 import { parseColor } from './lib.js'
@@ -30,7 +30,7 @@ export function compileLoupedeckLiveProps(device: LoupedeckDevice): DeviceRegist
 		pincodeMode: false, // TODO: Implement
 	}
 }
-export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
 	readonly pluginId = LOUPEDECK_PLUGIN_ID
 
 	readonly #deck: LoupedeckDevice
@@ -43,7 +43,7 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 		return this.#deck.modelName
 	}
 
-	public constructor(surfaceId: string, device: LoupedeckDevice) {
+	public constructor(surfaceId: string, device: LoupedeckDevice, context: SurfaceContext) {
 		super()
 
 		this.#deck = device
@@ -56,14 +56,7 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 			device.modelId !== LoupedeckModelId.RazerStreamController
 		)
 			throw new Error('Incorrect model passed to wrapper!')
-	}
 
-	async close(): Promise<void> {
-		await this.#deck.blankDevice(true, true).catch(() => null)
-
-		await this.#deck.close()
-	}
-	async initDevice(client: SurfaceContext): Promise<void> {
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button' && id >= 0 && id < 8) {
 				return 24 + id
@@ -87,18 +80,17 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 			// Discard
 			return 99
 		}
-		console.log('Registering key events for ' + this.surfaceId)
-		this.#deck.on('down', (info) => client.keyDown(convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => client.keyUp(convertButtonId(info.type, info.index)))
+		this.#deck.on('down', (info) => context.keyDown(convertButtonId(info.type, info.index)))
+		this.#deck.on('up', (info) => context.keyUp(convertButtonId(info.type, info.index)))
 		this.#deck.on('rotate', (info, delta) => {
 			if (info.type !== LoupedeckControlType.Rotary) return
 
 			const id2 = convertButtonId(info.type, info.index)
 			if (id2 < 90) {
 				if (delta < 0) {
-					client.rotateLeft(id2)
+					context.rotateLeft(id2)
 				} else if (delta > 0) {
-					client.rotateRight(id2)
+					context.rotateRight(id2)
 				}
 			}
 		})
@@ -110,17 +102,26 @@ export class LoupedeckLiveWrapper extends EventEmitter<WrappedSurfaceEvents> imp
 		this.#deck.on('touchstart', (data) => {
 			for (const touch of data.changedTouches) {
 				if (touch.target.key !== undefined) {
-					client.keyDown(translateKeyIndex(touch.target.key))
+					context.keyDown(translateKeyIndex(touch.target.key))
 				}
 			}
 		})
 		this.#deck.on('touchend', (data) => {
 			for (const touch of data.changedTouches) {
 				if (touch.target.key !== undefined) {
-					client.keyUp(translateKeyIndex(touch.target.key))
+					context.keyUp(translateKeyIndex(touch.target.key))
 				}
 			}
 		})
+	}
+
+	async close(): Promise<void> {
+		await this.#deck.blankDevice(true, true).catch(() => null)
+
+		await this.#deck.close()
+	}
+	async initDevice(): Promise<void> {
+		console.log('Initialisng ' + this.surfaceId)
 
 		// Start with blanking it
 		await this.blankDevice()

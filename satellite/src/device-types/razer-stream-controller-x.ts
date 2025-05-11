@@ -6,7 +6,7 @@ import type {
 	SurfaceContext,
 	DeviceDrawProps,
 	DeviceRegisterProps,
-	WrappedSurface,
+	SurfaceInstance,
 	WrappedSurfaceEvents,
 } from './api.js'
 import { EventEmitter } from 'events'
@@ -24,7 +24,7 @@ export function compileRazerStreamControllerXProps(device: LoupedeckDevice): Dev
 	}
 }
 
-export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
 	readonly pluginId = LOUPEDECK_PLUGIN_ID
 
 	readonly #deck: LoupedeckDevice
@@ -37,7 +37,7 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 		return this.#deck.modelName
 	}
 
-	public constructor(surfaceId: string, device: LoupedeckDevice) {
+	public constructor(surfaceId: string, device: LoupedeckDevice, context: SurfaceContext) {
 		super()
 
 		this.#deck = device
@@ -47,14 +47,7 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 
 		if (device.modelId !== LoupedeckModelId.RazerStreamControllerX)
 			throw new Error('Incorrect model passed to wrapper!')
-	}
 
-	async close(): Promise<void> {
-		await this.#deck.blankDevice(true, true).catch(() => null)
-
-		await this.#deck.close()
-	}
-	async initDevice(client: SurfaceContext): Promise<void> {
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button') {
 				return id
@@ -63,9 +56,17 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 			// Discard
 			return 99
 		}
-		console.log('Registering key events for ' + this.surfaceId)
-		this.#deck.on('down', (info) => client.keyDown(convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => client.keyUp(convertButtonId(info.type, info.index)))
+		this.#deck.on('down', (info) => context.keyDown(convertButtonId(info.type, info.index)))
+		this.#deck.on('up', (info) => context.keyUp(convertButtonId(info.type, info.index)))
+	}
+
+	async close(): Promise<void> {
+		await this.#deck.blankDevice(true, true).catch(() => null)
+
+		await this.#deck.close()
+	}
+	async initDevice(): Promise<void> {
+		console.log('Initialisng ' + this.surfaceId)
 
 		// Start with blanking it
 		await this.blankDevice()

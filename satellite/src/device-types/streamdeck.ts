@@ -14,12 +14,11 @@ import {
 	SurfacePlugin,
 	DeviceRegisterProps,
 	DiscoveredSurfaceInfo,
-	WrappedSurface,
+	SurfaceInstance,
 	WrappedSurfaceEvents,
 	HIDDevice,
 	SurfaceContext,
 	OpenSurfaceResult,
-	SurfacePincodeMap,
 } from './api.js'
 import { parseColor } from './lib.js'
 import util from 'util'
@@ -86,63 +85,66 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 		}
 	}
 
-	openSurface = async (surfaceId: string, pluginInfo: StreamDeckDeviceInfo): Promise<OpenSurfaceResult> => {
+	openSurface = async (
+		surfaceId: string,
+		pluginInfo: StreamDeckDeviceInfo,
+		context: SurfaceContext,
+	): Promise<OpenSurfaceResult> => {
 		const streamdeck = await openStreamDeck(pluginInfo.path)
 		const registerProps = compileRegisterProps(streamdeck)
 		return {
-			surface: new StreamDeckWrapper(surfaceId, streamdeck, registerProps),
+			surface: new StreamDeckWrapper(surfaceId, streamdeck, registerProps, context),
 			registerProps: registerProps,
+			// readonly pincodeMap: SurfacePincodeMap = {
+			// 	type: 'single-page',
+			// 	pincode: [0, 1],
+			// 	0: [4, 1],
+			// 	1: [1, 2],
+			// 	2: [2, 2],
+			// 	3: [3, 2],
+			// 	4: [1, 1],
+			// 	5: [2, 1],
+			// 	6: [3, 1],
+			// 	7: [1, 0],
+			// 	8: [2, 0],
+			// 	9: [3, 0],
+			// }
+
+			pincodeMap: {
+				type: 'multiple-page',
+				pincode: [0, 0],
+				nextPage: [0, 1],
+				pages: [
+					{
+						1: [1, 1],
+						2: [2, 1],
+						3: [1, 0],
+						4: [2, 0],
+					},
+					{
+						5: [1, 1],
+						6: [2, 1],
+						7: [1, 0],
+						8: [2, 0],
+					},
+					{
+						9: [1, 1],
+						0: [2, 1],
+						// 7: [1, 0],
+						// 8: [2, 0],
+					},
+				],
+			},
 		}
 	}
 }
 
-export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #deck: StreamDeck
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
-
-	// readonly pincodeMap: SurfacePincodeMap = {
-	// 	type: 'single-page',
-	// 	pincode: [0, 1],
-	// 	0: [4, 1],
-	// 	1: [1, 2],
-	// 	2: [2, 2],
-	// 	3: [3, 2],
-	// 	4: [1, 1],
-	// 	5: [2, 1],
-	// 	6: [3, 1],
-	// 	7: [1, 0],
-	// 	8: [2, 0],
-	// 	9: [3, 0],
-	// }
-
-	readonly pincodeMap: SurfacePincodeMap = {
-		type: 'multiple-page',
-		pincode: [0, 0],
-		nextPage: [0, 1],
-		pages: [
-			{
-				1: [1, 1],
-				2: [2, 1],
-				3: [1, 0],
-				4: [2, 0],
-			},
-			{
-				5: [1, 1],
-				6: [2, 1],
-				7: [1, 0],
-				8: [2, 0],
-			},
-			{
-				9: [1, 1],
-				0: [2, 1],
-				// 7: [1, 0],
-				// 8: [2, 0],
-			},
-		],
-	}
 
 	/**
 	 * Whether the LCD has been written to outside the button bounds that needs clearing
@@ -156,7 +158,12 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		return this.#deck.PRODUCT_NAME
 	}
 
-	public constructor(surfaceId: string, deck: StreamDeck, registerProps: DeviceRegisterProps) {
+	public constructor(
+		surfaceId: string,
+		deck: StreamDeck,
+		registerProps: DeviceRegisterProps,
+		context: SurfaceContext,
+	) {
 		super()
 
 		this.#deck = deck
@@ -165,6 +172,36 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		this.#deck.on('error', (e) => this.emit('error', e))
 
 		this.#registerProps = registerProps
+
+		this.#deck.on('down', (control) => {
+			context.keyDownXY(control.column, control.row)
+		})
+		this.#deck.on('up', (control) => {
+			context.keyUpXY(control.column, control.row)
+		})
+		this.#deck.on('rotate', (control, delta) => {
+			if (delta < 0) {
+				context.rotateLeftXY(control.column, control.row)
+			} else if (delta > 0) {
+				context.rotateRightXY(control.column, control.row)
+			}
+		})
+		this.#deck.on('lcdShortPress', (control, position) => {
+			if (context.isLocked) return
+
+			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
+			const column = control.column + columnOffset
+
+			context.keyDownUpXY(column, control.row)
+		})
+		this.#deck.on('lcdLongPress', (control, position) => {
+			if (context.isLocked) return
+
+			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
+			const column = control.column + columnOffset
+
+			context.keyDownUpXY(column, control.row)
+		})
 	}
 
 	async close(): Promise<void> {
@@ -172,37 +209,8 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		await this.#deck.close()
 	}
-	async initDevice(client: SurfaceContext): Promise<void> {
-		console.log('Registering key events for ' + this.surfaceId)
-		this.#deck.on('down', (control) => {
-			client.keyDownXY(control.column, control.row)
-		})
-		this.#deck.on('up', (control) => {
-			client.keyUpXY(control.column, control.row)
-		})
-		this.#deck.on('rotate', (control, delta) => {
-			if (delta < 0) {
-				client.rotateLeftXY(control.column, control.row)
-			} else if (delta > 0) {
-				client.rotateRightXY(control.column, control.row)
-			}
-		})
-		this.#deck.on('lcdShortPress', (control, position) => {
-			if (client.isLocked) return
-
-			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
-			const column = control.column + columnOffset
-
-			client.keyDownUpXY(column, control.row)
-		})
-		this.#deck.on('lcdLongPress', (control, position) => {
-			if (client.isLocked) return
-
-			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
-			const column = control.column + columnOffset
-
-			client.keyDownUpXY(column, control.row)
-		})
+	async initDevice(): Promise<void> {
+		console.log('Initialising ' + this.surfaceId)
 
 		// Start with blanking it
 		await this.blankDevice()

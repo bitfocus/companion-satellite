@@ -7,7 +7,7 @@ import {
 	XencelabsQuickKeysManagerInstance,
 } from '@xencelabs-quick-keys/node'
 import type {
-	WrappedSurface,
+	SurfaceInstance,
 	DeviceDrawProps,
 	ClientCapabilities,
 	WrappedSurfaceEvents,
@@ -82,9 +82,13 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 		}
 	}
 
-	openSurface = async (surfaceId: string, quickkeys: XencelabsQuickKeys): Promise<OpenSurfaceResult> => {
+	openSurface = async (
+		surfaceId: string,
+		quickkeys: XencelabsQuickKeys,
+		context: SurfaceContext,
+	): Promise<OpenSurfaceResult> => {
 		return {
-			surface: new QuickKeysWrapper(surfaceId, quickkeys),
+			surface: new QuickKeysWrapper(surfaceId, quickkeys, context),
 			registerProps: {
 				brightness: true,
 				rowCount: 2,
@@ -106,7 +110,7 @@ function keyToCompanion(k: number): number | null {
 	return null
 }
 
-export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #surface: XencelabsQuickKeys
@@ -122,44 +126,33 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 		return 'Xencelabs Quick Keys'
 	}
 
-	public constructor(surfaceId: string, surface: XencelabsQuickKeys) {
+	public constructor(surfaceId: string, surface: XencelabsQuickKeys, context: SurfaceContext) {
 		super()
 
 		this.#surface = surface
 		this.#surfaceId = surfaceId
 
-		this.#surface.on('error', (e) => this.emit('error', e))
-	}
-
-	async close(): Promise<void> {
-		this.#unsub?.()
-
-		this.stopStatusInterval()
-
-		await this.#surface.stopData()
-	}
-	async initDevice(client: SurfaceContext): Promise<void> {
-		console.log('Registering key events for ' + this.surfaceId)
+		this.#surface.on('error', (e) => context.disconnect(e as any))
 
 		const handleDown = (key: number) => {
 			const k = keyToCompanion(key)
 			if (k !== null) {
-				client.keyDown(k)
+				context.keyDown(k)
 			}
 		}
 		const handleUp = (key: number) => {
 			const k = keyToCompanion(key)
 			if (k !== null) {
-				client.keyUp(k)
+				context.keyUp(k)
 			}
 		}
 		const handleWheel = (ev: WheelEvent) => {
 			switch (ev) {
 				case WheelEvent.Left:
-					client.rotateLeft(5)
+					context.rotateLeft(5)
 					break
 				case WheelEvent.Right:
-					client.rotateRight(5)
+					context.rotateRight(5)
 					break
 			}
 		}
@@ -172,6 +165,17 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 			this.#surface.off('up', handleUp)
 			this.#surface.off('wheel', handleWheel)
 		}
+	}
+
+	async close(): Promise<void> {
+		this.#unsub?.()
+
+		this.stopStatusInterval()
+
+		await this.#surface.stopData()
+	}
+	async initDevice(): Promise<void> {
+		console.log('Initialising ' + this.surfaceId)
 
 		await this.#surface.startData()
 

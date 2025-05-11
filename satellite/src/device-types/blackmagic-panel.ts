@@ -15,7 +15,7 @@ import type {
 	HIDDevice,
 	OpenSurfaceResult,
 	SurfacePlugin,
-	WrappedSurface,
+	SurfaceInstance,
 	WrappedSurfaceEvents,
 } from './api.js'
 import { parseColor } from './lib.js'
@@ -51,7 +51,11 @@ export class BlackmagicControllerPlugin implements SurfacePlugin<BlackmagicContr
 		}
 	}
 
-	openSurface = async (surfaceId: string, pluginInfo: BlackmagicControllerDeviceInfo): Promise<OpenSurfaceResult> => {
+	openSurface = async (
+		surfaceId: string,
+		pluginInfo: BlackmagicControllerDeviceInfo,
+		context: SurfaceContext,
+	): Promise<OpenSurfaceResult> => {
 		const controller = await openBlackmagicController(pluginInfo.path)
 
 		const allRowValues = controller.CONTROLS.map((control) => control.row)
@@ -61,7 +65,7 @@ export class BlackmagicControllerPlugin implements SurfacePlugin<BlackmagicContr
 		const rowCount = Math.max(...allRowValues) + 1
 
 		return {
-			surface: new BlackmagicControllerWrapper(surfaceId, controller, rowCount, columnCount),
+			surface: new BlackmagicControllerWrapper(surfaceId, controller, context, rowCount, columnCount),
 			registerProps: compileRegisterProps(rowCount, columnCount),
 		}
 	}
@@ -103,7 +107,7 @@ function compileRegisterProps(rowCount: number, columnCount: number): DeviceRegi
 	return info
 }
 
-export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #device: BlackmagicController
@@ -118,7 +122,13 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		return `Blackmagic ${this.#device.PRODUCT_NAME}`
 	}
 
-	public constructor(surfaceId: string, device: BlackmagicController, _rowCount: number, columnCount: number) {
+	public constructor(
+		surfaceId: string,
+		device: BlackmagicController,
+		context: SurfaceContext,
+		_rowCount: number,
+		columnCount: number,
+	) {
 		super()
 
 		this.#device = device
@@ -128,28 +138,19 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		this.#columnCount = columnCount
 
 		this.#device.on('error', (e) => this.emit('error', e))
-	}
 
-	async close(): Promise<void> {
-		await this.#device.clearPanel().catch(() => null)
-
-		await this.#device.close()
-	}
-	async initDevice(client: SurfaceContext): Promise<void> {
-		console.log('Registering key events for ' + this.surfaceId)
 		this.#device.on('down', (control) => {
-			client.keyDownXY(control.column, control.row)
+			context.keyDownXY(control.column, control.row)
 		})
 		this.#device.on('up', (control) => {
-			client.keyUpXY(control.column, control.row)
+			context.keyUpXY(control.column, control.row)
 		})
 		this.#device.on('batteryLevel', (_level) => {
-			// client.sendVariableValue(this.#surfaceId, 'batteryLevel', level.toString())
+			// context.sendVariableValue(this.#surfaceId, 'batteryLevel', level.toString())
 		})
 		this.#device.on('tbar', (_control, level) => {
-			client.sendVariableValue('tbarValueVariable', level.toString())
+			context.sendVariableValue('tbarValueVariable', level.toString())
 		})
-
 		// this.#device
 		// 	.getBatteryLevel()
 		// 	.then((level) => {
@@ -158,6 +159,15 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		// 	.catch((e) => {
 		// 		console.error('Failed to report battery level', e)
 		// 	})
+	}
+
+	async close(): Promise<void> {
+		await this.#device.clearPanel().catch(() => null)
+
+		await this.#device.close()
+	}
+	async initDevice(): Promise<void> {
+		console.log('Initialisng ' + this.surfaceId)
 
 		// Start with blanking it
 		await this.blankDevice()

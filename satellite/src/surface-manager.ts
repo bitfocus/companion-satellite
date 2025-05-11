@@ -10,7 +10,7 @@ import { InfinittonPlugin } from './device-types/infinitton.js'
 import { LoupedeckPlugin } from './device-types/loupedeck-plugin.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 import { BlackmagicControllerPlugin } from './device-types/blackmagic-panel.js'
-import { SurfaceProxy } from './surfaceProxy.js'
+import { SurfaceProxy, SurfaceProxyContext } from './surfaceProxy.js'
 import { LockingGraphicsGenerator, SurfaceGraphicsContext } from './graphics/lib.js'
 
 // Force into hidraw mode
@@ -429,24 +429,24 @@ export class SurfaceManager {
 		console.log(`adding new surface: ${pluginInfo.surfaceId}`)
 		console.log(`existing = ${JSON.stringify(Array.from(this.#surfaces.keys()))}`)
 
-		plugin
-			.openSurface(pluginInfo.surfaceId, pluginInfo.pluginInfo)
-			.then(async ({ surface, registerProps }) => {
-				try {
-					surface.on('error', (e) => {
-						console.error('surface error', e)
-						this.#cleanupSurfaceById(pluginInfo.surfaceId)
-					})
+		const context = new SurfaceProxyContext(this.#client, pluginInfo.surfaceId, (e) => {
+			console.error('surface error', e)
+			this.#cleanupSurfaceById(pluginInfo.surfaceId)
+		})
 
+		plugin
+			.openSurface(pluginInfo.surfaceId, pluginInfo.pluginInfo, context)
+			.then(async ({ surface, registerProps, pincodeMap }) => {
+				try {
 					if (plugin.pluginId !== surface.pluginId) {
 						throw new Error('Plugin ID mismatch')
 					}
 
-					const proxySurface = new SurfaceProxy(this.#graphics, surface, registerProps)
+					const proxySurface = new SurfaceProxy(this.#graphics, context, surface, registerProps, pincodeMap)
 
 					this.#surfaces.set(pluginInfo.surfaceId, proxySurface)
 
-					await proxySurface.initDevice(this.#client, this.#statusString)
+					await proxySurface.initDevice(this.#client.displayHost, this.#statusString)
 
 					proxySurface.updateCapabilities(this.#client.capabilities)
 

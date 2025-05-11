@@ -112,14 +112,16 @@ export interface SurfacePlugin<TInfo> {
 	 * Open a discovered/known surface
 	 * @param surfaceId Id of the surface
 	 * @param pluginInfo Plugin specific info about the surface
+	 * @param context Context for the surface
 	 * @returns Instance of the surface
 	 */
-	openSurface: (surfaceId: string, pluginInfo: TInfo) => Promise<OpenSurfaceResult>
+	openSurface: (surfaceId: string, pluginInfo: TInfo, context: SurfaceContext) => Promise<OpenSurfaceResult>
 }
 
 export interface OpenSurfaceResult {
-	surface: WrappedSurface
+	surface: SurfaceInstance
 	registerProps: DeviceRegisterProps
+	pincodeMap?: SurfacePincodeMap
 }
 
 export interface WrappedSurfaceEvents {
@@ -150,19 +152,15 @@ export interface SurfacePincodeMapPageEntry {
 	9: [number, number]
 }
 
-export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
+export interface SurfaceInstance extends EventEmitter<WrappedSurfaceEvents> {
 	readonly pluginId: string
 
 	readonly surfaceId: SurfaceId
 	readonly productName: string
 
-	readonly pincodeMap?: SurfacePincodeMap
-
-	// getRegisterProps(): DeviceRegisterProps
-
 	close(): Promise<void>
 
-	initDevice(client: SurfaceContext): Promise<void>
+	initDevice(): Promise<void>
 
 	updateCapabilities(capabilities: ClientCapabilities): void
 
@@ -201,6 +199,8 @@ export interface CompanionClient {
 export interface SurfaceContext {
 	get isLocked(): boolean
 	// get displayHost(): string
+
+	disconnect(error: Error): void
 
 	keyDown(keyIndex: number): void
 	keyUp(keyIndex: number): void

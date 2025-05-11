@@ -8,9 +8,10 @@ import {
 import type {
 	SurfacePlugin,
 	DiscoveredSurfaceInfo,
-	WrappedSurface,
+	SurfaceInstance,
 	DeviceRegisterProps,
 	OpenSurfaceResult,
+	SurfaceContext,
 } from './api.js'
 import { compileLoupedeckLiveProps, LoupedeckLiveWrapper } from './loupedeck-live.js'
 import { assertNever } from '../lib.js'
@@ -47,8 +48,12 @@ export class LoupedeckPlugin implements SurfacePlugin<LoupedeckDeviceInfo> {
 		return result
 	}
 
-	openSurface = async (surfaceId: string, pluginInfo: LoupedeckDeviceInfo): Promise<OpenSurfaceResult> => {
-		let factory: new (deviceId: string, device: LoupedeckDevice) => WrappedSurface
+	openSurface = async (
+		surfaceId: string,
+		pluginInfo: LoupedeckDeviceInfo,
+		context: SurfaceContext,
+	): Promise<OpenSurfaceResult> => {
+		let factory: new (deviceId: string, device: LoupedeckDevice, context: SurfaceContext) => SurfaceInstance
 		let propsFactory: (device: LoupedeckDevice) => DeviceRegisterProps
 
 		switch (pluginInfo.model) {
@@ -75,7 +80,7 @@ export class LoupedeckPlugin implements SurfacePlugin<LoupedeckDeviceInfo> {
 
 		const loupedeck = await openLoupedeck(pluginInfo.path)
 		return {
-			surface: new factory(surfaceId, loupedeck),
+			surface: new factory(surfaceId, loupedeck, context),
 			registerProps: propsFactory(loupedeck),
 		}
 	}

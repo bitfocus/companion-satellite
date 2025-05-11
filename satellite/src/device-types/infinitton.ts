@@ -4,7 +4,7 @@ import type {
 	DeviceDrawProps,
 	SurfacePlugin,
 	DiscoveredSurfaceInfo,
-	WrappedSurface,
+	SurfaceInstance,
 	WrappedSurfaceEvents,
 	HIDDevice,
 	OpenSurfaceResult,
@@ -48,10 +48,14 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 		}
 	}
 
-	openSurface = async (surfaceId: string, pluginInfo: InfinittonDeviceInfo): Promise<OpenSurfaceResult> => {
+	openSurface = async (
+		surfaceId: string,
+		pluginInfo: InfinittonDeviceInfo,
+		context: SurfaceContext,
+	): Promise<OpenSurfaceResult> => {
 		const infinitton = new Infinitton(pluginInfo.path)
 		return {
-			surface: new InfinittonWrapper(surfaceId, infinitton),
+			surface: new InfinittonWrapper(surfaceId, infinitton, context),
 			registerProps: {
 				brightness: true,
 				rowCount: 3,
@@ -65,7 +69,7 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 	}
 }
 
-export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #panel: Infinitton
@@ -78,22 +82,23 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		return `Infinitton`
 	}
 
-	public constructor(surfaceId: string, panel: Infinitton) {
+	public constructor(surfaceId: string, panel: Infinitton, context: SurfaceContext) {
 		super()
 
 		this.#panel = panel
 		this.#surfaceId = surfaceId
 
 		this.#panel.on('error', (e) => this.emit('error', e))
+
+		this.#panel.on('down', (key: number) => context.keyDown(key))
+		this.#panel.on('up', (key: number) => context.keyUp(key))
 	}
 
 	async close(): Promise<void> {
 		this.#panel.close()
 	}
-	async initDevice(client: SurfaceContext): Promise<void> {
-		console.log('Registering key events for ' + this.surfaceId)
-		this.#panel.on('down', (key: number) => client.keyDown(key))
-		this.#panel.on('up', (key: number) => client.keyUp(key))
+	async initDevice(): Promise<void> {
+		console.log('Initialising ' + this.surfaceId)
 
 		// Start with blanking it
 		await this.blankDevice()

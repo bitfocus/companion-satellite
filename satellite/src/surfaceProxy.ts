@@ -5,7 +5,8 @@ import type {
 	SurfaceContext,
 	SurfaceId,
 	SurfacePincodeMapPageEntry,
-	WrappedSurface,
+	SurfaceInstance,
+	SurfacePincodeMap,
 } from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
 import { DrawingState } from './drawingState.js'
@@ -24,13 +25,12 @@ export interface SurfaceProxyDrawProps {
  */
 export class SurfaceProxy {
 	readonly #graphics: SurfaceGraphicsContext
-	readonly #surface: WrappedSurface
+	readonly #context: SurfaceProxyContext
+	readonly #surface: SurfaceInstance
 	readonly #registerProps: DeviceRegisterProps
 
 	readonly #drawQueue = new DrawingState<number | string>('preinit')
 
-	#isLocked = false
-	#lockButtonPage = 0
 	#pincodeCharacterCount = 0
 
 	get pluginId(): string {
@@ -48,10 +48,20 @@ export class SurfaceProxy {
 		return this.#registerProps
 	}
 
-	constructor(graphics: SurfaceGraphicsContext, surface: WrappedSurface, registerProps: DeviceRegisterProps) {
+	constructor(
+		graphics: SurfaceGraphicsContext,
+		context: SurfaceProxyContext,
+		surface: SurfaceInstance,
+		registerProps: DeviceRegisterProps,
+		pincodeMap: SurfacePincodeMap | undefined,
+	) {
 		this.#graphics = graphics
+		this.#context = context
 		this.#surface = surface
 		this.#registerProps = registerProps
+
+		// Setup the cyclical reference :(
+		context.storeSurface(this, pincodeMap)
 	}
 
 	async close(): Promise<void> {
@@ -60,146 +70,13 @@ export class SurfaceProxy {
 		return this.#surface.close()
 	}
 
-	#keyIndexToXY(keyIndex: number): [number, number] {
-		const { columnCount } = this.#registerProps
-
-		const x = keyIndex % columnCount
-		const y = Math.floor(keyIndex / columnCount)
-
-		return [x, y]
-	}
-
-	async initDevice(client: CompanionClient, status: string): Promise<void> {
+	async initDevice(displayHost: string, status: string): Promise<void> {
 		// Ensure it doesn't get stuck as locked
-		this.#isLocked = false
+		this.#context.setLocked(false)
 
-		// eslint-disable-next-line @typescript-eslint/no-this-alias
-		const self = this
+		await this.#surface.initDevice()
 
-		const context: SurfaceContext = {
-			get isLocked(): boolean {
-				return self.#isLocked
-			},
-
-			keyDown: (keyIndex: number): void => {
-				const xy = this.#keyIndexToXY(keyIndex)
-
-				if (this.#isLocked) {
-					this.#pincodeXYPress(client, ...xy)
-					return
-				}
-
-				// TODO - test this
-				client.keyDownXY(this.surfaceId, ...xy)
-			},
-			keyUp: (keyIndex: number): void => {
-				if (this.#isLocked) return
-
-				const xy = this.#keyIndexToXY(keyIndex)
-				client.keyUpXY(this.surfaceId, ...xy)
-			},
-			keyDownUp: (keyIndex: number): void => {
-				const xy = this.#keyIndexToXY(keyIndex)
-
-				if (this.#isLocked) {
-					this.#pincodeXYPress(client, ...xy)
-					return
-				}
-
-				client.keyDownXY(this.surfaceId, ...xy)
-
-				setTimeout(() => {
-					if (!this.#isLocked) {
-						client.keyUpXY(this.surfaceId, ...xy)
-					}
-				}, 20)
-			},
-			rotateLeft: (keyIndex: number): void => {
-				if (this.#isLocked) return
-
-				const xy = this.#keyIndexToXY(keyIndex)
-				client.rotateLeftXY(this.surfaceId, ...xy)
-			},
-			rotateRight: (keyIndex: number): void => {
-				if (this.#isLocked) return
-
-				const xy = this.#keyIndexToXY(keyIndex)
-				client.rotateRightXY(this.surfaceId, ...xy)
-			},
-
-			keyDownXY: (x: number, y: number): void => {
-				// TODO - mirror to the non-XY version
-				if (this.#isLocked) {
-					this.#pincodeXYPress(client, x, y)
-					return
-				}
-
-				client.keyDownXY(this.surfaceId, x, y)
-			},
-			keyUpXY: (x: number, y: number): void => {
-				if (this.#isLocked) return
-
-				client.keyUpXY(this.surfaceId, x, y)
-			},
-			keyDownUpXY: (x: number, y: number): void => {
-				if (this.#isLocked) {
-					this.#pincodeXYPress(client, x, y)
-					return
-				}
-
-				client.keyDownXY(this.surfaceId, x, y)
-
-				setTimeout(() => {
-					if (!this.#isLocked) {
-						client.keyUpXY(this.surfaceId, x, y)
-					}
-				}, 20)
-			},
-			rotateLeftXY: (x: number, y: number): void => {
-				if (this.#isLocked) return
-
-				client.rotateLeftXY(this.surfaceId, x, y)
-			},
-			rotateRightXY: (x: number, y: number): void => {
-				if (this.#isLocked) return
-
-				client.rotateRightXY(this.surfaceId, x, y)
-			},
-
-			sendVariableValue: (variable: string, value: any): void => {
-				if (this.#isLocked) return
-
-				client.sendVariableValue(this.surfaceId, variable, value)
-			},
-		}
-
-		await this.#surface.initDevice(context)
-
-		this.showStatus(client.displayHost, status)
-	}
-
-	#pincodeXYPress(client: CompanionClient, x: number, y: number): void {
-		const pincodeMap = this.#surface.pincodeMap
-		if (!pincodeMap) return
-
-		const equals = (xy: [number, number]) => x === xy[0] && y === xy[1]
-
-		if (pincodeMap.type === 'multiple-page' && equals(pincodeMap.nextPage)) {
-			this.#lockButtonPage = (this.#lockButtonPage + 1) % pincodeMap.pages.length
-			this.#drawPincodePage()
-			return
-		}
-
-		const pageInfo = pincodeMap.type === 'single-page' ? pincodeMap : pincodeMap.pages[this.#lockButtonPage]
-		if (!pageInfo) return
-
-		const index = Object.entries(pageInfo).find(([, v]) => equals(v))?.[0]
-		if (!index) return
-
-		const indexNumber = Number(index)
-		if (isNaN(indexNumber)) return
-
-		client.pincodeKey(this.surfaceId, indexNumber)
+		this.showStatus(displayHost, status)
 	}
 
 	updateCapabilities(capabilities: ClientCapabilities): void {
@@ -227,7 +104,7 @@ export class SurfaceProxy {
 	}
 
 	async draw(data: SurfaceProxyDrawProps): Promise<void> {
-		if (this.#isLocked) return
+		if (this.#context.isLocked) return
 
 		if (this.#drawQueue.state !== 'draw') {
 			// Abort any other draws and blank the device
@@ -271,8 +148,8 @@ export class SurfaceProxy {
 	}
 
 	onLockedStatus(locked: boolean, characterCount: number): void {
-		const wasLocked = this.#isLocked
-		this.#isLocked = locked
+		const wasLocked = this.#context.isLocked
+		this.#context.setLocked(locked)
 		this.#pincodeCharacterCount = characterCount
 
 		if (!wasLocked) {
@@ -280,14 +157,13 @@ export class SurfaceProxy {
 			this.#drawQueue.abortQueued('locked-pending-draw', async () => this.#surface.blankDevice())
 		}
 
-		if (!this.#surface.pincodeMap) {
+		if (!this.#context.pincodeMap) {
 			console.warn(`Pincode layout not supported not supported: ${this.surfaceId}`)
 			return
 		}
 
 		if (!wasLocked) {
-			this.#lockButtonPage = 0
-			this.#drawPincodePage()
+			this.drawPincodePage()
 		} else {
 			this.#drawPincodeStatus()
 		}
@@ -298,8 +174,8 @@ export class SurfaceProxy {
 	}
 
 	#lastPincodePageDraw = new Map<string, [number, number]>()
-	#drawPincodePage() {
-		if (!this.#isLocked) return
+	drawPincodePage(): void {
+		if (!this.#context.isLocked) return
 
 		this.#drawPincodeStatus()
 
@@ -325,8 +201,8 @@ export class SurfaceProxy {
 			this.#drawPincodeButton(xy, (width, height) => Buffer.alloc(width * height * 4, 0), '#000000', '')
 		}
 
-		if (this.#surface.pincodeMap?.type === 'multiple-page') {
-			const xy = this.#surface.pincodeMap.nextPage
+		if (this.#context.pincodeMap?.type === 'multiple-page') {
+			const xy = this.#context.pincodeMap.nextPage
 			this.#drawPincodeButton(
 				xy,
 				(width, height) => Buffer.from(this.#graphics.locking.generatePincodeChar(width, height, '+')),
@@ -337,7 +213,7 @@ export class SurfaceProxy {
 	}
 
 	#drawPincodeStatus() {
-		const pincodeXy = this.#surface.pincodeMap?.pincode
+		const pincodeXy = this.#context.pincodeMap?.pincode
 		if (!pincodeXy) return
 
 		this.#drawPincodeButton(
@@ -350,21 +226,10 @@ export class SurfaceProxy {
 	}
 
 	#drawPincodeNumber(key: keyof SurfacePincodeMapPageEntry) {
-		const pincodeMap = this.#surface.pincodeMap
+		const pincodeMap = this.#context.pincodeMap
 		if (!pincodeMap) return
 
-		let pageInfo: SurfacePincodeMapPageEntry
-
-		if (pincodeMap.type === 'single-page') {
-			pageInfo = pincodeMap
-		} else {
-			if (this.#lockButtonPage >= pincodeMap.pages.length) {
-				this.#lockButtonPage = 0
-			}
-			pageInfo = pincodeMap.pages[this.#lockButtonPage] as SurfacePincodeMapPageEntry
-		}
-
-		const xy = pageInfo?.[key]
+		const xy = this.#context.currentPincodePage?.[key]
 		if (!xy) return
 
 		this.#lastPincodePageDraw.set(`${xy[0]}-${xy[1]}`, xy)
@@ -421,5 +286,188 @@ export class SurfaceProxy {
 			if (signal.aborted) return
 			await this.#surface.showStatus(signal, this.#graphics.cards, hostname, status)
 		})
+	}
+}
+
+export class SurfaceProxyContext implements SurfaceContext {
+	readonly #client: CompanionClient
+	readonly #surfaceId: SurfaceId
+
+	readonly disconnect: SurfaceContext['disconnect']
+
+	#surface: SurfaceProxy | null = null
+	#pincodeMap: SurfacePincodeMap | undefined
+
+	#isLocked = false
+	#lockButtonPage = 0
+
+	get isLocked(): boolean {
+		return this.#isLocked
+	}
+
+	get pincodeMap(): SurfacePincodeMap | undefined {
+		return this.#pincodeMap
+	}
+
+	get currentPincodePage(): SurfacePincodeMapPageEntry | undefined {
+		const pincodeMap = this.#pincodeMap
+		if (!pincodeMap) return undefined
+
+		if (pincodeMap.type === 'single-page') {
+			return pincodeMap
+		} else {
+			if (this.#lockButtonPage >= pincodeMap.pages.length) {
+				this.#lockButtonPage = 0
+			}
+			return pincodeMap.pages[this.#lockButtonPage] as SurfacePincodeMapPageEntry
+		}
+	}
+
+	constructor(client: CompanionClient, surfaceId: SurfaceId, onDisconnect: SurfaceContext['disconnect']) {
+		this.#client = client
+		this.#surfaceId = surfaceId
+
+		this.disconnect = onDisconnect
+	}
+
+	storeSurface(surfaceProxy: SurfaceProxy, pincodeMap: SurfacePincodeMap | undefined): void {
+		if (this.#surface) throw new Error('Surface already set')
+		this.#surface = surfaceProxy
+		this.#pincodeMap = pincodeMap
+	}
+
+	setLocked(locked: boolean): void {
+		if (!this.isLocked && locked) {
+			this.#lockButtonPage = 0
+		}
+
+		this.#isLocked = locked
+	}
+
+	keyDown(keyIndex: number): void {
+		const xy = this.#keyIndexToXY(keyIndex)
+
+		if (this.#isLocked) {
+			this.#pincodeXYPress(...xy)
+			return
+		}
+
+		// TODO - test this
+		this.#client.keyDownXY(this.#surfaceId, ...xy)
+	}
+	keyUp(keyIndex: number): void {
+		if (this.#isLocked) return
+
+		const xy = this.#keyIndexToXY(keyIndex)
+		this.#client.keyUpXY(this.#surfaceId, ...xy)
+	}
+	keyDownUp(keyIndex: number): void {
+		const xy = this.#keyIndexToXY(keyIndex)
+
+		if (this.#isLocked) {
+			this.#pincodeXYPress(...xy)
+			return
+		}
+
+		this.#client.keyDownXY(this.#surfaceId, ...xy)
+
+		setTimeout(() => {
+			if (!this.#isLocked) {
+				this.#client.keyUpXY(this.#surfaceId, ...xy)
+			}
+		}, 20)
+	}
+	rotateLeft(keyIndex: number): void {
+		if (this.#isLocked) return
+
+		const xy = this.#keyIndexToXY(keyIndex)
+		this.#client.rotateLeftXY(this.#surfaceId, ...xy)
+	}
+	rotateRight(keyIndex: number): void {
+		if (this.#isLocked) return
+
+		const xy = this.#keyIndexToXY(keyIndex)
+		this.#client.rotateRightXY(this.#surfaceId, ...xy)
+	}
+
+	keyDownXY(x: number, y: number): void {
+		// TODO - mirror to the non-XY version
+		if (this.#isLocked) {
+			this.#pincodeXYPress(x, y)
+			return
+		}
+
+		this.#client.keyDownXY(this.#surfaceId, x, y)
+	}
+	keyUpXY(x: number, y: number): void {
+		if (this.#isLocked) return
+
+		this.#client.keyUpXY(this.#surfaceId, x, y)
+	}
+	keyDownUpXY(x: number, y: number): void {
+		if (this.#isLocked) {
+			this.#pincodeXYPress(x, y)
+			return
+		}
+
+		this.#client.keyDownXY(this.#surfaceId, x, y)
+
+		setTimeout(() => {
+			if (!this.#isLocked) {
+				this.#client.keyUpXY(this.#surfaceId, x, y)
+			}
+		}, 20)
+	}
+	rotateLeftXY(x: number, y: number): void {
+		if (this.#isLocked) return
+
+		this.#client.rotateLeftXY(this.#surfaceId, x, y)
+	}
+	rotateRightXY(x: number, y: number): void {
+		if (this.#isLocked) return
+
+		this.#client.rotateRightXY(this.#surfaceId, x, y)
+	}
+
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+	sendVariableValue(variable: string, value: any): void {
+		if (this.#isLocked) return
+
+		this.#client.sendVariableValue(this.#surfaceId, variable, value)
+	}
+
+	#keyIndexToXY(keyIndex: number): [number, number] {
+		if (!this.#surface) throw new Error('Surface not set')
+
+		const { columnCount } = this.#surface.registerProps
+
+		const x = keyIndex % columnCount
+		const y = Math.floor(keyIndex / columnCount)
+
+		return [x, y]
+	}
+
+	#pincodeXYPress(x: number, y: number): void {
+		const pincodeMap = this.#pincodeMap
+		if (!pincodeMap) return
+
+		const equals = (xy: [number, number]) => x === xy[0] && y === xy[1]
+
+		if (pincodeMap.type === 'multiple-page' && equals(pincodeMap.nextPage)) {
+			this.#lockButtonPage = (this.#lockButtonPage + 1) % pincodeMap.pages.length
+			this.#surface?.drawPincodePage()
+			return
+		}
+
+		const pageInfo = pincodeMap.type === 'single-page' ? pincodeMap : pincodeMap.pages[this.#lockButtonPage]
+		if (!pageInfo) return
+
+		const index = Object.entries(pageInfo).find(([, v]) => equals(v))?.[0]
+		if (!index) return
+
+		const indexNumber = Number(index)
+		if (isNaN(indexNumber)) return
+
+		this.#client.pincodeKey(this.#surfaceId, indexNumber)
 	}
 }
