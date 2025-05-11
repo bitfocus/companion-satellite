@@ -9,7 +9,7 @@ import type {
 	SurfacePincodeMap,
 } from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
-import { DrawingState } from './drawingState.js'
+import { DrawingState } from './graphics/drawingState.js'
 import { transformButtonImage } from './device-types/lib.js'
 
 export interface SurfaceProxyDrawProps {

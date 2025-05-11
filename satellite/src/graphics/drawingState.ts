@@ -1,7 +1,7 @@
-import { ImageWriteQueue2 } from './writeQueue.js'
+import { ImageWriteQueue } from './writeQueue.js'
 
 export class DrawingState<TKey extends number | string> {
-	#queue: ImageWriteQueue2<TKey>
+	#queue: ImageWriteQueue<TKey>
 	#state: string
 
 	#isAborting = false
@@ -13,7 +13,7 @@ export class DrawingState<TKey extends number | string> {
 
 	constructor(state: string) {
 		this.#state = state
-		this.#queue = new ImageWriteQueue2()
+		this.#queue = new ImageWriteQueue()
 	}
 
 	queueJob(key: TKey, fn: (key: TKey, signal: AbortSignal) => Promise<void>): void {
@@ -21,7 +21,7 @@ export class DrawingState<TKey extends number | string> {
 	}
 
 	abortQueued(newState: string, fnBeforeRunQueue?: () => Promise<void>): void {
-		let abortQueue: ImageWriteQueue2<TKey> | null = null
+		let abortQueue: ImageWriteQueue<TKey> | null = null
 		if (!this.#isAborting) {
 			this.#isAborting = true
 			abortQueue = this.#queue
@@ -30,7 +30,7 @@ export class DrawingState<TKey extends number | string> {
 		console.log(`Aborting queue: ${this.#state} -> ${newState}`, !!abortQueue)
 
 		this.#state = newState
-		this.#queue = new ImageWriteQueue2(false)
+		this.#queue = new ImageWriteQueue(false)
 		this.#execBeforeRunQueue = fnBeforeRunQueue ?? null
 
 		if (abortQueue) {
