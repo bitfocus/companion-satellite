@@ -13,10 +13,8 @@ import type {
 	DeviceDrawProps,
 	DeviceRegisterProps,
 	SurfaceInstance,
-	WrappedSurfaceEvents,
 } from './api.js'
 import { parseColor } from './lib.js'
-import { EventEmitter } from 'events'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 
 export function compileLoupedeckLiveSProps(device: LoupedeckDevice): DeviceRegisterProps {
@@ -31,7 +29,7 @@ export function compileLoupedeckLiveSProps(device: LoupedeckDevice): DeviceRegis
 	}
 }
 
-export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
+export class LoupedeckLiveSWrapper implements SurfaceInstance {
 	readonly pluginId = LOUPEDECK_PLUGIN_ID
 
 	readonly #deck: LoupedeckDevice
@@ -45,12 +43,10 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 	}
 
 	public constructor(surfaceId: string, device: LoupedeckDevice, context: SurfaceContext) {
-		super()
-
 		this.#deck = device
 		this.#surfaceId = surfaceId
 
-		this.#deck.on('error', (e) => this.emit('error', e))
+		this.#deck.on('error', (e) => context.disconnect(e))
 
 		if (device.modelId !== LoupedeckModelId.LoupedeckLiveS) throw new Error('Incorrect model passed to wrapper!')
 

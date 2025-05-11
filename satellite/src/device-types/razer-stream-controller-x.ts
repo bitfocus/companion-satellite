@@ -7,9 +7,7 @@ import type {
 	DeviceDrawProps,
 	DeviceRegisterProps,
 	SurfaceInstance,
-	WrappedSurfaceEvents,
 } from './api.js'
-import { EventEmitter } from 'events'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 
 export function compileRazerStreamControllerXProps(device: LoupedeckDevice): DeviceRegisterProps {
@@ -24,7 +22,7 @@ export function compileRazerStreamControllerXProps(device: LoupedeckDevice): Dev
 	}
 }
 
-export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
+export class RazerStreamControllerXWrapper implements SurfaceInstance {
 	readonly pluginId = LOUPEDECK_PLUGIN_ID
 
 	readonly #deck: LoupedeckDevice
@@ -38,12 +36,10 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 	}
 
 	public constructor(surfaceId: string, device: LoupedeckDevice, context: SurfaceContext) {
-		super()
-
 		this.#deck = device
 		this.#surfaceId = surfaceId
 
-		this.#deck.on('error', (e) => this.emit('error', e))
+		this.#deck.on('error', (e) => context.disconnect(e))
 
 		if (device.modelId !== LoupedeckModelId.RazerStreamControllerX)
 			throw new Error('Incorrect model passed to wrapper!')

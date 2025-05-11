@@ -5,14 +5,12 @@ import type {
 	SurfacePlugin,
 	DiscoveredSurfaceInfo,
 	SurfaceInstance,
-	WrappedSurfaceEvents,
 	HIDDevice,
 	OpenSurfaceResult,
 	SurfaceContext,
 } from './api.js'
 import * as imageRs from '@julusian/image-rs'
 import Infinitton from 'infinitton-idisplay'
-import { EventEmitter } from 'events'
 
 export interface InfinittonDeviceInfo {
 	path: string
@@ -69,7 +67,7 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 	}
 }
 
-export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
+export class InfinittonWrapper implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #panel: Infinitton
@@ -83,12 +81,10 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	}
 
 	public constructor(surfaceId: string, panel: Infinitton, context: SurfaceContext) {
-		super()
-
 		this.#panel = panel
 		this.#surfaceId = surfaceId
 
-		this.#panel.on('error', (e) => this.emit('error', e))
+		this.#panel.on('error', (e) => context.disconnect(e))
 
 		this.#panel.on('down', (key: number) => context.keyDown(key))
 		this.#panel.on('up', (key: number) => context.keyUp(key))

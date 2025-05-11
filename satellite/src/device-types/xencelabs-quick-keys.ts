@@ -10,7 +10,6 @@ import type {
 	SurfaceInstance,
 	DeviceDrawProps,
 	ClientCapabilities,
-	WrappedSurfaceEvents,
 	SurfacePlugin,
 	SurfacePluginDetectionEvents,
 	SurfacePluginDetection,
@@ -110,7 +109,7 @@ function keyToCompanion(k: number): number | null {
 	return null
 }
 
-export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
+export class QuickKeysWrapper implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #surface: XencelabsQuickKeys
@@ -127,8 +126,6 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 	}
 
 	public constructor(surfaceId: string, surface: XencelabsQuickKeys, context: SurfaceContext) {
-		super()
-
 		this.#surface = surface
 		this.#surfaceId = surfaceId
 

@@ -16,11 +16,9 @@ import type {
 	OpenSurfaceResult,
 	SurfacePlugin,
 	SurfaceInstance,
-	WrappedSurfaceEvents,
 } from './api.js'
 import { parseColor } from './lib.js'
 import debounceFn from 'debounce-fn'
-import { EventEmitter } from 'events'
 import type { CardGenerator } from '../graphics/cards.js'
 
 const PLUGIN_ID = 'blackmagic-controller'
@@ -107,7 +105,7 @@ function compileRegisterProps(rowCount: number, columnCount: number): DeviceRegi
 	return info
 }
 
-export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
+export class BlackmagicControllerWrapper implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #device: BlackmagicController
@@ -129,15 +127,13 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		_rowCount: number,
 		columnCount: number,
 	) {
-		super()
-
 		this.#device = device
 		this.#surfaceId = surfaceId
 
 		// this.#rowCount = rowCount
 		this.#columnCount = columnCount
 
-		this.#device.on('error', (e) => this.emit('error', e))
+		this.#device.on('error', (e) => context.disconnect(e as any))
 
 		this.#device.on('down', (control) => {
 			context.keyDownXY(control.column, control.row)

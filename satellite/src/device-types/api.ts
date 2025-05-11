@@ -124,10 +124,6 @@ export interface OpenSurfaceResult {
 	pincodeMap?: SurfacePincodeMap
 }
 
-export interface WrappedSurfaceEvents {
-	error: [error: any]
-}
-
 export type SurfacePincodeMap = SurfacePincodeMapPageSingle | SurfacePincodeMapPageMultiple
 export interface SurfacePincodeMapPageSingle extends SurfacePincodeMapPageEntry {
 	type: 'single-page'
@@ -152,7 +148,7 @@ export interface SurfacePincodeMapPageEntry {
 	9: [number, number]
 }
 
-export interface SurfaceInstance extends EventEmitter<WrappedSurfaceEvents> {
+export interface SurfaceInstance {
 	readonly pluginId: string
 
 	readonly surfaceId: SurfaceId

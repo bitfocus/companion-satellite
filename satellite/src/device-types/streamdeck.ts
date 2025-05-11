@@ -15,14 +15,12 @@ import {
 	DeviceRegisterProps,
 	DiscoveredSurfaceInfo,
 	SurfaceInstance,
-	WrappedSurfaceEvents,
 	HIDDevice,
 	SurfaceContext,
 	OpenSurfaceResult,
 } from './api.js'
 import { parseColor } from './lib.js'
 import util from 'util'
-import EventEmitter from 'events'
 
 const setTimeoutPromise = util.promisify(setTimeout)
 
@@ -139,7 +137,7 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 	}
 }
 
-export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements SurfaceInstance {
+export class StreamDeckWrapper implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #deck: StreamDeck
@@ -164,12 +162,10 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		registerProps: DeviceRegisterProps,
 		context: SurfaceContext,
 	) {
-		super()
-
 		this.#deck = deck
 		this.#surfaceId = surfaceId
 
-		this.#deck.on('error', (e) => this.emit('error', e))
+		this.#deck.on('error', (e) => context.disconnect(e as any))
 
 		this.#registerProps = registerProps
 
