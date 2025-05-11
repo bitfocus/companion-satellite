@@ -157,7 +157,7 @@ export class SurfaceManager {
 					surface.onVariableValue(msg.name, msg.value)
 				},
 				(e) => {
-					console.error(`Clear deck: ${e}`)
+					console.error(`Error handling variable value: ${e}`)
 				},
 			),
 		)
