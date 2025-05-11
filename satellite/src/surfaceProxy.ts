@@ -1,8 +1,23 @@
-import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
+import { PixelFormat } from '@julusian/image-rs'
 import type { SurfaceGraphicsContext } from './graphics/lib.js'
-import type { SurfaceContext, SurfaceId, SurfacePincodeMapPageEntry, WrappedSurface } from './device-types/api.js'
-import type { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
+import type {
+	DeviceDrawImageFn,
+	SurfaceContext,
+	SurfaceId,
+	SurfacePincodeMapPageEntry,
+	WrappedSurface,
+} from './device-types/api.js'
+import type { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
 import { DrawingState } from './drawingState.js'
+import { transformButtonImage } from './device-types/lib.js'
+
+export interface SurfaceProxyDrawProps {
+	deviceId: string
+	keyIndex: number
+	image?: Buffer
+	color?: string // hex
+	text?: string
+}
 
 /**
  * A wrapper around a surface to handle pincode locking and other common tasks
@@ -211,7 +226,7 @@ export class SurfaceProxy {
 		})
 	}
 
-	async draw(data: DeviceDrawProps): Promise<void> {
+	async draw(data: SurfaceProxyDrawProps): Promise<void> {
 		if (this.#isLocked) return
 
 		if (this.#drawQueue.state !== 'draw') {
@@ -222,7 +237,28 @@ export class SurfaceProxy {
 		this.#drawQueue.queueJob(data.keyIndex, async (_key, signal) => {
 			if (signal.aborted) return
 
-			return this.#surface.draw(signal, data)
+			const bitmapSize = this.registerProps.bitmapSize
+			const rawImage = data.image
+			const image: DeviceDrawImageFn | undefined =
+				bitmapSize && rawImage
+					? async (targetWidth, targetHeight, targetPixelFormat) =>
+							transformButtonImage(
+								{
+									width: targetWidth,
+									height: targetHeight,
+									buffer: rawImage,
+									pixelFormat: PixelFormat.Rgba,
+								},
+								targetWidth,
+								targetHeight,
+								targetPixelFormat,
+							)
+					: undefined
+
+			return this.#surface.draw(signal, {
+				...data,
+				image,
+			})
 		})
 	}
 
@@ -347,18 +383,21 @@ export class SurfaceProxy {
 		color: string,
 		text: string,
 	) {
-		let keyBuffer: Buffer | undefined
-		if (this.registerProps.bitmapSize) {
-			const render = bitmapFn(this.registerProps.bitmapSize, this.registerProps.bitmapSize)
-
-			// TODO - this is a hack to get the image to draw correctly
-			keyBuffer = ImageTransformer.fromBuffer(
-				Buffer.from(render),
-				this.registerProps.bitmapSize,
-				this.registerProps.bitmapSize,
-				PixelFormat.Rgba,
-			).toBufferSync(PixelFormat.Rgb).buffer
-		}
+		const bitmapSize = this.registerProps.bitmapSize
+		const image: DeviceDrawImageFn | undefined = bitmapSize
+			? async (targetWidth, targetHeight, targetPixelFormat) =>
+					transformButtonImage(
+						{
+							width: targetWidth,
+							height: targetHeight,
+							buffer: bitmapFn(targetWidth, targetHeight),
+							pixelFormat: PixelFormat.Rgba,
+						},
+						targetWidth,
+						targetHeight,
+						targetPixelFormat,
+					)
+			: undefined
 
 		const keyIndex = xy[0] + xy[1] * this.registerProps.columnCount
 		this.#drawQueue.queueJob(keyIndex, async (key, signal) => {
@@ -367,7 +406,7 @@ export class SurfaceProxy {
 			await this.#surface.draw(signal, {
 				deviceId: this.surfaceId,
 				keyIndex: keyIndex,
-				image: keyBuffer,
+				image,
 				color,
 				text,
 			})

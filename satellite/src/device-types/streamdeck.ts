@@ -21,7 +21,7 @@ import {
 	OpenSurfaceResult,
 	SurfacePincodeMap,
 } from './api.js'
-import { parseColor, transformButtonImage } from './lib.js'
+import { parseColor } from './lib.js'
 import util from 'util'
 import EventEmitter from 'events'
 
@@ -237,19 +237,19 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		})
 		if (!control) return
 
-		const bufferSize = this.#registerProps.bitmapSize
-
 		if (control.type === 'button') {
 			if (control.feedbackType === 'lcd') {
+				if (!drawProps.image) {
+					console.error(`No image provided for lcd button`)
+					return
+				}
+
 				let newbuffer: Buffer | undefined
 				if (control.pixelSize.width === 0 || control.pixelSize.height === 0) {
 					return
 				} else {
 					try {
-						newbuffer = await transformButtonImage(
-							drawProps.image,
-							bufferSize,
-							bufferSize,
+						newbuffer = await drawProps.image(
 							control.pixelSize.width,
 							control.pixelSize.height,
 							imageRs.PixelFormat.Rgb,
@@ -285,6 +285,11 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 				})
 			}
 		} else if (control.type === 'lcd-segment' && control.drawRegions) {
+			if (!drawProps.image) {
+				console.error(`No image provided for lcd-segment`)
+				return
+			}
+
 			const drawColumn = x - control.column
 
 			const columnWidth = control.pixelSize.width / control.columnSpan
@@ -298,14 +303,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 			let newbuffer: Buffer | undefined
 			try {
-				newbuffer = await transformButtonImage(
-					drawProps.image,
-					bufferSize,
-					bufferSize,
-					targetSize,
-					targetSize,
-					imageRs.PixelFormat.Rgb,
-				)
+				newbuffer = await drawProps.image(targetSize, targetSize, imageRs.PixelFormat.Rgb)
 			} catch (e) {
 				console.log(`scale image failed: ${e}`)
 				return

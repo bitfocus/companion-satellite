@@ -112,7 +112,8 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	}
 	async draw(_signal: AbortSignal, d: DeviceDrawProps): Promise<void> {
 		if (d.image) {
-			this.#panel.fillImage(d.keyIndex, d.image)
+			const buffer = await d.image(72, 72, imageRs.PixelFormat.Rgb)
+			this.#panel.fillImage(d.keyIndex, buffer)
 		} else {
 			throw new Error(`Cannot draw for Streamdeck without image`)
 		}

@@ -1,15 +1,24 @@
 import type HID from 'node-hid'
 import type { CardGenerator } from '../graphics/cards.js'
 import EventEmitter from 'events'
+import type { PixelFormat } from '@julusian/image-rs'
 
 export type HIDDevice = HID.Device
 
 export type SurfaceId = string
 
+export interface DeviceDrawImage {
+	buffer: Buffer
+	width: number
+	height: number
+	pixelFormat: PixelFormat
+}
+export type DeviceDrawImageFn = (width: number, height: number, format: PixelFormat) => Promise<Buffer>
+
 export interface DeviceDrawProps {
 	deviceId: string
 	keyIndex: number
-	image?: Buffer
+	image?: DeviceDrawImageFn
 	color?: string // hex
 	text?: string
 }

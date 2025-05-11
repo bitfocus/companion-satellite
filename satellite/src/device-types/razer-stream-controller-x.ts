@@ -84,7 +84,8 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 	}
 	async draw(_signal: AbortSignal, d: DeviceDrawProps): Promise<void> {
 		if (d.image) {
-			await this.#deck.drawKeyBuffer(d.keyIndex, d.image, LoupedeckBufferFormat.RGB)
+			const buffer = await d.image(this.#deck.lcdKeySize, this.#deck.lcdKeySize, imageRs.PixelFormat.Rgb)
+			await this.#deck.drawKeyBuffer(d.keyIndex, buffer, LoupedeckBufferFormat.RGB)
 		} else {
 			throw new Error(`Cannot draw for Loupedeck without image`)
 		}

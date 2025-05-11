@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
+import { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
 import { assertNever, DEFAULT_TCP_PORT } from './lib.js'
 import * as semver from 'semver'
 import {
@@ -10,6 +10,7 @@ import {
 	ICompanionSatelliteClientOptions,
 	SomeConnectionDetails,
 } from './clientImplementations.js'
+import { SurfaceProxyDrawProps } from './surfaceProxy.js'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
@@ -90,7 +91,7 @@ export type CompanionSatelliteClientEvents = {
 	connecting: []
 	disconnected: []
 
-	draw: [DeviceDrawProps]
+	draw: [SurfaceProxyDrawProps]
 	brightness: [{ deviceId: string; percent: number }]
 	newDevice: [{ deviceId: string }]
 	clearDeck: [{ deviceId: string }]

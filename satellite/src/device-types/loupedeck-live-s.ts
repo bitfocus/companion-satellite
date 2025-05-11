@@ -171,7 +171,8 @@ export class LoupedeckLiveSWrapper extends EventEmitter<WrappedSurfaceEvents> im
 		if (x >= 0 && x < 5) {
 			const keyIndex = x + y * 5
 			if (d.image) {
-				await this.#deck.drawKeyBuffer(keyIndex, d.image, LoupedeckBufferFormat.RGB)
+				const buffer = await d.image(this.#deck.lcdKeySize, this.#deck.lcdKeySize, imageRs.PixelFormat.Rgb)
+				await this.#deck.drawKeyBuffer(keyIndex, buffer, LoupedeckBufferFormat.RGB)
 			} else {
 				throw new Error(`Cannot draw for Loupedeck without image`)
 			}
