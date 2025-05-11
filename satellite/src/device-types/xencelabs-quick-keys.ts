@@ -15,11 +15,11 @@ import type {
 	SurfacePluginDetectionEvents,
 	SurfacePluginDetection,
 	OpenSurfaceResult,
-	CompanionClientInner,
+	SurfaceContext,
 } from './api.js'
 import { parseColor } from './lib.js'
 import { EventEmitter } from 'events'
-import type { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../graphics/cards.js'
 
 class QuickKeysPluginDetection
 	extends EventEmitter<SurfacePluginDetectionEvents<XencelabsQuickKeys>>
@@ -138,7 +138,7 @@ export class QuickKeysWrapper extends EventEmitter<WrappedSurfaceEvents> impleme
 
 		await this.#surface.stopData()
 	}
-	async initDevice(client: CompanionClientInner): Promise<void> {
+	async initDevice(client: SurfaceContext): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 
 		const handleDown = (key: number) => {

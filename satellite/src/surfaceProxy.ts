@@ -1,11 +1,14 @@
 import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
-import type { CardGenerator } from './cards.js'
-import type { CompanionClientInner, SurfaceId, SurfacePincodeMapPageEntry, WrappedSurface } from './device-types/api.js'
+import type { SurfaceGraphicsContext } from './graphics/lib.js'
+import type { SurfaceContext, SurfaceId, SurfacePincodeMapPageEntry, WrappedSurface } from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
 import { DrawingState } from './drawingState.js'
 
+/**
+ * A wrapper around a surface to handle pincode locking and other common tasks
+ */
 export class SurfaceProxy {
-	readonly #cardGenerator: CardGenerator
+	readonly #graphics: SurfaceGraphicsContext
 	readonly #surface: WrappedSurface
 	readonly #registerProps: DeviceRegisterProps
 
@@ -30,8 +33,8 @@ export class SurfaceProxy {
 		return this.#registerProps
 	}
 
-	constructor(cardGenerator: CardGenerator, surface: WrappedSurface, registerProps: DeviceRegisterProps) {
-		this.#cardGenerator = cardGenerator
+	constructor(graphics: SurfaceGraphicsContext, surface: WrappedSurface, registerProps: DeviceRegisterProps) {
+		this.#graphics = graphics
 		this.#surface = surface
 		this.#registerProps = registerProps
 	}
@@ -58,7 +61,7 @@ export class SurfaceProxy {
 		// eslint-disable-next-line @typescript-eslint/no-this-alias
 		const self = this
 
-		const clientWrapper: CompanionClientInner = {
+		const context: SurfaceContext = {
 			get isLocked(): boolean {
 				return self.#isLocked
 			},
@@ -155,7 +158,7 @@ export class SurfaceProxy {
 			},
 		}
 
-		await this.#surface.initDevice(clientWrapper)
+		await this.#surface.initDevice(context)
 
 		this.showStatus(client.displayHost, status)
 	}
@@ -290,7 +293,7 @@ export class SurfaceProxy {
 			const xy = this.#surface.pincodeMap.nextPage
 			this.#drawPincodeButton(
 				xy,
-				(width, height) => Buffer.from(this.#cardGenerator.generatePincodeChar(width, height, '+')),
+				(width, height) => Buffer.from(this.#graphics.locking.generatePincodeChar(width, height, '+')),
 				'#ffffff',
 				'+',
 			)
@@ -304,7 +307,7 @@ export class SurfaceProxy {
 		this.#drawPincodeButton(
 			pincodeXy,
 			(width, height) =>
-				Buffer.from(this.#cardGenerator.generatePincodeValue(width, height, this.#pincodeCharacterCount)),
+				Buffer.from(this.#graphics.locking.generatePincodeValue(width, height, this.#pincodeCharacterCount)),
 			'#ffffff',
 			'*'.repeat(this.#pincodeCharacterCount),
 		)
@@ -332,7 +335,7 @@ export class SurfaceProxy {
 
 		this.#drawPincodeButton(
 			xy,
-			(width, height) => Buffer.from(this.#cardGenerator.generatePincodeChar(width, height, key)),
+			(width, height) => Buffer.from(this.#graphics.locking.generatePincodeChar(width, height, key)),
 			'#ffffff',
 			`${key}`,
 		)
@@ -377,7 +380,7 @@ export class SurfaceProxy {
 
 		this.#drawQueue.queueJob(0, async (_key, signal) => {
 			if (signal.aborted) return
-			await this.#surface.showStatus(signal, this.#cardGenerator, hostname, status)
+			await this.#surface.showStatus(signal, this.#graphics.cards, hostname, status)
 		})
 	}
 }

@@ -1,6 +1,6 @@
 import { CompanionSatelliteClient } from './client.js'
 import { usb } from 'usb'
-import { CardGenerator } from './cards.js'
+import { CardGenerator } from './graphics/cards.js'
 import { SurfaceId, SurfacePlugin, DiscoveredSurfaceInfo } from './device-types/api.js'
 import { StreamDeckPlugin } from './device-types/streamdeck.js'
 import { QuickKeysPlugin } from './device-types/xencelabs-quick-keys.js'
@@ -11,6 +11,7 @@ import { LoupedeckPlugin } from './device-types/loupedeck-plugin.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 import { BlackmagicControllerPlugin } from './device-types/blackmagic-panel.js'
 import { SurfaceProxy } from './surfaceProxy.js'
+import { LockingGraphicsGenerator, SurfaceGraphicsContext } from './graphics/lib.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -29,7 +30,7 @@ export class SurfaceManager {
 	/** Surfaces which are in the process of being opened */
 	readonly #pendingSurfaces: Set<SurfaceId>
 	readonly #client: CompanionSatelliteClient
-	readonly #cardGenerator: CardGenerator
+	readonly #graphics: SurfaceGraphicsContext
 
 	readonly #plugins = new Map<string, SurfacePlugin<any>>()
 
@@ -81,7 +82,10 @@ export class SurfaceManager {
 		this.#enabledPluginsConfig = enabledPluginsConfig
 		this.#surfaces = new Map()
 		this.#pendingSurfaces = new Set()
-		this.#cardGenerator = new CardGenerator()
+		this.#graphics = {
+			cards: new CardGenerator(),
+			locking: new LockingGraphicsGenerator(),
+		}
 
 		usb.on('attach', this.#onUsbAttach)
 		usb.on('detach', this.#onUsbDetach)
@@ -438,7 +442,7 @@ export class SurfaceManager {
 						throw new Error('Plugin ID mismatch')
 					}
 
-					const proxySurface = new SurfaceProxy(this.#cardGenerator, surface, registerProps)
+					const proxySurface = new SurfaceProxy(this.#graphics, surface, registerProps)
 
 					this.#surfaces.set(pluginInfo.surfaceId, proxySurface)
 

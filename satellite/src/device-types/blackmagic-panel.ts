@@ -8,7 +8,7 @@ import {
 } from '@blackmagic-controller/node'
 import type {
 	ClientCapabilities,
-	CompanionClientInner,
+	SurfaceContext,
 	DeviceDrawProps,
 	DeviceRegisterProps,
 	DiscoveredSurfaceInfo,
@@ -21,7 +21,7 @@ import type {
 import { parseColor } from './lib.js'
 import debounceFn from 'debounce-fn'
 import { EventEmitter } from 'events'
-import type { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../graphics/cards.js'
 
 const PLUGIN_ID = 'blackmagic-controller'
 
@@ -135,7 +135,7 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 
 		await this.#device.close()
 	}
-	async initDevice(client: CompanionClientInner): Promise<void> {
+	async initDevice(client: SurfaceContext): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#device.on('down', (control) => {
 			client.keyDownXY(control.column, control.row)

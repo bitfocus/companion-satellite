@@ -1,4 +1,4 @@
-import type { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../graphics/cards.js'
 import type {
 	ClientCapabilities,
 	DeviceDrawProps,
@@ -8,7 +8,7 @@ import type {
 	WrappedSurfaceEvents,
 	HIDDevice,
 	OpenSurfaceResult,
-	CompanionClientInner,
+	SurfaceContext,
 } from './api.js'
 import * as imageRs from '@julusian/image-rs'
 import Infinitton from 'infinitton-idisplay'
@@ -90,7 +90,7 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 	async close(): Promise<void> {
 		this.#panel.close()
 	}
-	async initDevice(client: CompanionClientInner): Promise<void> {
+	async initDevice(client: SurfaceContext): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#panel.on('down', (key: number) => client.keyDown(key))
 		this.#panel.on('up', (key: number) => client.keyUp(key))

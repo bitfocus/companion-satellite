@@ -1,9 +1,9 @@
 import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
 import * as imageRs from '@julusian/image-rs'
-import type { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../graphics/cards.js'
 import type {
 	ClientCapabilities,
-	CompanionClientInner,
+	SurfaceContext,
 	DeviceDrawProps,
 	DeviceRegisterProps,
 	WrappedSurface,
@@ -54,7 +54,7 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 
 		await this.#deck.close()
 	}
-	async initDevice(client: CompanionClientInner): Promise<void> {
+	async initDevice(client: SurfaceContext): Promise<void> {
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button') {
 				return id

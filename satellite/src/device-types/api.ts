@@ -1,5 +1,5 @@
 import type HID from 'node-hid'
-import type { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../graphics/cards.js'
 import EventEmitter from 'events'
 
 export type HIDDevice = HID.Device
@@ -153,7 +153,7 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 
 	close(): Promise<void>
 
-	initDevice(client: CompanionClientInner): Promise<void>
+	initDevice(client: SurfaceContext): Promise<void>
 
 	updateCapabilities(capabilities: ClientCapabilities): void
 
@@ -189,7 +189,7 @@ export interface CompanionClient {
 	sendVariableValue(deviceId: string, variable: string, value: any): void
 }
 
-export interface CompanionClientInner {
+export interface SurfaceContext {
 	get isLocked(): boolean
 	// get displayHost(): string
 

@@ -7,7 +7,7 @@ import {
 	StreamDeckLcdSegmentControlDefinition,
 } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
-import type { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../graphics/cards.js'
 import {
 	ClientCapabilities,
 	DeviceDrawProps,
@@ -17,7 +17,7 @@ import {
 	WrappedSurface,
 	WrappedSurfaceEvents,
 	HIDDevice,
-	CompanionClientInner,
+	SurfaceContext,
 	OpenSurfaceResult,
 	SurfacePincodeMap,
 } from './api.js'
@@ -172,7 +172,7 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 		await this.#deck.close()
 	}
-	async initDevice(client: CompanionClientInner): Promise<void> {
+	async initDevice(client: SurfaceContext): Promise<void> {
 		console.log('Registering key events for ' + this.surfaceId)
 		this.#deck.on('down', (control) => {
 			client.keyDownXY(control.column, control.row)
