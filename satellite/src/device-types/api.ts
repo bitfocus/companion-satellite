@@ -1,26 +1,36 @@
 import type HID from 'node-hid'
-import type { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../graphics/cards.js'
 import EventEmitter from 'events'
+import type { PixelFormat } from '@julusian/image-rs'
 
 export type HIDDevice = HID.Device
 
 export type SurfaceId = string
 
+export interface DeviceDrawImage {
+	buffer: Buffer
+	width: number
+	height: number
+	pixelFormat: PixelFormat
+}
+export type DeviceDrawImageFn = (width: number, height: number, format: PixelFormat) => Promise<Buffer>
+
 export interface DeviceDrawProps {
 	deviceId: string
 	keyIndex: number
-	image?: Buffer
+	image?: DeviceDrawImageFn
 	color?: string // hex
 	text?: string
 }
 export interface DeviceRegisterProps {
 	brightness: boolean
-	keysTotal: number
-	keysPerRow: number
+	rowCount: number
+	columnCount: number
 	bitmapSize: number | null
 	colours: boolean
 	text: boolean
 	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
+	pincodeMap: SurfacePincodeMap | null
 }
 
 export interface DeviceRegisterInputVariable {
@@ -102,27 +112,53 @@ export interface SurfacePlugin<TInfo> {
 	 * Open a discovered/known surface
 	 * @param surfaceId Id of the surface
 	 * @param pluginInfo Plugin specific info about the surface
-	 * @param cardGenerator Generator for creating status cards
+	 * @param context Context for the surface
 	 * @returns Instance of the surface
 	 */
-	openSurface: (surfaceId: string, pluginInfo: TInfo, cardGenerator: CardGenerator) => Promise<WrappedSurface>
+	openSurface: (surfaceId: string, pluginInfo: TInfo, context: SurfaceContext) => Promise<OpenSurfaceResult>
 }
 
-export interface WrappedSurfaceEvents {
-	error: [error: any]
+export interface OpenSurfaceResult {
+	surface: SurfaceInstance
+	registerProps: DeviceRegisterProps
 }
 
-export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
+export type SurfacePincodeMap = SurfacePincodeMapPageSingle | SurfacePincodeMapPageMultiple | SurfacePincodeMapCustom
+export interface SurfacePincodeMapCustom {
+	type: 'custom'
+}
+export interface SurfacePincodeMapPageSingle extends SurfacePincodeMapPageEntry {
+	type: 'single-page'
+	pincode: [number, number] | null
+}
+export interface SurfacePincodeMapPageMultiple {
+	type: 'multiple-page'
+	pincode: [number, number]
+	nextPage: [number, number]
+	pages: Partial<SurfacePincodeMapPageEntry>[]
+}
+export interface SurfacePincodeMapPageEntry {
+	0: [number, number]
+	1: [number, number]
+	2: [number, number]
+	3: [number, number]
+	4: [number, number]
+	5: [number, number]
+	6: [number, number]
+	7: [number, number]
+	8: [number, number]
+	9: [number, number]
+}
+
+export interface SurfaceInstance {
 	readonly pluginId: string
 
 	readonly surfaceId: SurfaceId
 	readonly productName: string
 
-	getRegisterProps(): DeviceRegisterProps
-
 	close(): Promise<void>
 
-	initDevice(client: CompanionClient, status: string): Promise<void>
+	initDevice(): Promise<void>
 
 	updateCapabilities(capabilities: ClientCapabilities): void
 
@@ -132,11 +168,13 @@ export interface WrappedSurface extends EventEmitter<WrappedSurfaceEvents> {
 
 	blankDevice(): Promise<void>
 
-	draw(data: DeviceDrawProps): Promise<void>
+	draw(signal: AbortSignal, data: DeviceDrawProps): Promise<void>
 
 	onVariableValue?(name: string, value: string): void
 
-	showStatus(hostname: string, status: string): void
+	onLockedStatus?(locked: boolean, characterCount: number): void
+
+	showStatus(signal: AbortSignal, cardGenerator: CardGenerator, hostname: string, status: string): Promise<void>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -147,15 +185,32 @@ export interface ClientCapabilities {
 export interface CompanionClient {
 	get displayHost(): string
 
-	keyDown(deviceId: string, keyIndex: number): void
-	keyUp(deviceId: string, keyIndex: number): void
-	rotateLeft(deviceId: string, keyIndex: number): void
-	rotateRight(deviceId: string, keyIndex: number): void
-
 	keyDownXY(deviceId: string, x: number, y: number): void
 	keyUpXY(deviceId: string, x: number, y: number): void
 	rotateLeftXY(deviceId: string, x: number, y: number): void
 	rotateRightXY(deviceId: string, x: number, y: number): void
+	pincodeKey(deviceId: string, keyCode: number): void
 
 	sendVariableValue(deviceId: string, variable: string, value: any): void
+}
+
+export interface SurfaceContext {
+	get isLocked(): boolean
+	// get displayHost(): string
+
+	disconnect(error: Error): void
+
+	keyDown(keyIndex: number): void
+	keyUp(keyIndex: number): void
+	keyDownUp(keyIndex: number): void
+	rotateLeft(keyIndex: number): void
+	rotateRight(keyIndex: number): void
+
+	keyDownXY(x: number, y: number): void
+	keyUpXY(x: number, y: number): void
+	keyDownUpXY(x: number, y: number): void
+	rotateLeftXY(x: number, y: number): void
+	rotateRightXY(x: number, y: number): void
+
+	sendVariableValue(variable: string, value: any): void
 }

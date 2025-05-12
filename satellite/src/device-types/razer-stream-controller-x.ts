@@ -1,28 +1,33 @@
 import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CardGenerator } from '../cards.js'
-import { ImageWriteQueue } from '../writeQueue.js'
-import {
+import type { CardGenerator } from '../graphics/cards.js'
+import type {
 	ClientCapabilities,
-	CompanionClient,
+	SurfaceContext,
 	DeviceDrawProps,
+	SurfaceInstance,
 	DeviceRegisterProps,
-	WrappedSurface,
-	WrappedSurfaceEvents,
 } from './api.js'
-import { EventEmitter } from 'events'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
+import { Pincode5x3 } from './pincode.js'
 
-export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+export function compileRazerStreamControllerXProps(device: LoupedeckDevice): DeviceRegisterProps {
+	return {
+		brightness: true,
+		rowCount: 3,
+		columnCount: 5,
+		bitmapSize: device.lcdKeySize,
+		colours: true,
+		text: false,
+		pincodeMap: Pincode5x3(),
+	}
+}
+
+export class RazerStreamControllerXWrapper implements SurfaceInstance {
 	readonly pluginId = LOUPEDECK_PLUGIN_ID
 
-	readonly #cardGenerator: CardGenerator
 	readonly #deck: LoupedeckDevice
 	readonly #surfaceId: string
-
-	#queueOutputId: number
-	#isShowingCard = true
-	#queue: ImageWriteQueue
 
 	public get surfaceId(): string {
 		return this.#surfaceId
@@ -31,59 +36,15 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 		return this.#deck.modelName
 	}
 
-	public constructor(surfaceId: string, device: LoupedeckDevice, cardGenerator: CardGenerator) {
-		super()
-
+	public constructor(surfaceId: string, device: LoupedeckDevice, context: SurfaceContext) {
 		this.#deck = device
 		this.#surfaceId = surfaceId
-		this.#cardGenerator = cardGenerator
 
-		this.#deck.on('error', (e) => this.emit('error', e))
+		this.#deck.on('error', (e) => context.disconnect(e))
 
 		if (device.modelId !== LoupedeckModelId.RazerStreamControllerX)
 			throw new Error('Incorrect model passed to wrapper!')
 
-		this.#queueOutputId = 0
-
-		this.#queue = new ImageWriteQueue(async (key: number, buffer: Buffer) => {
-			if (key > 40) {
-				return
-			}
-
-			try {
-				if (this.#isShowingCard) {
-					this.#isShowingCard = false
-
-					// Do a blank of the whole panel before drawing a button, so that there isnt any bleed
-					await this.blankDevice(true)
-				}
-
-				await this.#deck.drawKeyBuffer(key, buffer, LoupedeckBufferFormat.RGB)
-			} catch (e_1) {
-				console.error(`device(${surfaceId}): fillImage failed: ${e_1}`)
-			}
-		})
-	}
-
-	getRegisterProps(): DeviceRegisterProps {
-		return {
-			brightness: true,
-			keysTotal: 15,
-			keysPerRow: 5,
-			bitmapSize: this.#deck.lcdKeySize,
-			colours: true,
-			text: false,
-		}
-	}
-
-	async close(): Promise<void> {
-		this.#queue?.abort()
-
-		await this.#deck.blankDevice(true, true).catch(() => null)
-
-		await this.#deck.close()
-	}
-	async initDevice(client: CompanionClient, status: string): Promise<void> {
 		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
 			if (type === 'button') {
 				return id
@@ -92,63 +53,55 @@ export class RazerStreamControllerXWrapper extends EventEmitter<WrappedSurfaceEv
 			// Discard
 			return 99
 		}
-		console.log('Registering key events for ' + this.surfaceId)
-		this.#deck.on('down', (info) => client.keyDown(this.surfaceId, convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => client.keyUp(this.surfaceId, convertButtonId(info.type, info.index)))
+		this.#deck.on('down', (info) => context.keyDown(convertButtonId(info.type, info.index)))
+		this.#deck.on('up', (info) => context.keyUp(convertButtonId(info.type, info.index)))
+	}
+
+	async close(): Promise<void> {
+		await this.#deck.blankDevice(true, true).catch(() => null)
+
+		await this.#deck.close()
+	}
+	async initDevice(): Promise<void> {
+		console.log('Initialisng ' + this.surfaceId)
 
 		// Start with blanking it
 		await this.blankDevice()
-
-		this.showStatus(client.displayHost, status)
 	}
 
 	updateCapabilities(_capabilities: ClientCapabilities): void {
 		// Not used
 	}
 
-	async deviceAdded(): Promise<void> {
-		this.#queueOutputId++
-	}
+	async deviceAdded(): Promise<void> {}
 	async setBrightness(percent: number): Promise<void> {
 		await this.#deck.setBrightness(percent / 100)
 	}
 	async blankDevice(skipButtons?: boolean): Promise<void> {
 		await this.#deck.blankDevice(true, !skipButtons)
 	}
-	async draw(d: DeviceDrawProps): Promise<void> {
+	async draw(_signal: AbortSignal, d: DeviceDrawProps): Promise<void> {
 		if (d.image) {
-			this.#queue.queue(d.keyIndex, d.image)
+			const buffer = await d.image(this.#deck.lcdKeySize, this.#deck.lcdKeySize, imageRs.PixelFormat.Rgb)
+			await this.#deck.drawKeyBuffer(d.keyIndex, buffer, LoupedeckBufferFormat.RGB)
 		} else {
 			throw new Error(`Cannot draw for Loupedeck without image`)
 		}
 	}
-	showStatus(hostname: string, status: string): void {
+
+	async showStatus(
+		signal: AbortSignal,
+		cardGenerator: CardGenerator,
+		hostname: string,
+		status: string,
+	): Promise<void> {
 		const width = this.#deck.displayMain.width
 		const height = this.#deck.displayMain.height
 
-		// abort and discard current operations
-		this.#queue?.abort()
-		this.#queueOutputId++
-		const outputId = this.#queueOutputId
-		this.#cardGenerator
-			.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
-			.then(async (buffer) => {
-				if (outputId === this.#queueOutputId) {
-					this.#isShowingCard = true
-					// still valid
-					await this.#deck.drawBuffer(
-						LoupedeckDisplayId.Center,
-						buffer,
-						LoupedeckBufferFormat.RGB,
-						width,
-						height,
-						0,
-						0,
-					)
-				}
-			})
-			.catch((e) => {
-				console.error(`Failed to fill device`, e)
-			})
+		const buffer = await cardGenerator.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
+
+		if (signal.aborted) return
+
+		await this.#deck.drawBuffer(LoupedeckDisplayId.Center, buffer, LoupedeckBufferFormat.RGB, width, height, 0, 0)
 	}
 }

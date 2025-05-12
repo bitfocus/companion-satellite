@@ -5,22 +5,25 @@ import {
 	openBlackmagicController,
 	BlackmagicControllerTBarControlDefinition,
 	BlackmagicControllerSetButtonColorValue,
+	BlackmagicControllerControlDefinition,
+	DeviceModelId,
 } from '@blackmagic-controller/node'
-import {
+import type {
 	ClientCapabilities,
-	CompanionClient,
+	SurfaceContext,
 	DeviceDrawProps,
 	DeviceRegisterProps,
 	DiscoveredSurfaceInfo,
 	HIDDevice,
+	OpenSurfaceResult,
 	SurfacePlugin,
-	WrappedSurface,
-	WrappedSurfaceEvents,
+	SurfaceInstance,
+	SurfacePincodeMap,
 } from './api.js'
 import { parseColor } from './lib.js'
 import debounceFn from 'debounce-fn'
-import { EventEmitter } from 'events'
-import type { CardGenerator } from '../cards.js'
+import type { CardGenerator } from '../graphics/cards.js'
+import { assertNever } from '../lib.js'
 
 const PLUGIN_ID = 'blackmagic-controller'
 
@@ -53,20 +56,124 @@ export class BlackmagicControllerPlugin implements SurfacePlugin<BlackmagicContr
 	openSurface = async (
 		surfaceId: string,
 		pluginInfo: BlackmagicControllerDeviceInfo,
-		_cardGenerator: CardGenerator,
-	): Promise<WrappedSurface> => {
+		context: SurfaceContext,
+	): Promise<OpenSurfaceResult> => {
 		const controller = await openBlackmagicController(pluginInfo.path)
-		return new BlackmagicControllerWrapper(surfaceId, controller)
+
+		const registerProps = compileRegisterProps(controller)
+
+		return {
+			surface: new BlackmagicControllerWrapper(surfaceId, controller, context, registerProps),
+			registerProps,
+		}
 	}
 }
 
-export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+function compileRegisterProps(controller: BlackmagicController): DeviceRegisterProps {
+	const allRowValues = controller.CONTROLS.map((control) => control.row)
+	const allColumnValues = controller.CONTROLS.map((button) => button.column)
+
+	const columnCount = Math.max(...allColumnValues) + 1
+	const rowCount = Math.max(...allRowValues) + 1
+
+	const info: DeviceRegisterProps = {
+		brightness: false,
+		rowCount: rowCount,
+		columnCount: columnCount,
+		bitmapSize: 0,
+		colours: true,
+		text: false,
+		transferVariables: [
+			{
+				id: 'tbarValueVariable',
+				type: 'input',
+				name: 'Variable to store T-bar value to',
+				description:
+					'This produces a value between 0 and 1. You can use an expression to convert it into a different range.',
+			},
+			{
+				id: 'tbarLeds',
+				type: 'output',
+				name: 'T-bar LED pattern',
+				description:
+					'Set the pattern of LEDs on the T-bar. Use numbers -16 to 16, positive numbers light up from the bottom, negative from the top.',
+			},
+			// {
+			// 	id: 'batteryLevel',
+			// 	type: 'input',
+			// 	name: 'Battery percentage',
+			// 	description: 'The battery level of the controller, in range 0-1',
+			// },
+		],
+		pincodeMap: generatePincodeMap(controller.MODEL, controller.CONTROLS),
+	}
+
+	return info
+}
+
+function generatePincodeMap(
+	model: DeviceModelId,
+	controls: Readonly<BlackmagicControllerControlDefinition[]>,
+): SurfacePincodeMap | null {
+	const controlMap = new Map(controls.filter((c) => c.type === 'button').map((control) => [control.id, control]))
+
+	switch (model) {
+		case DeviceModelId.AtemMicroPanel: {
+			const preview10 = controlMap.get('preview10')
+			const preview1 = controlMap.get('preview1')
+			const preview2 = controlMap.get('preview2')
+			const preview3 = controlMap.get('preview3')
+			const preview4 = controlMap.get('preview4')
+			const preview5 = controlMap.get('preview5')
+			const preview6 = controlMap.get('preview6')
+			const preview7 = controlMap.get('preview7')
+			const preview8 = controlMap.get('preview8')
+			const preview9 = controlMap.get('preview9')
+
+			if (
+				!preview10 ||
+				!preview1 ||
+				!preview2 ||
+				!preview3 ||
+				!preview4 ||
+				!preview5 ||
+				!preview6 ||
+				!preview7 ||
+				!preview8 ||
+				!preview9
+			) {
+				console.error('Missing controls for pincode map')
+				return null
+			}
+
+			return {
+				type: 'single-page',
+				pincode: [0, 0], // Not used
+				0: [preview10.column, preview10.row],
+				1: [preview1.column, preview1.row],
+				2: [preview2.column, preview2.row],
+				3: [preview3.column, preview3.row],
+				4: [preview4.column, preview4.row],
+				5: [preview5.column, preview5.row],
+				6: [preview6.column, preview6.row],
+				7: [preview7.column, preview7.row],
+				8: [preview8.column, preview8.row],
+				9: [preview9.column, preview9.row],
+			}
+		}
+		default:
+			assertNever(model)
+			return null
+	}
+}
+
+export class BlackmagicControllerWrapper implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
 	readonly #device: BlackmagicController
 	readonly #surfaceId: string
 	readonly #columnCount: number
-	readonly #rowCount: number
+	// readonly #rowCount: number
 
 	public get surfaceId(): string {
 		return this.#surfaceId
@@ -75,76 +182,32 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		return `Blackmagic ${this.#device.PRODUCT_NAME}`
 	}
 
-	public constructor(surfaceId: string, device: BlackmagicController) {
-		super()
-
+	public constructor(
+		surfaceId: string,
+		device: BlackmagicController,
+		context: SurfaceContext,
+		registerProps: DeviceRegisterProps,
+	) {
 		this.#device = device
 		this.#surfaceId = surfaceId
 
-		this.#device.on('error', (e) => this.emit('error', e))
+		// this.#rowCount = rowCount
+		this.#columnCount = registerProps.columnCount
 
-		const allRowValues = this.#device.CONTROLS.map((control) => control.row)
-		const allColumnValues = this.#device.CONTROLS.map((button) => button.column)
+		this.#device.on('error', (e) => context.disconnect(e as any))
 
-		this.#columnCount = Math.max(...allColumnValues) + 1
-		this.#rowCount = Math.max(...allRowValues) + 1
-	}
-
-	getRegisterProps(): DeviceRegisterProps {
-		const info: DeviceRegisterProps = {
-			brightness: false,
-			keysTotal: this.#columnCount * this.#rowCount,
-			keysPerRow: this.#columnCount,
-			bitmapSize: 0,
-			colours: true,
-			text: false,
-			transferVariables: [
-				{
-					id: 'tbarValueVariable',
-					type: 'input',
-					name: 'Variable to store T-bar value to',
-					description:
-						'This produces a value between 0 and 1. You can use an expression to convert it into a different range.',
-				},
-				{
-					id: 'tbarLeds',
-					type: 'output',
-					name: 'T-bar LED pattern',
-					description:
-						'Set the pattern of LEDs on the T-bar. Use numbers -16 to 16, positive numbers light up from the bottom, negative from the top.',
-				},
-				// {
-				// 	id: 'batteryLevel',
-				// 	type: 'input',
-				// 	name: 'Battery percentage',
-				// 	description: 'The battery level of the controller, in range 0-1',
-				// },
-			],
-		}
-
-		return info
-	}
-
-	async close(): Promise<void> {
-		await this.#device.clearPanel().catch(() => null)
-
-		await this.#device.close()
-	}
-	async initDevice(client: CompanionClient, status: string): Promise<void> {
-		console.log('Registering key events for ' + this.surfaceId)
 		this.#device.on('down', (control) => {
-			client.keyDownXY(this.surfaceId, control.column, control.row)
+			context.keyDownXY(control.column, control.row)
 		})
 		this.#device.on('up', (control) => {
-			client.keyUpXY(this.surfaceId, control.column, control.row)
+			context.keyUpXY(control.column, control.row)
 		})
 		this.#device.on('batteryLevel', (_level) => {
-			// client.sendVariableValue(this.#surfaceId, 'batteryLevel', level.toString())
+			// context.sendVariableValue(this.#surfaceId, 'batteryLevel', level.toString())
 		})
 		this.#device.on('tbar', (_control, level) => {
-			client.sendVariableValue(this.#surfaceId, 'tbarValueVariable', level.toString())
+			context.sendVariableValue('tbarValueVariable', level.toString())
 		})
-
 		// this.#device
 		// 	.getBatteryLevel()
 		// 	.then((level) => {
@@ -153,11 +216,18 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		// 	.catch((e) => {
 		// 		console.error('Failed to report battery level', e)
 		// 	})
+	}
+
+	async close(): Promise<void> {
+		await this.#device.clearPanel().catch(() => null)
+
+		await this.#device.close()
+	}
+	async initDevice(): Promise<void> {
+		console.log('Initialisng ' + this.surfaceId)
 
 		// Start with blanking it
 		await this.blankDevice()
-
-		this.showStatus(client.displayHost, status)
 	}
 
 	updateCapabilities(_capabilities: ClientCapabilities): void {
@@ -171,9 +241,11 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		// Not supported
 	}
 	async blankDevice(): Promise<void> {
+		this.#pendingDrawColors = {}
+
 		await this.#device.clearPanel()
 	}
-	async draw(d: DeviceDrawProps): Promise<void> {
+	async draw(_signal: AbortSignal, d: DeviceDrawProps): Promise<void> {
 		if (!d.color) d.color = '#000000'
 
 		const x = d.keyIndex % this.#columnCount
@@ -220,7 +292,47 @@ export class BlackmagicControllerWrapper extends EventEmitter<WrappedSurfaceEven
 		}
 	}
 
-	showStatus(_hostname: string, _status: string): void {
+	onLockedStatus(locked: boolean, characterCount: number): void {
+		if (locked && this.#device.MODEL === DeviceModelId.AtemMicroPanel) {
+			// Show a progress bar on the upper row to indicate number of characters entered
+
+			const lockOutputKeyIds = [
+				// Note: these are in order of value they represent
+				'program1',
+				'program2',
+				'program3',
+				'program4',
+				'program5',
+				'program6',
+				'program7',
+				'program8',
+				'program9',
+				'program10',
+			]
+
+			const colors: BlackmagicControllerSetButtonColorValue[] = []
+
+			for (let i = 0; i < characterCount && i < lockOutputKeyIds.length; i++) {
+				colors.push({
+					keyId: lockOutputKeyIds[i],
+					red: true,
+					green: true,
+					blue: true,
+				})
+			}
+
+			this.#device.setButtonColors(colors).catch((e) => {
+				console.error(`write failed: ${e}`)
+			})
+		}
+	}
+
+	async showStatus(
+		_signal: AbortSignal,
+		_cardGenerator: CardGenerator,
+		_hostname: string,
+		_status: string,
+	): Promise<void> {
 		// Nothing to display here
 		// TODO - do some flashing lights to indicate each status?
 	}

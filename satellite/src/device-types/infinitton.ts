@@ -1,18 +1,17 @@
-import { CardGenerator } from '../cards.js'
-import {
+import type { CardGenerator } from '../graphics/cards.js'
+import type {
 	ClientCapabilities,
-	CompanionClient,
 	DeviceDrawProps,
 	SurfacePlugin,
-	DeviceRegisterProps,
 	DiscoveredSurfaceInfo,
-	WrappedSurface,
-	WrappedSurfaceEvents,
+	SurfaceInstance,
 	HIDDevice,
+	OpenSurfaceResult,
+	SurfaceContext,
 } from './api.js'
 import * as imageRs from '@julusian/image-rs'
 import Infinitton from 'infinitton-idisplay'
-import { EventEmitter } from 'events'
+import { Pincode5x3 } from './pincode.js'
 
 export interface InfinittonDeviceInfo {
 	path: string
@@ -51,21 +50,29 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 	openSurface = async (
 		surfaceId: string,
 		pluginInfo: InfinittonDeviceInfo,
-		cardGenerator: CardGenerator,
-	): Promise<WrappedSurface> => {
+		context: SurfaceContext,
+	): Promise<OpenSurfaceResult> => {
 		const infinitton = new Infinitton(pluginInfo.path)
-		return new InfinittonWrapper(surfaceId, infinitton, cardGenerator)
+		return {
+			surface: new InfinittonWrapper(surfaceId, infinitton, context),
+			registerProps: {
+				brightness: true,
+				rowCount: 3,
+				columnCount: 5,
+				bitmapSize: 72,
+				colours: false,
+				text: false,
+				pincodeMap: Pincode5x3(),
+			},
+		}
 	}
 }
 
-export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+export class InfinittonWrapper implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
-	readonly #cardGenerator: CardGenerator
 	readonly #panel: Infinitton
 	readonly #surfaceId: string
-
-	#currentStatus: string | null = null
 
 	public get surfaceId(): string {
 		return this.#surfaceId
@@ -74,76 +81,58 @@ export class InfinittonWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		return `Infinitton`
 	}
 
-	public constructor(surfaceId: string, panel: Infinitton, cardGenerator: CardGenerator) {
-		super()
-
+	public constructor(surfaceId: string, panel: Infinitton, context: SurfaceContext) {
 		this.#panel = panel
 		this.#surfaceId = surfaceId
-		this.#cardGenerator = cardGenerator
 
-		this.#panel.on('error', (e) => this.emit('error', e))
-	}
+		this.#panel.on('error', (e) => context.disconnect(e))
 
-	getRegisterProps(): DeviceRegisterProps {
-		return {
-			brightness: true,
-			keysTotal: 15,
-			keysPerRow: 5,
-			bitmapSize: 72,
-			colours: false,
-			text: false,
-		}
+		this.#panel.on('down', (key: number) => context.keyDown(key))
+		this.#panel.on('up', (key: number) => context.keyUp(key))
 	}
 
 	async close(): Promise<void> {
 		this.#panel.close()
 	}
-	async initDevice(client: CompanionClient, status: string): Promise<void> {
-		console.log('Registering key events for ' + this.surfaceId)
-		this.#panel.on('down', (key: number) => client.keyDown(this.surfaceId, key))
-		this.#panel.on('up', (key: number) => client.keyUp(this.surfaceId, key))
+	async initDevice(): Promise<void> {
+		console.log('Initialising ' + this.surfaceId)
 
 		// Start with blanking it
 		await this.blankDevice()
-
-		this.showStatus(client.displayHost, status)
 	}
 
 	updateCapabilities(_capabilities: ClientCapabilities): void {
 		// Nothing to do
 	}
 
-	async deviceAdded(): Promise<void> {
-		this.#currentStatus = null
-	}
+	async deviceAdded(): Promise<void> {}
 	async setBrightness(percent: number): Promise<void> {
 		this.#panel.setBrightness(percent)
 	}
 	async blankDevice(): Promise<void> {
 		this.#panel.clearAllKeys()
 	}
-	async draw(d: DeviceDrawProps): Promise<void> {
+	async draw(_signal: AbortSignal, d: DeviceDrawProps): Promise<void> {
 		if (d.image) {
-			this.#panel.fillImage(d.keyIndex, d.image)
+			const buffer = await d.image(72, 72, imageRs.PixelFormat.Rgb)
+			this.#panel.fillImage(d.keyIndex, buffer)
 		} else {
 			throw new Error(`Cannot draw for Streamdeck without image`)
 		}
 	}
-	showStatus(hostname: string, status: string): void {
-		this.#currentStatus = status
-
+	async showStatus(
+		signal: AbortSignal,
+		cardGenerator: CardGenerator,
+		hostname: string,
+		status: string,
+	): Promise<void> {
 		const width = Infinitton.ICON_SIZE * Infinitton.NUM_KEYS_PER_ROW
 		const height = Infinitton.ICON_SIZE * Math.floor(Infinitton.NUM_KEYS / Infinitton.NUM_KEYS_PER_ROW)
-		this.#cardGenerator
-			.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
-			.then(async (buffer) => {
-				if (status === this.#currentStatus) {
-					// still valid
-					this.#panel.fillPanelImage(buffer)
-				}
-			})
-			.catch((e) => {
-				console.error(`Failed to fill device`, e)
-			})
+		const buffer = await cardGenerator.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
+
+		if (signal.aborted) return
+
+		// still valid
+		this.#panel.fillPanelImage(buffer)
 	}
 }

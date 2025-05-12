@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { ClientCapabilities, CompanionClient, DeviceDrawProps, DeviceRegisterProps } from './device-types/api.js'
+import { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
 import { assertNever, DEFAULT_TCP_PORT } from './lib.js'
 import * as semver from 'semver'
 import {
@@ -10,6 +10,7 @@ import {
 	ICompanionSatelliteClientOptions,
 	SomeConnectionDetails,
 } from './clientImplementations.js'
+import { SurfaceProxyDrawProps } from './surfaceProxy.js'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
@@ -90,11 +91,12 @@ export type CompanionSatelliteClientEvents = {
 	connecting: []
 	disconnected: []
 
-	draw: [DeviceDrawProps]
+	draw: [SurfaceProxyDrawProps]
 	brightness: [{ deviceId: string; percent: number }]
 	newDevice: [{ deviceId: string }]
 	clearDeck: [{ deviceId: string }]
 	variableValue: [{ deviceId: string; name: string; value: string }]
+	lockedState: [{ deviceId: string; locked: boolean; characterCount: number }]
 	deviceErrored: [{ deviceId: string; message: string }]
 }
 
@@ -119,6 +121,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _companionApiVersion: string | null = null
 	private _companionUnsupported = false
 
+	private _supportsLocalLockState = false
+
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
 	}
@@ -133,6 +137,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get companionUnsupported(): boolean {
 		return this._companionUnsupported
+	}
+
+	public get supportsLocalLockState(): boolean {
+		return this._supportsLocalLockState
 	}
 
 	public get displayHost(): string {
@@ -355,6 +363,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case 'VARIABLE-VALUE':
 				this.handleVariableValue(params)
 				break
+			case 'LOCKED-STATE':
+				this.handleLockedState(params)
+				break
 			case 'BRIGHTNESS':
 				this.handleBrightness(params)
 				break
@@ -371,6 +382,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case 'KEY-PRESS':
 			case 'KEY-ROTATE':
 			case 'SET-VARIABLE-VALUE':
+			case 'PINCODE-KEY':
 				// Ignore
 				break
 			default:
@@ -401,10 +413,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		// 		this._supportsCombinedEncoders = true
 		// 		console.log('Companion supports combined encoders')
 		// 	}
-		// 	if (semver.lte('1.5.0', protocolVersion)) {
-		// 		this._supportsBitmapResolution = true
-		// 		console.log('Companion supports bitmap resolution')
-		// 	}
+		if (this._companionApiVersion && semver.lte('1.8.0', this._companionApiVersion)) {
+			this._supportsLocalLockState = true
+			console.log('Companion supports delegating locking drawing')
+		}
 		// }
 
 		// report the connection as ready
@@ -464,6 +476,27 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		})
 	}
 
+	private handleLockedState(params: Record<string, string | boolean>) {
+		if (typeof params.DEVICEID !== 'string') {
+			console.log('Mising DEVICEID in LOCKED-STATE response')
+			return
+		}
+		if (typeof params.LOCKED !== 'string') {
+			console.log('Missing LOCKED in LOCKED-STATE response')
+			return
+		}
+		if (typeof params.CHARACTER_COUNT !== 'string') {
+			console.log('Missing CHARACTER_COUNT in LOCKED-STATE response')
+			return
+		}
+
+		this.emit('lockedState', {
+			deviceId: params.DEVICEID,
+			locked: params.LOCKED === '1',
+			characterCount: Number(params.CHARACTER_COUNT),
+		})
+	}
+
 	private handleBrightness(params: Record<string, string | boolean>): void {
 		if (typeof params.DEVICEID !== 'string') {
 			console.log('Missing DEVICEID in BRIGHTNESS response')
@@ -503,38 +536,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.emit('newDevice', { deviceId: params.DEVICEID })
 	}
 
-	public keyDown(deviceId: string, keyIndex: number): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-PRESS', null, deviceId, {
-				KEY: keyIndex,
-				PRESSED: true,
-			})
-		}
-	}
-	public keyUp(deviceId: string, keyIndex: number): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-PRESS', null, deviceId, {
-				KEY: keyIndex,
-				PRESSED: false,
-			})
-		}
-	}
-	public rotateLeft(deviceId: string, keyIndex: number): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-ROTATE', null, deviceId, {
-				KEY: keyIndex,
-				DIRECTION: false,
-			})
-		}
-	}
-	public rotateRight(deviceId: string, keyIndex: number): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-ROTATE', null, deviceId, {
-				KEY: keyIndex,
-				DIRECTION: true,
-			})
-		}
-	}
 	public keyDownXY(deviceId: string, x: number, y: number): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('KEY-PRESS', null, deviceId, {
@@ -567,6 +568,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			})
 		}
 	}
+	public pincodeKey(deviceId: string, keyCode: number): void {
+		if (this._connected && this.socket) {
+			this.sendMessage('PINCODE-KEY', null, deviceId, {
+				KEY: keyCode,
+			})
+		}
+	}
 	public sendVariableValue(deviceId: string, variable: string, value: string): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('SET-VARIABLE-VALUE', null, deviceId, {
@@ -593,13 +601,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 			this.sendMessage('ADD-DEVICE', null, deviceId, {
 				PRODUCT_NAME: productName,
-				KEYS_TOTAL: props.keysTotal,
-				KEYS_PER_ROW: props.keysPerRow,
+				KEYS_TOTAL: props.columnCount * props.rowCount,
+				KEYS_PER_ROW: props.columnCount,
 				BITMAPS: props.bitmapSize ?? 0,
 				COLORS: props.colours,
 				TEXT: props.text,
 				VARIABLES: transferVariables,
 				BRIGHTNESS: props.brightness,
+				PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
 			})
 		}
 	}

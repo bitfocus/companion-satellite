@@ -7,22 +7,23 @@ import {
 	StreamDeckLcdSegmentControlDefinition,
 } from '@elgato-stream-deck/node'
 import * as imageRs from '@julusian/image-rs'
-import { CardGenerator } from '../cards.js'
-import { ImageWriteQueue } from '../writeQueue.js'
+import type { CardGenerator } from '../graphics/cards.js'
 import {
 	ClientCapabilities,
-	CompanionClient,
 	DeviceDrawProps,
 	SurfacePlugin,
 	DeviceRegisterProps,
 	DiscoveredSurfaceInfo,
-	WrappedSurface,
-	WrappedSurfaceEvents,
+	SurfaceInstance,
 	HIDDevice,
+	SurfaceContext,
+	OpenSurfaceResult,
+	SurfacePincodeMap,
 } from './api.js'
-import { parseColor, transformButtonImage } from './lib.js'
+import { parseColor } from './lib.js'
 import util from 'util'
-import EventEmitter from 'events'
+import { assertNever } from '../lib.js'
+import { Pincode4x4, Pincode5x3, Pincode6x2 } from './pincode.js'
 
 const setTimeoutPromise = util.promisify(setTimeout)
 
@@ -52,11 +53,12 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 
 	return {
 		brightness: deck.MODEL !== DeviceModelId.PEDAL,
-		keysTotal: cols * rows,
-		keysPerRow: cols,
+		rowCount: rows,
+		columnCount: cols,
 		bitmapSize: needsBitmaps,
 		colours: true,
 		text: false,
+		pincodeMap: generatePincodeMap(deck.MODEL),
 	}
 }
 
@@ -87,23 +89,99 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 	openSurface = async (
 		surfaceId: string,
 		pluginInfo: StreamDeckDeviceInfo,
-		cardGenerator: CardGenerator,
-	): Promise<WrappedSurface> => {
+		context: SurfaceContext,
+	): Promise<OpenSurfaceResult> => {
 		const streamdeck = await openStreamDeck(pluginInfo.path)
-		return new StreamDeckWrapper(surfaceId, streamdeck, cardGenerator)
+		const registerProps = compileRegisterProps(streamdeck)
+		return {
+			surface: new StreamDeckWrapper(surfaceId, streamdeck, registerProps, context),
+			registerProps: registerProps,
+		}
 	}
 }
 
-export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implements WrappedSurface {
+function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
+	switch (model) {
+		case DeviceModelId.MINI:
+			return {
+				type: 'multiple-page',
+				pincode: [0, 0],
+				nextPage: [0, 1],
+				pages: [
+					{
+						1: [1, 1],
+						2: [2, 1],
+						3: [1, 0],
+						4: [2, 0],
+					},
+					{
+						5: [1, 1],
+						6: [2, 1],
+						7: [1, 0],
+						8: [2, 0],
+					},
+					{
+						9: [1, 1],
+						0: [2, 1],
+						// 7: [1, 0],
+						// 8: [2, 0],
+					},
+				],
+			}
+		case DeviceModelId.ORIGINAL:
+		case DeviceModelId.ORIGINALV2:
+		case DeviceModelId.ORIGINALMK2:
+			return Pincode5x3()
+		case DeviceModelId.PEDAL:
+			// Not suitable for a pincode
+			return { type: 'custom' }
+		case DeviceModelId.NEO:
+			return {
+				type: 'single-page',
+				pincode: [1, 2],
+				0: [3, 2],
+				1: [0, 0],
+				2: [1, 0],
+				3: [2, 0],
+				4: [3, 0],
+				5: [0, 1],
+				6: [1, 1],
+				7: [2, 1],
+				8: [3, 1],
+				9: [0, 2],
+			}
+		case DeviceModelId.PLUS:
+			return {
+				type: 'single-page',
+				pincode: [0, 2],
+				0: [3, 2],
+				1: [0, 0],
+				2: [1, 0],
+				3: [2, 0],
+				4: [3, 0],
+				5: [0, 1],
+				6: [1, 1],
+				7: [2, 1],
+				8: [3, 1],
+				9: [2, 2],
+			}
+		case DeviceModelId.STUDIO:
+			return Pincode6x2(1)
+		case DeviceModelId.XL:
+			return Pincode4x4(2)
+		default:
+			assertNever(model)
+			return null
+	}
+}
+
+export class StreamDeckWrapper implements SurfaceInstance {
 	readonly pluginId = PLUGIN_ID
 
-	readonly #cardGenerator: CardGenerator
 	readonly #deck: StreamDeck
 	readonly #surfaceId: string
 	readonly #registerProps: DeviceRegisterProps
-
-	#drawAbort: AbortController
-	#queue: ImageWriteQueue<[abort: AbortSignal, drawProps: DeviceDrawProps]>
+	readonly #context: SurfaceContext
 
 	/**
 	 * Whether the LCD has been written to outside the button bounds that needs clearing
@@ -117,85 +195,178 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 		return this.#deck.PRODUCT_NAME
 	}
 
-	public constructor(surfaceId: string, deck: StreamDeck, cardGenerator: CardGenerator) {
-		super()
-
+	public constructor(
+		surfaceId: string,
+		deck: StreamDeck,
+		registerProps: DeviceRegisterProps,
+		context: SurfaceContext,
+	) {
 		this.#deck = deck
 		this.#surfaceId = surfaceId
-		this.#cardGenerator = cardGenerator
+		this.#registerProps = registerProps
+		this.#context = context
 
-		this.#deck.on('error', (e) => this.emit('error', e))
+		this.#deck.on('error', (e) => context.disconnect(e as any))
 
-		this.#drawAbort = new AbortController()
+		this.#deck.on('down', (control) => {
+			context.keyDownXY(control.column, control.row)
+		})
+		this.#deck.on('up', (control) => {
+			context.keyUpXY(control.column, control.row)
+		})
+		this.#deck.on('rotate', (control, delta) => {
+			if (delta < 0) {
+				context.rotateLeftXY(control.column, control.row)
+			} else if (delta > 0) {
+				context.rotateRightXY(control.column, control.row)
+			}
+		})
+		this.#deck.on('lcdShortPress', (control, position) => {
+			if (context.isLocked) return
 
-		this.#registerProps = compileRegisterProps(deck)
+			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
+			const column = control.column + columnOffset
 
-		this.#queue = new ImageWriteQueue(async (key: number, abort: AbortSignal, drawProps: DeviceDrawProps) => {
-			if (abort.aborted) return
+			context.keyDownUpXY(column, control.row)
+		})
+		this.#deck.on('lcdLongPress', (control, position) => {
+			if (context.isLocked) return
 
-			const x = key % this.#registerProps.keysPerRow
-			const y = Math.floor(key / this.#registerProps.keysPerRow)
+			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
+			const column = control.column + columnOffset
 
-			const control = this.#deck.CONTROLS.find((control) => {
-				if (control.row !== y) return false
+			context.keyDownUpXY(column, control.row)
+		})
+	}
 
-				if (control.column === x) return true
+	async close(): Promise<void> {
+		await this.#deck.resetToLogo().catch(() => null)
 
-				if (control.type === 'lcd-segment' && x >= control.column && x < control.column + control.columnSpan)
-					return true
+		await this.#deck.close()
+	}
+	async initDevice(): Promise<void> {
+		console.log('Initialising ' + this.surfaceId)
 
-				return false
-			})
-			if (!control) return
+		// Start with blanking it
+		await this.blankDevice()
+	}
 
-			const bufferSize = this.#registerProps.bitmapSize
+	updateCapabilities(_capabilities: ClientCapabilities): void {
+		// Not used
+	}
 
-			if (control.type === 'button') {
-				if (control.feedbackType === 'lcd') {
-					let newbuffer: Buffer | undefined
-					if (control.pixelSize.width === 0 || control.pixelSize.height === 0) {
-						return
-					} else {
-						try {
-							newbuffer = await transformButtonImage(
-								drawProps.image,
-								bufferSize,
-								bufferSize,
-								control.pixelSize.width,
-								control.pixelSize.height,
-								imageRs.PixelFormat.Rgb,
-							)
-						} catch (e: any) {
-							console.error(`scale image failed: ${e}\n${e.stack}`)
-							return
-						}
-					}
+	async deviceAdded(): Promise<void> {}
+	async setBrightness(percent: number): Promise<void> {
+		await this.#deck.setBrightness(percent)
+	}
+	async blankDevice(): Promise<void> {
+		await this.#deck.clearPanel()
+	}
+	async draw(signal: AbortSignal, drawProps: DeviceDrawProps): Promise<void> {
+		const key = drawProps.keyIndex
 
-					const maxAttempts = 3
-					for (let attempts = 1; attempts <= maxAttempts; attempts++) {
-						try {
-							if (abort.aborted) return
+		const x = key % this.#registerProps.columnCount
+		const y = Math.floor(key / this.#registerProps.columnCount)
 
-							await this.#deck.fillKeyBuffer(control.index, newbuffer)
-							return
-						} catch (e) {
-							if (attempts == maxAttempts) {
-								console.log(`fillImage failed after ${attempts} attempts: ${e}`)
-								return
-							}
-							await setTimeoutPromise(20)
-						}
-					}
-				} else if (control.feedbackType === 'rgb') {
-					const color = parseColor(drawProps.color)
+		const control = this.#deck.CONTROLS.find((control) => {
+			if (control.row !== y) return false
 
-					if (abort.aborted) return
+			if (control.column === x) return true
 
-					this.#deck.fillKeyColor(control.index, color.r, color.g, color.b).catch((e) => {
-						console.log(`color failed: ${e}`)
-					})
+			if (control.type === 'lcd-segment' && x >= control.column && x < control.column + control.columnSpan)
+				return true
+
+			return false
+		})
+		if (!control) return
+
+		if (control.type === 'button') {
+			if (control.feedbackType === 'lcd') {
+				if (!drawProps.image) {
+					console.error(`No image provided for lcd button`)
+					return
 				}
-			} else if (control.type === 'lcd-segment' && control.drawRegions) {
+
+				let newbuffer: Buffer | undefined
+				if (control.pixelSize.width === 0 || control.pixelSize.height === 0) {
+					return
+				} else {
+					try {
+						newbuffer = await drawProps.image(
+							control.pixelSize.width,
+							control.pixelSize.height,
+							imageRs.PixelFormat.Rgb,
+						)
+					} catch (e: any) {
+						console.error(`scale image failed: ${e}\n${e.stack}`)
+						return
+					}
+				}
+
+				const maxAttempts = 3
+				for (let attempts = 1; attempts <= maxAttempts; attempts++) {
+					try {
+						if (signal.aborted) return
+
+						await this.#deck.fillKeyBuffer(control.index, newbuffer)
+						return
+					} catch (e) {
+						if (attempts == maxAttempts) {
+							console.log(`fillImage failed after ${attempts} attempts: ${e}`)
+							return
+						}
+						await setTimeoutPromise(20)
+					}
+				}
+			} else if (control.feedbackType === 'rgb') {
+				const color = parseColor(drawProps.color)
+
+				if (signal.aborted) return
+
+				this.#deck.fillKeyColor(control.index, color.r, color.g, color.b).catch((e) => {
+					console.log(`color failed: ${e}`)
+				})
+			}
+		} else if (control.type === 'lcd-segment') {
+			if (!drawProps.image) {
+				console.error(`No image provided for lcd-segment`)
+				return
+			}
+
+			// Clear the lcd segment if needed
+			if (this.#fullLcdDirty) {
+				if (signal.aborted) return
+
+				this.#fullLcdDirty = false
+				await this.#deck.clearLcdSegment(control.id)
+			}
+
+			if (this.#context.isLocked) {
+				// Special case handling for neo lcd strip
+				if (this.#deck.MODEL === DeviceModelId.NEO) {
+					const image = await drawProps.image(
+						control.pixelSize.width,
+						control.pixelSize.height,
+						imageRs.PixelFormat.Rgb,
+					)
+
+					await this.#deck.fillLcd(control.id, image, {
+						format: 'rgb',
+					})
+					return
+				} else if (this.#deck.MODEL === DeviceModelId.PLUS && x === 0) {
+					const width = (control.pixelSize.width / control.columnSpan) * 2
+					const image = await drawProps.image(width, control.pixelSize.height, imageRs.PixelFormat.Rgb)
+
+					await this.#deck.fillLcdRegion(control.id, 0, 0, image, {
+						format: 'rgb',
+						width: width,
+						height: control.pixelSize.height,
+					})
+					return
+				}
+			}
+			if (control.drawRegions) {
 				const drawColumn = x - control.column
 
 				const columnWidth = control.pixelSize.width / control.columnSpan
@@ -209,31 +380,16 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 
 				let newbuffer: Buffer | undefined
 				try {
-					newbuffer = await transformButtonImage(
-						drawProps.image,
-						bufferSize,
-						bufferSize,
-						targetSize,
-						targetSize,
-						imageRs.PixelFormat.Rgb,
-					)
+					newbuffer = await drawProps.image(targetSize, targetSize, imageRs.PixelFormat.Rgb)
 				} catch (e) {
 					console.log(`scale image failed: ${e}`)
 					return
 				}
 
-				// Clear the lcd segment if needed
-				if (this.#fullLcdDirty) {
-					if (abort.aborted) return
-
-					this.#fullLcdDirty = false
-					await this.#deck.clearLcdSegment(control.id)
-				}
-
 				const maxAttempts = 3
 				for (let attempts = 1; attempts <= maxAttempts; attempts++) {
 					try {
-						if (abort.aborted) return
+						if (signal.aborted) return
 
 						await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
 							format: 'rgb',
@@ -249,111 +405,33 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 						await setTimeoutPromise(20)
 					}
 				}
-			} else if (control.type === 'encoder' && control.hasLed) {
-				const color = parseColor(drawProps.color)
-
-				if (abort.aborted) return
-
-				await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
 			}
-		})
+		} else if (control.type === 'encoder' && control.hasLed) {
+			const color = parseColor(drawProps.color)
+
+			if (signal.aborted) return
+
+			await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
+		}
 	}
-
-	getRegisterProps(): DeviceRegisterProps {
-		return this.#registerProps
-	}
-
-	async close(): Promise<void> {
-		this.#queue?.abort()
-
-		await this.#deck.resetToLogo().catch(() => null)
-
-		await this.#deck.close()
-	}
-	async initDevice(client: CompanionClient, status: string): Promise<void> {
-		console.log('Registering key events for ' + this.surfaceId)
-		this.#deck.on('down', (control) => {
-			client.keyDownXY(this.surfaceId, control.column, control.row)
-		})
-		this.#deck.on('up', (control) => {
-			client.keyUpXY(this.surfaceId, control.column, control.row)
-		})
-		this.#deck.on('rotate', (control, delta) => {
-			if (delta < 0) {
-				client.rotateLeftXY(this.surfaceId, control.column, control.row)
-			} else if (delta > 0) {
-				client.rotateRightXY(this.surfaceId, control.column, control.row)
-			}
-		})
-		this.#deck.on('lcdShortPress', (control, position) => {
-			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
-
-			const column = control.column + columnOffset
-
-			client.keyDownXY(this.surfaceId, column, control.row)
-
-			setTimeout(() => {
-				client.keyUpXY(this.surfaceId, column, control.row)
-			}, 20)
-		})
-		this.#deck.on('lcdLongPress', (control, position) => {
-			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
-
-			const column = control.column + columnOffset
-
-			client.keyDownXY(this.surfaceId, column, control.row)
-
-			setTimeout(() => {
-				client.keyUpXY(this.surfaceId, column, control.row)
-			}, 20)
-		})
-
-		// Start with blanking it
-		await this.blankDevice()
-
-		this.showStatus(client.displayHost, status)
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Not used
-	}
-
-	#discardDraws() {
-		this.#drawAbort.abort()
-		this.#drawAbort = new AbortController()
-
-		this.#queue.abort()
-	}
-
-	async deviceAdded(): Promise<void> {
-		this.#discardDraws()
-	}
-	async setBrightness(percent: number): Promise<void> {
-		await this.#deck.setBrightness(percent)
-	}
-	async blankDevice(): Promise<void> {
-		this.#discardDraws()
-
-		await this.#deck.clearPanel()
-	}
-	async draw(drawProps: DeviceDrawProps): Promise<void> {
-		this.#queue.queue(drawProps.keyIndex, this.#drawAbort.signal, drawProps)
-	}
-	showStatus(hostname: string, status: string): void {
-		this.#discardDraws()
-
-		const signal = this.#drawAbort.signal
-
+	async showStatus(
+		signal: AbortSignal,
+		cardGenerator: CardGenerator,
+		hostname: string,
+		status: string,
+	): Promise<void> {
 		const fillPanelDimensions = this.#deck.calculateFillPanelDimensions()
 		const lcdSegments = this.#deck.CONTROLS.filter(
 			(c): c is StreamDeckLcdSegmentControlDefinition => c.type === 'lcd-segment',
 		)
 
+		const ps: Promise<void>[] = []
+
 		if (fillPanelDimensions) {
 			const fillCard =
 				lcdSegments.length > 0
-					? this.#cardGenerator.generateLogoCard(fillPanelDimensions.width, fillPanelDimensions.height)
-					: this.#cardGenerator.generateBasicCard(
+					? cardGenerator.generateLogoCard(fillPanelDimensions.width, fillPanelDimensions.height)
+					: cardGenerator.generateBasicCard(
 							fillPanelDimensions.width,
 							fillPanelDimensions.height,
 							imageRs.PixelFormat.Rgba,
@@ -361,43 +439,51 @@ export class StreamDeckWrapper extends EventEmitter<WrappedSurfaceEvents> implem
 							status,
 						)
 
-			fillCard
-				.then(async (buffer) => {
-					if (signal.aborted) return
-
-					// still valid
-					await this.#deck.fillPanelBuffer(buffer, {
-						format: 'rgba',
-					})
-				})
-				.catch((e) => {
-					console.error(`Failed to fill device`, e)
-				})
-
-			for (const lcdStrip of lcdSegments) {
-				this.#cardGenerator
-					.generateLcdStripCard(
-						lcdStrip.pixelSize.width,
-						lcdStrip.pixelSize.height,
-						imageRs.PixelFormat.Rgba,
-						hostname,
-						status,
-					)
+			ps.push(
+				fillCard
 					.then(async (buffer) => {
 						if (signal.aborted) return
 
-						// Mark the screen as dirty, so the gaps get cleared when the first region draw happens
-						this.#fullLcdDirty = true
-
 						// still valid
-						await this.#deck.fillLcd(lcdStrip.id, buffer, {
+						await this.#deck.fillPanelBuffer(buffer, {
 							format: 'rgba',
 						})
 					})
 					.catch((e) => {
 						console.error(`Failed to fill device`, e)
-					})
+					}),
+			)
+
+			for (const lcdStrip of lcdSegments) {
+				const stripCard = cardGenerator.generateLcdStripCard(
+					lcdStrip.pixelSize.width,
+					lcdStrip.pixelSize.height,
+					imageRs.PixelFormat.Rgba,
+					hostname,
+					status,
+				)
+				stripCard.catch(() => null) // Ensure error doesn't go uncaught
+
+				ps.push(
+					stripCard
+						.then(async (buffer) => {
+							if (signal.aborted) return
+
+							// Mark the screen as dirty, so the gaps get cleared when the first region draw happens
+							this.#fullLcdDirty = true
+
+							// still valid
+							await this.#deck.fillLcd(lcdStrip.id, buffer, {
+								format: 'rgba',
+							})
+						})
+						.catch((e) => {
+							console.error(`Failed to fill device`, e)
+						}),
+				)
 			}
 		}
+
+		await Promise.all(ps)
 	}
 }
