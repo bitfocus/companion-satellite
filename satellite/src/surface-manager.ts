@@ -13,6 +13,7 @@ import { BlackmagicControllerPlugin } from './device-types/blackmagic-panel.js'
 import { SurfaceProxy, SurfaceProxyContext } from './surfaceProxy.js'
 import { LockingGraphicsGenerator, SurfaceGraphicsContext } from './graphics/lib.js'
 import { ContourShuttlePlugin } from './device-types/contour-shuttle.js'
+import { VecFootpedalPlugin } from './device-types/vec-footpedal.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -25,6 +26,7 @@ const knownPlugins: SurfacePlugin<any>[] = [
 	new QuickKeysPlugin(),
 	new BlackmagicControllerPlugin(),
 	new ContourShuttlePlugin(),
+	new VecFootpedalPlugin(),
 ]
 
 export class SurfaceManager {

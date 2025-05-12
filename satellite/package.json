@@ -62,6 +62,7 @@
 		"shuttle-node": "^0.1.1",
 		"tslib": "^2.8.1",
 		"usb": "^2.15.0",
+		"vec-footpedal": "^2.0.1",
 		"ws": "^8.18.1"
 	},
 	"lint-staged": {
