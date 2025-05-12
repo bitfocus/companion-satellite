@@ -1,5 +1,4 @@
 import * as imageRs from '@julusian/image-rs'
-import { DeviceDrawImage } from './api.js'
 
 export function parseColor(color: string | undefined): { r: number; g: number; b: number } {
 	const r = color ? parseInt(color.substr(1, 2), 16) : 0
@@ -9,11 +8,18 @@ export function parseColor(color: string | undefined): { r: number; g: number; b
 	return { r, g, b }
 }
 
+export interface TransformButtonImage {
+	buffer: Buffer
+	width: number
+	height: number
+	pixelFormat: imageRs.PixelFormat
+}
+
 /**
  * Transform a button image render to the format needed for a surface integration
  */
 export async function transformButtonImage(
-	rawImage: DeviceDrawImage | undefined,
+	rawImage: TransformButtonImage | undefined,
 	targetWidth: number,
 	targetHeight: number,
 	targetFormat: imageRs.PixelFormat,

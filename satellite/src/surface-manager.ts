@@ -414,16 +414,6 @@ export class SurfaceManager {
 		this.scanForSurfaces()
 	}
 
-	// private getAutoId(path: string, prefix: string): string {
-	// 	const val = autoIdMap.get(path)
-	// 	if (val) return val
-
-	// 	const nextId = autoIdMap.size + 1
-	// 	const val2 = `${prefix}-${nextId.toString().padStart(3, '0')}`
-	// 	autoIdMap.set(path, val2)
-	// 	return val2
-	// }
-
 	#tryAddSurfaceFromPlugin<T>(plugin: SurfacePlugin<T>, pluginInfo: DiscoveredSurfaceInfo<T>): boolean {
 		if (this.#pendingSurfaces.has(pluginInfo.surfaceId) || this.#surfaces.has(pluginInfo.surfaceId)) return false
 		this.#pendingSurfaces.add(pluginInfo.surfaceId)

@@ -231,8 +231,6 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 		await this.#device.close()
 	}
 	async initDevice(): Promise<void> {
-		console.log('Initialisng ' + this.surfaceId)
-
 		// Start with blanking it
 		await this.blankDevice()
 	}

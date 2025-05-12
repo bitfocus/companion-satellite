@@ -95,8 +95,6 @@ export class InfinittonWrapper implements SurfaceInstance {
 		this.#panel.close()
 	}
 	async initDevice(): Promise<void> {
-		console.log('Initialising ' + this.surfaceId)
-
 		// Start with blanking it
 		await this.blankDevice()
 	}

@@ -118,8 +118,6 @@ export class LoupedeckLiveSWrapper implements SurfaceInstance {
 		await this.#deck.close()
 	}
 	async initDevice(): Promise<void> {
-		console.log('Initialising ' + this.surfaceId)
-
 		// Start with blanking it
 		await this.blankDevice()
 	}

@@ -73,6 +73,8 @@ export class SurfaceProxy {
 		// Ensure it doesn't get stuck as locked
 		this.#context.setLocked(false)
 
+		console.log('Initialising ' + this.surfaceId)
+
 		await this.#surface.initDevice()
 
 		this.showStatus(displayHost, status)

@@ -283,7 +283,7 @@ export class ContourShuttleWrapper implements SurfaceInstance {
 		await this.#device.close()
 	}
 	async initDevice(): Promise<void> {
-		console.log('Initialisng ' + this.surfaceId)
+		// Nothing to do
 	}
 
 	updateCapabilities(_capabilities: ClientCapabilities): void {

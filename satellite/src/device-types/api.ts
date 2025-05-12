@@ -7,12 +7,6 @@ export type HIDDevice = HID.Device
 
 export type SurfaceId = string
 
-export interface DeviceDrawImage {
-	buffer: Buffer
-	width: number
-	height: number
-	pixelFormat: PixelFormat
-}
 export type DeviceDrawImageFn = (width: number, height: number, format: PixelFormat) => Promise<Buffer>
 
 export interface DeviceDrawProps {

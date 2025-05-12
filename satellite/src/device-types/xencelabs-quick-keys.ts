@@ -172,8 +172,6 @@ export class QuickKeysWrapper implements SurfaceInstance {
 		await this.#surface.stopData()
 	}
 	async initDevice(): Promise<void> {
-		console.log('Initialising ' + this.surfaceId)
-
 		await this.#surface.startData()
 
 		await this.#surface.setWheelSpeed(XencelabsQuickKeysWheelSpeed.Normal) // TODO dynamic
