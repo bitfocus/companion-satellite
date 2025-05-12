@@ -37,7 +37,7 @@
 		"node": "^20.14"
 	},
 	"dependencies": {
-		"@blackmagic-controller/node": "^0.1.1",
+		"@blackmagic-controller/node": "^0.2.0",
 		"@elgato-stream-deck/node": "^7.1.2",
 		"@julusian/bonjour-service": "^1.3.0-2",
 		"@julusian/image-rs": "^1.1.1",

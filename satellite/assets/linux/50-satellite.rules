@@ -30,7 +30,11 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="0fd9", ATTRS{idProduct}=="00aa", MODE:="666
 
 # blackmagic panels
 KERNEL=="hidraw*", ATTRS{idVendor}=="1edb", ATTRS{idProduct}=="bef0", MODE:="660", GROUP="satellite"
+KERNEL=="hidraw*", ATTRS{idVendor}=="1edb", ATTRS{idProduct}=="da11", MODE:="660", GROUP="satellite"
 
 #xencelabs
 KERNEL=="hidraw*", ATTRS{busnum}=="1", ATTRS{idVendor}=="28bd", ATTRS{idProduct}=="5202", MODE:="666", GROUP="satellite"
 KERNEL=="hidraw*", ATTRS{busnum}=="1", ATTRS{idVendor}=="28bd", ATTRS{idProduct}=="5203", MODE:="666", GROUP="satellite"
+
+#contour-shuttle
+KERNEL=="hidraw*", ATTRS{idVendor}=="0b33", MODE:="666", GROUP="satellite"

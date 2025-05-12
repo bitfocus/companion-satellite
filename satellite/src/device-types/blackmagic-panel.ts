@@ -4,9 +4,10 @@ import {
 	getBlackmagicControllerDeviceInfo,
 	openBlackmagicController,
 	BlackmagicControllerTBarControlDefinition,
-	BlackmagicControllerSetButtonColorValue,
 	BlackmagicControllerControlDefinition,
 	DeviceModelId,
+	BlackmagicControllerSetButtonSomeValue,
+	BlackmagicControllerButtonControlDefinition,
 } from '@blackmagic-controller/node'
 import type {
 	ClientCapabilities,
@@ -161,6 +162,12 @@ function generatePincodeMap(
 				9: [preview9.column, preview9.row],
 			}
 		}
+		case DeviceModelId.DaVinciResolveReplayEditor:
+			// Don't support pincode entry
+			// TODO: should we support this?
+			return {
+				type: 'custom',
+			}
 		default:
 			assertNever(model)
 			return null
@@ -252,11 +259,12 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 		const y = Math.floor(d.keyIndex / this.#columnCount)
 
 		const control = this.#device.CONTROLS.find(
-			(control) => control.type === 'button' && control.row === y && control.column === x,
+			(control): control is BlackmagicControllerButtonControlDefinition =>
+				control.type === 'button' && control.row === y && control.column === x,
 		)
 		if (!control) return
 
-		this.#pendingDrawColors[control.id] = d.color
+		this.#pendingDrawColors[control.id] = { color: d.color, control }
 
 		this.#triggerRedraw()
 	}
@@ -310,18 +318,43 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 				'program10',
 			]
 
-			const colors: BlackmagicControllerSetButtonColorValue[] = []
+			const controlMap = new Map(
+				this.#device.CONTROLS.filter((c) => c.type === 'button').map((control) => [control.id, control]),
+			)
+
+			const colors: BlackmagicControllerSetButtonSomeValue[] = []
 
 			for (let i = 0; i < characterCount && i < lockOutputKeyIds.length; i++) {
-				colors.push({
-					keyId: lockOutputKeyIds[i],
-					red: true,
-					green: true,
-					blue: true,
-				})
+				const control = controlMap.get(lockOutputKeyIds[i])
+				if (!control) continue
+
+				switch (control.feedbackType) {
+					case 'rgb':
+						colors.push({
+							type: 'rgb',
+							keyId: lockOutputKeyIds[i],
+							red: true,
+							green: true,
+							blue: true,
+						})
+						break
+					case 'on-off':
+						colors.push({
+							type: 'on-off',
+							keyId: lockOutputKeyIds[i],
+							on: true,
+						})
+						break
+					case 'none':
+						// no-op
+						break
+					default:
+						assertNever(control.feedbackType)
+						break
+				}
 			}
 
-			this.#device.setButtonColors(colors).catch((e) => {
+			this.#device.setButtonStates(colors).catch((e) => {
 				console.error(`write failed: ${e}`)
 			})
 		}
@@ -343,24 +376,46 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 	 */
 	#triggerRedraw = debounceFn(
 		() => {
-			const colors: BlackmagicControllerSetButtonColorValue[] = []
+			const colors: BlackmagicControllerSetButtonSomeValue[] = []
 
 			const threshold = 100 // Use a lower than 50% threshold, to make it more sensitive
 
-			for (const [id, rawColor] of Object.entries(this.#pendingDrawColors)) {
+			for (const [id, { color: rawColor, control }] of Object.entries(this.#pendingDrawColors)) {
 				const color = parseColor(rawColor)
-				colors.push({
-					keyId: id,
-					red: color.r >= threshold,
-					green: color.g >= threshold,
-					blue: color.b >= threshold,
-				})
+				const red = color.r >= threshold
+				const green = color.g >= threshold
+				const blue = color.b >= threshold
+
+				switch (control.feedbackType) {
+					case 'rgb':
+						colors.push({
+							keyId: id,
+							type: 'rgb',
+							red: color.r >= threshold,
+							green: color.g >= threshold,
+							blue: color.b >= threshold,
+						})
+						break
+					case 'on-off':
+						colors.push({
+							keyId: id,
+							type: 'on-off',
+							on: red || green || blue,
+						})
+						break
+					case 'none':
+						// no-op
+						break
+					default:
+						assertNever(control.feedbackType)
+						break
+				}
 			}
 
 			if (colors.length === 0) return
 
 			this.#pendingDrawColors = {}
-			this.#device.setButtonColors(colors).catch((e) => {
+			this.#device.setButtonStates(colors).catch((e) => {
 				console.error(`write failed: ${e}`)
 			})
 		},
@@ -371,5 +426,5 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 			maxWait: 20,
 		},
 	)
-	#pendingDrawColors: Record<string, string> = {}
+	#pendingDrawColors: Record<string, { color: string; control: BlackmagicControllerButtonControlDefinition }> = {}
 }
