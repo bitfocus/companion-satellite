@@ -12,6 +12,7 @@ import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from '
 import { BlackmagicControllerPlugin } from './device-types/blackmagic-panel.js'
 import { SurfaceProxy, SurfaceProxyContext } from './surfaceProxy.js'
 import { LockingGraphicsGenerator, SurfaceGraphicsContext } from './graphics/lib.js'
+import { ContourShuttlePlugin } from './device-types/contour-shuttle.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -23,6 +24,7 @@ const knownPlugins: SurfacePlugin<any>[] = [
 	new LoupedeckPlugin(),
 	new QuickKeysPlugin(),
 	new BlackmagicControllerPlugin(),
+	new ContourShuttlePlugin(),
 ]
 
 export class SurfaceManager {
