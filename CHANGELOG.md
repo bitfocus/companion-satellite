@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.1.0](https://github.com/bitfocus/companion-satellite/compare/v2.0.3...v2.1.0) (2025-05-24)
+
+
+### Features
+
+* add support for contour-shuttle [#196](https://github.com/bitfocus/companion-satellite/issues/196) ([24bf859](https://github.com/bitfocus/companion-satellite/commit/24bf859b7abda16973680dbb4ce7f794bfb8c4d4))
+* local surface locking ([#198](https://github.com/bitfocus/companion-satellite/issues/198)) ([0d24d00](https://github.com/bitfocus/companion-satellite/commit/0d24d00359267fd8770709901c52bc1499f66f1e))
+* support blackmagic resolve replay editor ([39f9f74](https://github.com/bitfocus/companion-satellite/commit/39f9f743731257470622a622d920d9b831ea3777))
+
+
+### Bug Fixes
+
+* support http proxy in update check ([2e5b410](https://github.com/bitfocus/companion-satellite/commit/2e5b4103ec827d28b4a947cccb7856a4af40a5d3))
+* suppress `MaxListenersExceededWarning` warning ([ffbb48b](https://github.com/bitfocus/companion-satellite/commit/ffbb48b4581ae8b82cc402a4905ff2b94befe399))
+
 ## [2.0.3](https://github.com/bitfocus/companion-satellite/compare/v2.0.2...v2.0.3) (2025-04-13)
 
 
