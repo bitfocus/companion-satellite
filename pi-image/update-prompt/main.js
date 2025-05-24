@@ -2,6 +2,14 @@
 import semver from 'semver'
 import inquirer from 'inquirer'
 import fs from 'fs'
+import { setGlobalDispatcher, EnvHttpProxyAgent } from 'undici'
+
+// Setup support for HTTP_PROXY before anything might use it
+if (process.env.NODE_USE_ENV_PROXY) {
+	// HACK: This is temporary and should be removed once https://github.com/nodejs/node/pull/57165 has been backported to node 22
+	const envHttpProxyAgent = new EnvHttpProxyAgent()
+	setGlobalDispatcher(envHttpProxyAgent)
+}
 
 const ALLOWED_VERSIONS = '^1.5.0 || ^2.0.0'
 

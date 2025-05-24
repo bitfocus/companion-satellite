@@ -5,11 +5,13 @@
   "type": "module",
   "license": "MIT",
   "dependencies": {
-    "inquirer": "^9.3.7",
-    "semver": "^7.6.3"
+    "@types/node": "^22.15.21",
+    "inquirer": "^12.6.2",
+    "semver": "^7.7.2",
+    "undici": "^6.21.3"
   },
   "packageManager": "yarn@4.6.0",
   "engines": {
-    "node": ">=18.18"
+    "node": ">=20.18"
   }
 }
