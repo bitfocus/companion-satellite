@@ -103,6 +103,7 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
 	switch (model) {
 		case DeviceModelId.MINI:
+		case DeviceModelId.MODULE6:
 			return {
 				type: 'multiple-page',
 				pincode: [0, 0],
@@ -131,6 +132,8 @@ function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
 		case DeviceModelId.ORIGINAL:
 		case DeviceModelId.ORIGINALV2:
 		case DeviceModelId.ORIGINALMK2:
+		case DeviceModelId.ORIGINALMK2SCISSOR:
+		case DeviceModelId.MODULE15:
 			return Pincode5x3()
 		case DeviceModelId.PEDAL:
 			// Not suitable for a pincode
@@ -168,6 +171,7 @@ function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
 		case DeviceModelId.STUDIO:
 			return Pincode6x2(1)
 		case DeviceModelId.XL:
+		case DeviceModelId.MODULE32:
 			return Pincode4x4(2)
 		default:
 			assertNever(model)
