@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.2.0](https://github.com/bitfocus/companion-satellite/compare/v2.1.0...v2.2.0) (2025-05-27)
+
+
+### Features
+
+* support new streamdeck models ([695094c](https://github.com/bitfocus/companion-satellite/commit/695094c1979a795b910d47aaa7893e7b4d6ce87e))
+
 ## [2.1.0](https://github.com/bitfocus/companion-satellite/compare/v2.0.3...v2.1.0) (2025-05-24)
 
 
