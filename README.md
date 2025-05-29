@@ -46,6 +46,12 @@ It can be built and run as a systemd service on a pi or other linux machine
 
 No images are provided for this, but the process has been written to be a single script.
 
+Switch to the root user, if required:
+
+```
+sudo -i
+```
+
 As root, run the following:
 
 ```
