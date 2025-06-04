@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.2.2](https://github.com/bitfocus/companion-satellite/compare/v2.2.1...v2.2.2) (2025-06-04)
+
+
+### Bug Fixes
+
+* allow testing build signing [build-signed] ([62ce51e](https://github.com/bitfocus/companion-satellite/commit/62ce51e2ad3c31a33a82633725b4a23773656866))
+
 ## [2.2.1](https://github.com/bitfocus/companion-satellite/compare/v2.2.0...v2.2.1) (2025-05-27)
 
 
