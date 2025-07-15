@@ -106,7 +106,7 @@ export class LoupedeckLiveWrapper implements SurfaceInstance {
 				) {
 					const x = touch.target.screen === LoupedeckDisplayId.Left ? 1 : 6
 					const y = Math.floor((touch.y / this.#deck.displayLeftStrip.height) * 3)
-					context.keyDown(translateKeyIndex(x + y * modelInfo.totalCols))
+					context.keyDown(x + y * 8)
 				}
 			}
 		})
@@ -120,7 +120,7 @@ export class LoupedeckLiveWrapper implements SurfaceInstance {
 				) {
 					const x = touch.target.screen === LoupedeckDisplayId.Left ? 1 : 6
 					const y = Math.floor((touch.y / this.#deck.displayLeftStrip.height) * 3)
-					context.keyUp(translateKeyIndex(x + y * modelInfo.totalCols))
+					context.keyUp(x + y * 8)
 				}
 			}
 		})
@@ -162,14 +162,27 @@ export class LoupedeckLiveWrapper implements SurfaceInstance {
 
 			return
 		}
-		const x = (d.keyIndex % 8) - 2
+		
+		const x = d.keyIndex % 8
 		const y = Math.floor(d.keyIndex / 8)
 
-		if (x >= 0 && x < 4) {
-			const keyIndex = x + y * 4
+		if (x >= 2 && x < 6) {
+			const keyIndex = x - 2 + y * 4
 			if (d.image) {
 				const buffer = await d.image(this.#deck.lcdKeySize, this.#deck.lcdKeySize, imageRs.PixelFormat.Rgb)
 				await this.#deck.drawKeyBuffer(keyIndex, buffer, LoupedeckBufferFormat.RGB)
+			} else {
+				throw new Error(`Cannot draw for Loupedeck without image`)
+			}
+		}
+		if ((x === 1 || x === 6) && y < 3) {
+			const displayId = x === 1 ? LoupedeckDisplayId.Left : LoupedeckDisplayId.Right
+			const width = this.#deck.displayLeftStrip?.width ?? 0
+			const height = (this.#deck.displayLeftStrip?.height ?? 0) / 3
+
+			if (d.image) {
+				const buffer = await d.image(width, height, imageRs.PixelFormat.Rgb)
+				await this.#deck.drawBuffer(displayId, buffer, LoupedeckBufferFormat.RGB, width, height, 0, y * height)
 			} else {
 				throw new Error(`Cannot draw for Loupedeck without image`)
 			}
