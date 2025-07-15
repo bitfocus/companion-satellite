@@ -19,7 +19,7 @@ You can find installers on the [Bitfocus website](https://user.bitfocus.io/downl
 
 ### Raspberry Pi
 
-A prebuilt image is provided for recent releases. Check the releases tab for the latest image.
+A prebuilt image is available on the [Bitfocus website](https://user.bitfocus.io/download).
 
 After writing the image to an sd card, edit the satellite-config file in the boot partition to point to your companion instance.
 
