@@ -21,7 +21,8 @@ You can find installers on the [Bitfocus website](https://user.bitfocus.io/downl
 
 A prebuilt image is available on the [Bitfocus website](https://user.bitfocus.io/download).
 
-After writing the image to an sd card, edit the satellite-config file in the boot partition to point to your companion instance.
+After writing the image to an sd card, edit the satellite-config file in the boot partition to point to your companion instance. Configuration can also be done through the web interface, running on port 9999.  
+If mdns works on your network, Companion will discover your Satellite, and will offer to configure it for you.
 
 ### Desktop
 
