@@ -100,6 +100,13 @@ export class LoupedeckLiveWrapper implements SurfaceInstance {
 			for (const touch of data.changedTouches) {
 				if (touch.target.key !== undefined) {
 					context.keyDown(translateKeyIndex(touch.target.key))
+				} else if (
+					this.#deck.displayLeftStrip &&
+					(touch.target.screen === LoupedeckDisplayId.Left || touch.target.screen === LoupedeckDisplayId.Right)
+				) {
+					const x = touch.target.screen === LoupedeckDisplayId.Left ? 1 : 6
+					const y = Math.floor((touch.y / this.#deck.displayLeftStrip.height) * 3)
+					context.keyDown(translateKeyIndex(x + y * modelInfo.totalCols))
 				}
 			}
 		})
@@ -107,6 +114,13 @@ export class LoupedeckLiveWrapper implements SurfaceInstance {
 			for (const touch of data.changedTouches) {
 				if (touch.target.key !== undefined) {
 					context.keyUp(translateKeyIndex(touch.target.key))
+				} else if (
+					this.#deck.displayLeftStrip &&
+					(touch.target.screen === LoupedeckDisplayId.Left || touch.target.screen === LoupedeckDisplayId.Right)
+				) {
+					const x = touch.target.screen === LoupedeckDisplayId.Left ? 1 : 6
+					const y = Math.floor((touch.y / this.#deck.displayLeftStrip.height) * 3)
+					context.keyUp(translateKeyIndex(x + y * modelInfo.totalCols))
 				}
 			}
 		})
