@@ -53,7 +53,7 @@
     "zx": "^8.8.1"
   },
   "engines": {
-    "node": "^20.19"
+    "node": "^22.19"
   },
   "packageManager": "yarn@4.9.4"
 }
