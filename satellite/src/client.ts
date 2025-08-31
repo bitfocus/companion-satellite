@@ -122,6 +122,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _companionUnsupported = false
 
 	private _supportsLocalLockState = false
+	private _supportsSurfaceSchema = false
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -141,6 +142,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	public get supportsLocalLockState(): boolean {
 		return this._supportsLocalLockState
+	}
+	public get supportsSurfaceSchema(): boolean {
+		return this._supportsSurfaceSchema
 	}
 
 	public get displayHost(): string {
@@ -406,18 +410,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			return
 		}
 
-		// Revive for future checks
-		// const protocolVersion = params.ApiVersion
-		// if (typeof protocolVersion === 'string') {
-		// 	if (semver.lte('1.3.0', protocolVersion)) {
-		// 		this._supportsCombinedEncoders = true
-		// 		console.log('Companion supports combined encoders')
-		// 	}
+		// Perform api version checks
 		if (this._companionApiVersion && semver.lte('1.8.0', this._companionApiVersion)) {
 			this._supportsLocalLockState = true
 			console.log('Companion supports delegating locking drawing')
 		}
-		// }
+		if (this._companionApiVersion && semver.lte('1.99.0', this._companionApiVersion)) {
+			// nocommit - define semver properly
+			this._supportsSurfaceSchema = true
+			console.log('Companion supports surface schema')
+		}
 
 		// report the connection as ready
 		setImmediate(() => {
@@ -603,17 +605,58 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 			const transferVariables = Buffer.from(JSON.stringify(props.transferVariables ?? [])).toString('base64')
 
-			this.sendMessage('ADD-DEVICE', null, deviceId, {
-				PRODUCT_NAME: productName,
-				KEYS_TOTAL: props.columnCount * props.rowCount,
-				KEYS_PER_ROW: props.columnCount,
-				BITMAPS: props.bitmapSize ?? 0,
-				COLORS: props.colours,
-				TEXT: props.text,
-				VARIABLES: transferVariables,
-				BRIGHTNESS: props.brightness,
-				PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
-			})
+			const neededColours = new Set<string>()
+			for (const style of Object.values(props.surfaceSchema.stylePresets)) {
+				if (style.colors) {
+					neededColours.add(style.colors)
+				}
+			}
+			if (neededColours.size > 1) {
+				throw new Error(
+					`Surface ${deviceId} has multiple color styles. This is not compatible with all API versions`,
+				)
+			}
+
+			if (this.supportsSurfaceSchema) {
+				this.sendMessage('ADD-DEVICE', null, deviceId, {
+					PRODUCT_NAME: productName,
+					SCHEMA: Buffer.from(JSON.stringify(props.surfaceSchema)).toString('base64'),
+					VARIABLES: transferVariables,
+					BRIGHTNESS: props.brightness,
+					PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
+				})
+			} else {
+				const needsText = Object.values(props.surfaceSchema.stylePresets).some((s) => !!s.text)
+				const needsTextStyle = Object.values(props.surfaceSchema.stylePresets).some((s) => !!s.textStyle)
+
+				// Find first bitmap size
+				let bitmapSize = props.surfaceSchema.stylePresets.default.bitmap
+				if (!bitmapSize) {
+					bitmapSize = Object.values(props.surfaceSchema.stylePresets).find((s) => !!s.bitmap)?.bitmap
+				}
+
+				// Estimate a grid size
+				const gridSize = Object.values(props.surfaceSchema.controls).reduce(
+					(gridSize, control) => ({
+						columns: Math.max(gridSize.columns, control.column),
+						rows: Math.max(gridSize.rows, control.row),
+					}),
+					{ columns: 0, rows: 0 },
+				)
+
+				this.sendMessage('ADD-DEVICE', null, deviceId, {
+					PRODUCT_NAME: productName,
+					KEYS_TOTAL: gridSize.columns * gridSize.rows,
+					KEYS_PER_ROW: gridSize.columns,
+					BITMAPS: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,
+					COLORS: neededColours.values().next().value || false,
+					TEXT: needsText,
+					TEXT_STYLE: needsTextStyle,
+					VARIABLES: transferVariables,
+					BRIGHTNESS: props.brightness,
+					PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
+				})
+			}
 		}
 	}
 

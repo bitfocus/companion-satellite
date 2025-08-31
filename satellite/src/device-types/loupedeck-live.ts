@@ -20,11 +20,14 @@ import { Pincode4x3 } from './pincode.js'
 export function compileLoupedeckLiveProps(device: LoupedeckDevice): DeviceRegisterProps {
 	return {
 		brightness: true,
-		rowCount: 4,
-		columnCount: 8,
-		bitmapSize: device.lcdKeySize,
-		colours: true,
-		text: false,
+		features: {
+			type: 'simple',
+			rowCount: 4,
+			columnCount: 8,
+			bitmapSize: device.lcdKeySize,
+			colours: true,
+			text: false,
+		},
 		pincodeMap: Pincode4x3(2),
 	}
 }

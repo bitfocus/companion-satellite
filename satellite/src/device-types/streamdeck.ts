@@ -52,11 +52,14 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 
 	return {
 		brightness: deck.MODEL !== DeviceModelId.PEDAL,
-		rowCount: rows,
-		columnCount: cols,
-		bitmapSize: needsBitmaps,
-		colours: true,
-		text: false,
+		features: {
+			type: 'simple',
+			rowCount: rows,
+			columnCount: cols,
+			bitmapSize: needsBitmaps,
+			colours: true,
+			text: false,
+		},
 		pincodeMap: generatePincodeMap(deck.MODEL),
 	}
 }

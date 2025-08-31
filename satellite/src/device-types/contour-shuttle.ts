@@ -67,11 +67,14 @@ export class ContourShuttlePlugin implements SurfacePlugin<HIDDevice> {
 function compileRegisterProps(modelInfo: ShuttleModelInfo): DeviceRegisterProps {
 	return {
 		brightness: false,
-		rowCount: modelInfo.totalRows,
-		columnCount: modelInfo.totalCols,
-		bitmapSize: 0,
-		colours: false,
-		text: false,
+		features: {
+			type: 'simple',
+			rowCount: modelInfo.totalRows,
+			columnCount: modelInfo.totalCols,
+			bitmapSize: 0,
+			colours: false,
+			text: false,
+		},
 		transferVariables: [
 			{
 				id: 'jogValueVariable',

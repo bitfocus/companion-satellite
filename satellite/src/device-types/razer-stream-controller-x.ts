@@ -13,11 +13,14 @@ import { Pincode5x3 } from './pincode.js'
 export function compileRazerStreamControllerXProps(device: LoupedeckDevice): DeviceRegisterProps {
 	return {
 		brightness: true,
-		rowCount: 3,
-		columnCount: 5,
-		bitmapSize: device.lcdKeySize,
-		colours: true,
-		text: false,
+		features: {
+			type: 'simple',
+			rowCount: 3,
+			columnCount: 5,
+			bitmapSize: device.lcdKeySize,
+			colours: true,
+			text: false,
+		},
 		pincodeMap: Pincode5x3(),
 	}
 }

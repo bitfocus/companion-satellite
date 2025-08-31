@@ -90,11 +90,14 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 			surface: new QuickKeysWrapper(surfaceId, quickkeys, context),
 			registerProps: {
 				brightness: true,
-				rowCount: 2,
-				columnCount: 6,
-				bitmapSize: null,
-				colours: true,
-				text: true,
+				features: {
+					type: 'simple',
+					rowCount: 2,
+					columnCount: 6,
+					bitmapSize: null,
+					colours: true,
+					text: true,
+				},
 				pincodeMap: null, // TODO - implement?
 			},
 		}

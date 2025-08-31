@@ -79,11 +79,14 @@ function compileRegisterProps(controller: BlackmagicController): DeviceRegisterP
 
 	const info: DeviceRegisterProps = {
 		brightness: false,
-		rowCount: rowCount,
-		columnCount: columnCount,
-		bitmapSize: 0,
-		colours: true,
-		text: false,
+		features: {
+			type: 'simple',
+			rowCount: rowCount,
+			columnCount: columnCount,
+			bitmapSize: 0,
+			colours: true,
+			text: false,
+		},
 		transferVariables: [
 			{
 				id: 'tbarValueVariable',

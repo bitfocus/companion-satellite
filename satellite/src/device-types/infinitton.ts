@@ -56,11 +56,14 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 			surface: new InfinittonWrapper(surfaceId, infinitton, context),
 			registerProps: {
 				brightness: true,
-				rowCount: 3,
-				columnCount: 5,
-				bitmapSize: 72,
-				colours: false,
-				text: false,
+				features: {
+					type: 'simple',
+					rowCount: 3,
+					columnCount: 5,
+					bitmapSize: 72,
+					colours: false,
+					text: false,
+				},
 				pincodeMap: Pincode5x3(),
 			},
 		}
