@@ -91,7 +91,12 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 		pluginInfo: StreamDeckDeviceInfo,
 		context: SurfaceContext,
 	): Promise<OpenSurfaceResult> => {
-		const streamdeck = await openStreamDeck(pluginInfo.path)
+		const streamdeck = await openStreamDeck(pluginInfo.path, {
+			jpegOptions: {
+				quality: 95,
+				subsampling: 1, // 422
+			},
+		})
 		const registerProps = compileRegisterProps(streamdeck)
 		return {
 			surface: new StreamDeckWrapper(surfaceId, streamdeck, registerProps, context),
