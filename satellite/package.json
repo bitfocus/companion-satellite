@@ -65,7 +65,7 @@
 		"ws": "^8.18.3"
 	},
 	"lint-staged": {
-		"*.{css,json,md,scss}": [
+		"*.{css,json,md,css}": [
 			"prettier --write"
 		],
 		"*.{ts,tsx,js,jsx}": [
