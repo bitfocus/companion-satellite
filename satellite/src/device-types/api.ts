@@ -2,6 +2,8 @@ import type HID from 'node-hid'
 import type { CardGenerator } from '../graphics/cards.js'
 import EventEmitter from 'events'
 import type { PixelFormat } from '@julusian/image-rs'
+import type { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
+import type { GridSize } from '../surfaceProxy.js'
 
 export type HIDDevice = HID.Device
 
@@ -11,20 +13,25 @@ export type DeviceDrawImageFn = (width: number, height: number, format: PixelFor
 
 export interface DeviceDrawProps {
 	deviceId: string
+	/** @deprecated TODO: is this needed? */
 	keyIndex: number
+	controlId: string
+	row: number
+	column: number
 	image?: DeviceDrawImageFn
 	color?: string // hex
 	text?: string
 }
 export interface DeviceRegisterProps {
 	brightness: boolean
-	rowCount: number
-	columnCount: number
-	bitmapSize: number | null
-	colours: boolean
-	text: boolean
+	surfaceManifest: SatelliteSurfaceLayout
 	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
 	pincodeMap: SurfacePincodeMap | null
+}
+
+export interface DeviceRegisterPropsComplete extends DeviceRegisterProps {
+	gridSize: GridSize
+	fallbackBitmapSize: number
 }
 
 export interface DeviceRegisterInputVariable {
@@ -154,8 +161,6 @@ export interface SurfaceInstance {
 
 	initDevice(): Promise<void>
 
-	updateCapabilities(capabilities: ClientCapabilities): void
-
 	deviceAdded(): Promise<void>
 
 	setBrightness(percent: number): Promise<void>
@@ -171,40 +176,36 @@ export interface SurfaceInstance {
 	showStatus(signal: AbortSignal, cardGenerator: CardGenerator, hostname: string, status: string): Promise<void>
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ClientCapabilities {
-	// For future use to support new functionality
+	supportsSurfaceManifest: boolean
 }
 
 export interface CompanionClient {
 	get displayHost(): string
+	get capabilities(): ClientCapabilities
 
-	keyDownXY(deviceId: string, x: number, y: number): void
-	keyUpXY(deviceId: string, x: number, y: number): void
-	rotateLeftXY(deviceId: string, x: number, y: number): void
-	rotateRightXY(deviceId: string, x: number, y: number): void
-	pincodeKey(deviceId: string, keyCode: number): void
+	keyDown(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
+	keyUp(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
+	rotateLeft(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
+	rotateRight(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
+	pincodeKey(surfaceId: string, keyCode: number): void
 
-	sendVariableValue(deviceId: string, variable: string, value: any): void
+	sendVariableValue(surfaceId: string, variable: string, value: any): void
 }
 
 export interface SurfaceContext {
 	get isLocked(): boolean
 	// get displayHost(): string
 
+	get capabilities(): ClientCapabilities
+
 	disconnect(error: Error): void
 
-	keyDown(keyIndex: number): void
-	keyUp(keyIndex: number): void
-	keyDownUp(keyIndex: number): void
-	rotateLeft(keyIndex: number): void
-	rotateRight(keyIndex: number): void
-
-	keyDownXY(x: number, y: number): void
-	keyUpXY(x: number, y: number): void
-	keyDownUpXY(x: number, y: number): void
-	rotateLeftXY(x: number, y: number): void
-	rotateRightXY(x: number, y: number): void
+	keyDownById(controlId: string): void
+	keyUpById(controlId: string): void
+	keyDownUpById(controlId: string): void
+	rotateLeftById(controlId: string): void
+	rotateRightById(controlId: string): void
 
 	sendVariableValue(variable: string, value: any): void
 }
