@@ -1,6 +1,6 @@
 /* eslint-disable n/no-process-exit */
 import { fs, usePowerShell, argv } from 'zx'
-// eslint-disable-next-line n/no-extraneous-import
+
 import electronBuilder from 'electron-builder'
 
 if (process.platform === 'win32') {

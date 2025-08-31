@@ -1,5 +1,4 @@
 import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
-import * as imageRs from '@julusian/image-rs'
 import type { CardGenerator } from '../graphics/cards.js'
 import type {
 	ClientCapabilities,

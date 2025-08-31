@@ -6,7 +6,6 @@ import {
 	StreamDeckDeviceInfo,
 	StreamDeckLcdSegmentControlDefinition,
 } from '@elgato-stream-deck/node'
-import * as imageRs from '@julusian/image-rs'
 import type { CardGenerator } from '../graphics/cards.js'
 import {
 	ClientCapabilities,

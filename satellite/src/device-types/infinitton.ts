@@ -9,7 +9,6 @@ import type {
 	OpenSurfaceResult,
 	SurfaceContext,
 } from './api.js'
-import * as imageRs from '@julusian/image-rs'
 import Infinitton from 'infinitton-idisplay'
 import { Pincode5x3 } from './pincode.js'
 

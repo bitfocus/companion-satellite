@@ -68,7 +68,7 @@
 			"prettier --write"
 		],
 		"*.{ts,tsx,js,jsx}": [
-			"run -T lint:raw --fix"
+			"yarn run -T lint:raw --fix"
 		]
 	}
 }

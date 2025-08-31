@@ -5,7 +5,6 @@ import {
 	LoupedeckModelId,
 	LoupedeckControlType,
 } from '@loupedeck/node'
-import * as imageRs from '@julusian/image-rs'
 import { CardGenerator } from '../graphics/cards.js'
 import type {
 	ClientCapabilities,
