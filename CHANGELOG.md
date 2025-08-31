@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.3.0](https://github.com/bitfocus/companion-satellite/compare/v2.2.2...v2.3.0) (2025-08-31)
+
+
+### Features
+
+* add version number to webui header ([04a13c4](https://github.com/bitfocus/companion-satellite/commit/04a13c4b6d56cf199c39f1e108a3665714379a3d))
+* update electron ([aa86537](https://github.com/bitfocus/companion-satellite/commit/aa8653733fa6ab6d6eceacf59ae21d2e0a435a76))
+* update shadcn components ([f44521c](https://github.com/bitfocus/companion-satellite/commit/f44521c1b9c1b5cae86e8389f56d0ab332feb015))
+* update tailwind ([eed99aa](https://github.com/bitfocus/companion-satellite/commit/eed99aaafcb0444392321489014a1284e9bd7bb4))
+
+
+### Bug Fixes
+
+* allow updater to run without prompting [#213](https://github.com/bitfocus/companion-satellite/issues/213) ([668a12f](https://github.com/bitfocus/companion-satellite/commit/668a12f690c03c7c81560e97461bd8e0a2b2da7e))
+* css tweaks ([5c5e669](https://github.com/bitfocus/companion-satellite/commit/5c5e669ca9c5e883afe1f300a60cd18105c2b94f))
+* electron css ([340791f](https://github.com/bitfocus/companion-satellite/commit/340791fa84e921425d1a249ab9db555ba802d776))
+* handle some errors when failing to register surface [#205](https://github.com/bitfocus/companion-satellite/issues/205) ([a39398d](https://github.com/bitfocus/companion-satellite/commit/a39398d91c2c239b66a957d69ef4dc88cc9a9f32))
+* mouse cursor css ([abcac6f](https://github.com/bitfocus/companion-satellite/commit/abcac6f42df5978e4726f46886edf7ad5a2315b8))
+* react warnings ([3ef2255](https://github.com/bitfocus/companion-satellite/commit/3ef2255c981da61ed627bf7e644c4fe77cfea2b2))
+* specify streamdeck jpeg options ([ccbedc8](https://github.com/bitfocus/companion-satellite/commit/ccbedc80eef7faa158d56b420bbe649cbdb0e5b0))
+
 ## [2.2.2](https://github.com/bitfocus/companion-satellite/compare/v2.2.1...v2.2.2) (2025-06-04)
 
 
