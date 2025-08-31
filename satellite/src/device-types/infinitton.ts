@@ -112,7 +112,7 @@ export class InfinittonWrapper implements SurfaceInstance {
 	}
 	async draw(_signal: AbortSignal, d: DeviceDrawProps): Promise<void> {
 		if (d.image) {
-			const buffer = await d.image(72, 72, imageRs.PixelFormat.Rgb)
+			const buffer = await d.image(72, 72, 'rgb')
 			this.#panel.fillImage(d.keyIndex, buffer)
 		} else {
 			throw new Error(`Cannot draw for Streamdeck without image`)
@@ -126,7 +126,7 @@ export class InfinittonWrapper implements SurfaceInstance {
 	): Promise<void> {
 		const width = Infinitton.ICON_SIZE * Infinitton.NUM_KEYS_PER_ROW
 		const height = Infinitton.ICON_SIZE * Math.floor(Infinitton.NUM_KEYS / Infinitton.NUM_KEYS_PER_ROW)
-		const buffer = await cardGenerator.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
+		const buffer = await cardGenerator.generateBasicCard(width, height, 'rgb', hostname, status)
 
 		if (signal.aborted) return
 

@@ -141,6 +141,7 @@ function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
 		case DeviceModelId.MODULE15:
 			return Pincode5x3()
 		case DeviceModelId.PEDAL:
+		case DeviceModelId.NETWORK_DOCK:
 			// Not suitable for a pincode
 			return { type: 'custom' }
 		case DeviceModelId.NEO:
@@ -299,11 +300,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 					return
 				} else {
 					try {
-						newbuffer = await drawProps.image(
-							control.pixelSize.width,
-							control.pixelSize.height,
-							imageRs.PixelFormat.Rgb,
-						)
+						newbuffer = await drawProps.image(control.pixelSize.width, control.pixelSize.height, 'rgb')
 					} catch (e: any) {
 						console.error(`scale image failed: ${e}\n${e.stack}`)
 						return
@@ -351,11 +348,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 			if (this.#context.isLocked) {
 				// Special case handling for neo lcd strip
 				if (this.#deck.MODEL === DeviceModelId.NEO) {
-					const image = await drawProps.image(
-						control.pixelSize.width,
-						control.pixelSize.height,
-						imageRs.PixelFormat.Rgb,
-					)
+					const image = await drawProps.image(control.pixelSize.width, control.pixelSize.height, 'rgb')
 
 					await this.#deck.fillLcd(control.id, image, {
 						format: 'rgb',
@@ -363,7 +356,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 					return
 				} else if (this.#deck.MODEL === DeviceModelId.PLUS && x === 0) {
 					const width = (control.pixelSize.width / control.columnSpan) * 2
-					const image = await drawProps.image(width, control.pixelSize.height, imageRs.PixelFormat.Rgb)
+					const image = await drawProps.image(width, control.pixelSize.height, 'rgb')
 
 					await this.#deck.fillLcdRegion(control.id, 0, 0, image, {
 						format: 'rgb',
@@ -387,7 +380,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 
 				let newbuffer: Buffer | undefined
 				try {
-					newbuffer = await drawProps.image(targetSize, targetSize, imageRs.PixelFormat.Rgb)
+					newbuffer = await drawProps.image(targetSize, targetSize, 'rgb')
 				} catch (e) {
 					console.log(`scale image failed: ${e}`)
 					return
@@ -441,7 +434,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 					: cardGenerator.generateBasicCard(
 							fillPanelDimensions.width,
 							fillPanelDimensions.height,
-							imageRs.PixelFormat.Rgba,
+							'rgba',
 							hostname,
 							status,
 						)
@@ -465,7 +458,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 				const stripCard = cardGenerator.generateLcdStripCard(
 					lcdStrip.pixelSize.width,
 					lcdStrip.pixelSize.height,
-					imageRs.PixelFormat.Rgba,
+					'rgba',
 					hostname,
 					status,
 				)

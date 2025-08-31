@@ -80,7 +80,7 @@ export class RazerStreamControllerXWrapper implements SurfaceInstance {
 	}
 	async draw(_signal: AbortSignal, d: DeviceDrawProps): Promise<void> {
 		if (d.image) {
-			const buffer = await d.image(this.#deck.lcdKeySize, this.#deck.lcdKeySize, imageRs.PixelFormat.Rgb)
+			const buffer = await d.image(this.#deck.lcdKeySize, this.#deck.lcdKeySize, 'rgb')
 			await this.#deck.drawKeyBuffer(d.keyIndex, buffer, LoupedeckBufferFormat.RGB)
 		} else {
 			throw new Error(`Cannot draw for Loupedeck without image`)
@@ -96,7 +96,7 @@ export class RazerStreamControllerXWrapper implements SurfaceInstance {
 		const width = this.#deck.displayMain.width
 		const height = this.#deck.displayMain.height
 
-		const buffer = await cardGenerator.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
+		const buffer = await cardGenerator.generateBasicCard(width, height, 'rgb', hostname, status)
 
 		if (signal.aborted) return
 

@@ -8,7 +8,6 @@ import type {
 	ApiSurfacePluginInfo,
 	ApiSurfacePluginsEnabled,
 	SatelliteUiApi,
-	// @ts-expect-error weird interop between cjs and mjs
 } from './apiTypes.js'
 
 const electronApi: SatelliteUiApi = {

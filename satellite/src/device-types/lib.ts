@@ -36,7 +36,7 @@ export async function transformButtonImage(
 		rawImage.pixelFormat,
 	)
 
-	image = image.scale(targetWidth, targetHeight, imageRs.ResizeMode.Fit)
+	image = image.scale(targetWidth, targetHeight, 'Fit')
 
 	// pad, in case a button is non-square
 	const dimensions = image.getCurrentDimensions()

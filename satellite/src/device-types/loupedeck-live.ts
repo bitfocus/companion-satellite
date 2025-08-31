@@ -154,7 +154,7 @@ export class LoupedeckLiveWrapper implements SurfaceInstance {
 		if (x >= 0 && x < 4) {
 			const keyIndex = x + y * 4
 			if (d.image) {
-				const buffer = await d.image(this.#deck.lcdKeySize, this.#deck.lcdKeySize, imageRs.PixelFormat.Rgb)
+				const buffer = await d.image(this.#deck.lcdKeySize, this.#deck.lcdKeySize, 'rgb')
 				await this.#deck.drawKeyBuffer(keyIndex, buffer, LoupedeckBufferFormat.RGB)
 			} else {
 				throw new Error(`Cannot draw for Loupedeck without image`)
@@ -171,7 +171,7 @@ export class LoupedeckLiveWrapper implements SurfaceInstance {
 		const width = this.#deck.displayMain.width
 		const height = this.#deck.displayMain.height
 
-		const buffer = await cardGenerator.generateBasicCard(width, height, imageRs.PixelFormat.Rgb, hostname, status)
+		const buffer = await cardGenerator.generateBasicCard(width, height, 'rgb', hostname, status)
 
 		if (signal.aborted) return
 

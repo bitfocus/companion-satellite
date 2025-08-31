@@ -1,4 +1,3 @@
-import { PixelFormat } from '@julusian/image-rs'
 import type { SurfaceGraphicsContext } from './graphics/lib.js'
 import type {
 	DeviceDrawImageFn,
@@ -125,7 +124,7 @@ export class SurfaceProxy {
 									width: bitmapSize,
 									height: bitmapSize,
 									buffer: rawImage,
-									pixelFormat: PixelFormat.Rgb,
+									pixelFormat: 'rgb',
 								},
 								targetWidth,
 								targetHeight,
@@ -258,7 +257,7 @@ export class SurfaceProxy {
 							width: targetWidth,
 							height: targetHeight,
 							buffer: bitmapFn(targetWidth, targetHeight),
-							pixelFormat: PixelFormat.Rgba,
+							pixelFormat: 'rgba',
 						},
 						targetWidth,
 						targetHeight,
