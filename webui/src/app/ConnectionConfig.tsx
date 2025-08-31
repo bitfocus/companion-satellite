@@ -62,7 +62,7 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 					children={(field) => (
 						<FormRow label="Protocol" htmlFor={field.name} hint="TCP is recommended for most use cases.">
 							<Select value={field.state.value} onValueChange={(value) => field.handleChange(value as 'tcp' | 'ws')}>
-								<SelectTrigger id={field.name} name={field.name}>
+								<SelectTrigger id={field.name} name={field.name} className="w-full">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
@@ -261,7 +261,7 @@ function FormRow({
 }): JSX.Element {
 	return (
 		<>
-			<Label className={cn('text-right content-center', hidden && 'hidden')} htmlFor={htmlFor}>
+			<Label className={cn('justify-self-end content-center', hidden && 'hidden')} htmlFor={htmlFor}>
 				{label}
 			</Label>
 			<div className={cn('col-span-3', hidden && 'hidden')}>{children}</div>

@@ -13,7 +13,7 @@ export function AppContent(): JSX.Element {
 		<QueryClientProvider client={queryClient}>
 			<Tabs defaultValue="connection">
 				<CardHeader className="text-center pb-3">
-					<TabsList className="flex-col sm:flex-row h-auto sm:h-9">
+					<TabsList className="flex-col sm:flex-row h-auto sm:h-9 w-full">
 						<TabsTrigger className="w-full sm:w-auto" value="connection">
 							Connection
 						</TabsTrigger>

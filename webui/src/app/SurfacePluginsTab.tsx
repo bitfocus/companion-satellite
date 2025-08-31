@@ -87,10 +87,10 @@ function SurfacePluginsConfig({
 						name={plugin.pluginId}
 						children={(field) => (
 							<>
-								<Label className="text-right content-center col-span-2" htmlFor={field.name}>
+								<Label className="justify-self-end content-center col-span-2" htmlFor={field.name}>
 									{plugin.pluginName}
 								</Label>
-								<div className="col-span-3">
+								<div className="col-span-3 content-center">
 									<Switch
 										id={field.name}
 										name={field.name}
