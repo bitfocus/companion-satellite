@@ -3,6 +3,7 @@ import type { CardGenerator } from '../graphics/cards.js'
 import EventEmitter from 'events'
 import type { PixelFormat } from '@julusian/image-rs'
 import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { GridSize } from '../surfaceProxy.js'
 
 export type HIDDevice = HID.Device
 
@@ -12,15 +13,9 @@ export type DeviceDrawImageFn = (width: number, height: number, format: PixelFor
 
 export interface DeviceDrawProps {
 	deviceId: string
+	/** @deprecated TODO: is this needed? */
 	keyIndex: number
 	controlId: string
-	// identifier:
-	// 	| {
-	// 			type: 'simple'
-	// 	  }
-	// 	| {
-	// 			type: 'schema'
-	// 	  }
 	image?: DeviceDrawImageFn
 	color?: string // hex
 	text?: string
@@ -28,10 +23,13 @@ export interface DeviceDrawProps {
 export interface DeviceRegisterProps {
 	brightness: boolean
 	surfaceSchema: SatelliteSurfaceLayout
-	columns: number
-	rows: number
 	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
 	pincodeMap: SurfacePincodeMap | null
+}
+
+export interface DeviceRegisterPropsComplete extends DeviceRegisterProps {
+	gridSize: GridSize
+	fallbackBitmapSize: number
 }
 
 export interface DeviceRegisterInputVariable {

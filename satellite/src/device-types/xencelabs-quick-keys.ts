@@ -90,13 +90,24 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 			surface: new QuickKeysWrapper(surfaceId, quickkeys, context),
 			registerProps: {
 				brightness: true,
-				features: {
-					type: 'simple',
-					rowCount: 2,
-					columnCount: 6,
-					bitmapSize: null,
-					colours: true,
-					text: true,
+				surfaceSchema: {
+					stylePresets: {
+						default: { text: true }, // Labelled buttons
+						wheel: { colors: 'hex' },
+						empty: {}, // The menu button
+					},
+					controls: {
+						menu: { row: 0, column: 0, stylePreset: 'empty' },
+						wheel: { row: 0, column: 5, stylePreset: 'wheel' },
+						'0/1': { row: 0, column: 1 },
+						'0/2': { row: 0, column: 2 },
+						'0/3': { row: 0, column: 3 },
+						'0/4': { row: 0, column: 4 },
+						'1/1': { row: 1, column: 1 },
+						'1/2': { row: 1, column: 2 },
+						'1/3': { row: 1, column: 3 },
+						'1/4': { row: 1, column: 4 },
+					},
 				},
 				pincodeMap: null, // TODO - implement?
 			},

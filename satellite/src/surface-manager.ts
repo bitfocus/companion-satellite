@@ -453,7 +453,7 @@ export class SurfaceManager {
 
 					proxySurface.updateCapabilities(this.#client.capabilities)
 
-					this.#client.addDevice(pluginInfo.surfaceId, proxySurface.productName, registerProps)
+					this.#client.addDevice(pluginInfo.surfaceId, proxySurface.productName, proxySurface.registerProps)
 				} catch (e) {
 					// Remove the failed surface
 					this.#surfaces.delete(pluginInfo.surfaceId)

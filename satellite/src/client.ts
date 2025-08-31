@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
+import { ClientCapabilities, CompanionClient, DeviceRegisterPropsComplete } from './device-types/api.js'
 import { assertNever, DEFAULT_TCP_PORT } from './lib.js'
 import * as semver from 'semver'
 import {
@@ -429,17 +429,24 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private handleState(params: Record<string, string | boolean>): void {
 		if (typeof params.DEVICEID !== 'string') {
-			console.log('Missing DEVICEID in KEY-DRAW response')
-			return
-		}
-		if (typeof params.KEY !== 'string') {
-			console.log('Missing KEY in KEY-DRAW response')
+			console.log('Missing DEVICEID in KEY-STATE response')
 			return
 		}
 
-		const keyIndex = parseInt(params.KEY)
-		if (isNaN(keyIndex)) {
-			console.log('Bad KEY in KEY-DRAW response')
+		let keyIndex: number | undefined
+		let controlId: string | undefined
+		if (typeof params.CONTROLID === 'string') {
+			controlId = params.CONTROLID
+		} else if (typeof params.KEY === 'string') {
+			keyIndex = parseInt(params.KEY)
+			if (isNaN(keyIndex)) {
+				console.log('Bad KEY in KEY-STATE response')
+				return
+			}
+		}
+
+		if (keyIndex === undefined && controlId === undefined) {
+			console.log('Missing KEY and CONTROLID in KEY-STATE response')
 			return
 		}
 
@@ -447,7 +454,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		const text = typeof params.TEXT === 'string' ? Buffer.from(params.TEXT, 'base64').toString() : undefined
 		const color = typeof params.COLOR === 'string' ? params.COLOR : undefined
 
-		this.emit('draw', { deviceId: params.DEVICEID, keyIndex, image, text, color })
+		this.emit('draw', { deviceId: params.DEVICEID, keyIndex, controlId, image, text, color })
 	}
 	private handleClear(params: Record<string, string | boolean>): void {
 		if (typeof params.DEVICEID !== 'string') {
@@ -590,7 +597,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		return this._registeredDevices.has(deviceId) || this._pendingDevices.has(deviceId)
 	}
 
-	public addDevice(deviceId: string, productName: string, props: DeviceRegisterProps): void {
+	public addDevice(deviceId: string, productName: string, props: DeviceRegisterPropsComplete): void {
 		if (this._registeredDevices.has(deviceId)) {
 			throw new Error('Device is already registered')
 		}
@@ -629,12 +636,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				const needsText = Object.values(props.surfaceSchema.stylePresets).some((s) => !!s.text)
 				const needsTextStyle = Object.values(props.surfaceSchema.stylePresets).some((s) => !!s.textStyle)
 
-				// Find first bitmap size
-
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					PRODUCT_NAME: productName,
-					KEYS_TOTAL: props.columns * props.rows,
-					KEYS_PER_ROW: props.columns,
+					KEYS_TOTAL: props.gridSize.columns * props.gridSize.rows,
+					KEYS_PER_ROW: props.gridSize.columns,
 					BITMAPS: props.fallbackBitmapSize,
 					COLORS: neededColours.values().next().value || false,
 					TEXT: needsText,
