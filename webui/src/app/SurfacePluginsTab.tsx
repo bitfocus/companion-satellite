@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { MyErrorBoundary } from '@/Util/ErrorBoundary'
 import { CONNECTED_SURFACES_QUERY_KEY, SURFACE_PLUGINS_ENABLED_QUERY_KEY } from './constants'
+import React from 'react'
 
 export function SurfacePluginsTab(): JSX.Element {
 	const api = useSatelliteApi()
@@ -56,7 +57,7 @@ function SurfacePluginsConfig({
 	const api = useSatelliteApi()
 	const queryClient = useQueryClient()
 
-	const form = useForm<ApiSurfacePluginsEnabled>({
+	const form = useForm({
 		defaultValues: config,
 		onSubmit: async ({ value }) => {
 			// Do something with form data
@@ -82,6 +83,7 @@ function SurfacePluginsConfig({
 			<div className="grid gap-3 grid-cols-5 mt-2">
 				{plugins.map((plugin) => (
 					<form.Field
+						key={plugin.pluginId}
 						name={plugin.pluginId}
 						children={(field) => (
 							<>
@@ -100,11 +102,11 @@ function SurfacePluginsConfig({
 								{plugin.pluginComment && (
 									<div className="col-span-3 col-start-3 -mt-3">
 										<p className="text-sm text-gray-500 p-1">
-											{plugin.pluginComment.map((line) => (
-												<>
+											{plugin.pluginComment.map((line, i) => (
+												<React.Fragment key={i}>
 													{line}
 													<br />
-												</>
+												</React.Fragment>
 											))}
 										</p>
 									</div>

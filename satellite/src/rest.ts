@@ -206,7 +206,7 @@ export class RestServer {
 			const newConfig = ctx.request.body as ApiSurfacePluginsEnabled
 			updateSurfacePluginsEnabledConfig(this.appConfig, newConfig)
 
-			ctx.body = 'OK'
+			ctx.body = this.appConfig.get('surfacePluginsEnabled')
 		})
 
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())
