@@ -584,6 +584,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
+	public hasDevice(deviceId: string): boolean {
+		return this._registeredDevices.has(deviceId) || this._pendingDevices.has(deviceId)
+	}
+
 	public addDevice(deviceId: string, productName: string, props: DeviceRegisterProps): void {
 		if (this._registeredDevices.has(deviceId)) {
 			throw new Error('Device is already registered')

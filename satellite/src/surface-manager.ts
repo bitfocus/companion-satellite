@@ -207,15 +207,22 @@ export class SurfaceManager {
 
 	#delayRetryAddOfDevice(surfaceId: string) {
 		setTimeout(() => {
-			const surface = this.#surfaces.get(surfaceId)
-			if (!surface) return
+			try {
+				const surface = this.#surfaces.get(surfaceId)
+				if (!surface) return
 
-			console.log('retry add', surfaceId)
+				// Don't retry if the client already has the device
+				if (this.#client.hasDevice(surfaceId)) return
 
-			// Make sure device knows what the client is capable of
-			surface.updateCapabilities(this.#client.capabilities)
+				console.log('retry add', surfaceId)
 
-			this.#client.addDevice(surfaceId, surface.productName, surface.registerProps)
+				// Make sure device knows what the client is capable of
+				surface.updateCapabilities(this.#client.capabilities)
+
+				this.#client.addDevice(surfaceId, surface.productName, surface.registerProps)
+			} catch (e) {
+				console.error(`Retry add failed: ${e}`)
+			}
 		}, 1000)
 	}
 
@@ -279,17 +286,21 @@ export class SurfaceManager {
 	public syncCapabilitiesAndRegisterAllDevices(): void {
 		console.log('registerAll', Array.from(this.#surfaces.keys()))
 		for (const surface of this.#surfaces.values()) {
-			// If it is still in the process of initialising skip it
-			if (this.#pendingSurfaces.has(surface.surfaceId)) continue
+			try {
+				// If it is still in the process of initialising skip it
+				if (this.#pendingSurfaces.has(surface.surfaceId)) continue
 
-			// Indicate on device
-			surface.showStatus(this.#client.displayHost, this.#statusString)
+				// Indicate on device
+				surface.showStatus(this.#client.displayHost, this.#statusString)
 
-			// Make sure device knows what the client is capable of
-			surface.updateCapabilities(this.#client.capabilities)
+				// Make sure device knows what the client is capable of
+				surface.updateCapabilities(this.#client.capabilities)
 
-			// Re-init device
-			this.#client.addDevice(surface.surfaceId, surface.productName, surface.registerProps)
+				// Re-init device
+				this.#client.addDevice(surface.surfaceId, surface.productName, surface.registerProps)
+			} catch (e) {
+				console.error(`Register failed for "${surface.surfaceId}": ${e}`)
+			}
 		}
 
 		this.scanForSurfaces()
