@@ -15,7 +15,7 @@ import {
 	SatelliteConfigSize,
 	SatelliteControlDefinition,
 	SatelliteControlStylePreset,
-} from './generated/SurfaceSchema.js'
+} from './generated/SurfaceManifestSchema.js'
 
 export interface SurfaceProxyDrawProps {
 	deviceId: string
@@ -69,14 +69,14 @@ export class SurfaceProxy {
 		this.#context = context
 		this.#surface = surface
 
-		let bitmapSize = registerProps.surfaceSchema.stylePresets.default.bitmap
+		let bitmapSize = registerProps.surfaceManifest.stylePresets.default.bitmap
 		if (!bitmapSize) {
-			bitmapSize = Object.values(registerProps.surfaceSchema.stylePresets).find((s) => !!s.bitmap)?.bitmap
+			bitmapSize = Object.values(registerProps.surfaceManifest.stylePresets).find((s) => !!s.bitmap)?.bitmap
 		}
 
 		this.#registerProps = {
 			...registerProps,
-			gridSize: calculateGridSize(registerProps.surfaceSchema),
+			gridSize: calculateGridSize(registerProps.surfaceManifest),
 			fallbackBitmapSize: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,
 		}
 
@@ -144,7 +144,7 @@ export class SurfaceProxy {
 			if (data.controlId !== undefined) {
 				controlId = data.controlId
 
-				const controlInfo = this.#registerProps.surfaceSchema.controls[controlId]
+				const controlInfo = this.#registerProps.surfaceManifest.controls[controlId]
 				if (!controlInfo) throw new Error(`Received draw for unknown controlId: ${controlId}`)
 
 				// Interpolate a keyIndex, for compatibility
@@ -159,7 +159,7 @@ export class SurfaceProxy {
 				row = Math.floor(keyIndex / this.#registerProps.gridSize.columns)
 				column = keyIndex % this.#registerProps.gridSize.columns
 
-				const controlInfo = Object.entries(this.#registerProps.surfaceSchema.controls).find(
+				const controlInfo = Object.entries(this.#registerProps.surfaceManifest.controls).find(
 					([_id, control]) => {
 						return control.row === row && control.column === column
 					},
@@ -317,7 +317,7 @@ export class SurfaceProxy {
 		text: string,
 	) {
 		let controlInfo: [string, SatelliteControlDefinition] | null = null
-		for (const [id, control] of Object.entries(this.#registerProps.surfaceSchema.controls)) {
+		for (const [id, control] of Object.entries(this.#registerProps.surfaceManifest.controls)) {
 			if (control.row === xy[1] && control.column === xy[0]) {
 				controlInfo = [id, control]
 				break
@@ -369,8 +369,8 @@ export class SurfaceProxy {
 
 	#getStyleForPreset(stylePreset: string | undefined): SatelliteControlStylePreset {
 		return (
-			(stylePreset && this.#registerProps.surfaceSchema.stylePresets[stylePreset]) ||
-			this.#registerProps.surfaceSchema.stylePresets.default
+			(stylePreset && this.#registerProps.surfaceManifest.stylePresets[stylePreset]) ||
+			this.#registerProps.surfaceManifest.stylePresets.default
 		)
 	}
 }
@@ -482,7 +482,7 @@ export class SurfaceProxyContext implements SurfaceContext {
 	#getControlById(controlId: string): SatelliteControlDefinition | null {
 		if (!this.#surface) throw new Error('Surface not set')
 
-		return this.#surface.registerProps.surfaceSchema.controls[controlId] ?? null
+		return this.#surface.registerProps.surfaceManifest.controls[controlId] ?? null
 	}
 
 	keyDownById(controlId: string): void {

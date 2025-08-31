@@ -10,7 +10,7 @@ import type {
 } from './api.js'
 import Infinitton from 'infinitton-idisplay'
 import { Pincode5x3 } from './pincode.js'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 
 export interface InfinittonDeviceInfo {
 	path: string
@@ -53,7 +53,7 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 	): Promise<OpenSurfaceResult> => {
 		const infinitton = new Infinitton(pluginInfo.path)
 
-		const surfaceSchema: SatelliteSurfaceLayout = {
+		const surfaceManifest: SatelliteSurfaceLayout = {
 			stylePresets: {
 				default: {
 					bitmap: { w: 72, h: 72 },
@@ -66,7 +66,7 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 			const row = Math.floor(i / Infinitton.NUM_KEYS_PER_ROW)
 			const column = i % Infinitton.NUM_KEYS_PER_ROW
 
-			surfaceSchema.controls[`${row}/${column}`] = {
+			surfaceManifest.controls[`${row}/${column}`] = {
 				row,
 				column,
 			}
@@ -76,7 +76,7 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 			surface: new InfinittonWrapper(surfaceId, infinitton, context),
 			registerProps: {
 				brightness: true,
-				surfaceSchema,
+				surfaceManifest,
 				pincodeMap: Pincode5x3(),
 			},
 		}

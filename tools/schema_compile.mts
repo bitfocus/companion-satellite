@@ -15,4 +15,8 @@ const compiledTypescript = await compileFromFile(schemaPath, {
 	enableConstEnums: false,
 })
 
-fs.writeFileSync(new URL('../satellite/src/generated/SurfaceSchema.ts', import.meta.url), compiledTypescript, 'utf8')
+fs.writeFileSync(
+	new URL('../satellite/src/generated/SurfaceManifestSchema.ts', import.meta.url),
+	compiledTypescript,
+	'utf8',
+)

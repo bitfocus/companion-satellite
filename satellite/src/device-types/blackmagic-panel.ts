@@ -24,7 +24,7 @@ import { parseColor } from './lib.js'
 import debounceFn from 'debounce-fn'
 import type { CardGenerator } from '../graphics/cards.js'
 import { assertNever } from '../lib.js'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 
 const PLUGIN_ID = 'blackmagic-controller'
 
@@ -71,7 +71,7 @@ export class BlackmagicControllerPlugin implements SurfacePlugin<BlackmagicContr
 }
 
 function compileRegisterProps(controller: BlackmagicController): DeviceRegisterProps {
-	const surfaceSchema: SatelliteSurfaceLayout = {
+	const surfaceManifest: SatelliteSurfaceLayout = {
 		stylePresets: {
 			default: {
 				colors: 'hex',
@@ -81,7 +81,7 @@ function compileRegisterProps(controller: BlackmagicController): DeviceRegisterP
 	}
 
 	for (const control of controller.CONTROLS) {
-		surfaceSchema.controls[`${control.row}/${control.column}`] = {
+		surfaceManifest.controls[`${control.row}/${control.column}`] = {
 			row: control.row,
 			column: control.column,
 		}
@@ -89,7 +89,7 @@ function compileRegisterProps(controller: BlackmagicController): DeviceRegisterP
 
 	const info: DeviceRegisterProps = {
 		brightness: false,
-		surfaceSchema,
+		surfaceManifest,
 		transferVariables: [
 			{
 				id: 'tbarValueVariable',

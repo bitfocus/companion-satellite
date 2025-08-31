@@ -89,7 +89,7 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 			surface: new QuickKeysWrapper(surfaceId, quickkeys, context),
 			registerProps: {
 				brightness: true,
-				surfaceSchema: {
+				surfaceManifest: {
 					stylePresets: {
 						default: { text: true }, // Labelled buttons
 						wheel: { colors: 'hex' },

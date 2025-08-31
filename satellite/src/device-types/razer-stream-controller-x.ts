@@ -3,7 +3,7 @@ import type { CardGenerator } from '../graphics/cards.js'
 import type { SurfaceContext, DeviceDrawProps, SurfaceInstance, DeviceRegisterProps } from './api.js'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 import { Pincode5x3 } from './pincode.js'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 
 const KEY_COUNT = 15
 const COLUMNS = 5
@@ -13,7 +13,7 @@ function getControlId(index: number): string {
 }
 
 export function compileRazerStreamControllerXProps(device: LoupedeckDevice): DeviceRegisterProps {
-	const surfaceSchema: SatelliteSurfaceLayout = {
+	const surfaceManifest: SatelliteSurfaceLayout = {
 		stylePresets: {
 			default: {
 				bitmap: {
@@ -26,7 +26,7 @@ export function compileRazerStreamControllerXProps(device: LoupedeckDevice): Dev
 	}
 
 	for (let i = 0; i < KEY_COUNT; i++) {
-		surfaceSchema.controls[getControlId(i)] = {
+		surfaceManifest.controls[getControlId(i)] = {
 			row: Math.floor(i / COLUMNS),
 			column: i % COLUMNS,
 		}
@@ -34,7 +34,7 @@ export function compileRazerStreamControllerXProps(device: LoupedeckDevice): Dev
 
 	return {
 		brightness: true,
-		surfaceSchema,
+		surfaceManifest,
 		pincodeMap: Pincode5x3(),
 	}
 }

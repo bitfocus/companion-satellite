@@ -1,6 +1,6 @@
 import * as imageRs from '@julusian/image-rs'
 import type { GridSize } from '../surfaceProxy.js'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 
 export function parseColor(color: string | undefined): { r: number; g: number; b: number } {
 	const r = color ? parseInt(color.substr(1, 2), 16) : 0
@@ -58,8 +58,8 @@ export async function transformButtonImage(
 	return computedImage.buffer
 }
 
-export function calculateGridSize(schema: SatelliteSurfaceLayout): GridSize {
-	return Object.values(schema.controls).reduce(
+export function calculateGridSize(surfaceLayout: SatelliteSurfaceLayout): GridSize {
+	return Object.values(surfaceLayout.controls).reduce(
 		(gridSize, control): GridSize => ({
 			columns: Math.max(gridSize.columns, control.column + 1),
 			rows: Math.max(gridSize.rows, control.row + 1),

@@ -2,7 +2,7 @@ import type HID from 'node-hid'
 import type { CardGenerator } from '../graphics/cards.js'
 import EventEmitter from 'events'
 import type { PixelFormat } from '@julusian/image-rs'
-import type { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 import type { GridSize } from '../surfaceProxy.js'
 
 export type HIDDevice = HID.Device
@@ -24,7 +24,7 @@ export interface DeviceDrawProps {
 }
 export interface DeviceRegisterProps {
 	brightness: boolean
-	surfaceSchema: SatelliteSurfaceLayout
+	surfaceManifest: SatelliteSurfaceLayout
 	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
 	pincodeMap: SurfacePincodeMap | null
 }
@@ -177,7 +177,7 @@ export interface SurfaceInstance {
 }
 
 export interface ClientCapabilities {
-	supportsSurfaceSchema: boolean
+	supportsSurfaceManifest: boolean
 }
 
 export interface CompanionClient {

@@ -23,7 +23,7 @@ import { parseColor } from './lib.js'
 import util from 'util'
 import { assertNever } from '../lib.js'
 import { Pincode4x4, Pincode5x3, Pincode6x2 } from './pincode.js'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 
 const setTimeoutPromise = util.promisify(setTimeout)
 
@@ -32,7 +32,7 @@ function getControlId(control: StreamDeckControlDefinition, xOffset = 0): string
 }
 
 function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
-	const surfaceSchema: SatelliteSurfaceLayout = {
+	const surfaceManifest: SatelliteSurfaceLayout = {
 		stylePresets: {
 			default: {
 				// Ignore default, as it is hard to translate into for our existing layout
@@ -49,7 +49,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 			case 'button':
 				switch (control.feedbackType) {
 					case 'none':
-						surfaceSchema.controls[controlId] = {
+						surfaceManifest.controls[controlId] = {
 							row: control.row,
 							column: control.column,
 							stylePreset: 'empty',
@@ -57,15 +57,15 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 						break
 					case 'lcd': {
 						const presetId = `btn_${control.pixelSize.width}x${control.pixelSize.height}`
-						if (!surfaceSchema.stylePresets[presetId]) {
-							surfaceSchema.stylePresets[presetId] = {
+						if (!surfaceManifest.stylePresets[presetId]) {
+							surfaceManifest.stylePresets[presetId] = {
 								bitmap: {
 									w: control.pixelSize.width,
 									h: control.pixelSize.height,
 								},
 							}
 						}
-						surfaceSchema.controls[controlId] = {
+						surfaceManifest.controls[controlId] = {
 							row: control.row,
 							column: control.column,
 							stylePreset: presetId,
@@ -73,7 +73,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 						break
 					}
 					case 'rgb':
-						surfaceSchema.controls[controlId] = {
+						surfaceManifest.controls[controlId] = {
 							row: control.row,
 							column: control.column,
 							stylePreset: 'rgb',
@@ -86,13 +86,13 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 				break
 			case 'encoder':
 				if (control.hasLed) {
-					surfaceSchema.controls[controlId] = {
+					surfaceManifest.controls[controlId] = {
 						row: control.row,
 						column: control.column,
 						stylePreset: 'rgb',
 					}
 				} else {
-					surfaceSchema.controls[controlId] = {
+					surfaceManifest.controls[controlId] = {
 						row: control.row,
 						column: control.column,
 						stylePreset: 'empty',
@@ -103,8 +103,8 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 			case 'lcd-segment': {
 				const width = control.pixelSize.width / control.columnSpan
 				const presetId = `lcd_${width}x${control.pixelSize.height}`
-				if (!surfaceSchema.stylePresets[presetId]) {
-					surfaceSchema.stylePresets[presetId] = {
+				if (!surfaceManifest.stylePresets[presetId]) {
+					surfaceManifest.stylePresets[presetId] = {
 						bitmap: {
 							w: width,
 							h: control.pixelSize.height,
@@ -114,7 +114,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 
 				for (let i = 0; i < control.columnSpan; i++) {
 					const controlId = getControlId(control, i)
-					surfaceSchema.controls[controlId] = {
+					surfaceManifest.controls[controlId] = {
 						row: control.row,
 						column: control.column + i,
 						stylePreset: presetId,
@@ -130,7 +130,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 
 	return {
 		brightness: deck.MODEL !== DeviceModelId.PEDAL,
-		surfaceSchema,
+		surfaceManifest,
 		pincodeMap: generatePincodeMap(deck.MODEL),
 	}
 }
@@ -441,7 +441,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 				const targetHeight = control.pixelSize.height
 				let targetWidth = targetHeight
 
-				if (this.#context.capabilities.supportsSurfaceSchema) {
+				if (this.#context.capabilities.supportsSurfaceManifest) {
 					targetWidth = columnWidth
 				} else {
 					if (this.#deck.MODEL === DeviceModelId.PLUS) {

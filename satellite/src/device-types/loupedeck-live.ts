@@ -10,7 +10,7 @@ import type { SurfaceContext, DeviceDrawProps, DeviceRegisterProps, SurfaceInsta
 import { parseColor } from './lib.js'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 import { Pincode4x3 } from './pincode.js'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 import { assertNever } from '../lib.js'
 
 const convertButtonId = (type: 'button' | 'rotary', index: number): string | null => {
@@ -38,7 +38,7 @@ const convertButtonId = (type: 'button' | 'rotary', index: number): string | nul
 }
 
 export function compileLoupedeckLiveProps(device: LoupedeckDevice): DeviceRegisterProps {
-	const surfaceSchema: SatelliteSurfaceLayout = {
+	const surfaceManifest: SatelliteSurfaceLayout = {
 		stylePresets: {
 			default: {
 				bitmap: {
@@ -63,10 +63,10 @@ export function compileLoupedeckLiveProps(device: LoupedeckDevice): DeviceRegist
 
 		switch (control.type) {
 			case LoupedeckControlType.Button:
-				surfaceSchema.controls[controlId] = { row, column, stylePreset: 'button' }
+				surfaceManifest.controls[controlId] = { row, column, stylePreset: 'button' }
 				break
 			case LoupedeckControlType.Rotary:
-				surfaceSchema.controls[controlId] = { row, column, stylePreset: 'empty' }
+				surfaceManifest.controls[controlId] = { row, column, stylePreset: 'empty' }
 				break
 			default:
 				assertNever(control.type)
@@ -77,13 +77,13 @@ export function compileLoupedeckLiveProps(device: LoupedeckDevice): DeviceRegist
 	// Populate lcd 'buttons'
 	for (let y = 0; y < 3; y++) {
 		for (let x = 2; x < 6; x++) {
-			surfaceSchema.controls[`${y}/${x}`] = { row: y, column: x }
+			surfaceManifest.controls[`${y}/${x}`] = { row: y, column: x }
 		}
 	}
 
 	return {
 		brightness: true,
-		surfaceSchema,
+		surfaceManifest,
 		pincodeMap: Pincode4x3(2),
 	}
 }

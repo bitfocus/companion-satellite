@@ -12,7 +12,7 @@ import type { CardGenerator } from '../graphics/cards.js'
 import { assertNever } from '../lib.js'
 import { isAShuttleDevice, ProductModelId, setupShuttle, Shuttle } from 'shuttle-node'
 import crypto from 'node:crypto'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 
 const PLUGIN_ID = 'contour-shuttle'
 
@@ -65,7 +65,7 @@ export class ContourShuttlePlugin implements SurfacePlugin<HIDDevice> {
 }
 
 function compileRegisterProps(modelInfo: ShuttleModelInfo): DeviceRegisterProps {
-	const surfaceSchema: SatelliteSurfaceLayout = {
+	const surfaceManifest: SatelliteSurfaceLayout = {
 		stylePresets: {
 			default: {},
 		},
@@ -82,7 +82,7 @@ function compileRegisterProps(modelInfo: ShuttleModelInfo): DeviceRegisterProps 
 	}
 
 	for (const button of modelInfo.buttons) {
-		surfaceSchema.controls[`${button[1]}/${button[0]}`] = {
+		surfaceManifest.controls[`${button[1]}/${button[0]}`] = {
 			row: button[1],
 			column: button[0],
 		}
@@ -90,7 +90,7 @@ function compileRegisterProps(modelInfo: ShuttleModelInfo): DeviceRegisterProps 
 
 	return {
 		brightness: false,
-		surfaceSchema,
+		surfaceManifest,
 		transferVariables: [
 			{
 				id: 'jogValueVariable',

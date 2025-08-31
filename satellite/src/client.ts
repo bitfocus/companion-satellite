@@ -11,7 +11,7 @@ import {
 	SomeConnectionDetails,
 } from './clientImplementations.js'
 import { SurfaceProxyDrawProps } from './surfaceProxy.js'
-import { SatelliteControlDefinition } from './generated/SurfaceSchema.js'
+import { SatelliteControlDefinition } from './generated/SurfaceManifestSchema.js'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
@@ -123,7 +123,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _companionUnsupported = false
 
 	private _supportsLocalLockState = false
-	private _supportsSurfaceSchema = false
+	private _supportsSurfaceManifest = false
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -144,8 +144,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	public get supportsLocalLockState(): boolean {
 		return this._supportsLocalLockState
 	}
-	public get supportsSurfaceSchema(): boolean {
-		return this._supportsSurfaceSchema
+	public get supportsSurfaceManifest(): boolean {
+		return this._supportsSurfaceManifest
 	}
 
 	public get displayHost(): string {
@@ -167,7 +167,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	public get capabilities(): ClientCapabilities {
 		return {
-			supportsSurfaceSchema: this._supportsSurfaceSchema,
+			supportsSurfaceManifest: this._supportsSurfaceManifest,
 		}
 	}
 
@@ -418,8 +418,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 		if (this._companionApiVersion && semver.lte('1.99.0', this._companionApiVersion)) {
 			// nocommit - define semver properly
-			this._supportsSurfaceSchema = true
-			console.log('Companion supports surface schema')
+			this._supportsSurfaceManifest = true
+			console.log('Companion supports surface manifest')
 		}
 
 		// report the connection as ready
@@ -618,7 +618,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			const transferVariables = Buffer.from(JSON.stringify(props.transferVariables ?? [])).toString('base64')
 
 			const neededColours = new Set<string>()
-			for (const style of Object.values(props.surfaceSchema.stylePresets)) {
+			for (const style of Object.values(props.surfaceManifest.stylePresets)) {
 				if (style.colors) {
 					neededColours.add(style.colors)
 				}
@@ -629,17 +629,17 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				)
 			}
 
-			if (this.supportsSurfaceSchema) {
+			if (this.supportsSurfaceManifest) {
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					PRODUCT_NAME: productName,
-					SCHEMA: Buffer.from(JSON.stringify(props.surfaceSchema)).toString('base64'),
+					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
 					VARIABLES: transferVariables,
 					BRIGHTNESS: props.brightness,
 					PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
 				})
 			} else {
-				const needsText = Object.values(props.surfaceSchema.stylePresets).some((s) => !!s.text)
-				const needsTextStyle = Object.values(props.surfaceSchema.stylePresets).some((s) => !!s.textStyle)
+				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)
+				const needsTextStyle = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.textStyle)
 
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					PRODUCT_NAME: productName,
