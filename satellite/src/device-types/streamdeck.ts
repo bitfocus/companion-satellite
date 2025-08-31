@@ -23,43 +23,129 @@ import { parseColor } from './lib.js'
 import util from 'util'
 import { assertNever } from '../lib.js'
 import { Pincode4x4, Pincode5x3, Pincode6x2 } from './pincode.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
 
 const setTimeoutPromise = util.promisify(setTimeout)
 
 function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
-	let minX = 0
-	let minY = 0
-	let maxX = 0
-	let maxY = 0
+	// let minX = 0
+	// let minY = 0
+	// let maxX = 0
+	// let maxY = 0
 
-	let needsBitmaps: number | null = null
+	// let needsBitmaps: number | null = null
+
+	const surfaceSchema: SatelliteSurfaceLayout = {
+		stylePresets: {
+			default: {
+				// Ignore default, as it is hard to translate into for our existing layout
+			},
+			empty: {},
+			rgb: { colors: 'hex' },
+		},
+		controls: {},
+	}
+
+	// const firstButtonWithBitmap = deck.CONTROLS.find((c) => c.type === 'button' && c.feedbackType === 'lcd')
+	// const firstButtonWithRgb = deck.CONTROLS.find((c) => c.type === 'button' && c.feedbackType === 'rgb')
+
+	// const buttonBitmapOrFallback =
+	// 	firstButtonWithBitmap || firstButtonWithRgb || deck.CONTROLS.find((c) => c.type === 'button')
+
+	// if (buttonBitmapOrFallback) {
+	// 	//
+	// }
 
 	for (const control of deck.CONTROLS) {
-		minX = Math.min(minX, control.column)
-		maxX = Math.max(maxX, control.column + ('columnSpan' in control ? control.columnSpan - 1 : 0))
-		minY = Math.min(minY, control.row)
-		maxY = Math.max(maxY, control.row + ('rowSpan' in control ? control.rowSpan - 1 : 0))
+		const controlId = `${control.row}/${control.column}`
+		switch (control.type) {
+			case 'button':
+				switch (control.feedbackType) {
+					case 'none':
+						surfaceSchema.controls[controlId] = {
+							row: control.row,
+							column: control.column,
+							stylePreset: 'empty',
+						}
+						break
+					case 'lcd': {
+						const presetId = `btn_${control.pixelSize.width}x${control.pixelSize.height}`
+						if (!surfaceSchema.stylePresets[presetId]) {
+							surfaceSchema.stylePresets[presetId] = {
+								bitmap: {
+									w: control.pixelSize.width,
+									h: control.pixelSize.height,
+								},
+							}
+						}
+						surfaceSchema.controls[controlId] = {
+							row: control.row,
+							column: control.column,
+							stylePreset: presetId,
+						}
+						break
+					}
+					case 'rgb':
+						surfaceSchema.controls[controlId] = {
+							row: control.row,
+							column: control.column,
+							stylePreset: 'rgb',
+						}
+						break
+					default:
+						assertNever(control)
+						break
+				}
+				break
+			case 'encoder':
+				if (control.hasLed) {
+					surfaceSchema.controls[controlId] = {
+						row: control.row,
+						column: control.column,
+						stylePreset: 'rgb',
+					}
+				} else {
+					surfaceSchema.controls[controlId] = {
+						row: control.row,
+						column: control.column,
+						stylePreset: 'empty',
+					}
+				}
+				// Future: LED ring
+				break
+			case 'lcd-segment': {
+				const width = control.pixelSize.width / control.columnSpan
+				const presetId = `lcd_${width}x${control.pixelSize.height}`
+				if (!surfaceSchema.stylePresets[presetId]) {
+					surfaceSchema.stylePresets[presetId] = {
+						bitmap: {
+							w: width,
+							h: control.pixelSize.height,
+						},
+					}
+				}
 
-		if (control.type === 'button' && control.feedbackType === 'lcd') {
-			needsBitmaps = Math.max(control.pixelSize.width, control.pixelSize.height, needsBitmaps ?? 0)
-		} else if (control.type === 'lcd-segment') {
-			// TODO - this should be considered
+				for (let i = 0; i < control.columnSpan; i++) {
+					const controlId = `${control.row}/${control.column + i}`
+					surfaceSchema.controls[controlId] = {
+						row: control.row,
+						column: control.column + i,
+						stylePreset: presetId,
+					}
+				}
+				break
+			}
+			default:
+				assertNever(control)
+				break
 		}
 	}
 
-	const rows = maxY - minY + 1
-	const cols = maxX - minX + 1
+	console.log('schema', surfaceSchema)
 
 	return {
 		brightness: deck.MODEL !== DeviceModelId.PEDAL,
-		features: {
-			type: 'simple',
-			rowCount: rows,
-			columnCount: cols,
-			bitmapSize: needsBitmaps,
-			colours: true,
-			text: false,
-		},
+		surfaceSchema,
 		pincodeMap: generatePincodeMap(deck.MODEL),
 	}
 }
@@ -192,7 +278,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 
 	readonly #deck: StreamDeck
 	readonly #surfaceId: string
-	readonly #registerProps: DeviceRegisterProps
+	// readonly #registerProps: DeviceRegisterProps
 	readonly #context: SurfaceContext
 
 	/**
@@ -210,12 +296,12 @@ export class StreamDeckWrapper implements SurfaceInstance {
 	public constructor(
 		surfaceId: string,
 		deck: StreamDeck,
-		registerProps: DeviceRegisterProps,
+		_registerProps: DeviceRegisterProps,
 		context: SurfaceContext,
 	) {
 		this.#deck = deck
 		this.#surfaceId = surfaceId
-		this.#registerProps = registerProps
+		// this.#registerProps = registerProps
 		this.#context = context
 
 		this.#deck.on('error', (e) => context.disconnect(e as any))
@@ -273,17 +359,16 @@ export class StreamDeckWrapper implements SurfaceInstance {
 		await this.#deck.clearPanel()
 	}
 	async draw(signal: AbortSignal, drawProps: DeviceDrawProps): Promise<void> {
-		const key = drawProps.keyIndex
-
-		const x = key % this.#registerProps.columnCount
-		const y = Math.floor(key / this.#registerProps.columnCount)
-
 		const control = this.#deck.CONTROLS.find((control) => {
-			if (control.row !== y) return false
+			if (control.row !== drawProps.row) return false
 
-			if (control.column === x) return true
+			if (control.column === drawProps.column) return true
 
-			if (control.type === 'lcd-segment' && x >= control.column && x < control.column + control.columnSpan)
+			if (
+				control.type === 'lcd-segment' &&
+				drawProps.column >= control.column &&
+				drawProps.column < control.column + control.columnSpan
+			)
 				return true
 
 			return false
@@ -356,7 +441,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 						format: 'rgb',
 					})
 					return
-				} else if (this.#deck.MODEL === DeviceModelId.PLUS && x === 0) {
+				} else if (this.#deck.MODEL === DeviceModelId.PLUS && drawProps.column === 0) {
 					const width = (control.pixelSize.width / control.columnSpan) * 2
 					const image = await drawProps.image(width, control.pixelSize.height, 'rgb')
 
@@ -369,20 +454,26 @@ export class StreamDeckWrapper implements SurfaceInstance {
 				}
 			}
 			if (control.drawRegions) {
-				const drawColumn = x - control.column
+				const drawColumn = drawProps.column - control.column
 
 				const columnWidth = control.pixelSize.width / control.columnSpan
 				let drawX = drawColumn * columnWidth
-				if (this.#deck.MODEL === DeviceModelId.PLUS) {
-					// Position aligned with the buttons/encoders
-					drawX = drawColumn * 216.666 + 25
-				}
 
-				const targetSize = control.pixelSize.height
+				const targetHeight = control.pixelSize.height
+				let targetWidth = targetHeight
+
+				if (this.#context.capabilities.supportsSurfaceSchema) {
+					targetWidth = columnWidth
+				} else {
+					if (this.#deck.MODEL === DeviceModelId.PLUS) {
+						// Position aligned with the buttons/encoders
+						drawX = drawColumn * 216.666 + 25
+					}
+				}
 
 				let newbuffer: Buffer | undefined
 				try {
-					newbuffer = await drawProps.image(targetSize, targetSize, 'rgb')
+					newbuffer = await drawProps.image(targetWidth, targetHeight, 'rgb')
 				} catch (e) {
 					console.log(`scale image failed: ${e}`)
 					return
@@ -395,8 +486,8 @@ export class StreamDeckWrapper implements SurfaceInstance {
 
 						await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
 							format: 'rgb',
-							width: targetSize,
-							height: targetSize,
+							width: targetWidth,
+							height: targetHeight,
 						})
 						return
 					} catch (e) {

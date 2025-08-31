@@ -16,6 +16,8 @@ export interface DeviceDrawProps {
 	/** @deprecated TODO: is this needed? */
 	keyIndex: number
 	controlId: string
+	row: number
+	column: number
 	image?: DeviceDrawImageFn
 	color?: string // hex
 	text?: string
@@ -182,6 +184,7 @@ export interface ClientCapabilities {
 
 export interface CompanionClient {
 	get displayHost(): string
+	get capabilities(): ClientCapabilities
 
 	keyDownXY(deviceId: string, x: number, y: number): void
 	keyUpXY(deviceId: string, x: number, y: number): void
@@ -195,6 +198,8 @@ export interface CompanionClient {
 export interface SurfaceContext {
 	get isLocked(): boolean
 	// get displayHost(): string
+
+	get capabilities(): ClientCapabilities
 
 	disconnect(error: Error): void
 

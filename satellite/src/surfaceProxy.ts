@@ -142,6 +142,8 @@ export class SurfaceProxy {
 			let controlId: string
 			let keyIndex: number
 			let bitmapSize: SatelliteConfigSize | undefined
+			let row: number
+			let column: number
 
 			if (data.controlId !== undefined) {
 				controlId = data.controlId
@@ -151,13 +153,15 @@ export class SurfaceProxy {
 
 				// Interpolate a keyIndex, for compatibility
 				keyIndex = controlInfo.row * this.#registerProps.gridSize.columns + controlInfo.column
+				row = controlInfo.row
+				column = controlInfo.column
 
 				bitmapSize = this.#getStyleForPreset(controlInfo.stylePreset).bitmap
 			} else if (data.keyIndex !== undefined) {
 				keyIndex = data.keyIndex
 
-				const row = Math.floor(keyIndex / this.#registerProps.gridSize.columns)
-				const column = keyIndex % this.#registerProps.gridSize.columns
+				row = Math.floor(keyIndex / this.#registerProps.gridSize.columns)
+				column = keyIndex % this.#registerProps.gridSize.columns
 
 				const controlInfo = Object.entries(this.#registerProps.surfaceSchema.controls).find(
 					([_id, control]) => {
@@ -177,17 +181,6 @@ export class SurfaceProxy {
 			} else {
 				throw new Error('No key or control specified for draw')
 			}
-
-			// let controlInfo: [string, SatelliteControlDefinition] | null = null
-			// for (const [id, control] of Object.entries(this.#registerProps.surfaceSchema.controls)) {
-			// 	if (control.row === xy[1] && control.column === xy[0]) {
-			// 		controlInfo = [id, control]
-			// 		break
-			// 	}
-			// }
-
-			// // Missing the control for some reason.. Probably using the old api.
-			// if (!controlInfo) return
 
 			const rawImage = data.image
 			const image: DeviceDrawImageFn | undefined =
@@ -210,6 +203,8 @@ export class SurfaceProxy {
 				...data,
 				controlId,
 				keyIndex,
+				row,
+				column,
 				image,
 			})
 		})
@@ -357,6 +352,8 @@ export class SurfaceProxy {
 				deviceId: this.surfaceId,
 				keyIndex,
 				controlId: controlInfo[0],
+				row: xy[1],
+				column: xy[0],
 				image,
 				color,
 				text,
@@ -414,6 +411,10 @@ export class SurfaceProxyContext implements SurfaceContext {
 			this.#lockButtonPage = 0
 		}
 		return pincodeMap.pages[this.#lockButtonPage] as SurfacePincodeMapPageEntry
+	}
+
+	get capabilities(): ClientCapabilities {
+		return this.#client.capabilities
 	}
 
 	constructor(client: CompanionClient, surfaceId: SurfaceId, onDisconnect: SurfaceContext['disconnect']) {

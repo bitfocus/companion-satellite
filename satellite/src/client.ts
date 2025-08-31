@@ -350,6 +350,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		const body = i === -1 ? '' : line.slice(i + 1)
 		const params = parseLineParameters(body)
 
+		// console.log('proc', line.slice(0, 80))
+
 		switch (cmd.toUpperCase()) {
 			case 'PING':
 				this.socket?.write(`PONG ${body}\n`)
