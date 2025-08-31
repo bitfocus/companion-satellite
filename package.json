@@ -34,7 +34,7 @@
     "dist": "run build && tsx tools/build_electron.mts"
   },
   "devDependencies": {
-    "@sofie-automation/eslint-plugin": "^0.1.1",
+    "@sofie-automation/eslint-plugin": "^0.2.1",
     "@tsconfig/node20": "^20.1.6",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
@@ -44,11 +44,11 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "husky": "^9.1.7",
-    "lint-staged": "^15.5.2",
+    "lint-staged": "^16.1.5",
     "openapi-typescript": "^7.9.1",
     "prettier": "^3.6.2",
     "tsx": "^4.20.5",
-    "typescript": "~5.7.3",
+    "typescript": "~5.9.2",
     "typescript-eslint": "^8.41.0",
     "zx": "^8.8.1"
   },
