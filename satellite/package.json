@@ -34,7 +34,7 @@
 		"tsx": "^4.20.5"
 	},
 	"engines": {
-		"node": "^20.14"
+		"node": "^20.19"
 	},
 	"dependencies": {
 		"@blackmagic-controller/node": "^0.2.2",
