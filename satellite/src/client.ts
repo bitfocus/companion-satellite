@@ -11,6 +11,7 @@ import {
 	SomeConnectionDetails,
 } from './clientImplementations.js'
 import { SurfaceProxyDrawProps } from './surfaceProxy.js'
+import { SatelliteControlDefinition } from './generated/SurfaceSchema.js'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
@@ -350,8 +351,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		const body = i === -1 ? '' : line.slice(i + 1)
 		const params = parseLineParameters(body)
 
-		// console.log('proc', line.slice(0, 80))
-
 		switch (cmd.toUpperCase()) {
 			case 'PING':
 				this.socket?.write(`PONG ${body}\n`)
@@ -547,34 +546,38 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.emit('newDevice', { deviceId: params.DEVICEID })
 	}
 
-	public keyDownXY(deviceId: string, x: number, y: number): void {
+	public keyDown(deviceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('KEY-PRESS', null, deviceId, {
-				KEY: `${y}/${x}`,
+				CONTROLID: controlId,
+				KEY: `${controlDefinition.row}/${controlDefinition.column}`,
 				PRESSED: true,
 			})
 		}
 	}
-	public keyUpXY(deviceId: string, x: number, y: number): void {
+	public keyUp(deviceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('KEY-PRESS', null, deviceId, {
-				KEY: `${y}/${x}`,
+				CONTROLID: controlId,
+				KEY: `${controlDefinition.row}/${controlDefinition.column}`,
 				PRESSED: false,
 			})
 		}
 	}
-	public rotateLeftXY(deviceId: string, x: number, y: number): void {
+	public rotateLeft(deviceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('KEY-ROTATE', null, deviceId, {
-				KEY: `${y}/${x}`,
+				CONTROLID: controlId,
+				KEY: `${controlDefinition.row}/${controlDefinition.column}`,
 				DIRECTION: false,
 			})
 		}
 	}
-	public rotateRightXY(deviceId: string, x: number, y: number): void {
+	public rotateRight(deviceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('KEY-ROTATE', null, deviceId, {
-				KEY: `${y}/${x}`,
+				CONTROLID: controlId,
+				KEY: `${controlDefinition.row}/${controlDefinition.column}`,
 				DIRECTION: true,
 			})
 		}

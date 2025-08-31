@@ -257,12 +257,9 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 	async draw(_signal: AbortSignal, d: DeviceDrawProps): Promise<void> {
 		if (!d.color) d.color = '#000000'
 
-		const x = d.keyIndex % this.#columnCount
-		const y = Math.floor(d.keyIndex / this.#columnCount)
-
 		const control = this.#device.CONTROLS.find(
 			(control): control is BlackmagicControllerButtonControlDefinition =>
-				control.type === 'button' && control.row === y && control.column === x,
+				control.type === 'button' && control.row === d.row && control.column === d.column,
 		)
 		if (!control) return
 

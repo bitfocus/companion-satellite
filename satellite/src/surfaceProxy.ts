@@ -446,7 +446,6 @@ export class SurfaceProxyContext implements SurfaceContext {
 			return
 		}
 
-		// TODO - test this
 		this.#client.keyDownXY(this.#surfaceId, ...xy)
 	}
 	keyUp(keyIndex: number): void {
@@ -484,43 +483,79 @@ export class SurfaceProxyContext implements SurfaceContext {
 		this.#client.rotateRightXY(this.#surfaceId, ...xy)
 	}
 
-	keyDownXY(x: number, y: number): void {
-		// TODO - mirror to the non-XY version
-		if (this.#isLocked) {
-			this.#pincodeXYPress(x, y)
+	#getControlById(controlId: string): SatelliteControlDefinition | null {
+		if (!this.#surface) throw new Error('Surface not set')
+
+		return this.#surface.registerProps.surfaceSchema.controls[controlId] ?? null
+	}
+
+	keyDownById(controlId: string): void {
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in keyDownById`)
 			return
 		}
 
-		this.#client.keyDownXY(this.#surfaceId, x, y)
+		if (this.#isLocked) {
+			this.#pincodeXYPress(control.column, control.row)
+			return
+		}
+
+		this.#client.keyDown(this.#surfaceId, controlId, control)
 	}
-	keyUpXY(x: number, y: number): void {
+	keyUpById(controlId: string): void {
 		if (this.#isLocked) return
 
-		this.#client.keyUpXY(this.#surfaceId, x, y)
-	}
-	keyDownUpXY(x: number, y: number): void {
-		if (this.#isLocked) {
-			this.#pincodeXYPress(x, y)
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in keyUpById`)
 			return
 		}
 
-		this.#client.keyDownXY(this.#surfaceId, x, y)
+		this.#client.keyUp(this.#surfaceId, controlId, control)
+	}
+
+	keyDownUpById(controlId: string): void {
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in keyDownUpById`)
+			return
+		}
+
+		if (this.#isLocked) {
+			this.#pincodeXYPress(control.column, control.row)
+			return
+		}
+
+		this.#client.keyDown(this.#surfaceId, controlId, control)
 
 		setTimeout(() => {
 			if (!this.#isLocked) {
-				this.#client.keyUpXY(this.#surfaceId, x, y)
+				this.#client.keyUp(this.#surfaceId, controlId, control)
 			}
 		}, 20)
 	}
-	rotateLeftXY(x: number, y: number): void {
+	rotateLeftById(controlId: string): void {
 		if (this.#isLocked) return
 
-		this.#client.rotateLeftXY(this.#surfaceId, x, y)
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in rotateLeftById`)
+			return
+		}
+
+		this.#client.rotateLeft(this.#surfaceId, controlId, control)
 	}
-	rotateRightXY(x: number, y: number): void {
+	rotateRightById(controlId: string): void {
 		if (this.#isLocked) return
 
-		this.#client.rotateRightXY(this.#surfaceId, x, y)
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in rotateRightById`)
+			return
+		}
+
+		this.#client.rotateRight(this.#surfaceId, controlId, control)
 	}
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

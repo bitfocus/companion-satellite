@@ -3,6 +3,7 @@ import {
 	getStreamDeckDeviceInfo,
 	openStreamDeck,
 	StreamDeck,
+	StreamDeckControlDefinition,
 	StreamDeckDeviceInfo,
 	StreamDeckLcdSegmentControlDefinition,
 } from '@elgato-stream-deck/node'
@@ -27,14 +28,11 @@ import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
 
 const setTimeoutPromise = util.promisify(setTimeout)
 
+function getControlId(control: StreamDeckControlDefinition, xOffset = 0): string {
+	return `${control.row}/${control.column + xOffset}`
+}
+
 function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
-	// let minX = 0
-	// let minY = 0
-	// let maxX = 0
-	// let maxY = 0
-
-	// let needsBitmaps: number | null = null
-
 	const surfaceSchema: SatelliteSurfaceLayout = {
 		stylePresets: {
 			default: {
@@ -46,18 +44,8 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 		controls: {},
 	}
 
-	// const firstButtonWithBitmap = deck.CONTROLS.find((c) => c.type === 'button' && c.feedbackType === 'lcd')
-	// const firstButtonWithRgb = deck.CONTROLS.find((c) => c.type === 'button' && c.feedbackType === 'rgb')
-
-	// const buttonBitmapOrFallback =
-	// 	firstButtonWithBitmap || firstButtonWithRgb || deck.CONTROLS.find((c) => c.type === 'button')
-
-	// if (buttonBitmapOrFallback) {
-	// 	//
-	// }
-
 	for (const control of deck.CONTROLS) {
-		const controlId = `${control.row}/${control.column}`
+		const controlId = getControlId(control)
 		switch (control.type) {
 			case 'button':
 				switch (control.feedbackType) {
@@ -126,7 +114,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 				}
 
 				for (let i = 0; i < control.columnSpan; i++) {
-					const controlId = `${control.row}/${control.column + i}`
+					const controlId = getControlId(control, i)
 					surfaceSchema.controls[controlId] = {
 						row: control.row,
 						column: control.column + i,
@@ -307,33 +295,31 @@ export class StreamDeckWrapper implements SurfaceInstance {
 		this.#deck.on('error', (e) => context.disconnect(e as any))
 
 		this.#deck.on('down', (control) => {
-			context.keyDownXY(control.column, control.row)
+			context.keyDownById(getControlId(control))
 		})
 		this.#deck.on('up', (control) => {
-			context.keyUpXY(control.column, control.row)
+			context.keyUpById(getControlId(control))
 		})
 		this.#deck.on('rotate', (control, delta) => {
 			if (delta < 0) {
-				context.rotateLeftXY(control.column, control.row)
+				context.rotateLeftById(getControlId(control))
 			} else if (delta > 0) {
-				context.rotateRightXY(control.column, control.row)
+				context.rotateRightById(getControlId(control))
 			}
 		})
 		this.#deck.on('lcdShortPress', (control, position) => {
 			if (context.isLocked) return
 
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
-			const column = control.column + columnOffset
 
-			context.keyDownUpXY(column, control.row)
+			context.keyDownUpById(getControlId(control, columnOffset))
 		})
 		this.#deck.on('lcdLongPress', (control, position) => {
 			if (context.isLocked) return
 
 			const columnOffset = Math.floor((position.x / control.pixelSize.width) * control.columnSpan)
-			const column = control.column + columnOffset
 
-			context.keyDownUpXY(column, control.row)
+			context.keyDownUpById(getControlId(control, columnOffset))
 		})
 	}
 

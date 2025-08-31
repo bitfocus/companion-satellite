@@ -2,7 +2,7 @@ import type HID from 'node-hid'
 import type { CardGenerator } from '../graphics/cards.js'
 import EventEmitter from 'events'
 import type { PixelFormat } from '@julusian/image-rs'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+import type { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
 import type { GridSize } from '../surfaceProxy.js'
 
 export type HIDDevice = HID.Device
@@ -186,13 +186,18 @@ export interface CompanionClient {
 	get displayHost(): string
 	get capabilities(): ClientCapabilities
 
-	keyDownXY(deviceId: string, x: number, y: number): void
-	keyUpXY(deviceId: string, x: number, y: number): void
-	rotateLeftXY(deviceId: string, x: number, y: number): void
-	rotateRightXY(deviceId: string, x: number, y: number): void
-	pincodeKey(deviceId: string, keyCode: number): void
+	keyDown(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
+	keyUp(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
+	rotateLeft(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
+	rotateRight(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
 
-	sendVariableValue(deviceId: string, variable: string, value: any): void
+	// keyDownXY(deviceId: string, x: number, y: number): void
+	// keyUpXY(deviceId: string, x: number, y: number): void
+	// rotateLeftXY(deviceId: string, x: number, y: number): void
+	// rotateRightXY(deviceId: string, x: number, y: number): void
+	pincodeKey(surfaceId: string, keyCode: number): void
+
+	sendVariableValue(surfaceId: string, variable: string, value: any): void
 }
 
 export interface SurfaceContext {
@@ -209,11 +214,17 @@ export interface SurfaceContext {
 	rotateLeft(keyIndex: number): void
 	rotateRight(keyIndex: number): void
 
-	keyDownXY(x: number, y: number): void
-	keyUpXY(x: number, y: number): void
-	keyDownUpXY(x: number, y: number): void
-	rotateLeftXY(x: number, y: number): void
-	rotateRightXY(x: number, y: number): void
+	keyDownById(controlId: string): void
+	keyUpById(controlId: string): void
+	keyDownUpById(controlId: string): void
+	rotateLeftById(controlId: string): void
+	rotateRightById(controlId: string): void
+
+	// keyDownXY(x: number, y: number): void
+	// keyUpXY(x: number, y: number): void
+	// keyDownUpXY(x: number, y: number): void
+	// rotateLeftXY(x: number, y: number): void
+	// rotateRightXY(x: number, y: number): void
 
 	sendVariableValue(variable: string, value: any): void
 }
