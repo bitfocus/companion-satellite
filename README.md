@@ -2,10 +2,9 @@
 
 [![License](https://img.shields.io/github/license/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/blob/main/LICENSE)
 [![Version](https://img.shields.io/github/v/release/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/releases)
+📋 [View Changelog](CHANGELOG.md)
 
 A small application to allow for connecting Elgato Stream Deck and other supprted surface types to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
-
-📋 [View Changelog](CHANGELOG.md)
 
 Companion 3.4.0 and newer are supported
 
@@ -97,10 +96,11 @@ Building for another platform has not been tested.
 ### REST API
 
 The default rest port is 9999
-a GET request to `http://Satellite-IP:9999/api/host` will return the current target ip in plain text
-a GET request to `http://Satellite-IP:9999/api/port` will return the current target port in plain text
-a GET request to `http://Satellite-IP:9999/api/config` will return the current target port and ip as json
 
-a POST request to `http://Satellite-IP:9999/api/host` with json body `{"host": "newhostip"}` or plain text `newhostip` will connect the satellite to that ip or hostname
-a POST request to `http://Satellite-IP:9999/api/port` with `{"port": 16622}` or plain text `16622` will connect the satellite to that port
-a POST request to `http://Satellite-IP:9999/api/config` with `{"host": "newhostip", "port": 16622}` will connect the satellite to that ip/hostname and port
+- a GET request to `http://Satellite-IP:9999/api/host` will return the current target ip in plain text
+- a GET request to `http://Satellite-IP:9999/api/port` will return the current target port in plain text
+- a GET request to `http://Satellite-IP:9999/api/config` will return the current target port and ip as json
+
+- a POST request to `http://Satellite-IP:9999/api/host` with json body `{"host": "newhostip"}` or plain text `newhostip` will connect the satellite to that ip or hostname
+- a POST request to `http://Satellite-IP:9999/api/port` with `{"port": 16622}` or plain text `16622` will connect the satellite to that port
+- a POST request to `http://Satellite-IP:9999/api/config` with `{"host": "newhostip", "port": 16622}` will connect the satellite to that ip/hostname and port
