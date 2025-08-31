@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSatelliteApi } from '@/Api/Context.js'
 import { Button } from '@/components/ui/button.js'
 import { Switch } from '@/components/ui/switch.js'
-import React from 'react'
+import React, { JSX } from 'react'
 import { CONNECTION_CONFIG_QUERY_KEY, CONNECTION_STATUS_QUERY_KEY } from './constants.js'
 import { BarLoader } from 'react-spinners'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js'
@@ -31,7 +31,7 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 	const api = useSatelliteApi()
 	const queryClient = useQueryClient()
 
-	const form = useForm<ApiConfigData>({
+	const form = useForm({
 		defaultValues: config,
 		onSubmit: async ({ value }) => {
 			// Do something with form data

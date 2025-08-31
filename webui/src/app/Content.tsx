@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ConnectionTab } from './ConnectionTab'
 import { ConnectedSurfacesTab } from './ConnectedSurfacesTab'
 import { SurfacePluginsTab } from './SurfacePluginsTab'
+import { JSX } from 'react'
 
 const queryClient = new QueryClient()
 

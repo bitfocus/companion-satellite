@@ -1,6 +1,7 @@
 import { MyErrorBoundary } from '@/Util/ErrorBoundary'
 import { ConnectionStatus } from './ConnectionStatus'
 import { ConnectionConfig } from './ConnectionConfig'
+import { JSX } from 'react'
 
 export function ConnectionTab(): JSX.Element {
 	return (

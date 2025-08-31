@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card'
 import { AppContent } from './Content'
+import { JSX } from 'react'
 
 export function App(): JSX.Element {
 	return (

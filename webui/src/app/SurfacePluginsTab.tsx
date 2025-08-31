@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { MyErrorBoundary } from '@/Util/ErrorBoundary'
 import { CONNECTED_SURFACES_QUERY_KEY, SURFACE_PLUGINS_ENABLED_QUERY_KEY } from './constants'
-import React from 'react'
+import React, { JSX } from 'react'
 
 export function SurfacePluginsTab(): JSX.Element {
 	const api = useSatelliteApi()

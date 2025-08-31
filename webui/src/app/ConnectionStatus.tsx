@@ -3,6 +3,7 @@ import type { ApiStatusResponse } from '../Api/types.js'
 import { useQuery } from '@tanstack/react-query'
 import { BarLoader } from 'react-spinners'
 import { CONNECTION_STATUS_QUERY_KEY } from './constants'
+import { JSX } from 'react'
 
 export function ConnectionStatus(): JSX.Element {
 	const api = useSatelliteApi()

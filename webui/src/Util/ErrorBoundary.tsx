@@ -1,6 +1,6 @@
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { PropsWithChildren } from 'react'
+import { JSX, PropsWithChildren } from 'react'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {

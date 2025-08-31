@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react'
+import React, { createContext, JSX, useContext } from 'react'
 import type { SatelliteUiApi } from './types'
 
 const ApiContext = createContext<SatelliteUiApi | null>(null)

@@ -1,6 +1,6 @@
 import { useSatelliteApi } from '@/Api/Context'
 import { BeatLoader } from 'react-spinners'
-import { useState } from 'react'
+import { JSX, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useQueryClient } from '@tanstack/react-query'
 import { CONNECTED_SURFACES_QUERY_KEY } from './constants'

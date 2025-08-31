@@ -5,6 +5,7 @@ import { ApiSurfaceInfo } from '@/Api/types'
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell, TableCaption } from '@/components/ui/table'
 import { BarLoader } from 'react-spinners'
 import { CONNECTED_SURFACES_QUERY_KEY } from './constants'
+import { JSX } from 'react'
 
 export function ConnectedSurfacesTab(): JSX.Element {
 	const api = useSatelliteApi()
