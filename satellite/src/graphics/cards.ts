@@ -8,7 +8,7 @@ export class CardGenerator {
 
 	async loadIcon(): Promise<Image> {
 		if (!this.iconImage) {
-			const rawData = await readFile(new URL('../assets/icon.png', import.meta.url))
+			const rawData = await readFile(new URL('../../assets/icon.png', import.meta.url))
 
 			this.iconImage = await loadImage(rawData)
 		}
