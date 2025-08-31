@@ -129,8 +129,6 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 		}
 	}
 
-	console.log('schema', surfaceSchema)
-
 	return {
 		brightness: deck.MODEL !== DeviceModelId.PEDAL,
 		surfaceSchema,
