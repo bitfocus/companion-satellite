@@ -438,50 +438,50 @@ export class SurfaceProxyContext implements SurfaceContext {
 		this.#isLocked = locked
 	}
 
-	keyDown(keyIndex: number): void {
-		const xy = this.#keyIndexToXY(keyIndex)
+	// keyDown(keyIndex: number): void {
+	// 	const xy = this.#keyIndexToXY(keyIndex)
 
-		if (this.#isLocked) {
-			this.#pincodeXYPress(...xy)
-			return
-		}
+	// 	if (this.#isLocked) {
+	// 		this.#pincodeXYPress(...xy)
+	// 		return
+	// 	}
 
-		this.#client.keyDownXY(this.#surfaceId, ...xy)
-	}
-	keyUp(keyIndex: number): void {
-		if (this.#isLocked) return
+	// 	this.#client.keyDownXY(this.#surfaceId, ...xy)
+	// }
+	// keyUp(keyIndex: number): void {
+	// 	if (this.#isLocked) return
 
-		const xy = this.#keyIndexToXY(keyIndex)
-		this.#client.keyUpXY(this.#surfaceId, ...xy)
-	}
-	keyDownUp(keyIndex: number): void {
-		const xy = this.#keyIndexToXY(keyIndex)
+	// 	const xy = this.#keyIndexToXY(keyIndex)
+	// 	this.#client.keyUpXY(this.#surfaceId, ...xy)
+	// }
+	// keyDownUp(keyIndex: number): void {
+	// 	const xy = this.#keyIndexToXY(keyIndex)
 
-		if (this.#isLocked) {
-			this.#pincodeXYPress(...xy)
-			return
-		}
+	// 	if (this.#isLocked) {
+	// 		this.#pincodeXYPress(...xy)
+	// 		return
+	// 	}
 
-		this.#client.keyDownXY(this.#surfaceId, ...xy)
+	// 	this.#client.keyDownXY(this.#surfaceId, ...xy)
 
-		setTimeout(() => {
-			if (!this.#isLocked) {
-				this.#client.keyUpXY(this.#surfaceId, ...xy)
-			}
-		}, 20)
-	}
-	rotateLeft(keyIndex: number): void {
-		if (this.#isLocked) return
+	// 	setTimeout(() => {
+	// 		if (!this.#isLocked) {
+	// 			this.#client.keyUpXY(this.#surfaceId, ...xy)
+	// 		}
+	// 	}, 20)
+	// }
+	// rotateLeft(keyIndex: number): void {
+	// 	if (this.#isLocked) return
 
-		const xy = this.#keyIndexToXY(keyIndex)
-		this.#client.rotateLeftXY(this.#surfaceId, ...xy)
-	}
-	rotateRight(keyIndex: number): void {
-		if (this.#isLocked) return
+	// 	const xy = this.#keyIndexToXY(keyIndex)
+	// 	this.#client.rotateLeftXY(this.#surfaceId, ...xy)
+	// }
+	// rotateRight(keyIndex: number): void {
+	// 	if (this.#isLocked) return
 
-		const xy = this.#keyIndexToXY(keyIndex)
-		this.#client.rotateRightXY(this.#surfaceId, ...xy)
-	}
+	// 	const xy = this.#keyIndexToXY(keyIndex)
+	// 	this.#client.rotateRightXY(this.#surfaceId, ...xy)
+	// }
 
 	#getControlById(controlId: string): SatelliteControlDefinition | null {
 		if (!this.#surface) throw new Error('Surface not set')
@@ -565,16 +565,16 @@ export class SurfaceProxyContext implements SurfaceContext {
 		this.#client.sendVariableValue(this.#surfaceId, variable, value)
 	}
 
-	#keyIndexToXY(keyIndex: number): [number, number] {
-		if (!this.#surface) throw new Error('Surface not set')
+	// #keyIndexToXY(keyIndex: number): [number, number] {
+	// 	if (!this.#surface) throw new Error('Surface not set')
 
-		const { columns } = this.#surface.registerProps.gridSize
+	// 	const { columns } = this.#surface.registerProps.gridSize
 
-		const x = keyIndex % columns
-		const y = Math.floor(keyIndex / columns)
+	// 	const x = keyIndex % columns
+	// 	const y = Math.floor(keyIndex / columns)
 
-		return [x, y]
-	}
+	// 	return [x, y]
+	// }
 
 	#pincodeXYPress(x: number, y: number): void {
 		const pincodeMap = this.#pincodeMap

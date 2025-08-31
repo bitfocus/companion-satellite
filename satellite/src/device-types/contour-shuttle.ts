@@ -13,6 +13,7 @@ import type { CardGenerator } from '../graphics/cards.js'
 import { assertNever } from '../lib.js'
 import { isAShuttleDevice, ProductModelId, setupShuttle, Shuttle } from 'shuttle-node'
 import crypto from 'node:crypto'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
 
 const PLUGIN_ID = 'contour-shuttle'
 
@@ -65,16 +66,32 @@ export class ContourShuttlePlugin implements SurfacePlugin<HIDDevice> {
 }
 
 function compileRegisterProps(modelInfo: ShuttleModelInfo): DeviceRegisterProps {
+	const surfaceSchema: SatelliteSurfaceLayout = {
+		stylePresets: {
+			default: {},
+		},
+		controls: {
+			jog: {
+				row: modelInfo.jog[1],
+				column: modelInfo.jog[0],
+			},
+			shuttle: {
+				row: modelInfo.shuttle[1],
+				column: modelInfo.shuttle[0],
+			},
+		},
+	}
+
+	for (const button of modelInfo.buttons) {
+		surfaceSchema.controls[`${button[1]}/${button[0]}`] = {
+			row: button[1],
+			column: button[0],
+		}
+	}
+
 	return {
 		brightness: false,
-		features: {
-			type: 'simple',
-			rowCount: modelInfo.totalRows,
-			columnCount: modelInfo.totalCols,
-			bitmapSize: 0,
-			colours: false,
-			text: false,
-		},
+		surfaceSchema,
 		transferVariables: [
 			{
 				id: 'jogValueVariable',
@@ -234,14 +251,14 @@ export class ContourShuttleWrapper implements SurfaceInstance {
 			const xy = this.#modelInfo.buttons[info]
 			if (!xy) return
 
-			context.keyDownXY(xy[0], xy[1])
+			context.keyDownById(`${xy[1]}/${xy[0]}`)
 		})
 
 		this.#device.on('up', (info) => {
 			const xy = this.#modelInfo.buttons[info]
 			if (!xy) return
 
-			context.keyUpXY(xy[0], xy[1])
+			context.keyUpById(`${xy[1]}/${xy[0]}`)
 		})
 
 		this.#device.on('jog', (delta) => {
@@ -249,9 +266,9 @@ export class ContourShuttleWrapper implements SurfaceInstance {
 			if (!xy) return
 
 			if (delta === 1) {
-				context.rotateRightXY(xy[0], xy[1])
+				context.rotateRightById('jog')
 			} else {
-				context.rotateLeftXY(xy[0], xy[1])
+				context.rotateLeftById('jog')
 			}
 
 			console.log(`Jog position has changed`, delta)
@@ -267,9 +284,9 @@ export class ContourShuttleWrapper implements SurfaceInstance {
 			if (!xy) return
 
 			if (lastShuttle < shuttle) {
-				context.rotateRightXY(xy[0], xy[1])
+				context.rotateRightById('shuttle')
 			} else {
-				context.rotateLeftXY(xy[0], xy[1])
+				context.rotateLeftById('shuttle')
 			}
 			lastShuttle = shuttle
 

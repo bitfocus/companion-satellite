@@ -21,10 +21,11 @@ import type {
 	SurfaceInstance,
 	SurfacePincodeMap,
 } from './api.js'
-import { calculateGridSize, parseColor } from './lib.js'
+import { parseColor } from './lib.js'
 import debounceFn from 'debounce-fn'
 import type { CardGenerator } from '../graphics/cards.js'
 import { assertNever } from '../lib.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
 
 const PLUGIN_ID = 'blackmagic-controller'
 
@@ -71,22 +72,25 @@ export class BlackmagicControllerPlugin implements SurfacePlugin<BlackmagicContr
 }
 
 function compileRegisterProps(controller: BlackmagicController): DeviceRegisterProps {
-	const allRowValues = controller.CONTROLS.map((control) => control.row)
-	const allColumnValues = controller.CONTROLS.map((button) => button.column)
+	const surfaceSchema: SatelliteSurfaceLayout = {
+		stylePresets: {
+			default: {
+				colors: 'hex',
+			},
+		},
+		controls: {},
+	}
 
-	const columnCount = Math.max(...allColumnValues) + 1
-	const rowCount = Math.max(...allRowValues) + 1
+	for (const control of controller.CONTROLS) {
+		surfaceSchema.controls[`${control.row}/${control.column}`] = {
+			row: control.row,
+			column: control.column,
+		}
+	}
 
 	const info: DeviceRegisterProps = {
 		brightness: false,
-		features: {
-			type: 'simple',
-			rowCount: rowCount,
-			columnCount: columnCount,
-			bitmapSize: 0,
-			colours: true,
-			text: false,
-		},
+		surfaceSchema,
 		transferVariables: [
 			{
 				id: 'tbarValueVariable',
@@ -182,8 +186,6 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 
 	readonly #device: BlackmagicController
 	readonly #surfaceId: string
-	readonly #columnCount: number
-	// readonly #rowCount: number
 
 	public get surfaceId(): string {
 		return this.#surfaceId
@@ -196,22 +198,18 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 		surfaceId: string,
 		device: BlackmagicController,
 		context: SurfaceContext,
-		registerProps: DeviceRegisterProps,
+		_registerProps: DeviceRegisterProps,
 	) {
 		this.#device = device
 		this.#surfaceId = surfaceId
 
-		const gridSize = calculateGridSize(registerProps.surfaceSchema)
-		// this.#rowCount = rowCount
-		this.#columnCount = gridSize.columns
-
 		this.#device.on('error', (e) => context.disconnect(e as any))
 
 		this.#device.on('down', (control) => {
-			context.keyDownXY(control.column, control.row)
+			context.keyDownById(`${control.row}/${control.column}`)
 		})
 		this.#device.on('up', (control) => {
-			context.keyUpXY(control.column, control.row)
+			context.keyUpById(`${control.row}/${control.column}`)
 		})
 		this.#device.on('batteryLevel', (_level) => {
 			// context.sendVariableValue(this.#surfaceId, 'batteryLevel', level.toString())

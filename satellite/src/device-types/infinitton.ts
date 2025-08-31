@@ -11,6 +11,7 @@ import type {
 } from './api.js'
 import Infinitton from 'infinitton-idisplay'
 import { Pincode5x3 } from './pincode.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
 
 export interface InfinittonDeviceInfo {
 	path: string
@@ -52,18 +53,31 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 		context: SurfaceContext,
 	): Promise<OpenSurfaceResult> => {
 		const infinitton = new Infinitton(pluginInfo.path)
+
+		const surfaceSchema: SatelliteSurfaceLayout = {
+			stylePresets: {
+				default: {
+					bitmap: { w: 72, h: 72 },
+				},
+			},
+			controls: {},
+		}
+
+		for (let i = 0; i < Infinitton.NUM_KEYS; i++) {
+			const row = Math.floor(i / Infinitton.NUM_KEYS_PER_ROW)
+			const column = i % Infinitton.NUM_KEYS_PER_ROW
+
+			surfaceSchema.controls[`${row}/${column}`] = {
+				row,
+				column,
+			}
+		}
+
 		return {
 			surface: new InfinittonWrapper(surfaceId, infinitton, context),
 			registerProps: {
 				brightness: true,
-				features: {
-					type: 'simple',
-					rowCount: 3,
-					columnCount: 5,
-					bitmapSize: 72,
-					colours: false,
-					text: false,
-				},
+				surfaceSchema,
 				pincodeMap: Pincode5x3(),
 			},
 		}
@@ -89,8 +103,8 @@ export class InfinittonWrapper implements SurfaceInstance {
 
 		this.#panel.on('error', (e) => context.disconnect(e))
 
-		this.#panel.on('down', (key: number) => context.keyDown(key))
-		this.#panel.on('up', (key: number) => context.keyUp(key))
+		this.#panel.on('down', (key: number) => context.keyDownById(key + ''))
+		this.#panel.on('up', (key: number) => context.keyUpById(key + ''))
 	}
 
 	async close(): Promise<void> {

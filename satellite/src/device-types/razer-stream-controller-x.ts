@@ -9,18 +9,38 @@ import type {
 } from './api.js'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 import { Pincode5x3 } from './pincode.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
+
+const KEY_COUNT = 15
+const COLUMNS = 5
+
+function getControlId(index: number): string {
+	return `${Math.floor(index / COLUMNS)}/${index % COLUMNS}`
+}
 
 export function compileRazerStreamControllerXProps(device: LoupedeckDevice): DeviceRegisterProps {
+	const surfaceSchema: SatelliteSurfaceLayout = {
+		stylePresets: {
+			default: {
+				bitmap: {
+					w: device.lcdKeySize,
+					h: device.lcdKeySize,
+				},
+			},
+		},
+		controls: {},
+	}
+
+	for (let i = 0; i < KEY_COUNT; i++) {
+		surfaceSchema.controls[getControlId(i)] = {
+			row: Math.floor(i / COLUMNS),
+			column: i % COLUMNS,
+		}
+	}
+
 	return {
 		brightness: true,
-		features: {
-			type: 'simple',
-			rowCount: 3,
-			columnCount: 5,
-			bitmapSize: device.lcdKeySize,
-			colours: true,
-			text: false,
-		},
+		surfaceSchema,
 		pincodeMap: Pincode5x3(),
 	}
 }
@@ -47,16 +67,22 @@ export class RazerStreamControllerXWrapper implements SurfaceInstance {
 		if (device.modelId !== LoupedeckModelId.RazerStreamControllerX)
 			throw new Error('Incorrect model passed to wrapper!')
 
-		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
+		const convertButtonId = (type: 'button' | 'rotary', id: number): string | null => {
 			if (type === 'button') {
-				return id
+				return getControlId(id)
 			}
 
 			// Discard
-			return 99
+			return null
 		}
-		this.#deck.on('down', (info) => context.keyDown(convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => context.keyUp(convertButtonId(info.type, info.index)))
+		this.#deck.on('down', (info) => {
+			const controlId = convertButtonId(info.type, info.index)
+			if (controlId) context.keyDownById(controlId)
+		})
+		this.#deck.on('up', (info) => {
+			const controlId = convertButtonId(info.type, info.index)
+			if (controlId) context.keyUpById(controlId)
+		})
 	}
 
 	async close(): Promise<void> {

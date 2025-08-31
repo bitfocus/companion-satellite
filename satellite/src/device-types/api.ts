@@ -190,11 +190,6 @@ export interface CompanionClient {
 	keyUp(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
 	rotateLeft(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
 	rotateRight(surfaceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void
-
-	// keyDownXY(deviceId: string, x: number, y: number): void
-	// keyUpXY(deviceId: string, x: number, y: number): void
-	// rotateLeftXY(deviceId: string, x: number, y: number): void
-	// rotateRightXY(deviceId: string, x: number, y: number): void
 	pincodeKey(surfaceId: string, keyCode: number): void
 
 	sendVariableValue(surfaceId: string, variable: string, value: any): void
@@ -208,23 +203,17 @@ export interface SurfaceContext {
 
 	disconnect(error: Error): void
 
-	keyDown(keyIndex: number): void
-	keyUp(keyIndex: number): void
-	keyDownUp(keyIndex: number): void
-	rotateLeft(keyIndex: number): void
-	rotateRight(keyIndex: number): void
+	// keyDown(keyIndex: number): void
+	// keyUp(keyIndex: number): void
+	// keyDownUp(keyIndex: number): void
+	// rotateLeft(keyIndex: number): void
+	// rotateRight(keyIndex: number): void
 
 	keyDownById(controlId: string): void
 	keyUpById(controlId: string): void
 	keyDownUpById(controlId: string): void
 	rotateLeftById(controlId: string): void
 	rotateRightById(controlId: string): void
-
-	// keyDownXY(x: number, y: number): void
-	// keyUpXY(x: number, y: number): void
-	// keyDownUpXY(x: number, y: number): void
-	// rotateLeftXY(x: number, y: number): void
-	// rotateRightXY(x: number, y: number): void
 
 	sendVariableValue(variable: string, value: any): void
 }
