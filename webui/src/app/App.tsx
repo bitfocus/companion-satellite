@@ -8,6 +8,9 @@ export function App(): JSX.Element {
 				<a href="#" className="flex items-center gap-2 self-center font-medium text-3xl">
 					<img src="/icon.png" alt="Companion Satellite" className="h-16 w-16 mr-1" />
 					Companion Satellite
+					<span className="text-xs bg-muted-foreground/10 text-muted-foreground px-2 py-1 rounded-full">
+						v{__APP_VERSION__}
+					</span>
 				</a>
 				<Card className="grow">
 					<AppContent />

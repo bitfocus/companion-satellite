@@ -6,6 +6,10 @@ import { resolve } from 'path'
 export default defineConfig({
 	base: '', // Fix electron file paths
 
+	define: {
+		__APP_VERSION__: JSON.stringify(process.env.BUILD_VERSION || process.env.npm_package_version),
+	},
+
 	plugins: [react()],
 	server: {
 		proxy: {
