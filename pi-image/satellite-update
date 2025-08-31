@@ -12,10 +12,8 @@ systemctl stop satellite
 cd /usr/local/src/companion-satellite
 git pull -q
 
-# TODO - prompt for which branch to use
-
 # do the update
-./pi-image/update.sh
+./pi-image/update.sh $1
 
 # restart satellite
 # reboot
