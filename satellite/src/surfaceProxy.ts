@@ -9,7 +9,12 @@ import type {
 } from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
 import { DrawingState } from './graphics/drawingState.js'
-import { transformButtonImage } from './device-types/lib.js'
+import { calculateGridSize, transformButtonImage } from './device-types/lib.js'
+import {
+	SatelliteConfigSize,
+	SatelliteControlDefinition,
+	SatelliteControlStylePreset,
+} from './generated/SurfaceSchema.js'
 
 export interface SurfaceProxyDrawProps {
 	deviceId: string
@@ -17,6 +22,11 @@ export interface SurfaceProxyDrawProps {
 	image?: Buffer
 	color?: string // hex
 	text?: string
+}
+
+export interface GridSize {
+	rows: number
+	columns: number
 }
 
 /**
@@ -27,6 +37,8 @@ export class SurfaceProxy {
 	readonly #context: SurfaceProxyContext
 	readonly #surface: SurfaceInstance
 	readonly #registerProps: DeviceRegisterProps
+	readonly #gridSize: GridSize
+	readonly #fallbackBitmapSize: number
 
 	readonly #drawQueue = new DrawingState<number | string>('preinit')
 
@@ -46,6 +58,12 @@ export class SurfaceProxy {
 	get registerProps(): DeviceRegisterProps {
 		return this.#registerProps
 	}
+	get gridSize(): GridSize {
+		return this.#gridSize
+	}
+	get fallbackBitmapSize(): number {
+		return this.#fallbackBitmapSize
+	}
 
 	constructor(
 		graphics: SurfaceGraphicsContext,
@@ -57,6 +75,13 @@ export class SurfaceProxy {
 		this.#context = context
 		this.#surface = surface
 		this.#registerProps = registerProps
+		this.#gridSize = calculateGridSize(registerProps.surfaceSchema)
+
+		let bitmapSize = registerProps.surfaceSchema.stylePresets.default.bitmap
+		if (!bitmapSize) {
+			bitmapSize = Object.values(registerProps.surfaceSchema.stylePresets).find((s) => !!s.bitmap)?.bitmap
+		}
+		this.#fallbackBitmapSize = bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0
 
 		// Setup the cyclical reference :(
 		context.storeSurface(this, registerProps.pincodeMap)
@@ -114,15 +139,32 @@ export class SurfaceProxy {
 		this.#drawQueue.queueJob(data.keyIndex, async (_key, signal) => {
 			if (signal.aborted) return
 
-			const bitmapSize = this.registerProps.bitmapSize
+			let controlInfo: [string, SatelliteControlDefinition] | null = null
+			for (const [id, control] of Object.entries(this.#registerProps.surfaceSchema.controls)) {
+				if (control.row === xy[1] && control.column === xy[0]) {
+					controlInfo = [id, control]
+					break
+				}
+			}
+
+			// Missing the control for some reason.. Probably using the old api.
+			if (!controlInfo) return
+
+			const bitmapSize: SatelliteConfigSize | undefined = this.#context.supportsSchema
+				? this.#getStyleForPreset(controlInfo[1].stylePreset).bitmap
+				: {
+						w: this.#fallbackBitmapSize,
+						h: this.#fallbackBitmapSize,
+					}
+
 			const rawImage = data.image
 			const image: DeviceDrawImageFn | undefined =
 				bitmapSize && rawImage
 					? async (targetWidth, targetHeight, targetPixelFormat) =>
 							transformButtonImage(
 								{
-									width: bitmapSize,
-									height: bitmapSize,
+									width: bitmapSize.w,
+									height: bitmapSize.h,
 									buffer: rawImage,
 									pixelFormat: 'rgb',
 								},
@@ -249,7 +291,24 @@ export class SurfaceProxy {
 		color: string,
 		text: string,
 	) {
-		const bitmapSize = this.registerProps.bitmapSize
+		let controlInfo: [string, SatelliteControlDefinition] | null = null
+		for (const [id, control] of Object.entries(this.#registerProps.surfaceSchema.controls)) {
+			if (control.row === xy[1] && control.column === xy[0]) {
+				controlInfo = [id, control]
+				break
+			}
+		}
+
+		// Missing the control for some reason.. Probably using the old api.
+		if (!controlInfo) return
+
+		const bitmapSize: SatelliteConfigSize | undefined = this.#context.supportsSchema
+			? this.#getStyleForPreset(controlInfo[1].stylePreset).bitmap
+			: {
+					w: this.#fallbackBitmapSize,
+					h: this.#fallbackBitmapSize,
+				}
+
 		const image: DeviceDrawImageFn | undefined = bitmapSize
 			? async (targetWidth, targetHeight, targetPixelFormat) =>
 					transformButtonImage(
@@ -265,13 +324,14 @@ export class SurfaceProxy {
 					)
 			: undefined
 
-		const keyIndex = xy[0] + xy[1] * this.registerProps.columnCount
+		const keyIndex = xy[0] + xy[1] * this.#gridSize.columns
 		this.#drawQueue.queueJob(keyIndex, async (_key, signal) => {
 			if (signal.aborted) return
 
 			await this.#surface.draw(signal, {
 				deviceId: this.surfaceId,
-				keyIndex: keyIndex,
+				keyIndex,
+				controlId: controlInfo[0],
 				image,
 				color,
 				text,
@@ -287,6 +347,13 @@ export class SurfaceProxy {
 			if (signal.aborted) return
 			await this.#surface.showStatus(signal, this.#graphics.cards, hostname, status)
 		})
+	}
+
+	#getStyleForPreset(stylePreset: string | undefined): SatelliteControlStylePreset {
+		return (
+			(stylePreset && this.#registerProps.surfaceSchema.stylePresets[stylePreset]) ||
+			this.#registerProps.surfaceSchema.stylePresets.default
+		)
 	}
 }
 
@@ -322,6 +389,10 @@ export class SurfaceProxyContext implements SurfaceContext {
 			this.#lockButtonPage = 0
 		}
 		return pincodeMap.pages[this.#lockButtonPage] as SurfacePincodeMapPageEntry
+	}
+
+	get supportsSchema(): boolean {
+		return this.#client.displayHost
 	}
 
 	constructor(client: CompanionClient, surfaceId: SurfaceId, onDisconnect: SurfaceContext['disconnect']) {
@@ -440,10 +511,10 @@ export class SurfaceProxyContext implements SurfaceContext {
 	#keyIndexToXY(keyIndex: number): [number, number] {
 		if (!this.#surface) throw new Error('Surface not set')
 
-		const { columnCount } = this.#surface.registerProps
+		const { columns } = this.#surface.gridSize
 
-		const x = keyIndex % columnCount
-		const y = Math.floor(keyIndex / columnCount)
+		const x = keyIndex % columns
+		const y = Math.floor(keyIndex / columns)
 
 		return [x, y]
 	}

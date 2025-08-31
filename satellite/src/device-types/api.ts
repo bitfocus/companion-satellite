@@ -12,15 +12,15 @@ export type DeviceDrawImageFn = (width: number, height: number, format: PixelFor
 
 export interface DeviceDrawProps {
 	deviceId: string
-	identifier:
-		| {
-				type: 'simple'
-				keyIndex: number
-		  }
-		| {
-				type: 'schema'
-				id: string
-		  }
+	keyIndex: number
+	controlId: string
+	// identifier:
+	// 	| {
+	// 			type: 'simple'
+	// 	  }
+	// 	| {
+	// 			type: 'schema'
+	// 	  }
 	image?: DeviceDrawImageFn
 	color?: string // hex
 	text?: string
@@ -28,6 +28,8 @@ export interface DeviceDrawProps {
 export interface DeviceRegisterProps {
 	brightness: boolean
 	surfaceSchema: SatelliteSurfaceLayout
+	columns: number
+	rows: number
 	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
 	pincodeMap: SurfacePincodeMap | null
 }
@@ -176,9 +178,8 @@ export interface SurfaceInstance {
 	showStatus(signal: AbortSignal, cardGenerator: CardGenerator, hostname: string, status: string): Promise<void>
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ClientCapabilities {
-	// For future use to support new functionality
+	supportsSurfaceSchema: boolean
 }
 
 export interface CompanionClient {

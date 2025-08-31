@@ -166,7 +166,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	public get capabilities(): ClientCapabilities {
 		return {
-			// For future use
+			supportsSurfaceSchema: this._supportsSurfaceSchema,
 		}
 	}
 
@@ -630,25 +630,12 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				const needsTextStyle = Object.values(props.surfaceSchema.stylePresets).some((s) => !!s.textStyle)
 
 				// Find first bitmap size
-				let bitmapSize = props.surfaceSchema.stylePresets.default.bitmap
-				if (!bitmapSize) {
-					bitmapSize = Object.values(props.surfaceSchema.stylePresets).find((s) => !!s.bitmap)?.bitmap
-				}
-
-				// Estimate a grid size
-				const gridSize = Object.values(props.surfaceSchema.controls).reduce(
-					(gridSize, control) => ({
-						columns: Math.max(gridSize.columns, control.column),
-						rows: Math.max(gridSize.rows, control.row),
-					}),
-					{ columns: 0, rows: 0 },
-				)
 
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					PRODUCT_NAME: productName,
-					KEYS_TOTAL: gridSize.columns * gridSize.rows,
-					KEYS_PER_ROW: gridSize.columns,
-					BITMAPS: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,
+					KEYS_TOTAL: props.columns * props.rows,
+					KEYS_PER_ROW: props.columns,
+					BITMAPS: props.fallbackBitmapSize,
 					COLORS: neededColours.values().next().value || false,
 					TEXT: needsText,
 					TEXT_STYLE: needsTextStyle,

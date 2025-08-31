@@ -21,7 +21,7 @@ import type {
 	SurfaceInstance,
 	SurfacePincodeMap,
 } from './api.js'
-import { parseColor } from './lib.js'
+import { calculateGridSize, parseColor } from './lib.js'
 import debounceFn from 'debounce-fn'
 import type { CardGenerator } from '../graphics/cards.js'
 import { assertNever } from '../lib.js'
@@ -201,8 +201,9 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 		this.#device = device
 		this.#surfaceId = surfaceId
 
+		const gridSize = calculateGridSize(registerProps.surfaceSchema)
 		// this.#rowCount = rowCount
-		this.#columnCount = registerProps.columnCount
+		this.#columnCount = gridSize.columns
 
 		this.#device.on('error', (e) => context.disconnect(e as any))
 
