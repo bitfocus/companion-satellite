@@ -6,7 +6,9 @@ import { AppContent } from './app/Content.tsx'
 ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
 		<SatelliteApiProvider api={electronApi}>
-			<AppContent />
+			<div className="mt-4">
+				<AppContent />
+			</div>
 		</SatelliteApiProvider>
 	</React.StrictMode>,
 )
