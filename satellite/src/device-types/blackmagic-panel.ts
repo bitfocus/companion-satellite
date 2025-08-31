@@ -10,7 +10,6 @@ import {
 	BlackmagicControllerButtonControlDefinition,
 } from '@blackmagic-controller/node'
 import type {
-	ClientCapabilities,
 	SurfaceContext,
 	DeviceDrawProps,
 	DeviceRegisterProps,
@@ -235,10 +234,6 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 	async initDevice(): Promise<void> {
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Unused
 	}
 
 	async deviceAdded(): Promise<void> {

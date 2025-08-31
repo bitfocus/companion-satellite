@@ -9,7 +9,6 @@ import {
 import type {
 	SurfaceInstance,
 	DeviceDrawProps,
-	ClientCapabilities,
 	SurfacePlugin,
 	SurfacePluginDetectionEvents,
 	SurfacePluginDetection,
@@ -194,10 +193,6 @@ export class QuickKeysWrapper implements SurfaceInstance {
 
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {

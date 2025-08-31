@@ -1,6 +1,5 @@
 import type { CardGenerator } from '../graphics/cards.js'
 import type {
-	ClientCapabilities,
 	DeviceDrawProps,
 	SurfacePlugin,
 	DiscoveredSurfaceInfo,
@@ -113,10 +112,6 @@ export class InfinittonWrapper implements SurfaceInstance {
 	async initDevice(): Promise<void> {
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Nothing to do
 	}
 
 	async deviceAdded(): Promise<void> {}

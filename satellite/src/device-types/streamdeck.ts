@@ -9,7 +9,6 @@ import {
 } from '@elgato-stream-deck/node'
 import type { CardGenerator } from '../graphics/cards.js'
 import {
-	ClientCapabilities,
 	DeviceDrawProps,
 	SurfacePlugin,
 	DeviceRegisterProps,
@@ -329,10 +328,6 @@ export class StreamDeckWrapper implements SurfaceInstance {
 	async initDevice(): Promise<void> {
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {}

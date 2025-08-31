@@ -1,12 +1,6 @@
 import { LoupedeckDevice, LoupedeckDisplayId, LoupedeckBufferFormat, LoupedeckModelId } from '@loupedeck/node'
 import type { CardGenerator } from '../graphics/cards.js'
-import type {
-	ClientCapabilities,
-	SurfaceContext,
-	DeviceDrawProps,
-	SurfaceInstance,
-	DeviceRegisterProps,
-} from './api.js'
+import type { SurfaceContext, DeviceDrawProps, SurfaceInstance, DeviceRegisterProps } from './api.js'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 import { Pincode5x3 } from './pincode.js'
 import type { SatelliteSurfaceLayout } from '../generated/SurfaceSchema.js'
@@ -93,10 +87,6 @@ export class RazerStreamControllerXWrapper implements SurfaceInstance {
 	async initDevice(): Promise<void> {
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {}

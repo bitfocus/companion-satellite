@@ -161,8 +161,6 @@ export interface SurfaceInstance {
 
 	initDevice(): Promise<void>
 
-	updateCapabilities(capabilities: ClientCapabilities): void
-
 	deviceAdded(): Promise<void>
 
 	setBrightness(percent: number): Promise<void>
@@ -202,12 +200,6 @@ export interface SurfaceContext {
 	get capabilities(): ClientCapabilities
 
 	disconnect(error: Error): void
-
-	// keyDown(keyIndex: number): void
-	// keyUp(keyIndex: number): void
-	// keyDownUp(keyIndex: number): void
-	// rotateLeft(keyIndex: number): void
-	// rotateRight(keyIndex: number): void
 
 	keyDownById(controlId: string): void
 	keyUpById(controlId: string): void

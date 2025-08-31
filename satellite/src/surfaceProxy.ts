@@ -101,10 +101,6 @@ export class SurfaceProxy {
 		this.showStatus(displayHost, status)
 	}
 
-	updateCapabilities(capabilities: ClientCapabilities): void {
-		return this.#surface.updateCapabilities(capabilities)
-	}
-
 	async deviceAdded(): Promise<void> {
 		this.#drawQueue.abortQueued('reinit')
 

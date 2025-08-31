@@ -6,13 +6,7 @@ import {
 	LoupedeckControlType,
 } from '@loupedeck/node'
 import { CardGenerator } from '../graphics/cards.js'
-import type {
-	ClientCapabilities,
-	SurfaceContext,
-	DeviceDrawProps,
-	DeviceRegisterProps,
-	SurfaceInstance,
-} from './api.js'
+import type { SurfaceContext, DeviceDrawProps, DeviceRegisterProps, SurfaceInstance } from './api.js'
 import { parseColor } from './lib.js'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 import { Pincode5x3 } from './pincode.js'
@@ -170,10 +164,6 @@ export class LoupedeckLiveSWrapper implements SurfaceInstance {
 	async initDevice(): Promise<void> {
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {}

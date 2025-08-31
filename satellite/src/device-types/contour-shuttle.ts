@@ -1,5 +1,4 @@
 import type {
-	ClientCapabilities,
 	SurfaceContext,
 	DeviceDrawProps,
 	DeviceRegisterProps,
@@ -304,10 +303,6 @@ export class ContourShuttleWrapper implements SurfaceInstance {
 	}
 	async initDevice(): Promise<void> {
 		// Nothing to do
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Unused
 	}
 
 	async deviceAdded(): Promise<void> {
