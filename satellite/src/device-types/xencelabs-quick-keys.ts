@@ -9,7 +9,6 @@ import {
 import type {
 	SurfaceInstance,
 	DeviceDrawProps,
-	ClientCapabilities,
 	SurfacePlugin,
 	SurfacePluginDetectionEvents,
 	SurfacePluginDetection,
@@ -90,22 +89,36 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 			surface: new QuickKeysWrapper(surfaceId, quickkeys, context),
 			registerProps: {
 				brightness: true,
-				rowCount: 2,
-				columnCount: 6,
-				bitmapSize: null,
-				colours: true,
-				text: true,
+				surfaceManifest: {
+					stylePresets: {
+						default: { text: true }, // Labelled buttons
+						wheel: { colors: 'hex' },
+						empty: {}, // The menu button
+					},
+					controls: {
+						menu: { row: 0, column: 0, stylePreset: 'empty' },
+						wheel: { row: 0, column: 5, stylePreset: 'wheel' },
+						'0/1': { row: 0, column: 1 },
+						'0/2': { row: 0, column: 2 },
+						'0/3': { row: 0, column: 3 },
+						'0/4': { row: 0, column: 4 },
+						'1/1': { row: 1, column: 1 },
+						'1/2': { row: 1, column: 2 },
+						'1/3': { row: 1, column: 3 },
+						'1/4': { row: 1, column: 4 },
+					},
+				},
 				pincodeMap: null, // TODO - implement?
 			},
 		}
 	}
 }
 
-function keyToCompanion(k: number): number | null {
-	if (k >= 0 && k < 4) return k + 1
-	if (k >= 4 && k < 8) return k + 3
-	if (k === 8) return 0
-	if (k === 9) return 5
+function keyToCompanion(k: number): string | null {
+	if (k >= 0 && k < 4) return `0/${k}`
+	if (k >= 4 && k < 8) return `1/${k % 4}`
+	if (k === 8) return 'menu'
+	if (k === 9) return 'wheel'
 	return null
 }
 
@@ -134,22 +147,22 @@ export class QuickKeysWrapper implements SurfaceInstance {
 		const handleDown = (key: number) => {
 			const k = keyToCompanion(key)
 			if (k !== null) {
-				context.keyDown(k)
+				context.keyDownById(k)
 			}
 		}
 		const handleUp = (key: number) => {
 			const k = keyToCompanion(key)
 			if (k !== null) {
-				context.keyUp(k)
+				context.keyUpById(k)
 			}
 		}
 		const handleWheel = (ev: WheelEvent) => {
 			switch (ev) {
 				case WheelEvent.Left:
-					context.rotateLeft(5)
+					context.rotateLeftById('wheel')
 					break
 				case WheelEvent.Right:
-					context.rotateRight(5)
+					context.rotateRightById('wheel')
 					break
 			}
 		}
@@ -180,10 +193,6 @@ export class QuickKeysWrapper implements SurfaceInstance {
 
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {
