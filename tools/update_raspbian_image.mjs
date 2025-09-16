@@ -1,3 +1,4 @@
+/* eslint-disable n/no-process-exit */
 import fs from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -40,8 +41,9 @@ async function findImage(items) {
 								const m = txt.match(/[0-9a-f]{64}/i)
 								if (m) sha = m[0]
 							}
-						} catch (e) {
+						} catch (_e) {
 							// ignore fetch errors here; we'll fail later if no checksum
+							_e = _e
 						}
 					}
 
