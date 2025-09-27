@@ -5,7 +5,7 @@ import {
 	openBlackmagicController,
 	BlackmagicControllerTBarControlDefinition,
 	BlackmagicControllerControlDefinition,
-	DeviceModelId,
+	BlackmagicControllerModelId,
 	BlackmagicControllerSetButtonSomeValue,
 	BlackmagicControllerButtonControlDefinition,
 } from '@blackmagic-controller/node'
@@ -113,13 +113,13 @@ function compileRegisterProps(controller: BlackmagicController): DeviceRegisterP
 }
 
 function generatePincodeMap(
-	model: DeviceModelId,
+	model: BlackmagicControllerModelId,
 	controls: Readonly<BlackmagicControllerControlDefinition[]>,
 ): SurfacePincodeMap | null {
 	const controlMap = new Map(controls.filter((c) => c.type === 'button').map((control) => [control.id, control]))
 
 	switch (model) {
-		case DeviceModelId.AtemMicroPanel: {
+		case BlackmagicControllerModelId.AtemMicroPanel: {
 			const preview10 = controlMap.get('preview10')
 			const preview1 = controlMap.get('preview1')
 			const preview2 = controlMap.get('preview2')
@@ -162,7 +162,39 @@ function generatePincodeMap(
 				9: [preview9.column, preview9.row],
 			}
 		}
-		case DeviceModelId.DaVinciResolveReplayEditor:
+		case BlackmagicControllerModelId.DaVinciResolveSpeedEditor: {
+			const stopPlay = controlMap.get('stop-play')
+			const cam1 = controlMap.get('cam1')
+			const cam2 = controlMap.get('cam2')
+			const cam3 = controlMap.get('cam3')
+			const cam4 = controlMap.get('cam4')
+			const cam5 = controlMap.get('cam5')
+			const cam6 = controlMap.get('cam6')
+			const cam7 = controlMap.get('cam7')
+			const cam8 = controlMap.get('cam8')
+			const cam9 = controlMap.get('cam9')
+
+			if (!stopPlay || !cam1 || !cam2 || !cam3 || !cam4 || !cam5 || !cam6 || !cam7 || !cam8 || !cam9) {
+				console.error('Missing controls for pincode map')
+				return null
+			}
+
+			return {
+				type: 'single-page',
+				pincode: [0, 0], // Not used
+				0: [stopPlay.column, stopPlay.row],
+				1: [cam1.column, cam1.row],
+				2: [cam2.column, cam2.row],
+				3: [cam3.column, cam3.row],
+				4: [cam4.column, cam4.row],
+				5: [cam5.column, cam5.row],
+				6: [cam6.column, cam6.row],
+				7: [cam7.column, cam7.row],
+				8: [cam8.column, cam8.row],
+				9: [cam9.column, cam9.row],
+			}
+		}
+		case BlackmagicControllerModelId.DaVinciResolveReplayEditor:
 			// Don't support pincode entry
 			// TODO: should we support this?
 			return {
@@ -299,7 +331,7 @@ export class BlackmagicControllerWrapper implements SurfaceInstance {
 	}
 
 	onLockedStatus(locked: boolean, characterCount: number): void {
-		if (locked && this.#device.MODEL === DeviceModelId.AtemMicroPanel) {
+		if (locked && this.#device.MODEL === BlackmagicControllerModelId.AtemMicroPanel) {
 			// Show a progress bar on the upper row to indicate number of characters entered
 
 			const lockOutputKeyIds = [
