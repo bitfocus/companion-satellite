@@ -24,13 +24,13 @@
 		"@types/koa": "^3.0.0",
 		"@types/koa-router": "^7.4.8",
 		"@types/koa-static": "^4.0.4",
-		"@types/node": "^22.18.0",
-		"@types/semver": "^7.7.0",
+		"@types/node": "^22.18.6",
+		"@types/semver": "^7.7.1",
 		"@types/ws": "^8.18.1",
-		"electron": "37.4.0",
+		"electron": "37.5.1",
 		"electron-builder": "^26.0.20",
 		"rimraf": "^6.0.1",
-		"tsx": "^4.20.5"
+		"tsx": "^4.20.6"
 	},
 	"engines": {
 		"node": "^22.19"
@@ -40,8 +40,8 @@
 		"@elgato-stream-deck/node": "^7.3.2",
 		"@julusian/bonjour-service": "^1.4.2",
 		"@julusian/image-rs": "^2.0.2",
-		"@julusian/jpeg-turbo": "^2.2.0",
-		"@julusian/segfault-raub": "^2.3.1",
+		"@julusian/jpeg-turbo": "^2.3.0",
+		"@julusian/segfault-raub": "^2.3.2",
 		"@loupedeck/node": "^1.2.0",
 		"@napi-rs/canvas": "^0.1.78",
 		"@xencelabs-quick-keys/node": "^1.0.0",
@@ -55,7 +55,7 @@
 		"koa-body": "^6.0.1",
 		"koa-router": "^14.0.0",
 		"koa-static": "^5.0.0",
-		"nanoid": "^5.1.5",
+		"nanoid": "^5.1.6",
 		"node-hid": "^3.2.0",
 		"semver": "^7.7.2",
 		"shuttle-node": "^0.1.2",
