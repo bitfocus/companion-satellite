@@ -103,7 +103,7 @@ export class InfinittonWrapper implements SurfaceInstance {
 		this.#panel.on('error', (e) => context.disconnect(e))
 
 		this.#panel.on('down', (key: number) => context.keyDownById(key + ''))
-		this.#panel.on('up', (key: number) => context.keyUpById(key + ''))
+		this.#panel.on('up', (key: number) => context.keyUpById(String(key)))
 	}
 
 	async close(): Promise<void> {
