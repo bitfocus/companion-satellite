@@ -443,11 +443,9 @@ export class StreamDeckWrapper implements SurfaceInstance {
 
 				if (this.#context.capabilities.supportsSurfaceManifest) {
 					targetWidth = columnWidth
-				} else {
-					if (this.#deck.MODEL === DeviceModelId.PLUS) {
-						// Position aligned with the buttons/encoders
-						drawX = drawColumn * 216.666 + 25
-					}
+				} else if (this.#deck.MODEL === DeviceModelId.PLUS) {
+					// Position aligned with the buttons/encoders
+					drawX = drawColumn * 216.666 + 25
 				}
 
 				let newbuffer: Buffer | undefined
