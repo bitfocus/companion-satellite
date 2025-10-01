@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.4.0](https://github.com/bitfocus/companion-satellite/compare/v2.3.0...v2.4.0) (2025-10-01)
+
+
+### Features
+
+* rebuild loupedeck plugin as single implementation ([#222](https://github.com/bitfocus/companion-satellite/issues/222)) ([7b59139](https://github.com/bitfocus/companion-satellite/commit/7b59139d4daac1de6927f09087c43d5e70b66c8f))
+* satellite api complex surfaces ([#215](https://github.com/bitfocus/companion-satellite/issues/215)) ([32e328d](https://github.com/bitfocus/companion-satellite/commit/32e328d70c30064ae3a15271c609f89370f8d147))
+* support resolve speed editor ([c00b128](https://github.com/bitfocus/companion-satellite/commit/c00b128379218103b0975438fed260be446b7b91))
+
 ## [2.3.0](https://github.com/bitfocus/companion-satellite/compare/v2.2.2...v2.3.0) (2025-08-31)
 
 
