@@ -416,8 +416,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this._supportsLocalLockState = true
 			console.log('Companion supports delegating locking drawing')
 		}
-		if (this._companionApiVersion && semver.lte('1.99.0', this._companionApiVersion)) {
-			// nocommit - define semver properly
+		if (this._companionApiVersion && semver.lte('1.9.0', this._companionApiVersion)) {
 			this._supportsSurfaceManifest = true
 			console.log('Companion supports surface manifest')
 		}
