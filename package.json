@@ -46,12 +46,12 @@
     "eslint-plugin-react-refresh": "^0.4.22",
     "husky": "^9.1.7",
     "json-schema-to-typescript": "^15.0.4",
-    "lint-staged": "^16.2.1",
+    "lint-staged": "^16.2.3",
     "openapi-typescript": "^7.9.1",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",
-    "typescript": "~5.9.2",
-    "typescript-eslint": "^8.44.1",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.45.0",
     "zx": "^8.8.4"
   },
   "engines": {
