@@ -129,7 +129,7 @@ export class SurfaceProxy {
 			this.#drawQueue.abortQueued('draw', async () => this.#surface.blankDevice())
 		}
 
-		const queueId = data.controlId || data.keyIndex
+		const queueId = data.controlId ?? data.keyIndex
 		if (queueId === undefined) throw new Error('No key or control specified for draw')
 
 		this.#drawQueue.queueJob(queueId, async (_key, signal) => {
