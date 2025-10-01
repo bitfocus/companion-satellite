@@ -6,25 +6,86 @@ import {
 	LoupedeckControlType,
 } from '@loupedeck/node'
 import { CardGenerator } from '../graphics/cards.js'
-import type {
-	ClientCapabilities,
-	SurfaceContext,
-	DeviceDrawProps,
-	DeviceRegisterProps,
-	SurfaceInstance,
-} from './api.js'
+import type { SurfaceContext, DeviceDrawProps, DeviceRegisterProps, SurfaceInstance } from './api.js'
 import { parseColor } from './lib.js'
 import { LOUPEDECK_PLUGIN_ID } from './loupedeck-plugin.js'
 import { Pincode5x3 } from './pincode.js'
+import { assertNever } from '../lib.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
+
+const convertButtonId = (type: 'button' | 'rotary', id: number): string | null => {
+	if (type === 'button') {
+		// return 24 + id
+		switch (id) {
+			case 0:
+				return '2/0'
+			case 1:
+				return '0/6'
+			case 2:
+				return '1/6'
+			case 3:
+				return '2/6'
+		}
+	} else if (type === 'rotary') {
+		switch (id) {
+			case 0:
+				return '0/0'
+			case 1:
+				return '1/0'
+		}
+	}
+
+	// Discard
+	return null
+}
 
 export function compileLoupedeckLiveSProps(device: LoupedeckDevice): DeviceRegisterProps {
+	const surfaceManifest: SatelliteSurfaceLayout = {
+		stylePresets: {
+			default: {
+				bitmap: {
+					w: device.lcdKeySize,
+					h: device.lcdKeySize,
+				},
+			},
+			button: {
+				colors: 'hex',
+			},
+			empty: {},
+		},
+		controls: {},
+	}
+
+	for (const control of device.controls) {
+		const controlId = convertButtonId(control.type, control.index)
+		if (!controlId) continue
+
+		const [row, column] = controlId.split('/').map(Number)
+		if (isNaN(row) || isNaN(column)) continue
+
+		switch (control.type) {
+			case LoupedeckControlType.Button:
+				surfaceManifest.controls[controlId] = { row, column, stylePreset: 'button' }
+				break
+			case LoupedeckControlType.Rotary:
+				surfaceManifest.controls[controlId] = { row, column, stylePreset: 'empty' }
+				break
+			default:
+				assertNever(control.type)
+				break
+		}
+	}
+
+	// Populate lcd 'buttons'
+	for (let y = 0; y < 3; y++) {
+		for (let x = 1; x < 6; x++) {
+			surfaceManifest.controls[`${y}/${x}`] = { row: y, column: x }
+		}
+	}
+
 	return {
 		brightness: true,
-		rowCount: 3,
-		columnCount: 7,
-		bitmapSize: device.lcdKeySize,
-		colours: true,
-		text: false,
+		surfaceManifest,
 		pincodeMap: Pincode5x3(1),
 	}
 }
@@ -50,62 +111,46 @@ export class LoupedeckLiveSWrapper implements SurfaceInstance {
 
 		if (device.modelId !== LoupedeckModelId.LoupedeckLiveS) throw new Error('Incorrect model passed to wrapper!')
 
-		const convertButtonId = (type: 'button' | 'rotary', id: number): number => {
-			if (type === 'button') {
-				// return 24 + id
-				switch (id) {
-					case 0:
-						return 14
-					case 1:
-						return 6
-					case 2:
-						return 13
-					case 3:
-						return 20
-				}
-			} else if (type === 'rotary') {
-				switch (id) {
-					case 0:
-						return 0
-					case 1:
-						return 7
-				}
-			}
+		this.#deck.on('down', (info) => {
+			const id = convertButtonId(info.type, info.index)
+			if (!id) return
 
-			// Discard
-			return 99
-		}
+			context.keyDownById(id)
+		})
+		this.#deck.on('up', (info) => {
+			const id = convertButtonId(info.type, info.index)
+			if (!id) return
 
-		this.#deck.on('down', (info) => context.keyDown(convertButtonId(info.type, info.index)))
-		this.#deck.on('up', (info) => context.keyUp(convertButtonId(info.type, info.index)))
+			context.keyUpById(id)
+		})
 		this.#deck.on('rotate', (info, delta) => {
 			if (info.type !== LoupedeckControlType.Rotary) return
 
-			const id2 = convertButtonId(info.type, info.index)
-			if (id2 < 90) {
-				if (delta < 0) {
-					context.rotateLeft(id2)
-				} else if (delta > 0) {
-					context.rotateRight(id2)
-				}
+			const id = convertButtonId(info.type, info.index)
+			if (!id) return
+
+			if (delta < 0) {
+				context.rotateLeftById(id)
+			} else if (delta > 0) {
+				context.rotateRightById(id)
 			}
 		})
-		const translateKeyIndex = (key: number): number => {
+		const translateKeyIndex = (key: number): string => {
 			const x = key % 5
 			const y = Math.floor(key / 5)
-			return y * 7 + x + 1
+			return `${y}/${x + 1}`
 		}
 		this.#deck.on('touchstart', (data) => {
 			for (const touch of data.changedTouches) {
 				if (touch.target.key !== undefined) {
-					context.keyDown(translateKeyIndex(touch.target.key))
+					context.keyDownById(translateKeyIndex(touch.target.key))
 				}
 			}
 		})
 		this.#deck.on('touchend', (data) => {
 			for (const touch of data.changedTouches) {
 				if (touch.target.key !== undefined) {
-					context.keyUp(translateKeyIndex(touch.target.key))
+					context.keyUpById(translateKeyIndex(touch.target.key))
 				}
 			}
 		})
@@ -119,10 +164,6 @@ export class LoupedeckLiveSWrapper implements SurfaceInstance {
 	async initDevice(): Promise<void> {
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Not used
 	}
 
 	async deviceAdded(): Promise<void> {}

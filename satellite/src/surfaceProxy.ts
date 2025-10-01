@@ -6,17 +6,29 @@ import type {
 	SurfacePincodeMapPageEntry,
 	SurfaceInstance,
 	SurfacePincodeMap,
+	DeviceRegisterPropsComplete,
 } from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
 import { DrawingState } from './graphics/drawingState.js'
-import { transformButtonImage } from './device-types/lib.js'
+import { calculateGridSize, transformButtonImage } from './device-types/lib.js'
+import {
+	SatelliteConfigSize,
+	SatelliteControlDefinition,
+	SatelliteControlStylePreset,
+} from './generated/SurfaceManifestSchema.js'
 
 export interface SurfaceProxyDrawProps {
 	deviceId: string
-	keyIndex: number
+	keyIndex: number | undefined
+	controlId: string | undefined
 	image?: Buffer
 	color?: string // hex
 	text?: string
+}
+
+export interface GridSize {
+	rows: number
+	columns: number
 }
 
 /**
@@ -26,7 +38,7 @@ export class SurfaceProxy {
 	readonly #graphics: SurfaceGraphicsContext
 	readonly #context: SurfaceProxyContext
 	readonly #surface: SurfaceInstance
-	readonly #registerProps: DeviceRegisterProps
+	readonly #registerProps: DeviceRegisterPropsComplete
 
 	readonly #drawQueue = new DrawingState<number | string>('preinit')
 
@@ -43,7 +55,7 @@ export class SurfaceProxy {
 		return this.#surface.productName
 	}
 
-	get registerProps(): DeviceRegisterProps {
+	get registerProps(): DeviceRegisterPropsComplete {
 		return this.#registerProps
 	}
 
@@ -56,7 +68,17 @@ export class SurfaceProxy {
 		this.#graphics = graphics
 		this.#context = context
 		this.#surface = surface
-		this.#registerProps = registerProps
+
+		let bitmapSize = registerProps.surfaceManifest.stylePresets.default.bitmap
+		if (!bitmapSize) {
+			bitmapSize = Object.values(registerProps.surfaceManifest.stylePresets).find((s) => !!s.bitmap)?.bitmap
+		}
+
+		this.#registerProps = {
+			...registerProps,
+			gridSize: calculateGridSize(registerProps.surfaceManifest),
+			fallbackBitmapSize: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,
+		}
 
 		// Setup the cyclical reference :(
 		context.storeSurface(this, registerProps.pincodeMap)
@@ -77,10 +99,6 @@ export class SurfaceProxy {
 		await this.#surface.initDevice()
 
 		this.showStatus(displayHost, status)
-	}
-
-	updateCapabilities(capabilities: ClientCapabilities): void {
-		return this.#surface.updateCapabilities(capabilities)
 	}
 
 	async deviceAdded(): Promise<void> {
@@ -111,18 +129,63 @@ export class SurfaceProxy {
 			this.#drawQueue.abortQueued('draw', async () => this.#surface.blankDevice())
 		}
 
-		this.#drawQueue.queueJob(data.keyIndex, async (_key, signal) => {
+		const queueId = data.controlId ?? data.keyIndex
+		if (queueId === undefined) throw new Error('No key or control specified for draw')
+
+		this.#drawQueue.queueJob(queueId, async (_key, signal) => {
 			if (signal.aborted) return
 
-			const bitmapSize = this.registerProps.bitmapSize
+			let controlId: string
+			let keyIndex: number
+			let bitmapSize: SatelliteConfigSize | undefined
+			let row: number
+			let column: number
+
+			if (data.controlId !== undefined) {
+				controlId = data.controlId
+
+				const controlInfo = this.#registerProps.surfaceManifest.controls[controlId]
+				if (!controlInfo) throw new Error(`Received draw for unknown controlId: ${controlId}`)
+
+				// Interpolate a keyIndex, for compatibility
+				keyIndex = controlInfo.row * this.#registerProps.gridSize.columns + controlInfo.column
+				row = controlInfo.row
+				column = controlInfo.column
+
+				bitmapSize = this.#getStyleForPreset(controlInfo.stylePreset).bitmap
+			} else if (data.keyIndex !== undefined) {
+				keyIndex = data.keyIndex
+
+				row = Math.floor(keyIndex / this.#registerProps.gridSize.columns)
+				column = keyIndex % this.#registerProps.gridSize.columns
+
+				const controlInfo = Object.entries(this.#registerProps.surfaceManifest.controls).find(
+					([_id, control]) => {
+						return control.row === row && control.column === column
+					},
+				)
+				// Ignore a bad index. This can happen if there are gaps in the layout
+				if (!controlInfo) return
+
+				// Extract the controlId
+				controlId = controlInfo[0]
+
+				bitmapSize = {
+					w: this.#registerProps.fallbackBitmapSize,
+					h: this.#registerProps.fallbackBitmapSize,
+				}
+			} else {
+				throw new Error('No key or control specified for draw')
+			}
+
 			const rawImage = data.image
 			const image: DeviceDrawImageFn | undefined =
 				bitmapSize && rawImage
 					? async (targetWidth, targetHeight, targetPixelFormat) =>
 							transformButtonImage(
 								{
-									width: bitmapSize,
-									height: bitmapSize,
+									width: bitmapSize.w,
+									height: bitmapSize.h,
 									buffer: rawImage,
 									pixelFormat: 'rgb',
 								},
@@ -134,6 +197,10 @@ export class SurfaceProxy {
 
 			return this.#surface.draw(signal, {
 				...data,
+				controlId,
+				keyIndex,
+				row,
+				column,
 				image,
 			})
 		})
@@ -249,29 +316,40 @@ export class SurfaceProxy {
 		color: string,
 		text: string,
 	) {
-		const bitmapSize = this.registerProps.bitmapSize
-		const image: DeviceDrawImageFn | undefined = bitmapSize
-			? async (targetWidth, targetHeight, targetPixelFormat) =>
-					transformButtonImage(
-						{
-							width: targetWidth,
-							height: targetHeight,
-							buffer: bitmapFn(targetWidth, targetHeight),
-							pixelFormat: 'rgba',
-						},
-						targetWidth,
-						targetHeight,
-						targetPixelFormat,
-					)
-			: undefined
+		let controlInfo: [string, SatelliteControlDefinition] | null = null
+		for (const [id, control] of Object.entries(this.#registerProps.surfaceManifest.controls)) {
+			if (control.row === xy[1] && control.column === xy[0]) {
+				controlInfo = [id, control]
+				break
+			}
+		}
 
-		const keyIndex = xy[0] + xy[1] * this.registerProps.columnCount
+		// Missing the control for some reason.. Probably using the old api.
+		if (!controlInfo) return
+
+		const image: DeviceDrawImageFn | undefined = async (targetWidth, targetHeight, targetPixelFormat) =>
+			transformButtonImage(
+				{
+					width: targetWidth,
+					height: targetHeight,
+					buffer: bitmapFn(targetWidth, targetHeight),
+					pixelFormat: 'rgba',
+				},
+				targetWidth,
+				targetHeight,
+				targetPixelFormat,
+			)
+
+		const keyIndex = xy[0] + xy[1] * this.#registerProps.gridSize.columns
 		this.#drawQueue.queueJob(keyIndex, async (_key, signal) => {
 			if (signal.aborted) return
 
 			await this.#surface.draw(signal, {
 				deviceId: this.surfaceId,
-				keyIndex: keyIndex,
+				keyIndex,
+				controlId: controlInfo[0],
+				row: xy[1],
+				column: xy[0],
 				image,
 				color,
 				text,
@@ -287,6 +365,13 @@ export class SurfaceProxy {
 			if (signal.aborted) return
 			await this.#surface.showStatus(signal, this.#graphics.cards, hostname, status)
 		})
+	}
+
+	#getStyleForPreset(stylePreset: string | undefined): SatelliteControlStylePreset {
+		return (
+			(stylePreset && this.#registerProps.surfaceManifest.stylePresets[stylePreset]) ||
+			this.#registerProps.surfaceManifest.stylePresets.default
+		)
 	}
 }
 
@@ -324,6 +409,10 @@ export class SurfaceProxyContext implements SurfaceContext {
 		return pincodeMap.pages[this.#lockButtonPage] as SurfacePincodeMapPageEntry
 	}
 
+	get capabilities(): ClientCapabilities {
+		return this.#client.capabilities
+	}
+
 	constructor(client: CompanionClient, surfaceId: SurfaceId, onDisconnect: SurfaceContext['disconnect']) {
 		this.#client = client
 		this.#surfaceId = surfaceId
@@ -345,89 +434,124 @@ export class SurfaceProxyContext implements SurfaceContext {
 		this.#isLocked = locked
 	}
 
-	keyDown(keyIndex: number): void {
-		const xy = this.#keyIndexToXY(keyIndex)
+	// keyDown(keyIndex: number): void {
+	// 	const xy = this.#keyIndexToXY(keyIndex)
 
-		if (this.#isLocked) {
-			this.#pincodeXYPress(...xy)
+	// 	if (this.#isLocked) {
+	// 		this.#pincodeXYPress(...xy)
+	// 		return
+	// 	}
+
+	// 	this.#client.keyDownXY(this.#surfaceId, ...xy)
+	// }
+	// keyUp(keyIndex: number): void {
+	// 	if (this.#isLocked) return
+
+	// 	const xy = this.#keyIndexToXY(keyIndex)
+	// 	this.#client.keyUpXY(this.#surfaceId, ...xy)
+	// }
+	// keyDownUp(keyIndex: number): void {
+	// 	const xy = this.#keyIndexToXY(keyIndex)
+
+	// 	if (this.#isLocked) {
+	// 		this.#pincodeXYPress(...xy)
+	// 		return
+	// 	}
+
+	// 	this.#client.keyDownXY(this.#surfaceId, ...xy)
+
+	// 	setTimeout(() => {
+	// 		if (!this.#isLocked) {
+	// 			this.#client.keyUpXY(this.#surfaceId, ...xy)
+	// 		}
+	// 	}, 20)
+	// }
+	// rotateLeft(keyIndex: number): void {
+	// 	if (this.#isLocked) return
+
+	// 	const xy = this.#keyIndexToXY(keyIndex)
+	// 	this.#client.rotateLeftXY(this.#surfaceId, ...xy)
+	// }
+	// rotateRight(keyIndex: number): void {
+	// 	if (this.#isLocked) return
+
+	// 	const xy = this.#keyIndexToXY(keyIndex)
+	// 	this.#client.rotateRightXY(this.#surfaceId, ...xy)
+	// }
+
+	#getControlById(controlId: string): SatelliteControlDefinition | null {
+		if (!this.#surface) throw new Error('Surface not set')
+
+		return this.#surface.registerProps.surfaceManifest.controls[controlId] ?? null
+	}
+
+	keyDownById(controlId: string): void {
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in keyDownById`)
 			return
 		}
 
-		// TODO - test this
-		this.#client.keyDownXY(this.#surfaceId, ...xy)
+		if (this.#isLocked) {
+			this.#pincodeXYPress(control.column, control.row)
+			return
+		}
+
+		this.#client.keyDown(this.#surfaceId, controlId, control)
 	}
-	keyUp(keyIndex: number): void {
+	keyUpById(controlId: string): void {
 		if (this.#isLocked) return
 
-		const xy = this.#keyIndexToXY(keyIndex)
-		this.#client.keyUpXY(this.#surfaceId, ...xy)
-	}
-	keyDownUp(keyIndex: number): void {
-		const xy = this.#keyIndexToXY(keyIndex)
-
-		if (this.#isLocked) {
-			this.#pincodeXYPress(...xy)
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in keyUpById`)
 			return
 		}
 
-		this.#client.keyDownXY(this.#surfaceId, ...xy)
+		this.#client.keyUp(this.#surfaceId, controlId, control)
+	}
+
+	keyDownUpById(controlId: string): void {
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in keyDownUpById`)
+			return
+		}
+
+		if (this.#isLocked) {
+			this.#pincodeXYPress(control.column, control.row)
+			return
+		}
+
+		this.#client.keyDown(this.#surfaceId, controlId, control)
 
 		setTimeout(() => {
 			if (!this.#isLocked) {
-				this.#client.keyUpXY(this.#surfaceId, ...xy)
+				this.#client.keyUp(this.#surfaceId, controlId, control)
 			}
 		}, 20)
 	}
-	rotateLeft(keyIndex: number): void {
+	rotateLeftById(controlId: string): void {
 		if (this.#isLocked) return
 
-		const xy = this.#keyIndexToXY(keyIndex)
-		this.#client.rotateLeftXY(this.#surfaceId, ...xy)
-	}
-	rotateRight(keyIndex: number): void {
-		if (this.#isLocked) return
-
-		const xy = this.#keyIndexToXY(keyIndex)
-		this.#client.rotateRightXY(this.#surfaceId, ...xy)
-	}
-
-	keyDownXY(x: number, y: number): void {
-		// TODO - mirror to the non-XY version
-		if (this.#isLocked) {
-			this.#pincodeXYPress(x, y)
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in rotateLeftById`)
 			return
 		}
 
-		this.#client.keyDownXY(this.#surfaceId, x, y)
+		this.#client.rotateLeft(this.#surfaceId, controlId, control)
 	}
-	keyUpXY(x: number, y: number): void {
+	rotateRightById(controlId: string): void {
 		if (this.#isLocked) return
 
-		this.#client.keyUpXY(this.#surfaceId, x, y)
-	}
-	keyDownUpXY(x: number, y: number): void {
-		if (this.#isLocked) {
-			this.#pincodeXYPress(x, y)
+		const control = this.#getControlById(controlId)
+		if (!control) {
+			console.log(`Surface ${this.#surfaceId} control ${controlId} not found in rotateRightById`)
 			return
 		}
 
-		this.#client.keyDownXY(this.#surfaceId, x, y)
-
-		setTimeout(() => {
-			if (!this.#isLocked) {
-				this.#client.keyUpXY(this.#surfaceId, x, y)
-			}
-		}, 20)
-	}
-	rotateLeftXY(x: number, y: number): void {
-		if (this.#isLocked) return
-
-		this.#client.rotateLeftXY(this.#surfaceId, x, y)
-	}
-	rotateRightXY(x: number, y: number): void {
-		if (this.#isLocked) return
-
-		this.#client.rotateRightXY(this.#surfaceId, x, y)
+		this.#client.rotateRight(this.#surfaceId, controlId, control)
 	}
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -437,16 +561,16 @@ export class SurfaceProxyContext implements SurfaceContext {
 		this.#client.sendVariableValue(this.#surfaceId, variable, value)
 	}
 
-	#keyIndexToXY(keyIndex: number): [number, number] {
-		if (!this.#surface) throw new Error('Surface not set')
+	// #keyIndexToXY(keyIndex: number): [number, number] {
+	// 	if (!this.#surface) throw new Error('Surface not set')
 
-		const { columnCount } = this.#surface.registerProps
+	// 	const { columns } = this.#surface.registerProps.gridSize
 
-		const x = keyIndex % columnCount
-		const y = Math.floor(keyIndex / columnCount)
+	// 	const x = keyIndex % columns
+	// 	const y = Math.floor(keyIndex / columns)
 
-		return [x, y]
-	}
+	// 	return [x, y]
+	// }
 
 	#pincodeXYPress(x: number, y: number): void {
 		const pincodeMap = this.#pincodeMap

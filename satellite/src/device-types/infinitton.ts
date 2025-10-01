@@ -1,6 +1,5 @@
 import type { CardGenerator } from '../graphics/cards.js'
 import type {
-	ClientCapabilities,
 	DeviceDrawProps,
 	SurfacePlugin,
 	DiscoveredSurfaceInfo,
@@ -11,6 +10,7 @@ import type {
 } from './api.js'
 import Infinitton from 'infinitton-idisplay'
 import { Pincode5x3 } from './pincode.js'
+import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 
 export interface InfinittonDeviceInfo {
 	path: string
@@ -52,15 +52,31 @@ export class InfinittonPlugin implements SurfacePlugin<InfinittonDeviceInfo> {
 		context: SurfaceContext,
 	): Promise<OpenSurfaceResult> => {
 		const infinitton = new Infinitton(pluginInfo.path)
+
+		const surfaceManifest: SatelliteSurfaceLayout = {
+			stylePresets: {
+				default: {
+					bitmap: { w: 72, h: 72 },
+				},
+			},
+			controls: {},
+		}
+
+		for (let i = 0; i < Infinitton.NUM_KEYS; i++) {
+			const row = Math.floor(i / Infinitton.NUM_KEYS_PER_ROW)
+			const column = i % Infinitton.NUM_KEYS_PER_ROW
+
+			surfaceManifest.controls[`${row}/${column}`] = {
+				row,
+				column,
+			}
+		}
+
 		return {
 			surface: new InfinittonWrapper(surfaceId, infinitton, context),
 			registerProps: {
 				brightness: true,
-				rowCount: 3,
-				columnCount: 5,
-				bitmapSize: 72,
-				colours: false,
-				text: false,
+				surfaceManifest,
 				pincodeMap: Pincode5x3(),
 			},
 		}
@@ -86,8 +102,8 @@ export class InfinittonWrapper implements SurfaceInstance {
 
 		this.#panel.on('error', (e) => context.disconnect(e))
 
-		this.#panel.on('down', (key: number) => context.keyDown(key))
-		this.#panel.on('up', (key: number) => context.keyUp(key))
+		this.#panel.on('down', (key: number) => context.keyDownById(String(key)))
+		this.#panel.on('up', (key: number) => context.keyUpById(String(key)))
 	}
 
 	async close(): Promise<void> {
@@ -96,10 +112,6 @@ export class InfinittonWrapper implements SurfaceInstance {
 	async initDevice(): Promise<void> {
 		// Start with blanking it
 		await this.blankDevice()
-	}
-
-	updateCapabilities(_capabilities: ClientCapabilities): void {
-		// Nothing to do
 	}
 
 	async deviceAdded(): Promise<void> {}

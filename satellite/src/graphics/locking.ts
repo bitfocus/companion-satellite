@@ -17,7 +17,7 @@ export class LockingGraphicsGenerator {
 		context2d.textAlign = 'center'
 		context2d.textBaseline = 'middle'
 		context2d.fillStyle = '#ffffff'
-		context2d.fillText(keyCode + '', width / 2, height / 2)
+		context2d.fillText(String(keyCode), width / 2, height / 2)
 
 		return context2d.getImageData(0, 0, canvasWidth, canvasHeight).data
 	}

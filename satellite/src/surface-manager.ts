@@ -216,9 +216,6 @@ export class SurfaceManager {
 
 				console.log('retry add', surfaceId)
 
-				// Make sure device knows what the client is capable of
-				surface.updateCapabilities(this.#client.capabilities)
-
 				this.#client.addDevice(surfaceId, surface.productName, surface.registerProps)
 			} catch (e) {
 				console.error(`Retry add failed: ${e}`)
@@ -292,9 +289,6 @@ export class SurfaceManager {
 
 				// Indicate on device
 				surface.showStatus(this.#client.displayHost, this.#statusString)
-
-				// Make sure device knows what the client is capable of
-				surface.updateCapabilities(this.#client.capabilities)
 
 				// Re-init device
 				this.#client.addDevice(surface.surfaceId, surface.productName, surface.registerProps)
@@ -451,9 +445,7 @@ export class SurfaceManager {
 
 					await proxySurface.initDevice(this.#client.displayHost, this.#statusString)
 
-					proxySurface.updateCapabilities(this.#client.capabilities)
-
-					this.#client.addDevice(pluginInfo.surfaceId, proxySurface.productName, registerProps)
+					this.#client.addDevice(pluginInfo.surfaceId, proxySurface.productName, proxySurface.registerProps)
 				} catch (e) {
 					// Remove the failed surface
 					this.#surfaces.delete(pluginInfo.surfaceId)
