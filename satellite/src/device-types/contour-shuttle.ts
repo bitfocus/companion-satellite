@@ -140,6 +140,7 @@ function compileModelInfo(model: ProductModelId): ShuttleModelInfo {
 					[3, 1],
 				],
 			}
+		case ProductModelId.ShuttleProV1a:
 		case ProductModelId.ShuttleProV1:
 			return {
 				// Same as Pro V2 only without the buttons either side of the encoders
