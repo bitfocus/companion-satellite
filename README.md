@@ -2,8 +2,9 @@
 
 [![License](https://img.shields.io/github/license/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/blob/main/LICENSE)
 [![Version](https://img.shields.io/github/v/release/bitfocus/companion-satellite)](https://github.com/bitfocus/companion-satellite/releases)
+📋 [View Changelog](CHANGELOG.md)
 
-A small application to allow for connecting a streamdeck to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
+A small application to allow for connecting Elgato Stream Deck and other supprted surface types to [Bitfocus Companion](https://github.com/bitfocus/companion) over a network.
 
 Companion 3.4.0 and newer are supported
 
@@ -40,7 +41,9 @@ To manually build the latest version for your machine:
 
 ### Manual Headless / Raspberry pi
 
-If using a Raspberry Pi, we recommend using the 64bit 'Raspberry Pi OS Lite' images, the non-64bit version should work too but it less tested.  
+We only support x64 and arm64 Linux distributions. We recommend something debian based, but it should be possible to use on other distros with some additional work.
+
+If using a Raspberry Pi, we require the 64bit 'Raspberry Pi OS Lite' images.  
 If using a different brand SBC, we recommend running [Armbian](https://www.armbian.com/) specifically the minimal debian images, as this provides a minimal and consistent debian environment and are typically more up to date then the manufacturer images.
 
 It can be built and run as a systemd service on a pi or other linux machine
@@ -59,9 +62,10 @@ As root, run the following:
 curl https://raw.githubusercontent.com/bitfocus/companion-satellite/main/pi-image/install.sh | bash
 ```
 
-After this, you can use `sudo satellite-update` to change the version it has installed. Note: this is currently not fully implemented.
-
 Note: This script will create a new user called `satellite`, which Satellite will be run as and will own the configuration.
+
+After this, you can use `sudo satellite-update` to change the version it has installed.  
+Optionally, you can supply an argument to this updater to specify the new version to install. This should be either `beta` or `stable`.
 
 ## Configuration
 
@@ -71,7 +75,7 @@ For details of configuration options, see `https://user.bitfocus.io/docs/compani
 
 ## Development
 
-NodeJS 20 is required
+NodeJS 22 is required
 
 ### Headless
 
@@ -84,7 +88,7 @@ NodeJS 20 is required
 
 1. Install the dependencies `yarn install`
 1. In one terminal run `yarn dev:webui` to serve the web interface
-1. Run it `yarn dev-electron`
+1. Run it `yarn dev:electron`
 
 You can package for electron with `yarn dist`.  
 Building for another platform has not been tested.
@@ -92,10 +96,11 @@ Building for another platform has not been tested.
 ### REST API
 
 The default rest port is 9999
-a GET request to `http://Satellite-IP:9999/api/host` will return the current target ip in plain text
-a GET request to `http://Satellite-IP:9999/api/port` will return the current target port in plain text
-a GET request to `http://Satellite-IP:9999/api/config` will return the current target port and ip as json
 
-a POST request to `http://Satellite-IP:9999/api/host` with json body `{"host": "newhostip"}` or plain text `newhostip` will connect the satellite to that ip or hostname
-a POST request to `http://Satellite-IP:9999/api/port` with `{"port": 16622}` or plain text `16622` will connect the satellite to that port
-a POST request to `http://Satellite-IP:9999/api/config` with `{"host": "newhostip", "port": 16622}` will connect the satellite to that ip/hostname and port
+- a GET request to `http://Satellite-IP:9999/api/host` will return the current target ip in plain text
+- a GET request to `http://Satellite-IP:9999/api/port` will return the current target port in plain text
+- a GET request to `http://Satellite-IP:9999/api/config` will return the current target port and ip as json
+
+- a POST request to `http://Satellite-IP:9999/api/host` with json body `{"host": "newhostip"}` or plain text `newhostip` will connect the satellite to that ip or hostname
+- a POST request to `http://Satellite-IP:9999/api/port` with `{"port": 16622}` or plain text `16622` will connect the satellite to that port
+- a POST request to `http://Satellite-IP:9999/api/config` with `{"host": "newhostip", "port": 16622}` will connect the satellite to that ip/hostname and port

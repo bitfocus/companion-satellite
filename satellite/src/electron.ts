@@ -149,7 +149,7 @@ trayMenu.append(
 app.on('before-quit', () => {
 	Promise.allSettled([
 		// cleanup
-		client.disconnect(),
+		(async () => client.disconnect())(),
 		surfaceManager.close(),
 	]).catch((e) => {
 		console.error('Failed to do quit', e)

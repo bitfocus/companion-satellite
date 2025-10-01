@@ -1,6 +1,6 @@
 {
   "name": "companion-satellite",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "Satellite Streamdeck connector for Bitfocus Companion",
   "author": {
     "name": "Julian Waller",
@@ -27,7 +27,7 @@
     "dev:electron": "yarn workspace satellite dev:electron",
     "dev:webui": "yarn workspace webui dev",
     "build:openapi": "openapi-typescript ./openapi.yaml -o ./satellite/src/generated/openapi.ts",
-	"build:schema": "tsx tools/schema_compile.mts",
+    "build:schema": "tsx tools/schema_compile.mts",
     "build": "yarn workspaces foreach --all run build",
     "lint:raw": "eslint",
     "lint": "eslint .",
@@ -37,25 +37,25 @@
   "devDependencies": {
     "@sofie-automation/eslint-plugin": "^0.2.1",
     "@tsconfig/node20": "^20.1.6",
-    "eslint": "^9.34.0",
+    "eslint": "^9.36.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-n": "^17.21.3",
+    "eslint-plugin-n": "^17.23.1",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
+    "eslint-plugin-react-refresh": "^0.4.22",
     "husky": "^9.1.7",
     "json-schema-to-typescript": "^15.0.4",
-    "lint-staged": "^16.1.5",
+    "lint-staged": "^16.2.1",
     "openapi-typescript": "^7.9.1",
     "prettier": "^3.6.2",
-    "tsx": "^4.20.5",
+    "tsx": "^4.20.6",
     "typescript": "~5.9.2",
-    "typescript-eslint": "^8.41.0",
-    "zx": "^8.8.1"
+    "typescript-eslint": "^8.44.1",
+    "zx": "^8.8.4"
   },
   "engines": {
     "node": "^22.19"
   },
-  "packageManager": "yarn@4.9.4"
+  "packageManager": "yarn@4.10.3"
 }
