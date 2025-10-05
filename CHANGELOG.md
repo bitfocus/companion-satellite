@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.4.1](https://github.com/bitfocus/companion-satellite/compare/v2.4.0...v2.4.1) (2025-10-05)
+
+
+### Bug Fixes
+
+* windows build ([4ced9bd](https://github.com/bitfocus/companion-satellite/commit/4ced9bd2603c3f5f5bf8f2b64bee0c296f4a919b))
+
 ## [2.4.0](https://github.com/bitfocus/companion-satellite/compare/v2.3.0...v2.4.0) (2025-10-01)
 
 
