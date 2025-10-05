@@ -22,7 +22,7 @@ jobs:
           sudo apt-get install -y yasm libudev-dev libusb-1.0-0-dev
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.node-version'
 
@@ -53,7 +53,7 @@ jobs:
           sudo apt-get install -y yasm libudev-dev libusb-1.0-0-dev
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.node-version'
 
@@ -128,7 +128,7 @@ jobs:
           sudo apt-get install -y yasm libudev-dev libusb-1.0-0-dev
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.node-version'
 
@@ -203,7 +203,7 @@ jobs:
           fetch-depth: 0
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.node-version'
 
@@ -300,7 +300,7 @@ jobs:
           fetch-depth: 0
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.node-version'
 
@@ -377,7 +377,7 @@ jobs:
           fetch-depth: 0
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version-file: '.node-version'
 
