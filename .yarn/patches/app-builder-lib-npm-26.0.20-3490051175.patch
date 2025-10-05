@@ -1,0 +1,13 @@
+diff --git a/out/binDownload.js b/out/binDownload.js
+index fd870612ef732c372f24be4d2c3bfeac514946e5..6ef6504f3384c2446311c9cdf9c1dd483e38ce0e 100644
+--- a/out/binDownload.js
++++ b/out/binDownload.js
+@@ -48,7 +48,7 @@ function getBin(cacheKey, url, checksum) {
+     if (promise != null) {
+         return promise;
+     }
+-    promise = doGetBin(cacheName, url, checksum);
++    promise = doGetBin(cacheKey, url, checksum);
+     versionToPromise.set(cacheName, promise);
+     return promise;
+ }
