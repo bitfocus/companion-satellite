@@ -32,7 +32,7 @@
     "lint:raw": "eslint",
     "lint": "eslint .",
     "license-validate": "sofie-licensecheck",
-    "dist": "run build && tsx tools/build_electron.mts"
+    "dist": "run build && DEBUG=* tsx tools/build_electron.mts"
   },
   "devDependencies": {
     "@sofie-automation/eslint-plugin": "^0.2.1",
