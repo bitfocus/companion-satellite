@@ -427,10 +427,6 @@ export class SurfaceManager {
 			// cleanup
 			this.#surfaces.delete(surfaceId)
 			this.#client.removeDevice(surfaceId)
-
-			// surface.close().catch(() => {
-			// 	// Ignore
-			// })
 		} catch (_e) {
 			// Ignore
 		}
@@ -589,19 +585,12 @@ export class SurfaceManager {
 					type: 'detect'
 					info: OpenDeviceResult
 			  },
-		// pluginInfo: CheckDeviceResult,
-		// mode: 'scan' | 'hid',
 	): boolean {
 		if (this.#pendingSurfaces.has(pluginInfo.surfaceId) || this.#surfaces.has(pluginInfo.surfaceId)) return false
 		this.#pendingSurfaces.add(pluginInfo.surfaceId)
 
 		this.#logger.debug(`adding new surface: ${pluginInfo.surfaceId}`)
 		this.#logger.debug(`existing = ${JSON.stringify(Array.from(this.#surfaces.keys()))}`)
-
-		// const context = new SurfaceProxyContext(this.#client, pluginInfo.surfaceId, (e) => {
-		// 	this.#logger.error(`surface error: ${e}`)
-		// 	this.#cleanupSurfaceById(pluginInfo.surfaceId)
-		// })
 
 		const pOpen =
 			openInfo.type === 'hid'
@@ -614,41 +603,28 @@ export class SurfaceManager {
 			.then(async (result) => {
 				if (!result) return
 
-				try {
-					let bitmapSize = result.surfaceLayout.stylePresets.default.bitmap
-					if (!bitmapSize) {
-						bitmapSize = Object.values(result.surfaceLayout.stylePresets).find((s) => !!s.bitmap)?.bitmap
-					}
-
-					const openedInfo: SurfaceInfo = {
-						pluginId: plugin.info.pluginId,
-						surfaceId: pluginInfo.surfaceId,
-						productName: pluginInfo.description,
-						registerProps: {
-							brightness: result.supportsBrightness,
-							surfaceManifest: translateModuleToSatelliteSurfaceLayout(result.surfaceLayout),
-							transferVariables: translateModuleToSatelliteTransferVariables(result.transferVariables),
-
-							gridSize: calculateGridSize(result.surfaceLayout),
-							fallbackBitmapSize: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,
-						},
-					}
-					// const proxySurface = new SurfaceProxy(this.#graphics, context, surface, registerProps)
-
-					this.#surfaces.set(pluginInfo.surfaceId, openedInfo)
-
-					// await proxySurface.initDevice(this.#client.displayHost, this.#statusString)
-
-					this.#client.addDevice(pluginInfo.surfaceId, openedInfo.productName, openedInfo.registerProps)
-				} catch (e) {
-					// Remove the failed surface
-					this.#surfaces.delete(pluginInfo.surfaceId)
-
-					// Ensure the surface is not leaked
-					// surface.close().catch(() => {})
-
-					throw e
+				let bitmapSize = result.surfaceLayout.stylePresets.default.bitmap
+				if (!bitmapSize) {
+					bitmapSize = Object.values(result.surfaceLayout.stylePresets).find((s) => !!s.bitmap)?.bitmap
 				}
+
+				const openedInfo: SurfaceInfo = {
+					pluginId: plugin.info.pluginId,
+					surfaceId: pluginInfo.surfaceId,
+					productName: pluginInfo.description,
+					registerProps: {
+						brightness: result.supportsBrightness,
+						surfaceManifest: translateModuleToSatelliteSurfaceLayout(result.surfaceLayout),
+						transferVariables: translateModuleToSatelliteTransferVariables(result.transferVariables),
+
+						gridSize: calculateGridSize(result.surfaceLayout),
+						fallbackBitmapSize: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,
+					},
+				}
+
+				this.#surfaces.set(pluginInfo.surfaceId, openedInfo)
+
+				this.#client.addDevice(pluginInfo.surfaceId, openedInfo.productName, openedInfo.registerProps)
 			})
 			.catch((e) => {
 				this.#logger.error(`Open "${pluginInfo.surfaceId}" failed: ${e}`)
