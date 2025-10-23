@@ -2,8 +2,9 @@ import { readFile } from 'fs/promises'
 import { Canvas, Image, loadImage } from '@napi-rs/canvas'
 import * as imageRs from '@julusian/image-rs'
 import { networkInterfaces } from 'os'
+import type { HostCardGenerator } from '@companion-surface/host'
 
-export class CardGenerator {
+export class CardGenerator implements HostCardGenerator {
 	private iconImage: Image | undefined
 
 	async loadIcon(): Promise<Image> {
