@@ -2,28 +2,28 @@ import { CompanionSatelliteClient } from './client.js'
 import { usb } from 'usb'
 import { CardGenerator } from './graphics/cards.js'
 import { DeviceRegisterPropsComplete, SurfaceId } from './device-types/api.js'
-// import { StreamDeckPlugin } from './device-types/streamdeck.js'
-// import { QuickKeysPlugin } from './device-types/xencelabs-quick-keys.js'
 import * as HID from 'node-hid'
 import { wrapAsync } from './lib.js'
-// import { InfinittonPlugin } from './device-types/infinitton.js'
-// import { LoupedeckPlugin } from './device-types/loupedeck.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
-// import { BlackmagicControllerPlugin } from './device-types/blackmagic-panel.js'
-// import { ContourShuttlePlugin } from './device-types/contour-shuttle.js'
 import { createLogger } from './logging.js'
 import { CheckDeviceResult, OpenDeviceResult, PluginWrapper, SurfaceHostContext } from '@companion-surface/host'
 import { HIDDevice, SurfacePlugin as SurfacePlugin2 } from '@companion-surface/base'
-
-// @ts-expect-error No types because module-local-dev
-// eslint-disable-next-line n/no-missing-import
-import StreamDeckPlugin from '../../../module-local-dev/companion-surface-elgato-stream-deck/dist/main.js'
 import { LockingGraphicsGeneratorImpl } from './graphics/locking.js'
 import { calculateGridSize } from './device-types/lib.js'
 import {
 	translateModuleToSatelliteSurfaceLayout,
 	translateModuleToSatelliteTransferVariables,
 } from './translateSchema.js'
+
+// @ts-expect-error No types because module-local-dev
+// eslint-disable-next-line n/no-missing-import
+import StreamDeckPlugin from '../../../module-local-dev/companion-surface-elgato-stream-deck/dist/main.js'
+// @ts-expect-error No types because module-local-dev
+// eslint-disable-next-line n/no-missing-import
+import QuickKeysPlugin from '../../../module-local-dev/companion-surface-xencelabs-quick-keys/dist/main.js'
+// @ts-expect-error No types because module-local-dev
+// eslint-disable-next-line n/no-missing-import
+import LoupedeckPlugin from '../../../module-local-dev/companion-surface-loupedeck/dist/main.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -41,6 +41,20 @@ const rawPlugins: RawPluginsInfo[] = [
 			pluginName: 'Elgato Stream Deck',
 		},
 		plugin: StreamDeckPlugin,
+	},
+	{
+		info: {
+			pluginId: 'xencelabs-quick-keys',
+			pluginName: 'Xencelabs Quick Keys',
+		},
+		plugin: QuickKeysPlugin,
+	},
+	{
+		info: {
+			pluginId: 'loupedeck',
+			pluginName: 'Loupedeck',
+		},
+		plugin: LoupedeckPlugin,
 	},
 	// new StreamDeckPlugin(),
 	// new InfinittonPlugin(),
@@ -94,25 +108,26 @@ export class SurfaceManager {
 		try {
 			for (const rawPlugin of rawPlugins) {
 				try {
-					const wrappedPlugin = new PluginWrapper2(hostContext, rawPlugin)
+					const hostContextFull: SurfaceHostContext = {
+						...hostContext,
+						notifyOpenedDiscoveredSurface: async (_info: OpenDeviceResult) => {
+							throw new Error('Not implemented')
+						},
+					}
+					const wrappedPlugin = new PluginWrapper2(hostContextFull, rawPlugin)
+
+					// TODO: this is pretty horrible
+					;(hostContextFull as any).notifyOpenedDiscoveredSurface = async (info: OpenDeviceResult) => {
+						if (!manager.#tryAddSurfaceFromPlugin(wrappedPlugin, info, { type: 'detect', info })) {
+							manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
+						}
+					}
 
 					manager.#plugins.set(rawPlugin.info.pluginId, wrappedPlugin)
 				} catch (e) {
 					manager.#logger.error(`Failed to load plugin "${rawPlugin.info.pluginId}": ${e}`)
 					continue
 				}
-				// manager.#plugins.set(pluginId, plugin)
-
-				// if (plugin.detection) {
-				// 	plugin.detection.on('deviceAdded', (info) => {
-				// 		if (!manager.#tryAddSurfaceFromPlugin(plugin, info, 'detect')) {
-				// 			manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
-				// 		}
-				// 	})
-				// 	plugin.detection.on('deviceRemoved', (surfaceId) => {
-				// 		manager.#cleanupSurfaceById(surfaceId)
-				// 	})
-				// }
 			}
 
 			// Initialize all the plugins
@@ -130,7 +145,7 @@ export class SurfaceManager {
 		return manager
 	}
 
-	private createHostContext(): SurfaceHostContext {
+	private createHostContext(): Omit<SurfaceHostContext, 'notifyOpenedDiscoveredSurface'> {
 		const runForSurface = (surfaceId: string, fn: (surface: SurfaceInfo) => void) => {
 			try {
 				const surface = this.#getWrappedSurface(surfaceId)
@@ -188,12 +203,6 @@ export class SurfaceManager {
 			},
 
 			shouldOpenDiscoveredSurface: async (_info: CheckDeviceResult) => true, // Open everything for now
-			notifyOpenedDiscoveredSurface: async (info: OpenDeviceResult) => {
-				console.log('discover', info)
-				// if (!manager.#tryAddSurfaceFromPlugin(plugin, info, 'detect')) {
-				// 			manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
-				// 		}
-			},
 		}
 	}
 
@@ -575,6 +584,10 @@ export class SurfaceManager {
 			| {
 					type: 'hid'
 					hid: HIDDevice
+			  }
+			| {
+					type: 'detect'
+					info: OpenDeviceResult
 			  },
 		// pluginInfo: CheckDeviceResult,
 		// mode: 'scan' | 'hid',
@@ -591,7 +604,11 @@ export class SurfaceManager {
 		// })
 
 		const pOpen =
-			openInfo.type === 'hid' ? plugin.openHidDevice(openInfo.hid) : plugin.openScannedDevice(pluginInfo)
+			openInfo.type === 'hid'
+				? plugin.openHidDevice(openInfo.hid)
+				: openInfo.type === 'scan'
+					? plugin.openScannedDevice(pluginInfo)
+					: Promise.resolve(openInfo.info)
 
 		pOpen
 			.then(async (result) => {
