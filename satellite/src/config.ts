@@ -131,7 +131,6 @@ export function getConnectionDetailsFromConfig(config: SatelliteConfigInstance):
 				port: config.get('remotePort') || DEFAULT_TCP_PORT,
 			}
 		case 'ws':
-			console.log('get', config.get('remoteWsAddress'))
 			return {
 				mode: 'ws',
 				url: config.get('remoteWsAddress') || `ws://127.0.0.1:${DEFAULT_WS_PORT}`,

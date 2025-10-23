@@ -19,8 +19,11 @@ import {
 	updateConfig,
 	updateSurfacePluginsEnabledConfig,
 } from './apiTypes.js'
+import { createLogger } from './logging.js'
 
 export class RestServer {
+	readonly #logger = createLogger('RestServer')
+
 	private readonly appConfig: Conf<SatelliteConfig>
 	private readonly client: CompanionSatelliteClient
 	private readonly surfaceManager: SurfaceManager
@@ -221,12 +224,12 @@ export class RestServer {
 		if (enabled && port) {
 			try {
 				this.server = this.app.listen(port)
-				console.log(`REST server starting: port: ${port}`)
+				this.#logger.info(`REST server starting: port: ${port}`)
 			} catch (error) {
-				console.error('Error starting REST server:', error)
+				this.#logger.error(`Error starting REST server: ${error}`)
 			}
 		} else {
-			console.log('REST server not starting: port 0')
+			this.#logger.info('REST server not starting: port 0')
 		}
 	}
 
@@ -235,7 +238,7 @@ export class RestServer {
 			this.server.close()
 			this.server.closeAllConnections()
 			delete this.server
-			console.log('The rest server is closed')
+			this.#logger.info('The rest server is closed')
 		}
 	}
 }

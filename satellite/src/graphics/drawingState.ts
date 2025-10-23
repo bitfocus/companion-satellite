@@ -1,6 +1,9 @@
 import { ImageWriteQueue } from './writeQueue.js'
+import { createLogger, Logger } from '../logging.js'
 
 export class DrawingState<TKey extends number | string> {
+	readonly #logger: Logger
+
 	#queue: ImageWriteQueue<TKey>
 	#state: string
 
@@ -11,7 +14,8 @@ export class DrawingState<TKey extends number | string> {
 		return this.#state
 	}
 
-	constructor(state: string) {
+	constructor(surfaceId: string, state: string) {
+		this.#logger = createLogger(`DrawingState/${surfaceId}`)
 		this.#state = state
 		this.#queue = new ImageWriteQueue()
 	}
@@ -27,7 +31,7 @@ export class DrawingState<TKey extends number | string> {
 			abortQueue = this.#queue
 		}
 
-		console.log(`Aborting queue: ${this.#state} -> ${newState}`, !!abortQueue)
+		this.#logger.debug(`Aborting queue: ${this.#state} -> ${newState} (abortQueue=${!!abortQueue})`)
 
 		this.#state = newState
 		this.#queue = new ImageWriteQueue(false)
@@ -37,12 +41,12 @@ export class DrawingState<TKey extends number | string> {
 			abortQueue
 				.abort()
 				.catch((e) => {
-					console.error(`Failed to abort queue: ${e}`)
+					this.#logger.error(`Failed to abort queue: ${e}`)
 				})
 				.then(async () => {
 					if (this.#execBeforeRunQueue) {
 						await this.#execBeforeRunQueue().catch((e) => {
-							console.error(`Failed to run before queue: ${e}`)
+							this.#logger.error(`Failed to run before queue: ${e}`)
 						})
 						this.#execBeforeRunQueue = null
 					}
@@ -50,13 +54,13 @@ export class DrawingState<TKey extends number | string> {
 				.finally(() => {
 					this.#isAborting = false
 
-					console.log('aborted')
+					this.#logger.debug('aborted')
 
 					// Start execution
 					this.#queue.setRunning()
 				})
 				.catch((e) => {
-					console.error(`Failed to abort queue: ${e}`)
+					this.#logger.error(`Failed to abort queue: ${e}`)
 				})
 		}
 	}

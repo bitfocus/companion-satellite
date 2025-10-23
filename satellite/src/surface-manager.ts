@@ -13,6 +13,7 @@ import { BlackmagicControllerPlugin } from './device-types/blackmagic-panel.js'
 import { SurfaceProxy, SurfaceProxyContext } from './surfaceProxy.js'
 import { LockingGraphicsGenerator, SurfaceGraphicsContext } from './graphics/lib.js'
 import { ContourShuttlePlugin } from './device-types/contour-shuttle.js'
+import { createLogger } from './logging.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -28,6 +29,8 @@ const knownPlugins: SurfacePlugin<any>[] = [
 ]
 
 export class SurfaceManager {
+	readonly #logger = createLogger('SurfaceManager')
+
 	readonly #surfaces: Map<SurfaceId, SurfaceProxy>
 	/** Surfaces which are in the process of being opened */
 	readonly #pendingSurfaces: Set<SurfaceId>
@@ -55,7 +58,7 @@ export class SurfaceManager {
 				if (plugin.detection) {
 					plugin.detection.on('deviceAdded', (info) => {
 						if (!manager.#tryAddSurfaceFromPlugin(plugin, info)) {
-							console.log('Surface already exists', info.surfaceId)
+							manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
 						}
 					})
 					plugin.detection.on('deviceRemoved', (surfaceId) => {
@@ -100,14 +103,14 @@ export class SurfaceManager {
 		this.scanForSurfaces()
 
 		client.on('connected', () => {
-			console.log('connected')
+			this.#logger.info('connected')
 
 			this.#showStatusCard('Connected', false)
 
 			this.syncCapabilitiesAndRegisterAllDevices()
 		})
 		client.on('disconnected', () => {
-			console.log('disconnected')
+			this.#logger.info('disconnected')
 
 			this.#showStatusCard('Connecting', true)
 		})
@@ -123,7 +126,7 @@ export class SurfaceManager {
 					await surface.setBrightness(msg.percent)
 				},
 				(e) => {
-					console.error(`Set brightness: ${e}`)
+					this.#logger.error(`Set brightness: ${e}`)
 				},
 			),
 		)
@@ -135,7 +138,7 @@ export class SurfaceManager {
 					surface.blankDevice()
 				},
 				(e) => {
-					console.error(`Clear deck: ${e}`)
+					this.#logger.error(`Clear deck: ${e}`)
 				},
 			),
 		)
@@ -147,7 +150,7 @@ export class SurfaceManager {
 					await surface.draw(msg)
 				},
 				(e) => {
-					console.error(`Draw: ${e}`)
+					this.#logger.error(`Draw: ${e}`)
 				},
 			),
 		)
@@ -159,7 +162,7 @@ export class SurfaceManager {
 					surface.onVariableValue(msg.name, msg.value)
 				},
 				(e) => {
-					console.error(`Error handling variable value: ${e}`)
+					this.#logger.error(`Error handling variable value: ${e}`)
 				},
 			),
 		)
@@ -171,7 +174,7 @@ export class SurfaceManager {
 					surface.onLockedStatus(msg.locked, msg.characterCount)
 				},
 				(e) => {
-					console.error(`Clear deck: ${e}`)
+					this.#logger.error(`Clear deck: ${e}`)
 				},
 			),
 		)
@@ -183,7 +186,7 @@ export class SurfaceManager {
 					await surface.deviceAdded()
 				},
 				(e) => {
-					console.error(`Setup device: ${e}`)
+					this.#logger.error(`Setup device: ${e}`)
 				},
 			),
 		)
@@ -199,7 +202,7 @@ export class SurfaceManager {
 					this.#delayRetryAddOfDevice(msg.deviceId)
 				},
 				(e) => {
-					console.error(`Failed device: ${e}`)
+					this.#logger.error(`Failed device: ${e}`)
 				},
 			),
 		)
@@ -214,11 +217,11 @@ export class SurfaceManager {
 				// Don't retry if the client already has the device
 				if (this.#client.hasDevice(surfaceId)) return
 
-				console.log('retry add', surfaceId)
+				this.#logger.debug(`retry add: ${surfaceId}`)
 
 				this.#client.addDevice(surfaceId, surface.productName, surface.registerProps)
 			} catch (e) {
-				console.error(`Retry add failed: ${e}`)
+				this.#logger.error(`Retry add failed: ${e}`)
 			}
 		}, 1000)
 	}
@@ -248,7 +251,7 @@ export class SurfaceManager {
 	}
 
 	#onUsbAttach = (dev: usb.Device): void => {
-		console.log('Found a usb device', dev.deviceDescriptor)
+		this.#logger.debug(`Found a usb device: ${JSON.stringify(dev.deviceDescriptor)}`)
 
 		// most of the time it is available now
 		this.scanForSurfaces()
@@ -281,7 +284,7 @@ export class SurfaceManager {
 	}
 
 	public syncCapabilitiesAndRegisterAllDevices(): void {
-		console.log('registerAll', Array.from(this.#surfaces.keys()))
+		this.#logger.debug(`registerAll ${Array.from(this.#surfaces.keys()).join(',')}`)
 		for (const surface of this.#surfaces.values()) {
 			try {
 				// If it is still in the process of initialising skip it
@@ -293,7 +296,7 @@ export class SurfaceManager {
 				// Re-init device
 				this.#client.addDevice(surface.surfaceId, surface.productName, surface.registerProps)
 			} catch (e) {
-				console.error(`Register failed for "${surface.surfaceId}": ${e}`)
+				this.#logger.error(`Register failed for "${surface.surfaceId}": ${e}`)
 			}
 		}
 
@@ -328,7 +331,7 @@ export class SurfaceManager {
 					)
 				})
 				.catch((e) => {
-					console.error(`HID scan failed: ${e}`)
+					this.#logger.error(`HID scan failed: ${e}`)
 				}),
 
 			...Array.from(this.#plugins.values()).map(async (plugin) => {
@@ -344,7 +347,7 @@ export class SurfaceManager {
 						await plugin.detection.triggerScan()
 					}
 				} catch (e) {
-					console.error(`Plugin "${plugin.pluginId}" scan failed: ${e}`)
+					this.#logger.error(`Plugin "${plugin.pluginId}" scan failed: ${e}`)
 				}
 			}),
 		]).finally(() => {
@@ -399,11 +402,11 @@ export class SurfaceManager {
 
 			if (isEnabled) {
 				plugin.init().catch((e) => {
-					console.error(`Plugin "${plugin.pluginId}" init failed: ${e}`)
+					this.#logger.error(`Plugin "${plugin.pluginId}" init failed: ${e}`)
 				})
 			} else {
 				plugin.destroy().catch((e) => {
-					console.error(`Plugin "${plugin.pluginId}" destroy failed: ${e}`)
+					this.#logger.error(`Plugin "${plugin.pluginId}" destroy failed: ${e}`)
 				})
 			}
 		}
@@ -423,11 +426,11 @@ export class SurfaceManager {
 		if (this.#pendingSurfaces.has(pluginInfo.surfaceId) || this.#surfaces.has(pluginInfo.surfaceId)) return false
 		this.#pendingSurfaces.add(pluginInfo.surfaceId)
 
-		console.log(`adding new surface: ${pluginInfo.surfaceId}`)
-		console.log(`existing = ${JSON.stringify(Array.from(this.#surfaces.keys()))}`)
+		this.#logger.debug(`adding new surface: ${pluginInfo.surfaceId}`)
+		this.#logger.debug(`existing = ${JSON.stringify(Array.from(this.#surfaces.keys()))}`)
 
 		const context = new SurfaceProxyContext(this.#client, pluginInfo.surfaceId, (e) => {
-			console.error('surface error', e)
+			this.#logger.error(`surface error: ${e}`)
 			this.#cleanupSurfaceById(pluginInfo.surfaceId)
 		})
 
@@ -457,7 +460,7 @@ export class SurfaceManager {
 				}
 			})
 			.catch((e) => {
-				console.log(`Open "${pluginInfo.surfaceId}" failed: ${e}`)
+				this.#logger.error(`Open "${pluginInfo.surfaceId}" failed: ${e}`)
 			})
 			.finally(() => {
 				this.#pendingSurfaces.delete(pluginInfo.surfaceId)

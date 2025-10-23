@@ -1,5 +1,6 @@
 /* eslint-disable n/no-process-exit */
 import '@julusian/segfault-raub'
+import { createLogger, logger } from './logging.js'
 
 import exitHook from 'exit-hook'
 import { CompanionSatelliteClient } from './client.js'
@@ -26,7 +27,7 @@ if (!rawConfigPath) {
 
 const appConfig = openHeadlessConfig(rawConfigPath)
 
-console.log('Starting', appConfig.path)
+logger.info(`Starting with config: ${appConfig.path}`)
 
 const webRoot = fileURLToPath(new URL('../../webui/dist', import.meta.url))
 
@@ -35,11 +36,12 @@ const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfac
 const server = new RestServer(webRoot, appConfig, client, surfaceManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
-client.on('log', (l) => console.log(l))
-client.on('error', (e) => console.error(e))
+const clientLogger = createLogger('SatelliteClient')
+client.on('log', (l) => clientLogger.info(l))
+client.on('error', (e) => clientLogger.error(e))
 
 exitHook(() => {
-	console.log('Exiting')
+	logger.info('Exiting')
 	client.disconnect()
 	surfaceManager.close().catch(() => null)
 	server.close()
@@ -47,7 +49,7 @@ exitHook(() => {
 
 const tryConnect = () => {
 	client.connect(getConnectionDetailsFromConfig(appConfig)).catch((e) => {
-		console.log(`Failed to connect`, e)
+		clientLogger.error(`Failed to connect: ${e}`)
 	})
 }
 
