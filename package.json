@@ -37,22 +37,22 @@
   "devDependencies": {
     "@sofie-automation/eslint-plugin": "^0.2.1",
     "@tsconfig/node20": "^20.1.6",
-    "eslint": "^9.36.0",
+    "eslint": "^9.38.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-n": "^17.23.1",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.22",
+    "eslint-plugin-react-refresh": "^0.4.24",
     "husky": "^9.1.7",
     "json-schema-to-typescript": "^15.0.4",
-    "lint-staged": "^16.2.3",
-    "openapi-typescript": "^7.9.1",
+    "lint-staged": "^16.2.6",
+    "openapi-typescript": "^7.10.1",
     "prettier": "^3.6.2",
     "tsx": "^4.20.6",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.45.0",
-    "zx": "^8.8.4"
+    "typescript-eslint": "^8.46.2",
+    "zx": "^8.8.5"
   },
   "engines": {
     "node": "^22.19"
