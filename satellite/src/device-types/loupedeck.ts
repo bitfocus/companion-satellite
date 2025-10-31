@@ -106,6 +106,9 @@ function compileLoupedeckProps(device: LoupedeckDevice): DeviceRegisterProps {
 					surfaceManifest.controls[control.id] = { row, column, stylePreset: 'wheel' }
 				}
 				break
+			case 'lcd-segment':
+				// Ignore for now
+				break
 			default:
 				assertNever(control)
 				break
