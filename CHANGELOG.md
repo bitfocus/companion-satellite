@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.5.0](https://github.com/bitfocus/companion-satellite/compare/v2.4.1...v2.5.0) (2025-10-31)
+
+
+### Features
+
+* improve logging ([3906bc1](https://github.com/bitfocus/companion-satellite/commit/3906bc19d2e12162b34dd5b2f191e168c2e8e3ae))
+
+
+### Bug Fixes
+
+* reconnecting to companion doesnt clear supported feature flags ([7a78e68](https://github.com/bitfocus/companion-satellite/commit/7a78e687c692c3f34f1b6d208dc442d3ff3b12fb))
+
 ## [2.4.1](https://github.com/bitfocus/companion-satellite/compare/v2.4.0...v2.4.1) (2025-10-05)
 
 
