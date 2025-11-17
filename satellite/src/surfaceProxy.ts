@@ -366,6 +366,9 @@ export class SurfaceProxy {
 		// Always discard the previous draw
 		this.#drawQueue.abortQueued('status')
 
+		// Clear locked flag
+		this.#context.setLocked(false)
+
 		this.#drawQueue.queueJob(0, async (_key, signal) => {
 			if (signal.aborted) return
 			await this.#surface.showStatus(signal, this.#graphics.cards, hostname, status)
