@@ -1,6 +1,7 @@
 import {
 	DeviceModelId,
 	getStreamDeckDeviceInfo,
+	getStreamDeckModelName,
 	openStreamDeck,
 	StreamDeck,
 	StreamDeckControlDefinition,
@@ -154,7 +155,7 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 
 		return {
 			surfaceId: `streamdeck:${sdInfo.serialNumber}`,
-			description: sdInfo.model, // TODO: Better description
+			description: getStreamDeckModelName(sdInfo.model),
 			pluginInfo: sdInfo,
 		}
 	}

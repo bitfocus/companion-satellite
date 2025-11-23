@@ -1,4 +1,5 @@
 import {
+	getModelName,
 	listLoupedecks,
 	LoupedeckBufferFormat,
 	LoupedeckDevice,
@@ -43,7 +44,7 @@ export class LoupedeckPlugin implements SurfacePlugin<LoupedeckDeviceInfo> {
 
 			result.push({
 				surfaceId: `loupedeck:${surfaceInfo.serialNumber}`,
-				description: surfaceInfo.model, // TODO: Better description
+				description: getModelName(surfaceInfo.model),
 				pluginInfo: surfaceInfo,
 			})
 		}
