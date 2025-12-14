@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.6.0](https://github.com/bitfocus/companion-satellite/compare/v2.5.0...v2.6.0) (2025-12-14)
+
+
+### Features
+
+* support stream deck mini (discord) ([f7e1a9a](https://github.com/bitfocus/companion-satellite/commit/f7e1a9ab7bb37d6519ed6fe3b13d14159e422e0b))
+
 ## [2.5.0](https://github.com/bitfocus/companion-satellite/compare/v2.4.1...v2.5.0) (2025-11-17)
 
 
