@@ -1,25 +1,23 @@
 // @ts-check
 import semver from 'semver'
-import inquirer from 'inquirer'
+import * as inquirer from '@inquirer/prompts'
 import fs from 'fs'
-import { setGlobalDispatcher, EnvHttpProxyAgent } from 'undici'
-
-// Setup support for HTTP_PROXY before anything might use it
-if (process.env.NODE_USE_ENV_PROXY) {
-	// HACK: This is temporary and should be removed once https://github.com/nodejs/node/pull/57165 has been backported to node 22
-	const envHttpProxyAgent = new EnvHttpProxyAgent()
-	setGlobalDispatcher(envHttpProxyAgent)
-}
 
 const ALLOWED_VERSIONS = '^1.5.0 || ^2.0.0'
 
+/** @type {string | undefined} */
 let currentVersion
 try {
-	currentVersion = fs.readFileSync('/opt/companion-satellite/BUILD').toString().trim()
+	currentVersion = fs.readFileSync('/opt/companion-satellite/BUILD', 'utf-8').trim()
 } catch (_e) {
 	// Assume none installed
 }
 
+/**
+ * @param {string} branch
+ * @param {number} targetCount
+ * @returns
+ */
 async function getLatestBuildsForBranch(branch, targetCount) {
 	// This is a bit fragile, but is good enough
 	let target = `${process.platform}-${process.arch}-tgz`
@@ -54,6 +52,11 @@ async function getLatestBuildsForBranch(branch, targetCount) {
 	return result
 }
 
+/**
+ * @param {'stable' | 'beta' | string} type
+ * @param {string | undefined} [targetBuild]
+ * @returns {Promise<void>}
+ */
 async function selectBuildOfType(type, targetBuild) {
 	const candidates = await getLatestBuildsForBranch(type, 1)
 	const selectedBuild = targetBuild ? candidates.find((c) => c.name == targetBuild) : candidates[0]
@@ -69,36 +72,33 @@ async function selectBuildOfType(type, targetBuild) {
 		console.error(`No matching ${type} build was found!`)
 	}
 }
+
+/**
+ * @param {'stable'|'beta'} type
+ * @returns {Promise<void>}
+ */
 async function chooseOfType(type) {
 	const candidates = await getLatestBuildsForBranch(type, 10)
 
 	if (candidates.length === 0) {
 		console.error(`No ${type} build was found!`)
 	} else {
-		const selectedBuild = await inquirer.prompt([
-			{
-				type: 'list',
-				name: 'ref',
-				message: 'Which version do you want? ',
-				choices: [...candidates.map((c) => c.name), 'cancel'],
-			},
-		])
+		const selectedBuild = await inquirer.select({
+			message: 'Which version do you want? ',
+			choices: [...candidates.map((c) => c.name), 'cancel'],
+		})
 
-		if (selectedBuild.ref && selectedBuild.ref !== 'cancel') {
-			if (selectedBuild.ref === currentVersion) {
-				const confirm = await inquirer.prompt([
-					{
-						type: 'confirm',
-						name: 'confirm',
-						message: `Build "${currentVersion}" is already installed. Do you wish to reinstall it?`,
-					},
-				])
-				if (!confirm.confirm) {
+		if (selectedBuild && selectedBuild !== 'cancel') {
+			if (selectedBuild === currentVersion) {
+				const confirm = await inquirer.confirm({
+					message: `Build "${currentVersion}" is already installed. Do you wish to reinstall it?`,
+				})
+				if (!confirm) {
 					return
 				}
 			}
 
-			const build = candidates.find((c) => c.name === selectedBuild.ref)
+			const build = candidates.find((c) => c.name === selectedBuild)
 			if (build) {
 				console.log(`Selected ${type}: ${build.name}`)
 				fs.writeFileSync('/tmp/satellite-version-selection', build.uri)
@@ -128,50 +128,38 @@ async function runPrompt() {
 	//     console.log('Unable to determine your current version')
 	// }
 
-	const answer = await inquirer.prompt([
-		{
-			type: 'list',
-			name: 'ref',
-			message: 'What version do you want? ',
-			choices: ['latest stable', 'latest beta', 'specific stable', 'specific beta', 'custom-url', 'cancel'],
-			default: isOnBeta ? 'latest beta' : 'latest stable',
-		},
-	])
+	const selectedType = await inquirer.select({
+		message: 'What version do you want? ',
+		choices: ['latest stable', 'latest beta', 'specific stable', 'specific beta', 'custom-url', 'cancel'],
+		default: isOnBeta ? 'latest beta' : 'latest stable',
+	})
 
-	if (answer.ref === 'custom-url') {
+	if (selectedType === 'custom-url') {
 		console.log(
 			'Warning: This must be an linux build of Companion for the correct architecture, or companion will not be able to launch afterwards',
 		)
-		const answer = await inquirer.prompt([
-			{
-				type: 'input',
-				name: 'url',
-				message: 'What build url?',
-			},
-		])
+		const inputUrl = await inquirer.input({
+			message: 'What build url?',
+		})
 
-		const confirm = await inquirer.prompt([
-			{
-				type: 'confirm',
-				name: 'confirm',
-				message: `Are you sure you to download the build "${answer.url}"?\nMake sure you trust the source.\nIf you don't know what you are doing you could break your SatellitePi installation`,
-			},
-		])
-		if (!confirm.confirm) {
+		const confirm = await inquirer.confirm({
+			message: `Are you sure you to download the build "${inputUrl}"?\nMake sure you trust the source.\nIf you don't know what you are doing you could break your SatellitePi installation`,
+		})
+		if (!confirm) {
 			return runPrompt()
 		} else {
-			fs.writeFileSync('/tmp/satellite-version-selection', answer.url)
+			fs.writeFileSync('/tmp/satellite-version-selection', inputUrl)
 			fs.writeFileSync('/tmp/satellite-version-selection-name', '')
 		}
-	} else if (!answer.ref || answer.ref === 'cancel') {
+	} else if (!selectedType || selectedType === 'cancel') {
 		console.error('No version was selected!')
-	} else if (answer.ref === 'latest beta') {
+	} else if (selectedType === 'latest beta') {
 		selectBuildOfType('beta')
-	} else if (answer.ref === 'latest stable') {
+	} else if (selectedType === 'latest stable') {
 		selectBuildOfType('stable')
-	} else if (answer.ref === 'specific beta') {
+	} else if (selectedType === 'specific beta') {
 		chooseOfType('beta')
-	} else if (answer.ref === 'specific stable') {
+	} else if (selectedType === 'specific stable') {
 		chooseOfType('stable')
 	}
 }
