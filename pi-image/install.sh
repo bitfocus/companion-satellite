@@ -49,6 +49,9 @@ BUILD_BRANCH=beta
 if [ "$SATELLITE_BRANCH" == "stable" ]; then
     BUILD_BRANCH=stable
     SATELLITE_BRANCH=main
+elif [ "$SATELLITE_BUILD" == "stable" ]; then
+    BUILD_BRANCH=stable
+    SATELLITE_BUILD=""
 fi
 
 # clone the repository
