@@ -24,7 +24,7 @@ fi
 
 # Install a specific stable build. It is advised to not use this, as attempting to install a build that doesn't
 # exist can leave your system in a broken state that needs fixing manually
-SATELLITE_BUILD="${SATELLITE_BUILD:-beta}"
+SATELLITE_BUILD="${SATELLITE_BUILD:-stable}"
 # Development only: Allow building using a testing branch of this updater
 SATELLITE_BRANCH="${SATELLITE_BRANCH:-main}"
 
