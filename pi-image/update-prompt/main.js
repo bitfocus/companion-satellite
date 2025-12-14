@@ -116,6 +116,14 @@ async function runPrompt() {
 	console.log('Warning: Downgrading to an older version can cause issues with the database not being compatible')
 
 	let isOnBeta = true
+	if (currentVersion) {
+		try {
+			const parsed = new semver.SemVer(currentVersion)
+			isOnBeta = parsed.prerelease.length > 0 || parsed.build.length > 0
+		} catch (_e) {
+			// Ignore, not important
+		}
+	}
 
 	console.log(`You are currently on "${currentVersion || 'Unknown'}"`)
 
