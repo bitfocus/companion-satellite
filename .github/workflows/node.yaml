@@ -108,7 +108,7 @@ jobs:
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
       - name: Upload as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: linux-x64
           path: ${{ steps.filenames.outputs.sourcename }}
@@ -183,7 +183,7 @@ jobs:
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
       - name: Upload as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: linux-arm64
           path: ${{ steps.filenames.outputs.sourcename }}
@@ -285,7 +285,7 @@ jobs:
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
       - name: Upload as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: windows-x64
           path: ${{ steps.filenames.outputs.sourcename }}
@@ -362,7 +362,7 @@ jobs:
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
       - name: Upload as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: mac-intel
           path: ${{ steps.filenames.outputs.sourcename }}
@@ -439,7 +439,7 @@ jobs:
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
       - name: Upload as artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: mac-arm
           path: ${{ steps.filenames.outputs.sourcename }}
