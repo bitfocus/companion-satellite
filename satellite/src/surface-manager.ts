@@ -14,16 +14,7 @@ import {
 	translateModuleToSatelliteSurfaceLayout,
 	translateModuleToSatelliteTransferVariables,
 } from './translateSchema.js'
-
-// @ts-expect-error No types because module-local-dev
-// eslint-disable-next-line n/no-missing-import
-import StreamDeckPlugin from '../../../module-local-dev/companion-surface-elgato-stream-deck/dist/main.js'
-// @ts-expect-error No types because module-local-dev
-// eslint-disable-next-line n/no-missing-import
-import QuickKeysPlugin from '../../../module-local-dev/companion-surface-xencelabs-quick-keys/dist/main.js'
-// @ts-expect-error No types because module-local-dev
-// eslint-disable-next-line n/no-missing-import
-import LoupedeckPlugin from '../../../module-local-dev/companion-surface-loupedeck/dist/main.js'
+import { bundledModules } from './generated/bundled-modules.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -34,35 +25,14 @@ interface RawPluginsInfo {
 	plugin: SurfacePlugin2<unknown>
 }
 
-const rawPlugins: RawPluginsInfo[] = [
-	{
-		info: {
-			pluginId: 'elgato-stream-deck',
-			pluginName: 'Elgato Stream Deck',
-		},
-		plugin: StreamDeckPlugin,
+// Build rawPlugins from bundled modules
+const rawPlugins: RawPluginsInfo[] = bundledModules.map(({ manifest, plugin }) => ({
+	info: {
+		pluginId: manifest.id,
+		pluginName: manifest.name,
 	},
-	{
-		info: {
-			pluginId: 'xencelabs-quick-keys',
-			pluginName: 'Xencelabs Quick Keys',
-		},
-		plugin: QuickKeysPlugin,
-	},
-	{
-		info: {
-			pluginId: 'loupedeck',
-			pluginName: 'Loupedeck',
-		},
-		plugin: LoupedeckPlugin,
-	},
-	// new StreamDeckPlugin(),
-	// new InfinittonPlugin(),
-	// new LoupedeckPlugin(),
-	// new QuickKeysPlugin(),
-	// new BlackmagicControllerPlugin(),
-	// new ContourShuttlePlugin(),
-]
+	plugin,
+}))
 
 class PluginWrapper2 extends PluginWrapper<unknown> {
 	readonly info: ApiSurfacePluginInfo
@@ -288,7 +258,7 @@ export class SurfaceManager {
 						controlId = controlInfo[0]
 					}
 
-					// nocommit - this needs to transform the image if provided to match the stylePreset!
+					// TODO: transform the image if provided to match the stylePreset
 
 					await plugin.draw(msg.deviceId, [
 						{

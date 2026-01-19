@@ -11,6 +11,10 @@
 	"main": "dist/electron.js",
 	"license": "MIT",
 	"private": true,
+	"imports": {
+		"#modules/*/plugin": "../modules/*/dist/main.js",
+		"#modules/*/manifest": "../modules/*/companion/manifest.json"
+	},
 	"scripts": {
 		"dev": "tsx watch src/main.ts config.json",
 		"dev:electron": "run build:main && electron dist/electron.js",
@@ -36,6 +40,7 @@
 		"node": "^22.19"
 	},
 	"dependencies": {
+		"@companion-surface/base": "^1.1.0",
 		"@companion-surface/host": "^0.2.0",
 		"@julusian/bonjour-service": "^1.4.2",
 		"@julusian/image-rs": "^2.0.2",

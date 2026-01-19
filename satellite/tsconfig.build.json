@@ -3,11 +3,12 @@
 	"include": ["src/**/*.ts", "src/**/*.cts", "src/**/*.mts"],
 	"exclude": ["node_modules/**", "src/**/*spec.ts", "src/**/__tests__/*", "src/**/__mocks__/*"],
 	"compilerOptions": {
+		"rootDir": "./src",
 		"outDir": "./dist",
-		"baseUrl": "./",
+		"baseUrl": "..",
 		"paths": {
-			"*": ["./node_modules/*"],
-			"{{PACKAGE-NAME}}": ["./src/index.ts"]
+			"#modules/*/plugin": ["modules/*/dist/main.js"],
+			"#modules/*/manifest": ["modules/*/companion/manifest.json"]
 		},
 		"types": ["node"],
 		"lib": ["dom"],

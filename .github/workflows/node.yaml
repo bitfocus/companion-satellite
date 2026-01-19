@@ -15,6 +15,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -46,6 +47,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -121,6 +123,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -201,6 +204,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          submodules: recursive
 
       - name: Use Node.js
         uses: actions/setup-node@v6
@@ -298,6 +302,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          submodules: recursive
 
       - name: Use Node.js
         uses: actions/setup-node@v6
@@ -375,6 +380,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          submodules: recursive
 
       - name: Use Node.js
         uses: actions/setup-node@v6
@@ -464,6 +470,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          submodules: recursive
 
       - name: Determine files to upload
         id: filenames

@@ -1,0 +1,39 @@
+[submodule "modules/companion-surface-elgato-stream-deck"]
+	path = modules/companion-surface-elgato-stream-deck
+	url = https://github.com/bitfocus/companion-surface-elgato-stream-deck.git
+[submodule "modules/companion-surface-xencelabs-quick-keys"]
+	path = modules/companion-surface-xencelabs-quick-keys
+	url = https://github.com/bitfocus/companion-surface-xencelabs-quick-keys.git
+[submodule "modules/companion-surface-loupedeck"]
+	path = modules/companion-surface-loupedeck
+	url = https://github.com/bitfocus/companion-surface-loupedeck.git
+[submodule "modules/companion-surface-blackmagic-controller"]
+	path = modules/companion-surface-blackmagic-controller
+	url = https://github.com/bitfocus/companion-surface-blackmagic-controller.git
+[submodule "modules/companion-surface-contour-shuttle"]
+	path = modules/companion-surface-contour-shuttle
+	url = https://github.com/bitfocus/companion-surface-contour-shuttle.git
+[submodule "modules/companion-surface-xkeys"]
+	path = modules/companion-surface-xkeys
+	url = https://github.com/bitfocus/companion-surface-xkeys.git
+[submodule "modules/companion-surface-vec-footpedal"]
+	path = modules/companion-surface-vec-footpedal
+	url = https://github.com/bitfocus/companion-surface-vec-footpedal.git
+[submodule "modules/companion-surface-203-systems-mystrix"]
+	path = modules/companion-surface-203-systems-mystrix
+	url = https://github.com/bitfocus/companion-surface-203-systems-mystrix.git
+[submodule "modules/companion-surface-mirabox-stream-dock"]
+	path = modules/companion-surface-mirabox-stream-dock
+	url = https://github.com/bitfocus/companion-surface-mirabox-stream-dock.git
+[submodule "modules/companion-surface-idisplay-infinitton"]
+	path = modules/companion-surface-idisplay-infinitton
+	url = https://github.com/bitfocus/companion-surface-idisplay-infinitton.git
+[submodule "modules/companion-surface-framework-macropad"]
+	path = modules/companion-surface-framework-macropad
+	url = https://github.com/bitfocus/companion-surface-framework-macropad.git
+[submodule "modules/companion-surface-logitech-mx-creative-console"]
+	path = modules/companion-surface-logitech-mx-creative-console
+	url = https://github.com/bitfocus/companion-surface-logitech-mx-creative-console.git
+[submodule "modules/companion-surface-blackmagic-videohub-panel"]
+	path = modules/companion-surface-blackmagic-videohub-panel
+	url = https://github.com/bitfocus/companion-surface-blackmagic-videohub-panel.git
