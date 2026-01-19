@@ -339,6 +339,11 @@ jobs:
             export BUILD_VERSION=${{ steps.filenames.outputs.longversion }}
           fi
 
+          # Unset CSC_LINK if empty to allow unsigned builds
+          if [[ -z "$CSC_LINK" ]]; then
+            unset CSC_LINK
+          fi
+
           yarn
           yarn --cwd webui install
           yarn dist mac-x64
@@ -415,6 +420,11 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
             export EB_UPDATE_CHANNEL=experimental
             export BUILD_VERSION=${{ steps.filenames.outputs.longversion }}
+          fi
+
+          # Unset CSC_LINK if empty to allow unsigned builds
+          if [[ -z "$CSC_LINK" ]]; then
+            unset CSC_LINK
           fi
 
           yarn
