@@ -6,7 +6,13 @@ import * as HID from 'node-hid'
 import { wrapAsync } from './lib.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 import { createLogger } from './logging.js'
-import { CheckDeviceResult, OpenDeviceResult, PluginWrapper, SurfaceHostContext } from '@companion-surface/host'
+import {
+	CheckDeviceResult,
+	OpenDeviceResult,
+	PluginWrapper,
+	ShouldOpenSurfaceResult,
+	SurfaceHostContext,
+} from '@companion-surface/host'
 import { HIDDevice, SurfacePlugin as SurfacePlugin2 } from '@companion-surface/base'
 import { LockingGraphicsGeneratorImpl } from './graphics/locking.js'
 import { calculateGridSize } from './device-types/lib.js'
@@ -164,15 +170,34 @@ export class SurfaceManager {
 						}
 					})
 				},
+				changePage: (_surfaceId: string, _forward: boolean) => {
+					// Not implemented for satellite
+				},
 				setVariableValue: (surfaceId: string, name: string, value: any) => {
 					this.#client.sendVariableValue(surfaceId, name, value)
 				},
 				pincodeEntry: (surfaceId: string, char: number) => {
 					this.#client.pincodeKey(surfaceId, char)
 				},
+				firmwareUpdateInfo: (_surfaceId: string, _info) => {
+					// Not implemented for satellite
+				},
 			},
 
-			shouldOpenDiscoveredSurface: async (_info: CheckDeviceResult) => true, // Open everything for now
+			shouldOpenDiscoveredSurface: async (info: CheckDeviceResult): Promise<ShouldOpenSurfaceResult> => {
+				// Open everything, use the surfaceId as-is
+				return { shouldOpen: true, resolvedSurfaceId: info.surfaceId }
+			},
+
+			forgetDiscoveredSurfaces: (_devicePaths: string[]) => {
+				// Not needed for satellite - we don't track discovered-but-not-opened surfaces
+			},
+			connectionsFound: (_connectionInfos) => {
+				// Not implemented for satellite
+			},
+			connectionsForgotten: (_connectionIds: string[]) => {
+				// Not implemented for satellite
+			},
 		}
 	}
 
@@ -306,7 +331,7 @@ export class SurfaceManager {
 				async (msg) => {
 					const plugin = this.#getPluginForSurface(msg.deviceId)
 
-					await plugin.readySurface(msg.deviceId)
+					await plugin.readySurface(msg.deviceId, {})
 				},
 				(e) => {
 					this.#logger.error(`Setup device: ${e}`)
@@ -443,13 +468,18 @@ export class SurfaceManager {
 				.then(async (devices) => {
 					await Promise.all(
 						devices.map(async (device) => {
+							// Skip devices without a path - they can't be opened
+							if (!device.path) return
+
+							const hidDevice: HIDDevice = device as HIDDevice
+
 							for (const [pluginId, plugin] of this.#plugins.entries()) {
-								const info = await plugin.checkHidDevice(device)
+								const info = await plugin.checkHidDevice(hidDevice)
 								if (!info || !this.isPluginEnabled(pluginId)) continue
 
 								this.#tryAddSurfaceFromPlugin(plugin, info, {
 									type: 'hid',
-									hid: device,
+									hid: hidDevice,
 								})
 								return
 							}
@@ -466,7 +496,7 @@ export class SurfaceManager {
 
 					const surfaceInfos = await plugin.scanForDevices()
 					for (const surfaceInfo of surfaceInfos) {
-						this.#tryAddSurfaceFromPlugin(plugin, surfaceInfo, { type: 'scan' })
+						this.#tryAddSurfaceFromPlugin(plugin, surfaceInfo, { type: 'scan', checkResult: surfaceInfo })
 					}
 				} catch (e) {
 					this.#logger.error(`Plugin "${pluginId}" scan failed: ${e}`)
@@ -542,10 +572,11 @@ export class SurfaceManager {
 
 	#tryAddSurfaceFromPlugin(
 		plugin: PluginWrapper2,
-		pluginInfo: CheckDeviceResult,
+		pluginInfo: CheckDeviceResult | OpenDeviceResult,
 		openInfo:
 			| {
 					type: 'scan'
+					checkResult: CheckDeviceResult
 			  }
 			| {
 					type: 'hid'
@@ -564,9 +595,9 @@ export class SurfaceManager {
 
 		const pOpen =
 			openInfo.type === 'hid'
-				? plugin.openHidDevice(openInfo.hid)
+				? plugin.openHidDevice(openInfo.hid, pluginInfo.surfaceId)
 				: openInfo.type === 'scan'
-					? plugin.openScannedDevice(pluginInfo)
+					? plugin.openScannedDevice(openInfo.checkResult, pluginInfo.surfaceId)
 					: Promise.resolve(openInfo.info)
 
 		pOpen

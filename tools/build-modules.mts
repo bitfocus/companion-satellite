@@ -107,7 +107,7 @@ async function main() {
 		for (const r of failed) {
 			console.log(`  ✗ ${r.name}`)
 		}
-		process.exit(1)
+		throw new Error(`Build failed for ${failed.length} module(s)`)
 	}
 
 	console.log('\nAll modules built successfully!')
@@ -115,5 +115,5 @@ async function main() {
 
 main().catch((error) => {
 	console.error('Build failed:', error)
-	process.exit(1)
+	throw error
 })

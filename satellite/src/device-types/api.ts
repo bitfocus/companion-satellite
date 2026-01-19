@@ -2,7 +2,6 @@ import type HID from 'node-hid'
 import type { PixelFormat } from '@julusian/image-rs'
 import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 import type { GridSize } from '../surfaceProxy.js'
-import type { SurfacePincodeMap } from '@companion-surface/base'
 
 export type HIDDevice = HID.Device
 
@@ -25,10 +24,9 @@ export interface DeviceRegisterProps {
 	brightness: boolean
 	surfaceManifest: SatelliteSurfaceLayout
 	transferVariables?: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable>
-	pincodeMap: SurfacePincodeMap | null
 }
 
-export interface DeviceRegisterPropsComplete extends Omit<DeviceRegisterProps, 'pincodeMap'> {
+export interface DeviceRegisterPropsComplete extends DeviceRegisterProps {
 	gridSize: GridSize
 	fallbackBitmapSize: number
 }

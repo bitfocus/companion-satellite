@@ -635,8 +635,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
 					VARIABLES: transferVariables,
 					BRIGHTNESS: props.brightness,
-					// PINCODE_LOCK: props.pincodeMap ? 'FULL' : '', // nocommit - verify
-					PINCODE_LOCK: 'FULL',
+					PINCODE_LOCK: 'FULL', // Surfaces that don't support pincode lock are handled by the host library
 				})
 			} else {
 				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)
@@ -652,8 +651,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					TEXT_STYLE: needsTextStyle,
 					VARIABLES: transferVariables,
 					BRIGHTNESS: props.brightness,
-					// PINCODE_LOCK: props.pincodeMap ? 'FULL' : '', // nocommit - verify
-					PINCODE_LOCK: 'FULL',
+					PINCODE_LOCK: 'FULL', // Surfaces that don't support pincode lock are handled by the host library
 				})
 			}
 		}

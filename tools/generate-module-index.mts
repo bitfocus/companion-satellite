@@ -98,9 +98,7 @@ function generateCode(modules: ModuleInfo[]): string {
 		const manifestVarName = generateVariableName(module.manifest.id) + 'Manifest'
 
 		lines.push(`import ${varName} from '${module.relativePath}/plugin'`)
-		lines.push(
-			`import ${manifestVarName} from '${module.relativePath}/manifest' with { type: 'json' }`,
-		)
+		lines.push(`import ${manifestVarName} from '${module.relativePath}/manifest' with { type: 'json' }`)
 		lines.push('')
 	}
 
