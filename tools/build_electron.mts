@@ -1,11 +1,18 @@
 /* eslint-disable n/no-process-exit */
 import { fs, usePowerShell, argv } from 'zx'
+import * as path from 'path'
+import { fileURLToPath } from 'url'
 
 import electronBuilder from 'electron-builder'
 
 if (process.platform === 'win32') {
 	usePowerShell() // to enable powershell
 }
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const rootDir = path.resolve(__dirname, '..')
+const modulesDir = path.join(rootDir, 'modules')
+const bundledModulesDir = path.join(rootDir, 'satellite', 'bundled-modules')
 
 const platform = argv._[0] || `${process.platform}-${process.arch}`
 
@@ -43,6 +50,54 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 // 	await $`electron-builder install-app-deps`
 // }
 // console.log('pregyp args:', nodePreGypArgs)
+
+// Copy modules into satellite directory for packaging
+// The imports field in package.json points to ../modules/ which is outside the packaged app
+// We copy them to ./bundled-modules/ and update the imports field for the build
+async function copyModulesForPackaging(): Promise<void> {
+	console.log('Copying modules for packaging...')
+
+	// Clean up any previous bundled-modules directory
+	await fs.remove(bundledModulesDir)
+	await fs.ensureDir(bundledModulesDir)
+
+	if (!(await fs.pathExists(modulesDir))) {
+		console.log('No modules directory found, skipping module bundling')
+		return
+	}
+
+	const entries = await fs.readdir(modulesDir, { withFileTypes: true })
+
+	for (const entry of entries) {
+		if (!entry.isDirectory()) continue
+		if (!entry.name.startsWith('companion-surface-')) continue
+
+		const srcModulePath = path.join(modulesDir, entry.name)
+		const destModulePath = path.join(bundledModulesDir, entry.name)
+
+		// Copy dist directory (compiled plugin code)
+		const srcDist = path.join(srcModulePath, 'dist')
+		const destDist = path.join(destModulePath, 'dist')
+		if (await fs.pathExists(srcDist)) {
+			await fs.copy(srcDist, destDist)
+		}
+
+		// Copy companion/manifest.json
+		const srcManifest = path.join(srcModulePath, 'companion', 'manifest.json')
+		const destManifest = path.join(destModulePath, 'companion', 'manifest.json')
+		if (await fs.pathExists(srcManifest)) {
+			await fs.ensureDir(path.dirname(destManifest))
+			await fs.copy(srcManifest, destManifest)
+		}
+
+		console.log(`  Copied: ${entry.name}`)
+	}
+}
+
+async function cleanupBundledModules(): Promise<void> {
+	console.log('Cleaning up bundled modules...')
+	await fs.remove(bundledModulesDir)
+}
 
 // perform the electron build
 await fs.remove('./electron-output')
@@ -147,6 +202,24 @@ console.log('Injecting update channel: ' + satellitePkgJson.updateChannel)
 
 if (process.env.BUILD_VERSION) satellitePkgJson.version = process.env.BUILD_VERSION
 
+// Update imports field to use bundled modules path instead of ../modules/
+// This is necessary because electron-builder only packages the satellite directory
+if (satellitePkgJson.imports) {
+	console.log('Updating imports field for production build...')
+	const newImports: Record<string, string> = {}
+	for (const [key, value] of Object.entries(satellitePkgJson.imports)) {
+		if (typeof value === 'string' && value.startsWith('../modules/')) {
+			newImports[key] = value.replace('../modules/', './bundled-modules/')
+		} else {
+			newImports[key] = value as string
+		}
+	}
+	satellitePkgJson.imports = newImports
+}
+
+// Copy modules into satellite directory for packaging
+await copyModulesForPackaging()
+
 await fs.writeFile(satellitePkgJsonPath, JSON.stringify(satellitePkgJson))
 
 try {
@@ -159,4 +232,7 @@ try {
 } finally {
 	// undo the changes made
 	await fs.writeFile(satellitePkgJsonPath, satellitePkgJsonStr)
+
+	// Clean up bundled modules
+	await cleanupBundledModules()
 }

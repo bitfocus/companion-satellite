@@ -5,6 +5,7 @@ config.json
 electron-output
 .DS_STORE
 .cache
+satellite/bundled-modules
 
 # Yarn 3 files
 .pnp.*
