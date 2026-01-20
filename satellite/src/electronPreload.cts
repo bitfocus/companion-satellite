@@ -7,6 +7,9 @@ import type {
 	ApiSurfaceInfo,
 	ApiSurfacePluginInfo,
 	ApiSurfacePluginsEnabled,
+	ApiModulesAvailableResponse,
+	ApiModulesInstalledResponse,
+	ApiModulesUpdatesResponse,
 	SatelliteUiApi,
 } from './apiTypes.js'
 
@@ -22,6 +25,11 @@ const electronApi: SatelliteUiApi = {
 	surfacePluginsEnabled: async (): Promise<ApiSurfacePluginsEnabled> => ipcRenderer.invoke('surfacePluginsEnabled'),
 	surfacePluginsEnabledUpdate: async (newConfig: ApiSurfacePluginsEnabled): Promise<ApiSurfacePluginsEnabled> =>
 		ipcRenderer.invoke('surfacePluginsEnabledUpdate', newConfig),
+	modulesAvailable: async (): Promise<ApiModulesAvailableResponse> => ipcRenderer.invoke('modulesAvailable'),
+	modulesInstalled: async (): Promise<ApiModulesInstalledResponse> => ipcRenderer.invoke('modulesInstalled'),
+	modulesUpdates: async (): Promise<ApiModulesUpdatesResponse> => ipcRenderer.invoke('modulesUpdates'),
+	installModule: async (moduleId: string, version?: string): Promise<{ success: boolean; error?: string }> =>
+		ipcRenderer.invoke('installModule', moduleId, version),
 }
 
 contextBridge.exposeInMainWorld('electronApi', electronApi)

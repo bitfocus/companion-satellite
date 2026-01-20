@@ -29,6 +29,7 @@ import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
 import { ElectronUpdater } from './electronUpdater.js'
 import { setMaxListeners } from 'events'
+import { ModuleManager } from './module-store/index.js'
 
 const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
@@ -49,11 +50,24 @@ app.on('window-all-closed', () => {
 
 console.log('Starting')
 
+// Initialize the module manager using electron's userData path
+const moduleManager = new ModuleManager(app.getPath('userData'), app.getVersion())
+
+console.log('Initializing module manager...')
+await moduleManager.init()
+
+// Ensure modules are installed for enabled plugins
+await moduleManager.ensureModulesForConfig(appConfig.get('surfacePluginsEnabled'))
+
 const webRoot = fileURLToPath(new URL(app.isPackaged ? '../../webui' : '../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
-const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfacePluginsEnabled'))
-const server = new RestServer(webRoot, appConfig, client, surfaceManager)
+const surfaceManager = await SurfaceManager.create(
+	client,
+	appConfig.get('surfacePluginsEnabled'),
+	moduleManager.getLoadedPlugins(),
+)
+const server = new RestServer(webRoot, appConfig, client, surfaceManager, moduleManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 listenToConnectionConfigChanges(appConfig, tryConnect)
@@ -305,6 +319,35 @@ ipcMain.handle(
 		return appConfig.get('surfacePluginsEnabled')
 	},
 )
+ipcMain.handle('modulesAvailable', async () => {
+	const modules = moduleManager.getAvailableModules()
+	return {
+		modules: modules ? Object.values(modules) : [],
+		lastUpdated: Date.now(),
+	}
+})
+ipcMain.handle('modulesInstalled', async () => {
+	return {
+		modules: moduleManager.getInstalledModules().map((m) => ({
+			id: m.id,
+			name: m.manifest.name,
+			version: m.version,
+			isBeta: m.isBeta,
+		})),
+	}
+})
+ipcMain.handle('modulesUpdates', async () => {
+	const updates = await moduleManager.checkForUpdates()
+	return { updates }
+})
+ipcMain.handle('installModule', async (_e, moduleId: string, version?: string) => {
+	try {
+		await moduleManager.installModule(moduleId, version)
+		return { success: true }
+	} catch (e) {
+		return { success: false, error: e instanceof Error ? e.message : String(e) }
+	}
+})
 
 // about window
 ipcMain.handle('openShell', async (_e, url: string): Promise<void> => {

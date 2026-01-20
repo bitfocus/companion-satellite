@@ -19,8 +19,7 @@
   "private": true,
   "workspaces": [
     "satellite",
-    "webui",
-    "modules/*"
+    "webui"
   ],
   "scripts": {
     "postinstall": "husky",
@@ -29,9 +28,7 @@
     "dev:webui": "yarn workspace webui dev",
     "build:openapi": "openapi-typescript ./openapi.yaml -o ./satellite/src/generated/openapi.ts",
     "build:schema": "tsx tools/schema_compile.mts",
-    "build:modules": "tsx tools/build-modules.mts",
-    "generate:module-index": "tsx tools/generate-module-index.mts",
-    "build": "yarn build:modules && yarn generate:module-index && yarn workspaces foreach -A --exclude 'companion-surface-*' run build",
+    "build": "yarn workspaces foreach -A run build",
     "lint:raw": "eslint",
     "lint": "eslint .",
     "license-validate": "sofie-licensecheck",

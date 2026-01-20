@@ -20,7 +20,7 @@ import {
 	translateModuleToSatelliteSurfaceLayout,
 	translateModuleToSatelliteTransferVariables,
 } from './translateSchema.js'
-import { bundledModules } from './generated/bundled-modules.js'
+import type { LoadedPlugin } from './module-store/index.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -30,15 +30,6 @@ interface RawPluginsInfo {
 	info: ApiSurfacePluginInfo
 	plugin: SurfacePlugin2<unknown>
 }
-
-// Build rawPlugins from bundled modules
-const rawPlugins: RawPluginsInfo[] = bundledModules.map(({ manifest, plugin }) => ({
-	info: {
-		pluginId: manifest.id,
-		pluginName: manifest.name,
-	},
-	plugin,
-}))
 
 class PluginWrapper2 extends PluginWrapper<unknown> {
 	readonly info: ApiSurfacePluginInfo
@@ -76,8 +67,18 @@ export class SurfaceManager {
 	public static async create(
 		client: CompanionSatelliteClient,
 		enabledPluginsConfig: ApiSurfacePluginsEnabled,
+		loadedPlugins: LoadedPlugin[],
 	): Promise<SurfaceManager> {
 		const manager = new SurfaceManager(client, enabledPluginsConfig)
+
+		// Build rawPlugins from loaded modules
+		const rawPlugins: RawPluginsInfo[] = loadedPlugins.map((loaded) => ({
+			info: {
+				pluginId: loaded.info.pluginId,
+				pluginName: loaded.info.pluginName,
+			},
+			plugin: loaded.plugin,
+		}))
 
 		const hostContext = manager.createHostContext()
 

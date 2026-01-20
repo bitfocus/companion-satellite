@@ -5,11 +5,6 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"baseUrl": "..",
-		"paths": {
-			"#modules/*/plugin": ["modules/*/dist/main.js"],
-			"#modules/*/manifest": ["modules/*/companion/manifest.json"]
-		},
 		"types": ["node"],
 		"lib": ["dom"],
 		"skipLibCheck": true,

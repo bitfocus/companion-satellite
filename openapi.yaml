@@ -121,6 +121,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /modules/available:
+    get:
+      summary: Get available surface modules from store
+      operationId: getModulesAvailable
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  modules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModuleStoreEntry'
+                  lastUpdated:
+                    type: number
+                required:
+                  - modules
+                  - lastUpdated
+        '501':
+          description: Module management not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /modules/installed:
+    get:
+      summary: Get installed surface modules
+      operationId: getModulesInstalled
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  modules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InstalledModuleInfo'
+                required:
+                  - modules
+        '501':
+          description: Module management not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /modules/install:
+    post:
+      summary: Install a module from the store
+      operationId: installModule
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                moduleId:
+                  type: string
+                version:
+                  type: string
+              required:
+                - moduleId
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                required:
+                  - success
+        '501':
+          description: Module management not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /modules/updates:
+    get:
+      summary: Check for module updates
+      operationId: checkModuleUpdates
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  updates:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModuleUpdateInfo'
+                required:
+                  - updates
+        '501':
+          description: Module management not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /config:
     get:
       summary: Get current configuration
@@ -299,3 +414,91 @@ components:
       required:
         - pluginId
         - pluginName
+
+    ModuleStoreEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Module ID
+        name:
+          type: string
+          description: Module name
+        shortname:
+          type: string
+          description: Short name
+        products:
+          type: array
+          items:
+            type: string
+          description: List of products supported
+        keywords:
+          type: array
+          items:
+            type: string
+          description: Search keywords
+        storeUrl:
+          type: string
+          description: URL to the module store page
+        githubUrl:
+          type: string
+          nullable: true
+          description: URL to the GitHub repository
+        helpUrl:
+          type: string
+          nullable: true
+          description: URL to the help documentation
+        legacyIds:
+          type: array
+          items:
+            type: string
+          description: Legacy module IDs
+        deprecationReason:
+          type: string
+          nullable: true
+          description: Reason for deprecation if deprecated
+      required:
+        - id
+        - name
+        - shortname
+        - products
+        - keywords
+        - storeUrl
+
+    InstalledModuleInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Module ID
+        name:
+          type: string
+          description: Module name
+        version:
+          type: string
+          description: Installed version
+        isBeta:
+          type: boolean
+          description: Whether this is a beta version
+      required:
+        - id
+        - name
+        - version
+        - isBeta
+
+    ModuleUpdateInfo:
+      type: object
+      properties:
+        moduleId:
+          type: string
+          description: Module ID
+        currentVersion:
+          type: string
+          description: Currently installed version
+        latestVersion:
+          type: string
+          description: Latest available version
+      required:
+        - moduleId
+        - currentVersion
+        - latestVersion

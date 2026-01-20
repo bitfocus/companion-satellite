@@ -3,6 +3,7 @@ import '@julusian/segfault-raub'
 import { createLogger, logger } from './logging.js'
 
 import exitHook from 'exit-hook'
+import path from 'path'
 import { CompanionSatelliteClient } from './client.js'
 import { SurfaceManager } from './surface-manager.js'
 import { RestServer } from './rest.js'
@@ -10,6 +11,7 @@ import { getConnectionDetailsFromConfig, listenToConnectionConfigChanges, openHe
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
+import { ModuleManager } from './module-store/index.js'
 
 const rawConfigPath = process.argv[2]
 if (!rawConfigPath) {
@@ -29,11 +31,26 @@ const appConfig = openHeadlessConfig(rawConfigPath)
 
 logger.info(`Starting with config: ${appConfig.path}`)
 
+// Initialize the module manager
+// Use config directory from config path for module storage
+const configDir = path.dirname(appConfig.path)
+const moduleManager = new ModuleManager(configDir, '2.6.0')
+
+logger.info('Initializing module manager...')
+await moduleManager.init()
+
+// Ensure modules are installed for enabled plugins
+await moduleManager.ensureModulesForConfig(appConfig.get('surfacePluginsEnabled'))
+
 const webRoot = fileURLToPath(new URL('../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
-const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfacePluginsEnabled'))
-const server = new RestServer(webRoot, appConfig, client, surfaceManager)
+const surfaceManager = await SurfaceManager.create(
+	client,
+	appConfig.get('surfacePluginsEnabled'),
+	moduleManager.getLoadedPlugins(),
+)
+const server = new RestServer(webRoot, appConfig, client, surfaceManager, moduleManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 const clientLogger = createLogger('SatelliteClient')

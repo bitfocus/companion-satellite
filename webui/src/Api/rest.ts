@@ -6,6 +6,9 @@ import type {
 	ApiSurfaceInfo,
 	ApiSurfacePluginInfo,
 	ApiSurfacePluginsEnabled,
+	ApiModulesAvailableResponse,
+	ApiModulesInstalledResponse,
+	ApiModulesUpdatesResponse,
 } from './types'
 import type { paths } from '../../../satellite/src/generated/openapi'
 import createClient from 'openapi-fetch'
@@ -56,6 +59,28 @@ export const SatelliteRestApi: SatelliteUiApi = {
 	): Promise<ApiSurfacePluginsEnabled> {
 		const { data, error } = await client.POST('/surfaces/plugins/enabled', {
 			body: newConfig,
+		})
+		if (error) throw new Error(error.error)
+		return data
+	},
+	modulesAvailable: async function (): Promise<ApiModulesAvailableResponse> {
+		const { data, error } = await client.GET('/modules/available', {})
+		if (error) throw new Error(error.error)
+		return data
+	},
+	modulesInstalled: async function (): Promise<ApiModulesInstalledResponse> {
+		const { data, error } = await client.GET('/modules/installed', {})
+		if (error) throw new Error(error.error)
+		return data
+	},
+	modulesUpdates: async function (): Promise<ApiModulesUpdatesResponse> {
+		const { data, error } = await client.GET('/modules/updates', {})
+		if (error) throw new Error(error.error)
+		return data
+	},
+	installModule: async function (moduleId: string, version?: string): Promise<{ success: boolean; error?: string }> {
+		const { data, error } = await client.POST('/modules/install', {
+			body: { moduleId, version },
 		})
 		if (error) throw new Error(error.error)
 		return data
