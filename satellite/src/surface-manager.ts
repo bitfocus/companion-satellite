@@ -408,11 +408,36 @@ export class SurfaceManager {
 		setTimeout(() => this.scanForSurfaces(), 1000)
 	}
 
-	#onUsbDetach = (_dev: usb.Device): void => {
-		// Rescan after a short timeout
-		// setTimeout(() => this.scanDevices(), 100)
-		// console.log('Lost a device', dev.deviceDescriptor)
-		// this.cleanupDeviceById(dev.serialNumber)
+	#onUsbDetach = (dev: usb.Device): void => {
+		this.#logger.debug(
+			`USB device detached: vendor=${dev.deviceDescriptor?.idVendor} product=${dev.deviceDescriptor?.idProduct}`,
+		)
+
+		// Validate surfaces after a short delay to let device state settle
+		setTimeout(() => void this.#validateAndCleanupSurfaces(), 500)
+	}
+
+	async #validateAndCleanupSurfaces(): Promise<void> {
+		const surfaceIds = Array.from(this.#surfaces.keys())
+
+		for (const surfaceId of surfaceIds) {
+			const surface = this.#surfaces.get(surfaceId)
+			if (!surface) continue
+
+			const plugin = this.#plugins.get(surface.pluginId)
+			if (!plugin) continue
+
+			try {
+				// Try to show the current status - this validates the device is still accessible
+				await plugin.showStatus(surfaceId, this.#client.displayHost, this.#statusString)
+			} catch (e) {
+				this.#logger.info(`Surface ${surfaceId} is no longer accessible, cleaning up: ${e}`)
+				this.#cleanupSurfaceById(surfaceId)
+			}
+		}
+
+		// Rescan to pick up any reconnected devices
+		this.scanForSurfaces()
 	}
 
 	#cleanupSurfaceById(surfaceId: string): void {
