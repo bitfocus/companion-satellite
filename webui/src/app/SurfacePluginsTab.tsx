@@ -7,21 +7,183 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 import { MyErrorBoundary } from '@/Util/ErrorBoundary'
-import { CONNECTED_SURFACES_QUERY_KEY, SURFACE_PLUGINS_ENABLED_QUERY_KEY } from './constants'
+import {
+	CONNECTED_SURFACES_QUERY_KEY,
+	SURFACE_PLUGINS_ENABLED_QUERY_KEY,
+	MODULES_UPDATES_QUERY_KEY,
+	MODULES_AVAILABLE_QUERY_KEY,
+	MODULES_INSTALLED_QUERY_KEY,
+} from './constants'
 import { JSX, useState } from 'react'
 
-const MODULES_UPDATES_QUERY_KEY = 'modulesUpdates'
+interface OperationState {
+	type: 'installing' | 'updating' | 'uninstalling' | null
+	moduleId: string | null
+}
+
+interface ModuleStatusProps {
+	module: ApiModuleStoreEntry
+	isInstalled: boolean
+	installedVersion: string | undefined
+	updateInfo: ApiModuleUpdateInfo | undefined
+	isEnabled: boolean
+	operation: OperationState
+	isOperationInProgress: boolean
+	onInstall: () => void
+	onUpdate: (version: string) => void
+	onUninstall: (version: string) => void
+}
+
+function ModuleStatus({
+	module,
+	isInstalled,
+	installedVersion,
+	updateInfo,
+	isEnabled,
+	operation,
+	isOperationInProgress,
+	onInstall,
+	onUpdate,
+	onUninstall,
+}: ModuleStatusProps): JSX.Element {
+	const hasUpdate = !!updateInfo
+	const isThisModuleOperating = operation.moduleId === module.id
+
+	if (isInstalled) {
+		return (
+			<>
+				<span className={hasUpdate ? 'text-yellow-500' : 'text-green-500'}>v{installedVersion}</span>
+				<span className="flex items-center gap-2">
+					{hasUpdate && (
+						<>
+							{isThisModuleOperating && operation.type === 'updating' ? (
+								<span className="text-yellow-500">Updating...</span>
+							) : (
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => onUpdate(updateInfo.latestVersion)}
+									disabled={isOperationInProgress}
+								>
+									Update to v{updateInfo.latestVersion}
+								</Button>
+							)}
+						</>
+					)}
+					{!isEnabled && installedVersion && (
+						<>
+							{isThisModuleOperating && operation.type === 'uninstalling' ? (
+								<span className="text-yellow-500">Uninstalling...</span>
+							) : (
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => onUninstall(installedVersion)}
+									disabled={isOperationInProgress}
+								>
+									Uninstall
+								</Button>
+							)}
+						</>
+					)}
+				</span>
+			</>
+		)
+	}
+
+	if (isEnabled) {
+		if (isThisModuleOperating && operation.type === 'installing') {
+			return <span className="text-yellow-500">Installing...</span>
+		}
+		return (
+			<Button type="button" variant="outline" size="sm" onClick={onInstall} disabled={isOperationInProgress}>
+				Install
+			</Button>
+		)
+	}
+
+	return <span className="text-gray-500">Not installed</span>
+}
+
+interface ModuleFieldApi {
+	name: string
+	state: { value: boolean | undefined }
+	handleBlur: () => void
+	handleChange: (value: boolean) => void
+}
+
+interface ModuleRowProps {
+	module: ApiModuleStoreEntry
+	installedVersion: string | undefined
+	updateInfo: ApiModuleUpdateInfo | undefined
+	config: ApiSurfacePluginsEnabled
+	operation: OperationState
+	isOperationInProgress: boolean
+	field: ModuleFieldApi
+	onInstall: (moduleId: string) => void
+	onUpdate: (moduleId: string, version: string) => void
+	onUninstall: (moduleId: string, version: string) => void
+}
+
+function ModuleRow({
+	module,
+	installedVersion,
+	updateInfo,
+	config,
+	operation,
+	isOperationInProgress,
+	field,
+	onInstall,
+	onUpdate,
+	onUninstall,
+}: ModuleRowProps): JSX.Element {
+	const isInstalled = installedVersion !== undefined
+	const displayName = module.products?.[0] ?? module.name
+
+	return (
+		<>
+			<Label className="justify-self-end content-center col-span-2" htmlFor={field.name}>
+				{displayName}
+			</Label>
+			<div className="col-span-1 content-center">
+				<Switch
+					id={field.name}
+					name={field.name}
+					checked={field.state.value || false}
+					onBlur={field.handleBlur}
+					onCheckedChange={(checked) => field.handleChange(checked)}
+				/>
+			</div>
+			<div className="col-span-3 content-center text-sm flex items-center justify-between">
+				<ModuleStatus
+					module={module}
+					isInstalled={isInstalled}
+					installedVersion={installedVersion}
+					updateInfo={updateInfo}
+					isEnabled={config[module.id] || false}
+					operation={operation}
+					isOperationInProgress={isOperationInProgress}
+					onInstall={() => onInstall(module.id)}
+					onUpdate={(version) => onUpdate(module.id, version)}
+					onUninstall={(version) => onUninstall(module.id, version)}
+				/>
+			</div>
+		</>
+	)
+}
 
 export function SurfacePluginsTab(): JSX.Element {
 	const api = useSatelliteApi()
 
 	const modulesAvailable = useQuery({
-		queryKey: ['modulesAvailable'],
+		queryKey: [MODULES_AVAILABLE_QUERY_KEY],
 		queryFn: async () => api.modulesAvailable(),
 	})
 
 	const modulesInstalled = useQuery({
-		queryKey: ['modulesInstalled'],
+		queryKey: [MODULES_INSTALLED_QUERY_KEY],
 		queryFn: async () => api.modulesInstalled(),
 	})
 
@@ -78,16 +240,16 @@ function SurfacePluginsConfig({
 }): JSX.Element {
 	const api = useSatelliteApi()
 	const queryClient = useQueryClient()
-	const [installing, setInstalling] = useState<string | null>(null)
-	const [updating, setUpdating] = useState<string | null>(null)
-	const [uninstalling, setUninstalling] = useState<string | null>(null)
+	const [operation, setOperation] = useState<OperationState>({ type: null, moduleId: null })
+
+	const isOperationInProgress = operation.type !== null
 
 	const installedMap = new Map(installed.map((m) => [m.id, m]))
 	const updatesMap = new Map(updates.map((u) => [u.moduleId, u]))
 
 	const installMutation = useMutation({
 		mutationFn: async (moduleId: string) => {
-			setInstalling(moduleId)
+			setOperation({ type: 'installing', moduleId })
 			const result = await api.installModule(moduleId)
 			if (!result.success) {
 				throw new Error(result.error || 'Installation failed')
@@ -95,17 +257,17 @@ function SurfacePluginsConfig({
 			return result
 		},
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ['modulesInstalled'] })
+			await queryClient.invalidateQueries({ queryKey: [MODULES_INSTALLED_QUERY_KEY] })
 			await queryClient.invalidateQueries({ queryKey: [CONNECTED_SURFACES_QUERY_KEY] })
 		},
 		onSettled: () => {
-			setInstalling(null)
+			setOperation({ type: null, moduleId: null })
 		},
 	})
 
 	const updateMutation = useMutation({
 		mutationFn: async ({ moduleId, version }: { moduleId: string; version: string }) => {
-			setUpdating(moduleId)
+			setOperation({ type: 'updating', moduleId })
 			const result = await api.installModule(moduleId, version)
 			if (!result.success) {
 				throw new Error(result.error || 'Update failed')
@@ -113,18 +275,18 @@ function SurfacePluginsConfig({
 			return result
 		},
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ['modulesInstalled'] })
+			await queryClient.invalidateQueries({ queryKey: [MODULES_INSTALLED_QUERY_KEY] })
 			await queryClient.invalidateQueries({ queryKey: [MODULES_UPDATES_QUERY_KEY] })
 			await queryClient.invalidateQueries({ queryKey: [CONNECTED_SURFACES_QUERY_KEY] })
 		},
 		onSettled: () => {
-			setUpdating(null)
+			setOperation({ type: null, moduleId: null })
 		},
 	})
 
 	const uninstallMutation = useMutation({
 		mutationFn: async ({ moduleId, version }: { moduleId: string; version: string }) => {
-			setUninstalling(moduleId)
+			setOperation({ type: 'uninstalling', moduleId })
 			const result = await api.uninstallModule(moduleId, version)
 			if (!result.success) {
 				throw new Error(result.error || 'Uninstall failed')
@@ -132,11 +294,11 @@ function SurfacePluginsConfig({
 			return result
 		},
 		onSuccess: async () => {
-			await queryClient.invalidateQueries({ queryKey: ['modulesInstalled'] })
+			await queryClient.invalidateQueries({ queryKey: [MODULES_INSTALLED_QUERY_KEY] })
 			await queryClient.invalidateQueries({ queryKey: [CONNECTED_SURFACES_QUERY_KEY] })
 		},
 		onSettled: () => {
-			setUninstalling(null)
+			setOperation({ type: null, moduleId: null })
 		},
 	})
 
@@ -151,6 +313,18 @@ function SurfacePluginsConfig({
 		},
 	})
 
+	const handleInstall = (moduleId: string) => {
+		installMutation.mutate(moduleId)
+	}
+
+	const handleUpdate = (moduleId: string, version: string) => {
+		updateMutation.mutate({ moduleId, version })
+	}
+
+	const handleUninstall = (moduleId: string, version: string) => {
+		uninstallMutation.mutate({ moduleId, version })
+	}
+
 	return (
 		<form
 			onSubmit={(e) => {
@@ -160,107 +334,26 @@ function SurfacePluginsConfig({
 			}}
 		>
 			<div className="grid gap-3 grid-cols-6 mt-2">
-				{modules.map((module) => {
-					const isInstalled = installedMap.has(module.id)
-					const installedVersion = installedMap.get(module.id)?.version
-					const updateInfo = updatesMap.get(module.id)
-					const hasUpdate = !!updateInfo
-
-					// Use first product name for cleaner display
-					const displayName = module.products?.[0] ?? module.name
-
-					return (
-						<form.Field
-							key={module.id}
-							name={module.id}
-							children={(field) => (
-								<>
-									<Label className="justify-self-end content-center col-span-2" htmlFor={field.name}>
-										{displayName}
-									</Label>
-									<div className="col-span-1 content-center">
-										<Switch
-											id={field.name}
-											name={field.name}
-											checked={field.state.value || false}
-											onBlur={field.handleBlur}
-											onCheckedChange={(checked) => field.handleChange(checked)}
-										/>
-									</div>
-									<div className="col-span-3 content-center text-sm flex items-center justify-between">
-										{isInstalled ? (
-											<>
-												<span className={hasUpdate ? 'text-yellow-500' : 'text-green-500'}>v{installedVersion}</span>
-												<span className="flex items-center gap-2">
-													{hasUpdate && (
-														<>
-															{updating === module.id ? (
-																<span className="text-yellow-500">Updating...</span>
-															) : (
-																<Button
-																	type="button"
-																	variant="outline"
-																	size="sm"
-																	onClick={() =>
-																		updateMutation.mutate({
-																			moduleId: module.id,
-																			version: updateInfo.latestVersion,
-																		})
-																	}
-																	disabled={updating !== null || installing !== null || uninstalling !== null}
-																>
-																	Update to v{updateInfo.latestVersion}
-																</Button>
-															)}
-														</>
-													)}
-													{!config[module.id] && installedVersion && (
-														<>
-															{uninstalling === module.id ? (
-																<span className="text-yellow-500">Uninstalling...</span>
-															) : (
-																<Button
-																	type="button"
-																	variant="outline"
-																	size="sm"
-																	onClick={() =>
-																		uninstallMutation.mutate({
-																			moduleId: module.id,
-																			version: installedVersion,
-																		})
-																	}
-																	disabled={updating !== null || installing !== null || uninstalling !== null}
-																>
-																	Uninstall
-																</Button>
-															)}
-														</>
-													)}
-												</span>
-											</>
-										) : field.state.value ? (
-											installing === module.id ? (
-												<span className="text-yellow-500">Installing...</span>
-											) : (
-												<Button
-													type="button"
-													variant="outline"
-													size="sm"
-													onClick={() => installMutation.mutate(module.id)}
-													disabled={installing !== null || updating !== null || uninstalling !== null}
-												>
-													Install
-												</Button>
-											)
-										) : (
-											<span className="text-gray-500">Not installed</span>
-										)}
-									</div>
-								</>
-							)}
-						/>
-					)
-				})}
+				{modules.map((module) => (
+					<form.Field
+						key={module.id}
+						name={module.id}
+						children={(field) => (
+							<ModuleRow
+								module={module}
+								installedVersion={installedMap.get(module.id)?.version}
+								updateInfo={updatesMap.get(module.id)}
+								config={config}
+								operation={operation}
+								isOperationInProgress={isOperationInProgress}
+								field={field}
+								onInstall={handleInstall}
+								onUpdate={handleUpdate}
+								onUninstall={handleUninstall}
+							/>
+						)}
+					/>
+				))}
 
 				<form.Subscribe
 					selector={(state) => [state.canSubmit, state.isSubmitting, state.isDirty]}
