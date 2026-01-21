@@ -596,6 +596,60 @@ export class SurfaceManager {
 		this.scanForSurfaces()
 	}
 
+	/**
+	 * Add a newly installed plugin dynamically (without restart)
+	 */
+	public async addPlugin(loadedPlugin: LoadedPlugin): Promise<void> {
+		const pluginId = loadedPlugin.info.pluginId
+
+		// Skip if already registered
+		if (this.#plugins.has(pluginId)) {
+			this.#logger.warn(`Plugin "${pluginId}" already registered, skipping`)
+			return
+		}
+
+		const rawPlugin: RawPluginsInfo = {
+			info: {
+				pluginId: loadedPlugin.info.pluginId,
+				pluginName: loadedPlugin.info.pluginName,
+			},
+			plugin: loadedPlugin.plugin,
+		}
+
+		const hostContext = this.createHostContext()
+		const hostContextFull: SurfaceHostContext = {
+			...hostContext,
+			notifyOpenedDiscoveredSurface: async (_info: OpenDeviceResult) => {
+				throw new Error('Not implemented')
+			},
+		}
+
+		const wrappedPlugin = new PluginWrapper2(hostContextFull, rawPlugin)
+
+		// Set up the callback properly (same pattern as in create())
+		;(hostContextFull as any).notifyOpenedDiscoveredSurface = async (info: OpenDeviceResult) => {
+			if (!this.#tryAddSurfaceFromPlugin(wrappedPlugin, info, { type: 'detect', info })) {
+				this.#logger.warn(`Surface already exists: ${info.surfaceId}`)
+			}
+		}
+
+		this.#plugins.set(pluginId, wrappedPlugin)
+		this.#logger.info(`Plugin "${pluginId}" registered dynamically`)
+
+		// Initialize if enabled
+		if (this.isPluginEnabled(pluginId)) {
+			try {
+				await wrappedPlugin.init()
+				this.#logger.info(`Plugin "${pluginId}" initialized`)
+			} catch (e) {
+				this.#logger.error(`Plugin "${pluginId}" init failed: ${e}`)
+			}
+		}
+
+		// Trigger scan to find devices
+		this.scanForSurfaces()
+	}
+
 	#tryAddSurfaceFromPlugin(
 		plugin: PluginWrapper2,
 		pluginInfo: CheckDeviceResult | OpenDeviceResult,
@@ -638,7 +692,7 @@ export class SurfaceManager {
 				const openedInfo: SurfaceInfo = {
 					pluginId: plugin.info.pluginId,
 					surfaceId: pluginInfo.surfaceId,
-					productName: pluginInfo.description,
+					productName: result.description,
 					registerProps: {
 						brightness: result.supportsBrightness,
 						surfaceManifest: translateModuleToSatelliteSurfaceLayout(result.surfaceLayout),

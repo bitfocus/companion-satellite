@@ -1,5 +1,6 @@
 import '@julusian/segfault-raub'
 
+import { closeLogger } from './logging.js'
 import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain, shell } from 'electron'
 import * as path from 'path'
 import electronStore from 'electron-store'
@@ -165,9 +166,13 @@ app.on('before-quit', () => {
 		// cleanup
 		(async () => client.disconnect())(),
 		surfaceManager.close(),
-	]).catch((e) => {
-		console.error('Failed to do quit', e)
-	})
+	])
+		.then(async () => {
+			await closeLogger()
+		})
+		.catch((e) => {
+			console.error('Failed to do quit', e)
+		})
 })
 
 app.whenReady()
@@ -343,10 +348,19 @@ ipcMain.handle('modulesUpdates', async () => {
 ipcMain.handle('installModule', async (_e, moduleId: string, version?: string) => {
 	try {
 		await moduleManager.installModule(moduleId, version)
+		// Add newly loaded plugin to SurfaceManager for immediate device detection
+		const loadedPlugins = moduleManager.getLoadedPlugins()
+		const newPlugin = loadedPlugins.find((p) => p.info.pluginId === moduleId)
+		if (newPlugin) {
+			await surfaceManager.addPlugin(newPlugin)
+		}
 		return { success: true }
 	} catch (e) {
 		return { success: false, error: e instanceof Error ? e.message : String(e) }
 	}
+})
+ipcMain.handle('uninstallModule', async (_e, moduleId: string, version: string) => {
+	return moduleManager.uninstallModule(moduleId, version)
 })
 
 // about window

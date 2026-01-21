@@ -1,6 +1,6 @@
 /* eslint-disable n/no-process-exit */
 import '@julusian/segfault-raub'
-import { createLogger, logger } from './logging.js'
+import { closeLogger, createLogger, logger } from './logging.js'
 
 import exitHook from 'exit-hook'
 import path from 'path'
@@ -62,6 +62,7 @@ exitHook(() => {
 	client.disconnect()
 	surfaceManager.close().catch(() => null)
 	server.close()
+	closeLogger().catch(() => null)
 })
 
 const tryConnect = () => {

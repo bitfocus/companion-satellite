@@ -211,6 +211,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /modules/{moduleId}/{version}:
+    delete:
+      summary: Uninstall a specific module version
+      operationId: uninstallModule
+      parameters:
+        - name: moduleId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: version
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                required:
+                  - success
+        '501':
+          description: Module management not available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /modules/updates:
     get:
       summary: Check for module updates

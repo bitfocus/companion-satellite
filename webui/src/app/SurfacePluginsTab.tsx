@@ -80,6 +80,7 @@ function SurfacePluginsConfig({
 	const queryClient = useQueryClient()
 	const [installing, setInstalling] = useState<string | null>(null)
 	const [updating, setUpdating] = useState<string | null>(null)
+	const [uninstalling, setUninstalling] = useState<string | null>(null)
 
 	const installedMap = new Map(installed.map((m) => [m.id, m]))
 	const updatesMap = new Map(updates.map((u) => [u.moduleId, u]))
@@ -121,12 +122,31 @@ function SurfacePluginsConfig({
 		},
 	})
 
+	const uninstallMutation = useMutation({
+		mutationFn: async ({ moduleId, version }: { moduleId: string; version: string }) => {
+			setUninstalling(moduleId)
+			const result = await api.uninstallModule(moduleId, version)
+			if (!result.success) {
+				throw new Error(result.error || 'Uninstall failed')
+			}
+			return result
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ['modulesInstalled'] })
+			await queryClient.invalidateQueries({ queryKey: [CONNECTED_SURFACES_QUERY_KEY] })
+		},
+		onSettled: () => {
+			setUninstalling(null)
+		},
+	})
+
 	const form = useForm({
 		defaultValues: config,
 		onSubmit: async ({ value }) => {
 			console.log('saving', value)
 			const savedData = await api.surfacePluginsEnabledUpdate(value)
 			console.log('new', savedData)
+			await queryClient.invalidateQueries({ queryKey: [SURFACE_PLUGINS_ENABLED_QUERY_KEY] })
 			await queryClient.invalidateQueries({ queryKey: [CONNECTED_SURFACES_QUERY_KEY] })
 		},
 	})
@@ -167,32 +187,56 @@ function SurfacePluginsConfig({
 											onCheckedChange={(checked) => field.handleChange(checked)}
 										/>
 									</div>
-									<div className="col-span-3 content-center text-sm flex items-center gap-2">
+									<div className="col-span-3 content-center text-sm flex items-center justify-between">
 										{isInstalled ? (
 											<>
 												<span className={hasUpdate ? 'text-yellow-500' : 'text-green-500'}>v{installedVersion}</span>
-												{hasUpdate && (
-													<>
-														{updating === module.id ? (
-															<span className="text-yellow-500">Updating...</span>
-														) : (
-															<Button
-																type="button"
-																variant="outline"
-																size="sm"
-																onClick={() =>
-																	updateMutation.mutate({
-																		moduleId: module.id,
-																		version: updateInfo.latestVersion,
-																	})
-																}
-																disabled={updating !== null || installing !== null}
-															>
-																Update to v{updateInfo.latestVersion}
-															</Button>
-														)}
-													</>
-												)}
+												<span className="flex items-center gap-2">
+													{hasUpdate && (
+														<>
+															{updating === module.id ? (
+																<span className="text-yellow-500">Updating...</span>
+															) : (
+																<Button
+																	type="button"
+																	variant="outline"
+																	size="sm"
+																	onClick={() =>
+																		updateMutation.mutate({
+																			moduleId: module.id,
+																			version: updateInfo.latestVersion,
+																		})
+																	}
+																	disabled={updating !== null || installing !== null || uninstalling !== null}
+																>
+																	Update to v{updateInfo.latestVersion}
+																</Button>
+															)}
+														</>
+													)}
+													{!config[module.id] && installedVersion && (
+														<>
+															{uninstalling === module.id ? (
+																<span className="text-yellow-500">Uninstalling...</span>
+															) : (
+																<Button
+																	type="button"
+																	variant="outline"
+																	size="sm"
+																	onClick={() =>
+																		uninstallMutation.mutate({
+																			moduleId: module.id,
+																			version: installedVersion,
+																		})
+																	}
+																	disabled={updating !== null || installing !== null || uninstalling !== null}
+																>
+																	Uninstall
+																</Button>
+															)}
+														</>
+													)}
+												</span>
 											</>
 										) : field.state.value ? (
 											installing === module.id ? (
@@ -203,7 +247,7 @@ function SurfacePluginsConfig({
 													variant="outline"
 													size="sm"
 													onClick={() => installMutation.mutate(module.id)}
-													disabled={installing !== null || updating !== null}
+													disabled={installing !== null || updating !== null || uninstalling !== null}
 												>
 													Install
 												</Button>

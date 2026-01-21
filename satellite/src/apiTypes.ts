@@ -42,6 +42,7 @@ export interface SatelliteUiApi {
 	modulesInstalled: () => Promise<ApiModulesInstalledResponse>
 	modulesUpdates: () => Promise<ApiModulesUpdatesResponse>
 	installModule: (moduleId: string, version?: string) => Promise<{ success: boolean; error?: string }>
+	uninstallModule: (moduleId: string, version: string) => Promise<{ success: boolean; error?: string }>
 }
 
 export function compileStatus(client: CompanionSatelliteClient): ApiStatusResponse {

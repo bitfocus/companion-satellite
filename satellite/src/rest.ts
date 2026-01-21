@@ -270,6 +270,12 @@ export class RestServer {
 
 			const result = await this.moduleManager.installModule(moduleId, version ?? null)
 			if (result.success) {
+				// Add newly loaded plugin to SurfaceManager for immediate device detection
+				const loadedPlugins = this.moduleManager.getLoadedPlugins()
+				const newPlugin = loadedPlugins.find((p) => p.info.pluginId === moduleId)
+				if (newPlugin) {
+					await this.surfaceManager.addPlugin(newPlugin)
+				}
 				ctx.body = { success: true }
 			} else {
 				ctx.status = 400

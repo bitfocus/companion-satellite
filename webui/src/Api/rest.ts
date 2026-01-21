@@ -85,4 +85,11 @@ export const SatelliteRestApi: SatelliteUiApi = {
 		if (error) throw new Error(error.error)
 		return data
 	},
+	uninstallModule: async function (moduleId: string, version: string): Promise<{ success: boolean; error?: string }> {
+		const { data, error } = await client.DELETE('/modules/{moduleId}/{version}', {
+			params: { path: { moduleId, version } },
+		})
+		if (error) throw new Error(error.error)
+		return data
+	},
 }

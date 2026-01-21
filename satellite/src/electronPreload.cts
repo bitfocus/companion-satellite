@@ -30,6 +30,8 @@ const electronApi: SatelliteUiApi = {
 	modulesUpdates: async (): Promise<ApiModulesUpdatesResponse> => ipcRenderer.invoke('modulesUpdates'),
 	installModule: async (moduleId: string, version?: string): Promise<{ success: boolean; error?: string }> =>
 		ipcRenderer.invoke('installModule', moduleId, version),
+	uninstallModule: async (moduleId: string, version: string): Promise<{ success: boolean; error?: string }> =>
+		ipcRenderer.invoke('uninstallModule', moduleId, version),
 }
 
 contextBridge.exposeInMainWorld('electronApi', electronApi)
