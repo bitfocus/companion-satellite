@@ -15,7 +15,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -41,14 +40,12 @@ jobs:
           yarn lint
 
   Linux-x64:
-    if: false # Temporarily disabled
     runs-on: ubuntu-22.04
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -118,14 +115,12 @@ jobs:
           retention-days: 1
 
   Linux-arm64:
-    if: false # Temporarily disabled
     runs-on: ubuntu-22.04-arm
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -206,7 +201,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Use Node.js
         uses: actions/setup-node@v6
@@ -298,14 +292,12 @@ jobs:
           retention-days: 1
 
   Mac-x64:
-    if: false # Temporarily disabled
     runs-on: macos-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Use Node.js
         uses: actions/setup-node@v6
@@ -382,14 +374,12 @@ jobs:
           retention-days: 1
 
   Mac-arm64:
-    if: false # Temporarily disabled
     runs-on: macos-latest
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Use Node.js
         uses: actions/setup-node@v6
@@ -466,12 +456,11 @@ jobs:
           retention-days: 1
 
   pi-img:
-    if: false # Temporarily disabled
     runs-on: ubuntu-latest
     name: build image
 
     # only run for main
-    # if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
 
     needs:
       - Linux-arm64
@@ -485,7 +474,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          submodules: recursive
 
       - name: Determine files to upload
         id: filenames
