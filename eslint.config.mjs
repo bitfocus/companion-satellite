@@ -106,7 +106,6 @@ export default [
 			'**/electron-output/*',
 			'webui/vite.config.ts',
 			'pi-image/**/*',
-			'modules/**/*',
 			'satellite/surfaces/**/*',
 		],
 	},

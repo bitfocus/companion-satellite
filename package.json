@@ -28,7 +28,7 @@
     "dev:webui": "yarn workspace webui dev",
     "build:openapi": "openapi-typescript ./openapi.yaml -o ./satellite/src/generated/openapi.ts",
     "build:schema": "tsx tools/schema_compile.mts",
-    "build": "yarn workspaces foreach -A run build",
+    "build": "yarn workspaces foreach --all run build",
     "lint:raw": "eslint",
     "lint": "eslint .",
     "license-validate": "sofie-licensecheck",
