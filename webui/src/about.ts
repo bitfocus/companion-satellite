@@ -1,15 +1,18 @@
-declare const aboutApi: typeof import('../../satellite/dist/aboutPreload.cjs').aboutApi
+declare const aboutApi: {
+	openShell: (url: string) => Promise<void>
+	getVersion: () => Promise<string>
+}
 
 const bug_report = document.querySelector('.bug-report-link') as HTMLDivElement
-bug_report.addEventListener('click', (e) => {
+bug_report.addEventListener('click', (e: Event) => {
 	e.preventDefault()
-	aboutApi.openShell('https://github.com/bitfocus/companion-satellite/issues').catch((e) => {
+	aboutApi.openShell('https://github.com/bitfocus/companion-satellite/issues').catch((e: unknown) => {
 		console.error('failed to open bug report url', e)
 	})
 })
 
 const open_home = () => {
-	aboutApi.openShell('https://github.com/bitfocus/companion-satellite').catch((e) => {
+	aboutApi.openShell('https://github.com/bitfocus/companion-satellite').catch((e: unknown) => {
 		console.error('failed to open homepage url', e)
 	})
 }
@@ -28,10 +31,10 @@ yearElm.innerText = new Date().getFullYear().toString()
 
 aboutApi
 	.getVersion()
-	.then((version) => {
+	.then((version: string) => {
 		console.log('eaa', version)
 		title_elem.innerText += ` ${version}`
 	})
-	.catch((e) => {
+	.catch((e: unknown) => {
 		console.error('failed to get version', e)
 	})

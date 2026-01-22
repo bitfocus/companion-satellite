@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events'
-import { ClientCapabilities, CompanionClient, DeviceRegisterPropsComplete } from './device-types/api.js'
+import { ClientCapabilities, DeviceRegisterPropsComplete } from './device-types/api.js'
 import { assertNever, DEFAULT_TCP_PORT } from './lib.js'
 import * as semver from 'semver'
 import {
@@ -101,7 +101,7 @@ export type CompanionSatelliteClientEvents = {
 	deviceErrored: [{ deviceId: string; message: string }]
 }
 
-export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> implements CompanionClient {
+export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> {
 	private readonly debug: boolean
 	private socket: ICompanionSatelliteClient | undefined
 
@@ -635,7 +635,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
 					VARIABLES: transferVariables,
 					BRIGHTNESS: props.brightness,
-					PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
+					PINCODE_LOCK: 'FULL', // Surfaces that don't support pincode lock are handled by the host library
 				})
 			} else {
 				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)
@@ -651,7 +651,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					TEXT_STYLE: needsTextStyle,
 					VARIABLES: transferVariables,
 					BRIGHTNESS: props.brightness,
-					PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
+					PINCODE_LOCK: 'FULL', // Surfaces that don't support pincode lock are handled by the host library
 				})
 			}
 		}

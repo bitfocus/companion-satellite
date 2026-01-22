@@ -1,0 +1,6 @@
+export * from './types.js'
+export { ModuleCache } from './ModuleCache.js'
+export { ModuleStoreService } from './ModuleStoreService.js'
+export { ModuleInstaller } from './ModuleInstaller.js'
+export { ModuleScanner } from './ModuleScanner.js'
+export { ModuleManager, type LoadedPlugin } from './ModuleManager.js'

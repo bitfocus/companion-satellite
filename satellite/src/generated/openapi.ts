@@ -90,6 +90,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/modules/available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get available surface modules from store */
+        get: operations["getModulesAvailable"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/installed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get installed surface modules */
+        get: operations["getModulesInstalled"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Install a module from the store */
+        post: operations["installModule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/{moduleId}/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Uninstall a specific module version */
+        delete: operations["uninstallModule"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/modules/updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Check for module updates */
+        get: operations["checkModuleUpdates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/config": {
         parameters: {
             query?: never;
@@ -180,6 +265,46 @@ export interface components {
             pluginName: string;
             /** @description Comment about the plugin */
             pluginComment?: string[];
+        };
+        ModuleStoreEntry: {
+            /** @description Module ID */
+            id: string;
+            /** @description Module name */
+            name: string;
+            /** @description Short name */
+            shortname: string;
+            /** @description List of products supported */
+            products: string[];
+            /** @description Search keywords */
+            keywords: string[];
+            /** @description URL to the module store page */
+            storeUrl: string;
+            /** @description URL to the GitHub repository */
+            githubUrl?: string | null;
+            /** @description URL to the help documentation */
+            helpUrl?: string | null;
+            /** @description Legacy module IDs */
+            legacyIds?: string[];
+            /** @description Reason for deprecation if deprecated */
+            deprecationReason?: string | null;
+        };
+        InstalledModuleInfo: {
+            /** @description Module ID */
+            id: string;
+            /** @description Module name */
+            name: string;
+            /** @description Installed version */
+            version: string;
+            /** @description Whether this is a beta version */
+            isBeta: boolean;
+        };
+        ModuleUpdateInfo: {
+            /** @description Module ID */
+            moduleId: string;
+            /** @description Currently installed version */
+            currentVersion: string;
+            /** @description Latest available version */
+            latestVersion: string;
         };
     };
     responses: never;
@@ -363,6 +488,174 @@ export interface operations {
             };
             /** @description failed operation */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getModulesAvailable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        modules: components["schemas"]["ModuleStoreEntry"][];
+                        lastUpdated: number;
+                    };
+                };
+            };
+            /** @description Module management not available */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getModulesInstalled: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        modules: components["schemas"]["InstalledModuleInfo"][];
+                    };
+                };
+            };
+            /** @description Module management not available */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    installModule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    moduleId: string;
+                    version?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error?: string;
+                    };
+                };
+            };
+            /** @description Module management not available */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    uninstallModule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                moduleId: string;
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        success: boolean;
+                        error?: string;
+                    };
+                };
+            };
+            /** @description Module management not available */
+            501: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    checkModuleUpdates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        updates: components["schemas"]["ModuleUpdateInfo"][];
+                    };
+                };
+            };
+            /** @description Module management not available */
+            501: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -20,6 +20,7 @@ import {
 	updateSurfacePluginsEnabledConfig,
 } from './apiTypes.js'
 import { createLogger } from './logging.js'
+import type { ModuleManager } from './module-store/index.js'
 
 export class RestServer {
 	readonly #logger = createLogger('RestServer')
@@ -27,6 +28,7 @@ export class RestServer {
 	private readonly appConfig: Conf<SatelliteConfig>
 	private readonly client: CompanionSatelliteClient
 	private readonly surfaceManager: SurfaceManager
+	private readonly moduleManager: ModuleManager | null
 	private readonly app: Koa
 	private readonly router: Router
 	private server: http.Server | undefined
@@ -36,10 +38,12 @@ export class RestServer {
 		appConfig: Conf<SatelliteConfig>,
 		client: CompanionSatelliteClient,
 		surfaceManager: SurfaceManager,
+		moduleManager: ModuleManager | null = null,
 	) {
 		this.appConfig = appConfig
 		this.client = client
 		this.surfaceManager = surfaceManager
+		this.moduleManager = moduleManager
 
 		// Monitor for config changes
 		this.appConfig.onDidChange('restEnabled', this.open.bind(this))
@@ -210,6 +214,113 @@ export class RestServer {
 			updateSurfacePluginsEnabledConfig(this.appConfig, newConfig)
 
 			ctx.body = this.appConfig.get('surfacePluginsEnabled')
+		})
+
+		// Module management endpoints (only available if moduleManager is provided)
+		this.router.get('/api/modules/available', async (ctx) => {
+			if (!this.moduleManager) {
+				ctx.status = 501
+				ctx.body = { error: 'Module management not available' }
+				return
+			}
+
+			const modules = this.moduleManager.getAvailableModules()
+			ctx.body = {
+				modules: modules ? Object.values(modules) : [],
+				lastUpdated: Date.now(),
+			}
+		})
+
+		this.router.get('/api/modules/installed', async (ctx) => {
+			if (!this.moduleManager) {
+				ctx.status = 501
+				ctx.body = { error: 'Module management not available' }
+				return
+			}
+
+			ctx.body = {
+				modules: this.moduleManager.getInstalledModules().map((m) => ({
+					id: m.id,
+					name: m.manifest.name,
+					version: m.version,
+					isBeta: m.isBeta,
+				})),
+			}
+		})
+
+		this.router.post('/api/modules/install', koaBody(), async (ctx) => {
+			if (!this.moduleManager) {
+				ctx.status = 501
+				ctx.body = { error: 'Module management not available' }
+				return
+			}
+
+			if (ctx.request.type !== 'application/json') {
+				ctx.status = 400
+				ctx.body = { error: 'Invalid content type' }
+				return
+			}
+
+			const { moduleId, version } = ctx.request.body as { moduleId?: string; version?: string }
+			if (!moduleId) {
+				ctx.status = 400
+				ctx.body = { error: 'moduleId is required' }
+				return
+			}
+
+			const result = await this.moduleManager.installModule(moduleId, version ?? null)
+			if (result.success) {
+				// Add newly loaded plugin to SurfaceManager for immediate device detection
+				const loadedPlugins = this.moduleManager.getLoadedPlugins()
+				const newPlugin = loadedPlugins.find((p) => p.info.pluginId === moduleId)
+				if (newPlugin) {
+					await this.surfaceManager.addPlugin(newPlugin)
+				}
+				ctx.body = { success: true }
+			} else {
+				ctx.status = 400
+				ctx.body = { success: false, error: result.error }
+			}
+		})
+
+		this.router.delete('/api/modules/:moduleId/:version', async (ctx) => {
+			if (!this.moduleManager) {
+				ctx.status = 501
+				ctx.body = { error: 'Module management not available' }
+				return
+			}
+
+			const { moduleId, version } = ctx.params
+			const result = await this.moduleManager.uninstallModule(moduleId, version)
+
+			if (result.success) {
+				ctx.body = { success: true }
+			} else {
+				ctx.status = 400
+				ctx.body = { success: false, error: result.error }
+			}
+		})
+
+		this.router.get('/api/modules/updates', async (ctx) => {
+			if (!this.moduleManager) {
+				ctx.status = 501
+				ctx.body = { error: 'Module management not available' }
+				return
+			}
+
+			const updates = await this.moduleManager.checkForUpdates()
+			ctx.body = { updates }
+		})
+
+		this.router.post('/api/modules/refresh', async (ctx) => {
+			if (!this.moduleManager) {
+				ctx.status = 501
+				ctx.body = { error: 'Module management not available' }
+				return
+			}
+
+			await this.moduleManager.refreshStoreList()
+			ctx.body = { success: true }
 		})
 
 		this.app.use(this.router.routes()).use(this.router.allowedMethods())
