@@ -24,16 +24,16 @@
 		"@types/koa": "^3.0.1",
 		"@types/koa-router": "^7.4.9",
 		"@types/koa-static": "^4.0.4",
-		"@types/node": "^22.19.7",
+		"@types/node": "^24.10.9",
 		"@types/semver": "^7.7.1",
 		"@types/ws": "^8.18.1",
-		"electron": "37.10.3",
-		"electron-builder": "^26.0.20",
+		"electron": "40.1.0",
+		"electron-builder": "^26.7.0",
 		"rimraf": "^6.1.2",
 		"tsx": "^4.21.0"
 	},
 	"engines": {
-		"node": "^22.19"
+		"node": "^24.13"
 	},
 	"dependencies": {
 		"@blackmagic-controller/node": "^1.1.0",
