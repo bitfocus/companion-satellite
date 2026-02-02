@@ -12,6 +12,11 @@ import { BarLoader } from 'react-spinners'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js'
 import { cn } from '@/lib/utils.js'
 
+const PROTOCOL_ITEMS = [
+	{ value: 'tcp', label: 'TCP (Default)' },
+	{ value: 'ws', label: 'WebSocket (Advanced)' },
+]
+
 export function ConnectionConfig(): JSX.Element {
 	const api = useSatelliteApi()
 	const config = useQuery({ queryKey: [CONNECTION_CONFIG_QUERY_KEY], queryFn: api.getConfig, refetchInterval: 5000 })
@@ -61,13 +66,20 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 					name="protocol"
 					children={(field) => (
 						<FormRow label="Protocol" htmlFor={field.name} hint="TCP is recommended for most use cases.">
-							<Select value={field.state.value} onValueChange={(value) => field.handleChange(value as 'tcp' | 'ws')}>
+							<Select
+								value={field.state.value}
+								items={PROTOCOL_ITEMS}
+								onValueChange={(value) => field.handleChange(value as 'tcp' | 'ws')}
+							>
 								<SelectTrigger id={field.name} name={field.name} className="w-full">
 									<SelectValue />
 								</SelectTrigger>
 								<SelectContent>
-									<SelectItem value="tcp">TCP (Default)</SelectItem>
-									<SelectItem value="ws">WebSocket (Advanced)</SelectItem>
+									{PROTOCOL_ITEMS.map((value) => (
+										<SelectItem key={value.value} value={value.value}>
+											{value.label}
+										</SelectItem>
+									))}
 								</SelectContent>
 							</Select>
 						</FormRow>
