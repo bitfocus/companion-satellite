@@ -73,6 +73,7 @@ const options: electronBuilder.Configuration = {
 		gatekeeperAssess: false,
 		entitlements: 'satellite/entitlements.mac.plist',
 		entitlementsInherit: 'satellite/entitlements.mac.plist',
+		icon: 'icon-macos-glass.icon',
 	},
 	dmg: {
 		artifactName: 'companion-satellite-${arch}.dmg',
