@@ -20,6 +20,7 @@ import {
 	updateSurfacePluginsEnabledConfig,
 } from './apiTypes.js'
 import { createLogger } from './logging.js'
+import type { JsonValue } from 'type-fest'
 
 export class RestServer {
 	readonly #logger = createLogger('RestServer')
@@ -69,14 +70,14 @@ export class RestServer {
 
 		//POST
 		this.router.post('/api/host', koaBody(), async (ctx) => {
-			let host = ''
-			if (ctx.request.type == 'application/json') {
-				host = ctx.request.body['host']
+			let host: JsonValue | undefined
+			if (ctx.request.type == 'application/json' && bodyIsObject(ctx.request.body)) {
+				host = ctx.request.body?.['host']
 			} else if (ctx.request.type == 'text/plain') {
 				host = ctx.request.body
 			}
 
-			if (host) {
+			if (host && typeof host === 'string') {
 				this.appConfig.set('remoteIp', host)
 
 				ctx.body = 'OK'
@@ -87,7 +88,7 @@ export class RestServer {
 		})
 		this.router.post('/api/port', koaBody(), async (ctx) => {
 			let newPort = NaN
-			if (ctx.request.type == 'application/json') {
+			if (ctx.request.type == 'application/json' && bodyIsObject(ctx.request.body)) {
 				newPort = Number(ctx.request.body['port'])
 			} else if (ctx.request.type == 'text/plain') {
 				newPort = Number(ctx.request.body)
@@ -241,4 +242,8 @@ export class RestServer {
 			this.#logger.info('The rest server is closed')
 		}
 	}
+}
+
+function bodyIsObject(body: JsonValue | undefined): body is Record<string, JsonValue> {
+	return typeof body === 'object' && body !== null && !Array.isArray(body)
 }

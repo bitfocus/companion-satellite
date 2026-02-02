@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@sofie-automation/eslint-plugin": "^0.2.1",
-    "@tsconfig/node20": "^20.1.8",
+    "@tsconfig/node24": "^24.0.4",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-n": "^17.23.2",
