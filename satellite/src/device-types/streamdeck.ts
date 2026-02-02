@@ -1,5 +1,6 @@
 import {
 	DeviceModelId,
+	Dimension,
 	getStreamDeckDeviceInfo,
 	getStreamDeckModelName,
 	openStreamDeck,
@@ -60,10 +61,7 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 						const presetId = `btn_${control.pixelSize.width}x${control.pixelSize.height}`
 						if (!surfaceManifest.stylePresets[presetId]) {
 							surfaceManifest.stylePresets[presetId] = {
-								bitmap: {
-									w: control.pixelSize.width,
-									h: control.pixelSize.height,
-								},
+								bitmap: { w: control.pixelSize.width, h: control.pixelSize.height },
 							}
 						}
 						surfaceManifest.controls[controlId] = {
@@ -86,7 +84,8 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 				}
 				break
 			case 'encoder':
-				if (control.hasLed) {
+				// Note: treat the galleon k100 led ring as a single color for now
+				if (control.hasLed || control.ledRingSteps > 0) {
 					surfaceManifest.controls[controlId] = {
 						row: control.row,
 						column: control.column,
@@ -99,25 +98,28 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 						stylePreset: 'empty',
 					}
 				}
-				// Future: LED ring
+				// Future: proper LED ring
 				break
 			case 'lcd-segment': {
-				const width = control.pixelSize.width / control.columnSpan
-				const presetId = `lcd_${width}x${control.pixelSize.height}`
+				const { columns, pixelSize } = getLcdCellSize(deck.MODEL, control)
+
+				if (columns.length === 0) break
+
+				const presetId = `lcd_${pixelSize.width}x${pixelSize.height}`
 				if (!surfaceManifest.stylePresets[presetId]) {
 					surfaceManifest.stylePresets[presetId] = {
 						bitmap: {
-							w: width,
-							h: control.pixelSize.height,
+							w: pixelSize.width,
+							h: pixelSize.height,
 						},
 					}
 				}
 
-				for (let i = 0; i < control.columnSpan; i++) {
-					const controlId = getControlId(control, i)
+				for (let i = 0; i < columns.length; i++) {
+					const controlId = getControlId(control, columns[i])
 					surfaceManifest.controls[controlId] = {
 						row: control.row,
-						column: control.column + i,
+						column: control.column + columns[i],
 						stylePreset: presetId,
 					}
 				}
@@ -188,18 +190,8 @@ function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
 				pincode: [0, 0],
 				nextPage: [0, 1],
 				pages: [
-					{
-						1: [1, 1],
-						2: [2, 1],
-						3: [1, 0],
-						4: [2, 0],
-					},
-					{
-						5: [1, 1],
-						6: [2, 1],
-						7: [1, 0],
-						8: [2, 0],
-					},
+					{ 1: [1, 1], 2: [2, 1], 3: [1, 0], 4: [2, 0] },
+					{ 5: [1, 1], 6: [2, 1], 7: [1, 0], 8: [2, 0] },
 					{
 						9: [1, 1],
 						0: [2, 1],
@@ -253,6 +245,21 @@ function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
 		case DeviceModelId.XL:
 		case DeviceModelId.MODULE32:
 			return Pincode4x4(2)
+		case DeviceModelId.GALLEON_K100:
+			return {
+				type: 'single-page',
+				pincode: [0, 1],
+				0: [3, 1],
+				1: [0, 0],
+				2: [1, 0],
+				3: [2, 0],
+				4: [3, 0],
+				5: [4, 0],
+				6: [5, 0],
+				7: [0, 1],
+				8: [1, 1],
+				9: [2, 1],
+			}
 		default:
 			assertNever(model)
 			return null
@@ -417,9 +424,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 				if (this.#deck.MODEL === DeviceModelId.NEO) {
 					const image = await drawProps.image(control.pixelSize.width, control.pixelSize.height, 'rgb')
 
-					await this.#deck.fillLcd(control.id, image, {
-						format: 'rgb',
-					})
+					await this.#deck.fillLcd(control.id, image, { format: 'rgb' })
 					return
 				} else if (this.#deck.MODEL === DeviceModelId.PLUS && drawProps.column === 0) {
 					const width = (control.pixelSize.width / control.columnSpan) * 2
@@ -436,22 +441,23 @@ export class StreamDeckWrapper implements SurfaceInstance {
 			if (control.drawRegions) {
 				const drawColumn = drawProps.column - control.column
 
-				const columnWidth = control.pixelSize.width / control.columnSpan
-				let drawX = drawColumn * columnWidth
+				const { columns, pixelSize } = getLcdCellSize(this.#deck.MODEL, control)
 
-				const targetHeight = control.pixelSize.height
-				let targetWidth = targetHeight
+				const columnIndex = columns.indexOf(drawColumn)
+				if (columnIndex === -1) {
+					console.error(`Unknown column ${drawColumn} for ${drawProps.controlId}`)
+					return
+				}
 
-				if (this.#context.capabilities.supportsSurfaceManifest) {
-					targetWidth = columnWidth
-				} else if (this.#deck.MODEL === DeviceModelId.PLUS) {
+				let drawX = columnIndex * pixelSize.width
+				if (this.#deck.MODEL === DeviceModelId.PLUS) {
 					// Position aligned with the buttons/encoders
-					drawX = drawColumn * 216.666 + 25
+					drawX = columnIndex * 216.666 + 25
 				}
 
 				let newbuffer: Buffer | undefined
 				try {
-					newbuffer = await drawProps.image(targetWidth, targetHeight, 'rgb')
+					newbuffer = await drawProps.image(pixelSize.width, pixelSize.height, 'rgb')
 				} catch (e) {
 					console.log(`scale image failed: ${e}`)
 					return
@@ -464,8 +470,8 @@ export class StreamDeckWrapper implements SurfaceInstance {
 
 						await this.#deck.fillLcdRegion(control.id, drawX, 0, newbuffer, {
 							format: 'rgb',
-							width: targetWidth,
-							height: targetHeight,
+							width: pixelSize.width,
+							height: pixelSize.height,
 						})
 						return
 					} catch (e) {
@@ -483,6 +489,12 @@ export class StreamDeckWrapper implements SurfaceInstance {
 			if (signal.aborted) return
 
 			await this.#deck.setEncoderColor(control.index, color.r, color.g, color.b)
+		} else if (control.type === 'encoder' && control.ledRingSteps > 0) {
+			const color = parseColor(drawProps.color)
+
+			if (signal.aborted) return
+
+			await this.#deck.setEncoderRingSingleColor(control.index, color.r, color.g, color.b)
 		}
 	}
 	async showStatus(
@@ -516,9 +528,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 						if (signal.aborted) return
 
 						// still valid
-						await this.#deck.fillPanelBuffer(buffer, {
-							format: 'rgba',
-						})
+						await this.#deck.fillPanelBuffer(buffer, { format: 'rgba' })
 					})
 					.catch((e) => {
 						console.error(`Failed to fill device`, e)
@@ -544,9 +554,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 							this.#fullLcdDirty = true
 
 							// still valid
-							await this.#deck.fillLcd(lcdStrip.id, buffer, {
-								format: 'rgba',
-							})
+							await this.#deck.fillLcd(lcdStrip.id, buffer, { format: 'rgba' })
 						})
 						.catch((e) => {
 							console.error(`Failed to fill device`, e)
@@ -556,5 +564,34 @@ export class StreamDeckWrapper implements SurfaceInstance {
 		}
 
 		await Promise.all(ps)
+	}
+}
+
+function getLcdCellSize(
+	model: DeviceModelId,
+	control: StreamDeckLcdSegmentControlDefinition,
+): {
+	columns: number[]
+	pixelSize: Dimension
+} {
+	if (model === DeviceModelId.GALLEON_K100) {
+		// Split the LCD into 2 tiles
+		const columns = [0, 2]
+		return {
+			columns,
+			pixelSize: {
+				width: control.pixelSize.width / columns.length,
+				height: control.pixelSize.height,
+			},
+		}
+	}
+
+	// Default behavior for other models
+	return {
+		columns: Array.from({ length: control.columnSpan }, (_, i) => i),
+		pixelSize: {
+			width: control.pixelSize.height, // Future: correct non-square size
+			height: control.pixelSize.height,
+		},
 	}
 }
