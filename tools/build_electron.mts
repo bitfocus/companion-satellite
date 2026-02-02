@@ -136,6 +136,16 @@ const options: electronBuilder.Configuration = {
 			to: 'webui',
 		},
 	],
+	electronFuses: {
+		runAsNode: false,
+		enableCookieEncryption: false,
+		enableNodeOptionsEnvironmentVariable: false,
+		enableNodeCliInspectArguments: false,
+		enableEmbeddedAsarIntegrityValidation: true,
+		onlyLoadAppFromAsar: true,
+		loadBrowserProcessSpecificV8Snapshot: false,
+		grantFileProtocolExtraPrivileges: false,
+	},
 }
 
 const satellitePkgJsonPath = new URL('../satellite/package.json', import.meta.url)
