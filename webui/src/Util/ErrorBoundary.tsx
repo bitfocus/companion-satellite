@@ -7,7 +7,7 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
 	return (
 		<Alert variant="destructive">
 			<p>Something went wrong:</p>
-			<pre>{error?.message ?? ''}</pre>
+			<pre>{(error as Error)?.message ?? error ?? ''}</pre>
 			<Button className="mt-2" variant="outline" size="sm" onClick={resetErrorBoundary}>
 				Try again
 			</Button>
