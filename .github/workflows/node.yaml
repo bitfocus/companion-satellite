@@ -292,7 +292,7 @@ jobs:
           retention-days: 1
 
   Mac-x64:
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v6
@@ -369,7 +369,7 @@ jobs:
           retention-days: 1
 
   Mac-arm64:
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v6
