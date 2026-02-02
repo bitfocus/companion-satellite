@@ -30,6 +30,18 @@ import debounceFn from 'debounce-fn'
 import { ElectronUpdater } from './electronUpdater.js'
 import { setMaxListeners } from 'events'
 
+// Ensure there isn't another instance of companion running already
+const lock = app.requestSingleInstanceLock()
+if (!lock) {
+	dialog.showErrorBox(
+		'Multiple instances',
+		'Another instance is already running. Please close the other instance first.',
+	)
+	app.quit()
+	// eslint-disable-next-line n/no-process-exit
+	process.exit(0)
+}
+
 const appConfig = new electronStore<SatelliteConfig>({
 	// schema: satelliteConfigSchema,
 	// migrations: satelliteConfigMigrations,
