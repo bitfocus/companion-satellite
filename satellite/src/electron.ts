@@ -159,21 +159,22 @@ trayMenu.append(
 	}),
 )
 
-app.on('before-quit', async (e) => {
+app.on('before-quit', (e) => {
 	e.preventDefault()
-	try {
-		await Promise.allSettled([
-			// cleanup
-			(async () => client.disconnect())(),
-			surfaceManager.close(),
-		]).then(async () => {
+	Promise.allSettled([
+		// cleanup
+		(async () => client.disconnect())(),
+		surfaceManager.close(),
+	])
+		.then(async () => {
 			await flushLogger()
 		})
-	} catch (err) {
-		console.error('Failed to do quit', err)
-	} finally {
-		app.exit(0)
-	}
+		.catch((err) => {
+			console.error('Failed to do quit', err)
+		})
+		.finally(() => {
+			app.exit(0)
+		})
 })
 
 app.whenReady()
