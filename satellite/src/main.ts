@@ -1,8 +1,8 @@
 /* eslint-disable n/no-process-exit */
 import '@julusian/segfault-raub'
-import { createLogger, logger } from './logging.js'
+import { createLogger, logger, flushLogger } from './logging.js'
 
-import exitHook from 'exit-hook'
+import { asyncExitHook } from 'exit-hook'
 import { CompanionSatelliteClient } from './client.js'
 import { SurfaceManager } from './surface-manager.js'
 import { RestServer } from './rest.js'
@@ -40,12 +40,21 @@ const clientLogger = createLogger('SatelliteClient')
 client.on('log', (l) => clientLogger.info(l))
 client.on('error', (e) => clientLogger.error(e))
 
-exitHook(() => {
-	logger.info('Exiting')
-	client.disconnect()
-	surfaceManager.close().catch(() => null)
-	server.close()
-})
+asyncExitHook(
+	async () => {
+		logger.info('Exiting')
+		await Promise.allSettled([
+			(async () => client.disconnect())(),
+			surfaceManager.close(),
+			(async () => server.close())(),
+		])
+		await flushLogger()
+		process.exit(0)
+	},
+	{
+		wait: 2000,
+	},
+)
 
 const tryConnect = () => {
 	client.connect(getConnectionDetailsFromConfig(appConfig)).catch((e) => {

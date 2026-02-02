@@ -6,6 +6,7 @@ import electronStore from 'electron-store'
 import { SurfaceManager } from './surface-manager.js'
 import { CompanionSatelliteClient } from './client.js'
 import { RestServer } from './rest.js'
+import { flushLogger } from './logging.js'
 import {
 	SatelliteConfig,
 	ensureFieldsPopulated,
@@ -158,14 +159,21 @@ trayMenu.append(
 	}),
 )
 
-app.on('before-quit', () => {
-	Promise.allSettled([
-		// cleanup
-		(async () => client.disconnect())(),
-		surfaceManager.close(),
-	]).catch((e) => {
-		console.error('Failed to do quit', e)
-	})
+app.on('before-quit', async (e) => {
+	e.preventDefault()
+	try {
+		await Promise.allSettled([
+			// cleanup
+			(async () => client.disconnect())(),
+			surfaceManager.close(),
+		]).then(async () => {
+			await flushLogger()
+		})
+	} catch (err) {
+		console.error('Failed to do quit', err)
+	} finally {
+		app.exit(0)
+	}
 })
 
 app.whenReady()

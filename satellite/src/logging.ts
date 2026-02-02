@@ -17,3 +17,11 @@ export const logger = pino({
 export function createLogger(name: string): Logger {
 	return logger.child({ name })
 }
+
+export async function flushLogger(): Promise<void> {
+	return new Promise((resolve) => {
+		logger.flush(() => {
+			resolve()
+		})
+	})
+}
