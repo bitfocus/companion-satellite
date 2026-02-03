@@ -71,11 +71,11 @@ Optionally, you can supply an argument to this updater to specify the new versio
 
 Once installation is complete, configure your Companion Satellite installation using the web UI at `http://Satellite-IP:9999`
 
-For details of configuration options, see `https://user.bitfocus.io/docs/companion-satellite`
+For details of configuration options, see `https://companion.free/satellite/`
 
 ## Development
 
-NodeJS 22 is required
+NodeJS 24 is required
 
 ### Headless
 
