@@ -115,8 +115,8 @@ export class QuickKeysPlugin implements SurfacePlugin<XencelabsQuickKeys> {
 }
 
 function keyToCompanion(k: number): string | null {
-	if (k >= 0 && k < 4) return `0/${k}`
-	if (k >= 4 && k < 8) return `1/${k % 4}`
+	if (k >= 0 && k < 4) return `0/${k + 1}`
+	if (k >= 4 && k < 8) return `1/${(k % 4) + 1}`
 	if (k === 8) return 'menu'
 	if (k === 9) return 'wheel'
 	return null
