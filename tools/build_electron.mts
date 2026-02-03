@@ -145,7 +145,7 @@ const options: electronBuilder.Configuration = {
 		enableEmbeddedAsarIntegrityValidation: true,
 		onlyLoadAppFromAsar: true,
 		loadBrowserProcessSpecificV8Snapshot: false,
-		grantFileProtocolExtraPrivileges: false,
+		grantFileProtocolExtraPrivileges: true, // UI is being loaded from file://
 	},
 }
 
