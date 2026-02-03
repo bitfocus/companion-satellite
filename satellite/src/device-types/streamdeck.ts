@@ -140,6 +140,10 @@ function compileRegisterProps(deck: StreamDeck): DeviceRegisterProps {
 
 const PLUGIN_ID = 'elgato-streamdeck'
 
+function getCompanyName(model: DeviceModelId): string {
+	return model === DeviceModelId.GALLEON_K100 ? 'Corsair' : 'Elgato'
+}
+
 export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 	readonly pluginId = PLUGIN_ID
 	readonly pluginName = 'Elgato Stream Deck'
@@ -155,9 +159,13 @@ export class StreamDeckPlugin implements SurfacePlugin<StreamDeckDeviceInfo> {
 		const sdInfo = getStreamDeckDeviceInfo(device)
 		if (!sdInfo || !sdInfo.serialNumber) return null
 
+		// Some models, don't have real serial numbers, so we fake them
+		const useFakeSerialNumber = sdInfo.model === DeviceModelId.GALLEON_K100 && !!sdInfo.serialNumber.match(/^[0]+$/)
+		const serialNumber = useFakeSerialNumber ? DeviceModelId.GALLEON_K100 : sdInfo.serialNumber
+
 		return {
-			surfaceId: `streamdeck:${sdInfo.serialNumber}`,
-			description: getStreamDeckModelName(sdInfo.model),
+			surfaceId: `streamdeck:${serialNumber}`,
+			description: `${getCompanyName(sdInfo.model)} ${getStreamDeckModelName(sdInfo.model)}`,
 			pluginInfo: sdInfo,
 		}
 	}
@@ -283,7 +291,7 @@ export class StreamDeckWrapper implements SurfaceInstance {
 		return this.#surfaceId
 	}
 	public get productName(): string {
-		return this.#deck.PRODUCT_NAME
+		return `${getCompanyName(this.#deck.MODEL)} ${this.#deck.PRODUCT_NAME}`
 	}
 
 	public constructor(
