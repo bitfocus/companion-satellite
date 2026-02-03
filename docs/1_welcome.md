@@ -1,1 +1,0 @@
-This program is allows you to have your physical Stream Deck and other control surfaces connected via USB to your local computer but act as if they are connected to a remote Companion server. The computers do not have to be on the same subnet/vlan, but should be able to reach Companion via a TCP connection, whether this is on the same LAN or via a VPN connection.
