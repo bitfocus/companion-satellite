@@ -85,72 +85,70 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 						</FormRow>
 					)}
 				/>
-				<form.Field
-					name="host"
-					validators={{
-						onChangeListenTo: ['protocol'],
-					}}
-					children={(field) => (
-						<FormRow label="Address" htmlFor={field.name} hidden={form.getFieldValue('protocol') !== 'tcp'}>
-							<Input
-								type="text"
-								id={field.name}
-								name={field.name}
-								placeholder="Companion address (eg 127.0.0.1 or companion.local)"
-								value={field.state.value}
-								onBlur={field.handleBlur}
-								onChange={(e) => field.handleChange(e.target.value)}
+				<form.Subscribe
+					selector={(state) => state.values.protocol}
+					children={(protocol) => (
+						<>
+							<form.Field
+								name="host"
+								children={(field) => (
+									<FormRow label="Address" htmlFor={field.name} hidden={protocol !== 'tcp'}>
+										<Input
+											type="text"
+											id={field.name}
+											name={field.name}
+											placeholder="Companion address (eg 127.0.0.1 or companion.local)"
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+										/>
+									</FormRow>
+								)}
 							/>
-						</FormRow>
-					)}
-				/>
-				<form.Field
-					name="port"
-					validators={{
-						onChangeListenTo: ['protocol'],
-					}}
-					children={(field) => (
-						<FormRow
-							label="Port"
-							htmlFor={field.name}
-							hidden={form.getFieldValue('protocol') !== 'tcp'}
-							hint="Only change this if you know what you are doing. In almost all cases this should be left at the default."
-						>
-							<Input
-								type="number"
-								id={field.name}
-								name={field.name}
-								placeholder="16622"
-								min={1}
-								max={65535}
-								value={field.state.value}
-								onBlur={field.handleBlur}
-								onChange={(e) => field.handleChange(Number(e.target.value))}
+							<form.Field
+								name="port"
+								children={(field) => (
+									<FormRow
+										label="Port"
+										htmlFor={field.name}
+										hidden={protocol !== 'tcp'}
+										hint="Only change this if you know what you are doing. In almost all cases this should be left at the default."
+									>
+										<Input
+											type="number"
+											id={field.name}
+											name={field.name}
+											placeholder="16622"
+											min={1}
+											max={65535}
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(Number(e.target.value))}
+										/>
+									</FormRow>
+								)}
 							/>
-						</FormRow>
-					)}
-				/>
-				<form.Field
-					name="wsAddress"
-					validators={{
-						onChangeListenTo: ['protocol'],
-					}}
-					children={(field) => (
-						<FormRow
-							label="Websocket URL"
-							htmlFor={field.name}
-							hidden={form.getFieldValue('protocol') !== 'ws'}
-							hint="This must be a full URL, eg ws://127.0.0.1:16623"
-						>
-							<Input
-								type="text"
-								id={field.name}
-								name={field.name}
-								value={field.state.value}
-								onBlur={field.handleBlur}
-								onChange={(e) => field.handleChange(e.target.value)}
+							<form.Field
+								name="wsAddress"
+								children={(field) => (
+									<FormRow
+										label="Websocket URL"
+										htmlFor={field.name}
+										hidden={protocol !== 'ws'}
+										hint="This must be a full URL, eg ws://127.0.0.1:16623"
+									>
+										<Input
+											type="text"
+											id={field.name}
+											name={field.name}
+											value={field.state.value}
+											onBlur={field.handleBlur}
+											onChange={(e) => field.handleChange(e.target.value)}
+										/>
+									</FormRow>
+								)}
 							/>
-						</FormRow>
+						</>
 					)}
 				/>
 
