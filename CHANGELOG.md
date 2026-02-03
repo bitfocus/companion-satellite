@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.7.0](https://github.com/bitfocus/companion-satellite/compare/v2.6.0...v2.7.0) (2026-02-03)
+
+
+### Features
+
+* add macos glass icon ([b7bb320](https://github.com/bitfocus/companion-satellite/commit/b7bb320f5cdfb5a4b629554a4c98b5767c8b975d))
+* polish connection status in ui ([d47ab99](https://github.com/bitfocus/companion-satellite/commit/d47ab998ef774f4607365a986d4818cf25199f62))
+* support corsair galleon k100 sd ([7c6c837](https://github.com/bitfocus/companion-satellite/commit/7c6c837686a4f5b1b6dcfcf39187935c62312227))
+* update electron ([959baaa](https://github.com/bitfocus/companion-satellite/commit/959baaa3f9bbdddf0a7ee3d71ae96f7a348263d2))
+* update ui theme ([95a26af](https://github.com/bitfocus/companion-satellite/commit/95a26afffb93f0863b43a7f65f3dd832b6e32ff3))
+
+
+### Bug Fixes
+
+* enable asar integrity and configure other fuses ([4f1c610](https://github.com/bitfocus/companion-satellite/commit/4f1c6109671f699a36f9276331d90ae24255892b))
+* enforce singleton [#225](https://github.com/bitfocus/companion-satellite/issues/225) ([c3d7899](https://github.com/bitfocus/companion-satellite/commit/c3d7899dfa4d40784a32ea69c9b00b1c15195c40))
+* flush logger before exit ([822d31c](https://github.com/bitfocus/companion-satellite/commit/822d31c20009b314d9b56072cb911c961dd05893))
+* improve galleon sd serial number handling ([a2faabd](https://github.com/bitfocus/companion-satellite/commit/a2faabd3e9ff573b0d64f949b1a671dccb0b5dfc))
+
 ## [2.6.0](https://github.com/bitfocus/companion-satellite/compare/v2.5.0...v2.6.0) (2025-12-14)
 
 
