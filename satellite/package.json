@@ -22,7 +22,6 @@
 	"devDependencies": {
 		"@types/eslint": "^9.6.1",
 		"@types/koa": "^3.0.1",
-		"@types/koa-router": "^7.4.9",
 		"@types/koa-static": "^4.0.4",
 		"@types/node": "^24.10.9",
 		"@types/semver": "^7.7.1",
@@ -42,6 +41,7 @@
 		"@julusian/image-rs": "^2.1.1",
 		"@julusian/jpeg-turbo": "^3.0.1",
 		"@julusian/segfault-raub": "^2.3.2",
+		"@koa/router": "^15.3.0",
 		"@loupedeck/node": "^2.2.1",
 		"@napi-rs/canvas": "^0.1.89",
 		"@xencelabs-quick-keys/node": "^1.0.0",
@@ -53,7 +53,6 @@
 		"infinitton-idisplay": "^1.2.0",
 		"koa": "^3.1.1",
 		"koa-body": "^7.0.1",
-		"koa-router": "^14.0.0",
 		"koa-static": "^5.0.0",
 		"nanoid": "^5.1.6",
 		"node-hid": "^3.3.0",
