@@ -340,7 +340,6 @@ jobs:
         env:
           CSC_LINK: ${{ secrets.OSX_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.OSX_CSC_KEY_PASSWORD }}
-          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.OSX_CSC_LINK != '' && 'true' || 'false' }}
           APPLE_ID: ${{ secrets.APPLEID }}
           APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
@@ -418,7 +417,6 @@ jobs:
         env:
           CSC_LINK: ${{ secrets.OSX_CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.OSX_CSC_KEY_PASSWORD }}
-          CSC_IDENTITY_AUTO_DISCOVERY: ${{ secrets.OSX_CSC_LINK != '' && 'true' || 'false' }}
           APPLE_ID: ${{ secrets.APPLEID }}
           APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}

@@ -74,10 +74,10 @@ const options: electronBuilder.Configuration = {
 		entitlements: 'satellite/entitlements.mac.plist',
 		entitlementsInherit: 'satellite/entitlements.mac.plist',
 		icon: 'icon-macos-glass.icon',
+		identity: process.env.CSC_LINK ? undefined : null, // Disable signing when CSC_LINK is not set
 	},
 	dmg: {
 		artifactName: 'companion-satellite-${arch}.dmg',
-		sign: !!process.env.CSC_LINK, // Only sign in ci
 	},
 	win: {
 		target: 'nsis',
