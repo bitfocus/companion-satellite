@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.7.1](https://github.com/bitfocus/companion-satellite/compare/v2.7.0...v2.7.1) (2026-02-28)
+
+
+### Bug Fixes
+
+* replace koa-router with @koa/router ([1273e47](https://github.com/bitfocus/companion-satellite/commit/1273e47972bf94b3c2ba840f42895e0a7ac4c239))
+* xencelabs keymap ([74babaa](https://github.com/bitfocus/companion-satellite/commit/74babaa9ede52d82e21ada302b085dc9a2581a0a))
+
 ## [2.7.0](https://github.com/bitfocus/companion-satellite/compare/v2.6.0...v2.7.0) (2026-02-03)
 
 
