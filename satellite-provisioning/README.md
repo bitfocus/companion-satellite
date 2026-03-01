@@ -44,7 +44,7 @@ ansible-playbook satellite.yml -e branch=beta
 - **Companion Satellite**: Build from the [Bitfocus API](https://api.bitfocus.io), extracted to `/opt/companion-satellite`
 - **udev rules**: Stream Deck / surface USB device permissions (`50-satellite.rules`)
 - **systemd service**: `satellite.service` running as the `satellite` user (in the `dialout` group)
-- **Boot config**: `/boot/satellite-config` with `COMPANION_IP` (handles newer RPi OS `/boot/firmware` path)
+- **Boot config**: `/satellite-config` with `COMPANION_IP` (read once at service start as defaults)
 
 ## Updating
 

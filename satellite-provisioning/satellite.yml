@@ -248,18 +248,9 @@
           WantedBy=multi-user.target
       notify: restart satellite
 
-    - name: Check for newer Raspberry Pi OS boot path
-      ansible.builtin.stat:
-        path: /boot/firmware
-      register: boot_firmware
-
-    - name: Set boot config path
-      ansible.builtin.set_fact:
-        boot_config_path: "{{ '/boot/firmware/satellite-config' if boot_firmware.stat.isdir is defined and boot_firmware.stat.isdir else '/boot/satellite-config' }}"
-
-    - name: Deploy boot config
+    - name: Deploy satellite defaults config
       ansible.builtin.copy:
-        dest: "{{ boot_config_path }}"
+        dest: /satellite-config
         owner: root
         group: root
         mode: "0666"
@@ -269,14 +260,6 @@
           REST_PORT=9999
           # REST_PASSWORD=
       notify: restart satellite
-
-    - name: Symlink boot config for newer Raspberry Pi OS
-      ansible.builtin.file:
-        src: /boot/firmware/satellite-config
-        dest: /boot/satellite-config
-        state: link
-        force: true
-      when: boot_firmware.stat.isdir is defined and boot_firmware.stat.isdir
 
     - name: Enable and start satellite service
       ansible.builtin.systemd:
