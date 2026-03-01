@@ -1,0 +1,313 @@
+---
+# companion-satellite.yml - Provision a Debian host as a Bitfocus Companion Satellite
+#
+# Installs Node.js from the official tarball and fetches the latest stable
+# satellite build from the Bitfocus API — no fnm, no git clone, no interactive
+# prompts. Supports arm64 and x86_64.
+#
+# Prerequisites:
+#   - Debian-based Linux (arm64 or x86_64) with SSH access
+#   - Host is reachable at its inventory IP
+#
+# Usage:
+#   ansible-playbook satellite.yml
+#   ansible-playbook satellite.yml --limit satellite1
+
+- name: Provision Companion Satellite
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    node_version: "24.13.0"
+    branch: "stable"
+    companion_ip: "127.0.0.1"
+    node_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'x64' }}"
+    satellite_api_target: "{{ 'linux-arm64-tgz' if ansible_architecture == 'aarch64' else 'linux-tgz' }}"
+    satellite_api_url: "https://api.bitfocus.io/v1/product/companion-satellite/packages?branch={{ branch }}&limit=1&target={{ satellite_api_target }}"
+    node_url: "https://nodejs.org/dist/v{{ node_version }}/node-v{{ node_version }}-linux-{{ node_arch }}.tar.xz"
+    node_install_dir: "/opt/node"
+    satellite_install_dir: "/opt/companion-satellite"
+    build_tmp: "/var/tmp/companion-satellite-build"
+
+  tasks:
+    - name: Install system dependencies
+      ansible.builtin.apt:
+        name:
+          - adduser
+          - curl
+          - libusb-1.0-0-dev
+          - libudev-dev
+          - cmake
+          - libfontconfig1
+          - wget
+          - unzip
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Create satellite user
+      ansible.builtin.user:
+        name: satellite
+        shell: /usr/sbin/nologin
+        create_home: true
+        groups: dialout
+        append: true
+
+    # --- Node.js installation (idempotent) ---
+
+    - name: Create build temp directory
+      ansible.builtin.file:
+        path: "{{ build_tmp }}"
+        state: directory
+        mode: "0755"
+
+    - name: Check installed Node.js version
+      ansible.builtin.command: "{{ node_install_dir }}/bin/node --version"
+      register: installed_node_version
+      changed_when: false
+      failed_when: false
+
+    - name: Install Node.js
+      when: >
+        installed_node_version.rc != 0 or
+        ('v' + node_version) not in installed_node_version.stdout
+      block:
+        - name: Download Node.js tarball
+          ansible.builtin.get_url:
+            url: "{{ node_url }}"
+            dest: "{{ build_tmp }}/node.tar.xz"
+            mode: "0644"
+
+        - name: Create Node.js install directory
+          ansible.builtin.file:
+            path: "{{ node_install_dir }}"
+            state: directory
+            mode: "0755"
+
+        - name: Extract Node.js tarball
+          ansible.builtin.unarchive:
+            src: "{{ build_tmp }}/node.tar.xz"
+            dest: "{{ node_install_dir }}"
+            remote_src: true
+            extra_opts:
+              - --strip-components=1
+
+        - name: Clean up Node.js tarball
+          ansible.builtin.file:
+            path: "{{ build_tmp }}/node.tar.xz"
+            state: absent
+
+    # --- Satellite build installation (idempotent) ---
+
+    - name: Fetch satellite build info from API
+      ansible.builtin.uri:
+        url: "{{ satellite_api_url }}"
+        return_content: true
+      register: satellite_api
+      delegate_to: localhost
+      become: false
+      run_once: true
+      when: satellite_version is not defined
+
+    - name: Set satellite build facts from API
+      ansible.builtin.set_fact:
+        satellite_version: "{{ satellite_api.json.packages[0].version }}"
+        satellite_url: "{{ satellite_api.json.packages[0].uri }}"
+      when: satellite_version is not defined
+
+    - name: Show satellite version
+      ansible.builtin.debug:
+        msg: "Satellite {{ satellite_version }} — {{ satellite_url }}"
+
+    - name: Check installed satellite build
+      ansible.builtin.slurp:
+        src: "{{ satellite_install_dir }}/BUILD"
+      register: installed_build
+      failed_when: false
+
+    - name: Install satellite build
+      when: >
+        installed_build is failed or
+        (installed_build.content | default('') | b64decode | trim) != satellite_version
+      block:
+        - name: Download satellite build tarball
+          ansible.builtin.get_url:
+            url: "{{ satellite_url }}"
+            dest: "{{ build_tmp }}/companion-satellite.tar.gz"
+            mode: "0644"
+
+        - name: Create temp extraction directory
+          ansible.builtin.file:
+            path: "{{ build_tmp }}/extract"
+            state: directory
+            mode: "0755"
+
+        - name: Extract satellite build tarball
+          ansible.builtin.unarchive:
+            src: "{{ build_tmp }}/companion-satellite.tar.gz"
+            dest: "{{ build_tmp }}/extract"
+            remote_src: true
+            extra_opts:
+              - --strip-components=1
+
+        - name: Extract Electron asar
+          ansible.builtin.command:
+            cmd: >
+              {{ node_install_dir }}/bin/npx --yes @electron/asar@3 e
+              {{ build_tmp }}/extract/resources/app.asar
+              {{ build_tmp }}/extract/app
+          environment:
+            HOME: "{{ build_tmp }}"
+            PATH: "{{ node_install_dir }}/bin:{{ ansible_env.PATH }}"
+          changed_when: true
+
+        - name: Create satellite install directory
+          ansible.builtin.file:
+            path: "{{ satellite_install_dir }}/{{ item }}"
+            state: directory
+            owner: satellite
+            group: satellite
+            mode: "0755"
+          loop:
+            - ""
+            - satellite
+            - webui/dist
+
+        - name: Install satellite app
+          ansible.builtin.command:
+            cmd: >
+              cp -a {{ build_tmp }}/extract/app/.
+              {{ satellite_install_dir }}/satellite/
+          changed_when: true
+
+        - name: Install satellite webui
+          ansible.builtin.command:
+            cmd: >
+              cp -a {{ build_tmp }}/extract/resources/webui/.
+              {{ satellite_install_dir }}/webui/dist/
+          changed_when: true
+
+        - name: Set satellite directory ownership
+          ansible.builtin.file:
+            path: "{{ satellite_install_dir }}"
+            owner: satellite
+            group: satellite
+            recurse: true
+
+        - name: Install udev rules
+          ansible.builtin.copy:
+            src: "{{ build_tmp }}/extract/50-satellite.rules"
+            dest: /etc/udev/rules.d/50-satellite.rules
+            owner: root
+            group: root
+            mode: "0644"
+            remote_src: true
+          notify:
+            - reload udev
+            - trigger udev
+
+        - name: Write build version file
+          ansible.builtin.copy:
+            content: "{{ satellite_version }}\n"
+            dest: "{{ satellite_install_dir }}/BUILD"
+            owner: satellite
+            group: satellite
+            mode: "0644"
+          notify: restart satellite
+
+        - name: Clean up build temp directory
+          ansible.builtin.file:
+            path: "{{ build_tmp }}"
+            state: absent
+
+    # --- Service configuration ---
+
+    - name: Deploy systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/satellite.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Bitfocus Companion Satellite
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          User=satellite
+          Group=satellite
+          Type=simple
+          WorkingDirectory={{ satellite_install_dir }}/satellite
+          ExecStartPre=+{{ node_install_dir }}/bin/node {{ satellite_install_dir }}/satellite/dist/fixup-pi-config.js /home/satellite/satellite-config.json
+          ExecStart={{ node_install_dir }}/bin/node {{ satellite_install_dir }}/satellite/dist/main.js /home/satellite/satellite-config.json
+          Restart=on-failure
+          KillSignal=SIGINT
+          TimeoutStopSec=60
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: restart satellite
+
+    - name: Check for newer Raspberry Pi OS boot path
+      ansible.builtin.stat:
+        path: /boot/firmware
+      register: boot_firmware
+
+    - name: Set boot config path
+      ansible.builtin.set_fact:
+        boot_config_path: "{{ '/boot/firmware/satellite-config' if boot_firmware.stat.isdir is defined and boot_firmware.stat.isdir else '/boot/satellite-config' }}"
+
+    - name: Deploy boot config
+      ansible.builtin.copy:
+        dest: "{{ boot_config_path }}"
+        owner: root
+        group: root
+        mode: "0666"
+        content: |
+          COMPANION_IP={{ companion_ip }}
+          # COMPANION_PORT=16622
+          REST_PORT=9999
+          # REST_PASSWORD=
+      notify: restart satellite
+
+    - name: Symlink boot config for newer Raspberry Pi OS
+      ansible.builtin.file:
+        src: /boot/firmware/satellite-config
+        dest: /boot/satellite-config
+        state: link
+        force: true
+      when: boot_firmware.stat.isdir is defined and boot_firmware.stat.isdir
+
+    - name: Enable and start satellite service
+      ansible.builtin.systemd:
+        name: satellite
+        enabled: true
+        state: started
+        daemon_reload: true
+
+    - name: Flush handlers before verification
+      ansible.builtin.meta: flush_handlers
+
+    - name: Verify satellite is responding
+      ansible.builtin.uri:
+        url: "http://{{ ansible_host }}:9999/api/status"
+        return_content: false
+        status_code: 200
+      retries: 5
+      delay: 5
+
+  handlers:
+    - name: Reload udev rules
+      ansible.builtin.command: udevadm control --reload-rules
+      listen: reload udev
+
+    - name: Trigger udev events
+      ansible.builtin.command: udevadm trigger
+      listen: trigger udev
+
+    - name: Restart satellite service
+      ansible.builtin.systemd:
+        name: satellite
+        state: restarted
+        daemon_reload: true
+      listen: restart satellite
