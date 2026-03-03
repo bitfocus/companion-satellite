@@ -7,6 +7,7 @@ import {
 	StreamDeck,
 	StreamDeckControlDefinition,
 	StreamDeckDeviceInfo,
+	StreamDeckEncoderControlDefinition,
 	StreamDeckLcdSegmentControlDefinition,
 } from '@elgato-stream-deck/node'
 import type { CardGenerator } from '../graphics/cards.js'
@@ -248,6 +249,21 @@ function generatePincodeMap(model: DeviceModelId): SurfacePincodeMap | null {
 				8: [3, 1],
 				9: [2, 2],
 			}
+		case DeviceModelId.PLUS_XL:
+			return {
+				type: 'single-page',
+				pincode: [0, 4], // TODO - do this fancier with custom drawing?
+				0: [4, 3],
+				1: [3, 2],
+				2: [4, 2],
+				3: [5, 2],
+				4: [3, 1],
+				5: [4, 1],
+				6: [5, 1],
+				7: [3, 0],
+				8: [4, 0],
+				9: [5, 0],
+			}
 		case DeviceModelId.STUDIO:
 			return Pincode6x2(1)
 		case DeviceModelId.XL:
@@ -461,6 +477,17 @@ export class StreamDeckWrapper implements SurfaceInstance {
 				if (this.#deck.MODEL === DeviceModelId.PLUS) {
 					// Position aligned with the buttons/encoders
 					drawX = columnIndex * 216.666 + 25
+				} else if (this.#deck.MODEL === DeviceModelId.PLUS_XL) {
+					const matchingEncoder = this.#deck.CONTROLS.find(
+						(c): c is StreamDeckEncoderControlDefinition => c.type === 'encoder' && c.column === drawColumn,
+					)
+					if (!matchingEncoder) {
+						console.error(`Failed to find matching encoder for controlId ${drawProps.controlId}`)
+						return
+					}
+
+					// Position aligned with the buttons/encoders
+					drawX = matchingEncoder.index * 212 + 20
 				}
 
 				let newbuffer: Buffer | undefined
