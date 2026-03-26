@@ -102,9 +102,9 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 											onBlur={field.handleBlur}
 											onChange={(e) => {
 												let value = e.target.value
+												value = value.trim()
 												value = value.replace(/^https?:\/\//, '')
 												value = value.replace(/\/$/, '')
-												value = value.trim()
 												value = value.replace(/\/+$/, '')
 												field.handleChange(value)
 											}}
