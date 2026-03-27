@@ -104,7 +104,6 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 												let value = e.target.value
 												value = value.trim()
 												value = value.replace(/^https?:\/\//, '')
-												value = value.replace(/\/$/, '')
 												value = value.replace(/\/+$/, '')
 												field.handleChange(value)
 											}}
