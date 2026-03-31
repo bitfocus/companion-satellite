@@ -1,7 +1,7 @@
 /* eslint-disable n/no-process-exit */
 import { fs, usePowerShell, argv } from 'zx'
-
 import electronBuilder from 'electron-builder'
+// import { fetchBuiltinSurfaceModules } from './fetch_builtin_modules.mts'
 
 if (process.platform === 'win32') {
 	usePowerShell() // to enable powershell
@@ -36,6 +36,17 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 	console.error('Unknown platform')
 	process.exit(1)
 }
+
+// Future: implement this
+// // Download surface modules
+// {
+// 	const builtinSurfaceCacheDir = await fetchBuiltinSurfaceModules()
+// 	const builtinSurfacesDir = 'dist/builtin-surfaces/'
+
+// 	await fs.remove(builtinSurfacesDir)
+// 	await fs.mkdirp(builtinSurfacesDir)
+// 	await fs.copy(builtinSurfaceCacheDir, builtinSurfacesDir)
+// }
 
 // HACK: skip this as it is trying to rebuild everything from source and failing
 // if (!platform) {
