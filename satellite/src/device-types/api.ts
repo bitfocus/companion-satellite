@@ -11,7 +11,7 @@ export interface DeviceRegisterProps {
 	brightness: boolean
 	surfaceManifest: SatelliteSurfaceLayout
 	transferVariables: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable> | undefined
-	configFields?: SatelliteConfigFields
+	configFields: SatelliteConfigFields | undefined
 
 	gridSize: GridSize
 	fallbackBitmapSize: number

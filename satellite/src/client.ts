@@ -166,6 +166,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	public get supportsDeviceSerial(): boolean {
 		return this._supportsDeviceSerial
 	}
+	public get supportsSubscriptions(): boolean {
+		return this._supportsSubscriptions
+	}
 
 	public get displayHost(): string {
 		switch (this._connectionDetails.mode) {
@@ -182,10 +185,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				assertNever(this._connectionDetails)
 				return ''
 		}
-	}
-
-	public get supportsSubscriptions(): boolean {
-		return this._supportsSubscriptions
 	}
 
 	public get capabilities(): ClientCapabilities {
@@ -718,23 +717,27 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				)
 			}
 
-			const serialArgs: SatelliteMessageArgs = this._supportsDeviceSerial
-				? { SERIAL: props.serialNumber, SERIAL_IS_UNIQUE: props.serialIsUnique }
-				: {}
-
-			const configFieldsArgs: SatelliteMessageArgs =
-				props.configFields && this._supportsDeviceSerial // CONFIG_FIELDS added in v1.10.0, same as serial
-					? { CONFIG_FIELDS: Buffer.from(JSON.stringify(props.configFields)).toString('base64') }
-					: {}
+			const commonProps = {
+				PRODUCT_NAME: productName,
+				VARIABLES: transferVariables,
+				BRIGHTNESS: props.brightness,
+				// PINCODE_LOCK: props.pincodeMap ? 'FULL' : '', // nocommit - verify
+				PINCODE_LOCK: 'FULL',
+			}
 
 			if (this.supportsSurfaceManifest) {
+				const serialArgs: SatelliteMessageArgs = this._supportsDeviceSerial
+					? { SERIAL: props.serialNumber, SERIAL_IS_UNIQUE: props.serialIsUnique }
+					: {}
+
+				const configFieldsArgs: SatelliteMessageArgs =
+					props.configFields && this._supportsDeviceSerial // CONFIG_FIELDS added in v1.10.0, same as serial
+						? { CONFIG_FIELDS: Buffer.from(JSON.stringify(props.configFields)).toString('base64') }
+						: {}
+
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
-					PRODUCT_NAME: productName,
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
-					VARIABLES: transferVariables,
-					BRIGHTNESS: props.brightness,
-					// PINCODE_LOCK: props.pincodeMap ? 'FULL' : '', // nocommit - verify
-					PINCODE_LOCK: 'FULL',
+					...commonProps,
 					...serialArgs,
 					...configFieldsArgs,
 				})
@@ -743,19 +746,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				const needsTextStyle = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.textStyle)
 
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
-					PRODUCT_NAME: productName,
 					KEYS_TOTAL: props.gridSize.columns * props.gridSize.rows,
 					KEYS_PER_ROW: props.gridSize.columns,
 					BITMAPS: props.fallbackBitmapSize,
 					COLORS: neededColours.values().next().value || false,
 					TEXT: needsText,
 					TEXT_STYLE: needsTextStyle,
-					VARIABLES: transferVariables,
-					BRIGHTNESS: props.brightness,
-					// PINCODE_LOCK: props.pincodeMap ? 'FULL' : '', // nocommit - verify
-					PINCODE_LOCK: 'FULL',
-					...serialArgs,
-					...configFieldsArgs,
+					...commonProps,
 				})
 			}
 		}
