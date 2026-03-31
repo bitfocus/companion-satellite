@@ -4,6 +4,7 @@ import EventEmitter from 'events'
 import type { PixelFormat } from '@julusian/image-rs'
 import type { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 import type { GridSize } from '../surfaceProxy.js'
+import type { SatelliteConfigFields } from '../generated/SatelliteConfigFieldsSchema.js'
 
 export type HIDDevice = HID.Device
 
@@ -32,6 +33,8 @@ export interface DeviceRegisterProps {
 export interface DeviceRegisterPropsComplete extends DeviceRegisterProps {
 	gridSize: GridSize
 	fallbackBitmapSize: number
+
+	configFields: SatelliteConfigFields | undefined
 }
 
 export interface DeviceRegisterInputVariable {

@@ -17,15 +17,7 @@ import {
 	SatelliteControlStylePreset,
 } from './generated/SurfaceManifestSchema.js'
 import { createLogger, Logger } from './logging.js'
-
-export interface SurfaceProxyDrawProps {
-	deviceId: string
-	keyIndex: number | undefined
-	controlId: string | undefined
-	image?: Buffer
-	color?: string // hex
-	text?: string
-}
+import { CompanionSatelliteClientDrawProps } from './client.js'
 
 export interface GridSize {
 	rows: number
@@ -83,6 +75,8 @@ export class SurfaceProxy {
 			...registerProps,
 			gridSize: calculateGridSize(registerProps.surfaceManifest),
 			fallbackBitmapSize: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,
+
+			configFields: undefined,
 		}
 
 		// Setup the cyclical reference :(
@@ -126,7 +120,7 @@ export class SurfaceProxy {
 		})
 	}
 
-	async draw(data: SurfaceProxyDrawProps): Promise<void> {
+	async draw(data: CompanionSatelliteClientDrawProps): Promise<void> {
 		if (this.#context.isLocked) return
 
 		if (this.#drawQueue.state !== 'draw') {

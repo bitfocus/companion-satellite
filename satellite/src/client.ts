@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
-import { ClientCapabilities, CompanionClient, DeviceRegisterPropsComplete } from './device-types/api.js'
-import { assertNever, DEFAULT_TCP_PORT } from './lib.js'
+import { ClientCapabilities, DeviceRegisterPropsComplete } from './device-types/api.js'
+import { assertNever, Complete, DEFAULT_TCP_PORT } from './lib.js'
 import * as semver from 'semver'
 import {
 	CompanionSatelliteTcpClient,
@@ -10,7 +10,6 @@ import {
 	ICompanionSatelliteClientOptions,
 	SomeConnectionDetails,
 } from './clientImplementations.js'
-import { SurfaceProxyDrawProps } from './surfaceProxy.js'
 import { SatelliteControlDefinition } from './generated/SurfaceManifestSchema.js'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
@@ -85,6 +84,20 @@ export interface CompanionSatelliteClientOptions {
 	debug?: boolean
 }
 
+export interface CompanionSatelliteClientDrawProps {
+	deviceId: string
+	keyIndex: number | undefined
+	controlId: string | undefined
+	image?: Buffer
+	color?: string // hex
+	textColor?: string // hex
+	text?: string
+	fontSize?: number
+	type?: string
+	pressed?: boolean
+	location?: string
+}
+
 export type CompanionSatelliteClientEvents = {
 	error: [Error]
 	log: [string]
@@ -92,16 +105,17 @@ export type CompanionSatelliteClientEvents = {
 	connecting: []
 	disconnected: []
 
-	draw: [SurfaceProxyDrawProps]
+	draw: [CompanionSatelliteClientDrawProps]
 	brightness: [{ deviceId: string; percent: number }]
 	newDevice: [{ deviceId: string }]
 	clearDeck: [{ deviceId: string }]
 	variableValue: [{ deviceId: string; name: string; value: string }]
 	lockedState: [{ deviceId: string; locked: boolean; characterCount: number }]
 	deviceErrored: [{ deviceId: string; message: string }]
+	deviceConfig: [{ deviceId: string; config: Record<string, unknown> }]
 }
 
-export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> implements CompanionClient {
+export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> {
 	private readonly debug: boolean
 	private socket: ICompanionSatelliteClient | undefined
 
@@ -124,6 +138,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private _supportsLocalLockState = false
 	private _supportsSurfaceManifest = false
+	private _supportsDeviceSerial = false
+	private _supportsSubscriptions = false
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -146,6 +162,12 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get supportsSurfaceManifest(): boolean {
 		return this._supportsSurfaceManifest
+	}
+	public get supportsDeviceSerial(): boolean {
+		return this._supportsDeviceSerial
+	}
+	public get supportsSubscriptions(): boolean {
+		return this._supportsSubscriptions
 	}
 
 	public get displayHost(): string {
@@ -201,6 +223,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 				this._registeredDevices.clear()
 				this._pendingDevices.clear()
+
+				this._supportsSubscriptions = false
 
 				if (this._connected) {
 					this.emit('disconnected')
@@ -384,11 +408,21 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this.emit('log', `Connected to Companion: ${body}`)
 				this.handleBegin(params)
 				break
+			case 'CAPS':
+				this.handleCaps(params)
+				break
+			case 'DEVICE-CONFIG':
+				this.handleDeviceConfig(params)
+				break
+			case 'SUB-STATE':
+				// Subscription state updates - not currently used
+				break
 			case 'KEY-PRESS':
 			case 'KEY-ROTATE':
 			case 'SET-VARIABLE-VALUE':
 			case 'PINCODE-KEY':
-				// Ignore
+			case 'FIRMWARE-UPDATE-INFO':
+				// Ignore echoes of our own messages
 				break
 			default:
 				this.emit('log', `Received unhandled command: ${cmd} ${body}`)
@@ -420,6 +454,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this._supportsSurfaceManifest = !!this._companionApiVersion && semver.lte('1.9.0', this._companionApiVersion)
 		if (this._supportsSurfaceManifest) {
 			this.emit('log', 'Companion supports surface manifest')
+		}
+		this._supportsDeviceSerial = !!this._companionApiVersion && semver.lte('1.10.0', this._companionApiVersion)
+		if (this._supportsDeviceSerial) {
+			this.emit('log', 'Companion supports separate serial value')
 		}
 
 		// report the connection as ready
@@ -454,8 +492,25 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		const image = typeof params.BITMAP === 'string' ? Buffer.from(params.BITMAP, 'base64') : undefined
 		const text = typeof params.TEXT === 'string' ? Buffer.from(params.TEXT, 'base64').toString() : undefined
 		const color = typeof params.COLOR === 'string' ? params.COLOR : undefined
+		const textColor = typeof params.TEXTCOLOR === 'string' ? params.TEXTCOLOR : undefined
+		const fontSize = typeof params.FONT_SIZE === 'string' ? parseInt(params.FONT_SIZE) : undefined
+		const type = typeof params.TYPE === 'string' ? params.TYPE : undefined
+		const pressed = typeof params.PRESSED === 'string' ? params.PRESSED === '1' : undefined
+		const location = typeof params.LOCATION === 'string' ? params.LOCATION : undefined
 
-		this.emit('draw', { deviceId: params.DEVICEID, keyIndex, controlId, image, text, color })
+		this.emit('draw', {
+			deviceId: params.DEVICEID,
+			keyIndex,
+			controlId,
+			image,
+			text,
+			color,
+			textColor,
+			fontSize: fontSize !== undefined && !isNaN(fontSize) ? fontSize : undefined,
+			type,
+			pressed,
+			location,
+		} satisfies Complete<CompanionSatelliteClientDrawProps>)
 	}
 	private handleClear(params: Record<string, string | boolean>): void {
 		if (typeof params.DEVICEID !== 'string') {
@@ -546,6 +601,31 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.emit('newDevice', { deviceId: params.DEVICEID })
 	}
 
+	private handleCaps(params: Record<string, string | boolean>): void {
+		this._supportsSubscriptions = params.SUBSCRIPTIONS === '1' || params.SUBSCRIPTIONS === true
+		if (this._supportsSubscriptions) {
+			this.emit('log', 'Companion supports button subscriptions')
+		}
+	}
+
+	private handleDeviceConfig(params: Record<string, string | boolean>): void {
+		if (typeof params.DEVICEID !== 'string') {
+			this.emit('log', 'Missing DEVICEID in DEVICE-CONFIG response')
+			return
+		}
+		if (typeof params.CONFIG !== 'string') {
+			this.emit('log', 'Missing CONFIG in DEVICE-CONFIG response')
+			return
+		}
+
+		try {
+			const config = JSON.parse(Buffer.from(params.CONFIG, 'base64').toString()) as Record<string, unknown>
+			this.emit('deviceConfig', { deviceId: params.DEVICEID, config })
+		} catch (_e) {
+			this.emit('log', 'Bad CONFIG in DEVICE-CONFIG response')
+		}
+	}
+
 	public keyDown(deviceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('KEY-PRESS', null, deviceId, {
@@ -598,6 +678,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
+	public sendFirmwareUpdateInfo(deviceId: string, updateUrl: string): void {
+		if (this._connected && this.socket) {
+			this.sendMessage('FIRMWARE-UPDATE-INFO', null, deviceId, {
+				UPDATE_URL: updateUrl,
+			})
+		}
+	}
+
 	public hasDevice(deviceId: string): boolean {
 		return this._registeredDevices.has(deviceId) || this._pendingDevices.has(deviceId)
 	}
@@ -629,29 +717,42 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				)
 			}
 
+			const commonProps = {
+				PRODUCT_NAME: productName,
+				VARIABLES: transferVariables,
+				BRIGHTNESS: props.brightness,
+				// PINCODE_LOCK: props.pincodeMap ? 'FULL' : '', // nocommit - verify
+				PINCODE_LOCK: 'FULL',
+			}
+
 			if (this.supportsSurfaceManifest) {
+				// const serialArgs: SatelliteMessageArgs = this._supportsDeviceSerial
+				// 	? { SERIAL: props.serialNumber, SERIAL_IS_UNIQUE: props.serialIsUnique }
+				// 	: {}
+
+				const configFieldsArgs: SatelliteMessageArgs =
+					props.configFields && this._supportsDeviceSerial // CONFIG_FIELDS added in v1.10.0, same as serial
+						? { CONFIG_FIELDS: Buffer.from(JSON.stringify(props.configFields)).toString('base64') }
+						: {}
+
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
-					PRODUCT_NAME: productName,
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
-					VARIABLES: transferVariables,
-					BRIGHTNESS: props.brightness,
-					PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
+					...commonProps,
+					// ...serialArgs,
+					...configFieldsArgs,
 				})
 			} else {
 				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)
 				const needsTextStyle = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.textStyle)
 
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
-					PRODUCT_NAME: productName,
 					KEYS_TOTAL: props.gridSize.columns * props.gridSize.rows,
 					KEYS_PER_ROW: props.gridSize.columns,
 					BITMAPS: props.fallbackBitmapSize,
 					COLORS: neededColours.values().next().value || false,
 					TEXT: needsText,
 					TEXT_STYLE: needsTextStyle,
-					VARIABLES: transferVariables,
-					BRIGHTNESS: props.brightness,
-					PINCODE_LOCK: props.pincodeMap ? 'FULL' : '',
+					...commonProps,
 				})
 			}
 		}
