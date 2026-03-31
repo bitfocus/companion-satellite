@@ -32,7 +32,7 @@ const moduleQueue = new pQueue({
 	concurrency: 10,
 })
 for (const moduleId of Object.keys(existingModules)) {
-	moduleQueue.add(async () => {
+	void moduleQueue.add(async () => {
 		await pRetry(
 			async () => {
 				const res = await fetch(`${baseUrl}/v1/companion/modules/surface/${moduleId}`, {
