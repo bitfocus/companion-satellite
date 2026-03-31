@@ -1,13 +1,19 @@
 import { CompanionSatelliteClient } from './client.js'
 import { usb } from 'usb'
 import { CardGenerator } from './graphics/cards.js'
-import { DeviceRegisterPropsComplete, SurfaceId } from './device-types/api.js'
+import { DeviceRegisterProps, SurfaceId } from './device-types/api.js'
 import * as HID from 'node-hid'
-import { wrapAsync } from './lib.js'
+import { Complete, wrapAsync } from './lib.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 import { createLogger } from './logging.js'
-import { CheckDeviceResult, OpenDeviceResult, PluginWrapper, SurfaceHostContext } from '@companion-surface/host'
-import { HIDDevice, SurfacePlugin as SurfacePlugin2 } from '@companion-surface/base'
+import {
+	CheckDeviceResult,
+	OpenDeviceResult,
+	PluginWrapper,
+	ShouldOpenSurfaceResult,
+	SurfaceHostContext,
+} from '@companion-surface/host'
+import { HIDDevice, SurfaceDrawProps, SurfacePlugin as SurfacePlugin2 } from '@companion-surface/base'
 import { LockingGraphicsGeneratorImpl } from './graphics/locking.js'
 import { calculateGridSize } from './device-types/lib.js'
 import {
@@ -24,6 +30,7 @@ import QuickKeysPlugin from '../../../module-local-dev/companion-surface-xencela
 // @ts-expect-error No types because module-local-dev
 // eslint-disable-next-line n/no-missing-import
 import LoupedeckPlugin from '../../../module-local-dev/companion-surface-loupedeck/dist/main.js'
+import { createHash } from 'node:crypto'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -78,7 +85,7 @@ interface SurfaceInfo {
 	readonly productName: string
 	readonly surfaceId: SurfaceId
 
-	readonly registerProps: DeviceRegisterPropsComplete // TODO - explode?
+	readonly registerProps: DeviceRegisterProps // TODO - explode?
 }
 
 export class SurfaceManager {
@@ -90,6 +97,11 @@ export class SurfaceManager {
 	readonly #client: CompanionSatelliteClient
 
 	readonly #plugins = new Map<string, PluginWrapper2>()
+
+	/** Tracks discovered device paths to their resolved surface IDs */
+	readonly #discoveredPaths = new Map<string, string>()
+	/** Stashed CheckDeviceResult info from shouldOpenDiscoveredSurface, keyed by resolvedSurfaceId */
+	readonly #discoveredInfo = new Map<string, CheckDeviceResult>()
 
 	#enabledPluginsConfig: ApiSurfacePluginsEnabled = {}
 
@@ -118,7 +130,23 @@ export class SurfaceManager {
 
 					// TODO: this is pretty horrible
 					;(hostContextFull as any).notifyOpenedDiscoveredSurface = async (info: OpenDeviceResult) => {
-						if (!manager.#tryAddSurfaceFromPlugin(wrappedPlugin, info, { type: 'detect', info })) {
+						// Retrieve the stashed CheckDeviceResult from shouldOpenDiscoveredSurface
+						const discoveredInfo = manager.#discoveredInfo.get(info.surfaceId)
+						if (!discoveredInfo) {
+							manager.#logger.warn(`No discovered info for surface: ${info.surfaceId}, using defaults`)
+						}
+						const checkResult: CheckDeviceResult = discoveredInfo ?? {
+							devicePath: '',
+							surfaceId: info.surfaceId,
+							surfaceIdIsNotUnique: false,
+							description: info.description,
+						}
+						if (
+							!manager.#tryAddSurfaceFromPlugin(wrappedPlugin, checkResult, {
+								type: 'detect',
+								info,
+							})
+						) {
 							manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
 						}
 					}
@@ -200,9 +228,49 @@ export class SurfaceManager {
 				pincodeEntry: (surfaceId: string, char: number) => {
 					this.#client.pincodeKey(surfaceId, char)
 				},
+				changePage: (_surfaceId: string, _forward: boolean) => {
+					// Not implemented in satellite protocol
+				},
+				firmwareUpdateInfo: (surfaceId: string, info) => {
+					if (info?.updateUrl) {
+						this.#client.sendFirmwareUpdateInfo(surfaceId, info.updateUrl)
+					} else {
+						this.#client.sendFirmwareUpdateInfo(surfaceId, '')
+					}
+				},
 			},
 
-			shouldOpenDiscoveredSurface: async (_info: CheckDeviceResult) => true, // Open everything for now
+			shouldOpenDiscoveredSurface: async (info: CheckDeviceResult): Promise<ShouldOpenSurfaceResult> => {
+				const resolvedSurfaceId = this.#resolveUniqueSurfaceId(info.surfaceId)
+
+				// Track by devicePath for forgetDiscoveredSurfaces
+				if (info.devicePath) {
+					this.#discoveredPaths.set(info.devicePath, resolvedSurfaceId)
+				}
+
+				// Stash the original info so notifyOpenedDiscoveredSurface can retrieve serialNumber/serialIsUnique
+				this.#discoveredInfo.set(resolvedSurfaceId, info)
+
+				return { shouldOpen: true, resolvedSurfaceId }
+			},
+
+			forgetDiscoveredSurfaces: (devicePaths: string[]) => {
+				for (const devicePath of devicePaths) {
+					const resolvedId = this.#discoveredPaths.get(devicePath)
+					if (resolvedId) {
+						this.#discoveredPaths.delete(devicePath)
+						this.#discoveredInfo.delete(resolvedId)
+					}
+				}
+			},
+
+			connectionsFound: (_connectionInfos) => {
+				// Not used by satellite
+			},
+
+			connectionsForgotten: (_connectionIds) => {
+				// Not used by satellite
+			},
 		}
 	}
 
@@ -296,7 +364,7 @@ export class SurfaceManager {
 							image: msg.image,
 							color: msg.color,
 							text: msg.text,
-						},
+						} satisfies Complete<SurfaceDrawProps>,
 					])
 				},
 				(e) => {
@@ -336,7 +404,7 @@ export class SurfaceManager {
 				async (msg) => {
 					const plugin = this.#getPluginForSurface(msg.deviceId)
 
-					await plugin.readySurface(msg.deviceId)
+					await plugin.readySurface(msg.deviceId, {}) // Config for future use
 				},
 				(e) => {
 					this.#logger.error(`Setup device: ${e}`)
@@ -473,13 +541,33 @@ export class SurfaceManager {
 				.then(async (devices) => {
 					await Promise.all(
 						devices.map(async (device) => {
+							if (!device.path || !device.serialNumber) return
+
+							const hidDevice: HIDDevice = {
+								vendorId: device.vendorId,
+								productId: device.productId,
+								path: device.path,
+								serialNumber:
+									device.serialNumber ||
+									createHash('sha1')
+										.update(`${device.vendorId}:${device.productId}`)
+										.digest('hex')
+										.slice(0, 20),
+								manufacturer: device.manufacturer,
+								product: device.product,
+								release: device.release,
+								interface: device.interface,
+								usagePage: device.usagePage,
+								usage: device.usage,
+							} satisfies Complete<HIDDevice>
+
 							for (const [pluginId, plugin] of this.#plugins.entries()) {
-								const info = await plugin.checkHidDevice(device)
+								const info = await plugin.checkHidDevice(hidDevice)
 								if (!info || !this.isPluginEnabled(pluginId)) continue
 
 								this.#tryAddSurfaceFromPlugin(plugin, info, {
 									type: 'hid',
-									hid: device,
+									hid: hidDevice,
 								})
 								return
 							}
@@ -586,17 +674,29 @@ export class SurfaceManager {
 					info: OpenDeviceResult
 			  },
 	): boolean {
-		if (this.#pendingSurfaces.has(pluginInfo.surfaceId) || this.#surfaces.has(pluginInfo.surfaceId)) return false
-		this.#pendingSurfaces.add(pluginInfo.surfaceId)
+		// For the 'detect' path, PluginWrapper already called shouldOpenDiscoveredSurface
+		// and the OpenDeviceResult.surfaceId is already the resolvedSurfaceId.
+		// For 'hid'/'scan' paths, we resolve the ID ourselves.
+		const resolvedSurfaceId =
+			openInfo.type === 'detect' ? openInfo.info.surfaceId : this.#resolveUniqueSurfaceId(pluginInfo.surfaceId)
 
-		this.#logger.debug(`adding new surface: ${pluginInfo.surfaceId}`)
+		if (this.#pendingSurfaces.has(resolvedSurfaceId) || this.#surfaces.has(resolvedSurfaceId)) return false
+		this.#pendingSurfaces.add(resolvedSurfaceId)
+
+		// Determine the serial number and uniqueness from either stashed info (detect) or the pluginInfo directly
+		const serialNumber = pluginInfo.surfaceId
+		const serialIsUnique = !pluginInfo.surfaceIdIsNotUnique
+
+		this.#logger.debug(
+			`adding new surface: ${resolvedSurfaceId} (serial=${serialNumber}, unique=${serialIsUnique})`,
+		)
 		this.#logger.debug(`existing = ${JSON.stringify(Array.from(this.#surfaces.keys()))}`)
 
 		const pOpen =
 			openInfo.type === 'hid'
-				? plugin.openHidDevice(openInfo.hid)
+				? plugin.openHidDevice(openInfo.hid, resolvedSurfaceId)
 				: openInfo.type === 'scan'
-					? plugin.openScannedDevice(pluginInfo)
+					? plugin.openScannedDevice(pluginInfo, resolvedSurfaceId)
 					: Promise.resolve(openInfo.info)
 
 		pOpen
@@ -610,9 +710,12 @@ export class SurfaceManager {
 
 				const openedInfo: SurfaceInfo = {
 					pluginId: plugin.info.pluginId,
-					surfaceId: pluginInfo.surfaceId,
+					surfaceId: resolvedSurfaceId,
 					productName: pluginInfo.description,
 					registerProps: {
+						serialNumber,
+						serialIsUnique,
+
 						brightness: result.supportsBrightness,
 						surfaceManifest: translateModuleToSatelliteSurfaceLayout(result.surfaceLayout),
 						transferVariables: translateModuleToSatelliteTransferVariables(result.transferVariables),
@@ -622,18 +725,38 @@ export class SurfaceManager {
 					},
 				}
 
-				this.#surfaces.set(pluginInfo.surfaceId, openedInfo)
+				this.#surfaces.set(resolvedSurfaceId, openedInfo)
 
-				this.#client.addDevice(pluginInfo.surfaceId, openedInfo.productName, openedInfo.registerProps)
+				this.#client.addDevice(resolvedSurfaceId, openedInfo.productName, openedInfo.registerProps)
 			})
 			.catch((e) => {
-				this.#logger.error(`Open "${pluginInfo.surfaceId}" failed: ${e}`)
+				this.#logger.error(`Open "${resolvedSurfaceId}" failed: ${e}`)
 			})
 			.finally(() => {
-				this.#pendingSurfaces.delete(pluginInfo.surfaceId)
+				this.#pendingSurfaces.delete(resolvedSurfaceId)
+				// Clean up stashed discovery info
+				this.#discoveredInfo.delete(resolvedSurfaceId)
 			})
 
 		return true
+	}
+
+	/**
+	 * Resolve a unique surface ID, appending a counter suffix if the base ID is already in use.
+	 */
+	#resolveUniqueSurfaceId(baseSurfaceId: string): string {
+		if (!this.#pendingSurfaces.has(baseSurfaceId) && !this.#surfaces.has(baseSurfaceId)) {
+			return baseSurfaceId
+		}
+
+		let counter = 2
+		while (
+			this.#pendingSurfaces.has(`${baseSurfaceId}-${counter}`) ||
+			this.#surfaces.has(`${baseSurfaceId}-${counter}`)
+		) {
+			counter++
+		}
+		return `${baseSurfaceId}-${counter}`
 	}
 
 	#statusCardTimer: NodeJS.Timeout | undefined

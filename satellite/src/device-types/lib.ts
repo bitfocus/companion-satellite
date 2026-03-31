@@ -1,5 +1,9 @@
-import type { GridSize } from '../surfaceProxy.js'
 import type { SurfaceSchemaLayoutDefinition } from '@companion-surface/host'
+
+export interface GridSize {
+	rows: number
+	columns: number
+}
 
 export function calculateGridSize(surfaceLayout: SurfaceSchemaLayoutDefinition): GridSize {
 	return Object.values(surfaceLayout.controls).reduce(
