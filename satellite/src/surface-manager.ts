@@ -1,7 +1,6 @@
-import { CompanionSatelliteClient } from './client.js'
+import { CompanionSatelliteClient, DeviceRegisterProps } from './client/client.js'
 import { usb } from 'usb'
 import { CardGenerator } from './graphics/cards.js'
-import { DeviceRegisterProps, SurfaceId } from './device-types/api.js'
 import * as HID from 'node-hid'
 import { Complete, wrapAsync } from './lib.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
@@ -16,11 +15,11 @@ import {
 import { HIDDevice, SurfaceDrawProps, SurfacePlugin as SurfacePlugin2 } from '@companion-surface/base'
 import type { SurfaceSchemaLayoutDefinition } from '@companion-surface/base'
 import { LockingGraphicsGeneratorImpl } from './graphics/locking.js'
-import { calculateGridSize } from './device-types/lib.js'
 import {
 	translateModuleToSatelliteSurfaceLayout,
 	translateModuleToSatelliteTransferVariables,
 	translateModuleToSatelliteConfigFields,
+	calculateGridSize,
 } from './translateSchema.js'
 
 // @ts-expect-error No types because module-local-dev
@@ -38,6 +37,8 @@ import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
 // Force into hidraw mode
 HID.setDriverType('hidraw')
 HID.devices()
+
+export type SurfaceId = string
 
 interface RawPluginsInfo {
 	info: ApiSurfacePluginInfo

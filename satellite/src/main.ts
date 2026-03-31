@@ -3,7 +3,7 @@ import '@julusian/segfault-raub'
 import { createLogger, logger, flushLogger } from './logging.js'
 
 import { asyncExitHook } from 'exit-hook'
-import { CompanionSatelliteClient } from './client.js'
+import { CompanionSatelliteClient } from './client/client.js'
 import { SurfaceManager } from './surface-manager.js'
 import { RestServer } from './rest.js'
 import { getConnectionDetailsFromConfig, listenToConnectionConfigChanges, openHeadlessConfig } from './config.js'

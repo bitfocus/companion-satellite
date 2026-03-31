@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events'
-import { ClientCapabilities, DeviceRegisterProps } from './device-types/api.js'
-import { assertNever, Complete, DEFAULT_TCP_PORT } from './lib.js'
+import { assertNever, Complete, DEFAULT_TCP_PORT } from '../lib.js'
 import * as semver from 'semver'
 import {
 	CompanionSatelliteTcpClient,
@@ -9,8 +8,11 @@ import {
 	ICompanionSatelliteClient,
 	ICompanionSatelliteClientOptions,
 	SomeConnectionDetails,
-} from './clientImplementations.js'
-import { SatelliteControlDefinition } from './generated/SurfaceManifestSchema.js'
+} from './socketImplementations.js'
+import { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
+import { SatelliteConfigFields } from '../generated/SatelliteConfigFieldsSchema.js'
+import { parseLineParameters } from './parser.js'
+import type { GridSize } from '@companion-surface/base'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
@@ -19,66 +21,6 @@ const RECONNECT_DELAY = 1000
 const RECONNECT_DELAY_UNSUPPORTED = 30000
 
 const MINIMUM_PROTOCOL_VERSION = '1.7.0' // Companion 3.4
-
-function parseLineParameters(line: string): Record<string, string | boolean> {
-	const makeSafe = (index: number): number => {
-		return index === -1 ? Number.POSITIVE_INFINITY : index
-	}
-
-	const fragments: string[] = ['']
-	let quotes = 0
-
-	let i = 0
-	while (i < line.length) {
-		// Find the next characters of interest
-		const spaceIndex = makeSafe(line.indexOf(' ', i))
-		const slashIndex = makeSafe(line.indexOf('\\', i))
-		const quoteIndex = makeSafe(line.indexOf('"', i))
-
-		// Find which is closest
-		const o = Math.min(spaceIndex, slashIndex, quoteIndex)
-		if (!isFinite(o)) {
-			// None were found, copy the remainder and stop
-			const slice = line.substring(i)
-			fragments[fragments.length - 1] += slice
-
-			break
-		} else {
-			// copy the slice before this character
-			const slice = line.substring(i, o)
-			fragments[fragments.length - 1] += slice
-
-			const c = line[o]
-			if (c == '\\') {
-				// If char is a slash, the character following it is of interest
-				// Future: does this consider non \" chars?
-				fragments[fragments.length - 1] += line[o + 1]
-
-				i = o + 2
-			} else {
-				i = o + 1
-
-				// Figure out what the char was
-				if (c === '"') {
-					quotes ^= 1
-				} else if (!quotes && c === ' ') {
-					fragments.push('')
-				} else {
-					fragments[fragments.length - 1] += c
-				}
-			}
-		}
-	}
-
-	const res: Record<string, string | boolean> = {}
-
-	for (const fragment of fragments) {
-		const [key, value] = fragment.split('=', 2)
-		res[key] = value === undefined ? true : value
-	}
-
-	return res
-}
 
 export interface CompanionSatelliteClientOptions {
 	debug?: boolean
@@ -96,6 +38,36 @@ export interface CompanionSatelliteClientDrawProps {
 	type?: string
 	pressed?: boolean
 	location?: string
+}
+
+export interface DeviceRegisterProps {
+	serialNumber: string
+	serialIsUnique: boolean
+
+	brightness: boolean
+	surfaceManifest: SatelliteSurfaceLayout
+	transferVariables: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable> | undefined
+	configFields: SatelliteConfigFields | undefined
+
+	gridSize: GridSize
+	fallbackBitmapSize: number
+}
+
+export interface DeviceRegisterInputVariable {
+	id: string
+	type: 'input'
+	name: string
+	description?: string
+}
+export interface DeviceRegisterOutputVariable {
+	id: string
+	type: 'output'
+	name: string
+	description?: string
+}
+
+export interface ClientCapabilities {
+	supportsSurfaceManifest: boolean
 }
 
 export type CompanionSatelliteClientEvents = {

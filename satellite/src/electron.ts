@@ -4,7 +4,7 @@ import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain,
 import * as path from 'path'
 import electronStore from 'electron-store'
 import { SurfaceManager } from './surface-manager.js'
-import { CompanionSatelliteClient } from './client.js'
+import { CompanionSatelliteClient } from './client/client.js'
 import { RestServer } from './rest.js'
 import { flushLogger } from './logging.js'
 import {
