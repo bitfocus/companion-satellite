@@ -1,5 +1,6 @@
 import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
-import { GridSize } from './lib.js'
+import type { SatelliteConfigFields } from '../generated/SatelliteConfigFieldsSchema.js'
+import type { GridSize } from './lib.js'
 
 export type SurfaceId = string
 
@@ -10,7 +11,7 @@ export interface DeviceRegisterProps {
 	brightness: boolean
 	surfaceManifest: SatelliteSurfaceLayout
 	transferVariables: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable> | undefined
-	configFields?: unknown[]
+	configFields?: SatelliteConfigFields
 
 	gridSize: GridSize
 	fallbackBitmapSize: number

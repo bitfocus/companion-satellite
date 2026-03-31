@@ -19,6 +19,7 @@ import { calculateGridSize } from './device-types/lib.js'
 import {
 	translateModuleToSatelliteSurfaceLayout,
 	translateModuleToSatelliteTransferVariables,
+	translateModuleToSatelliteConfigFields,
 } from './translateSchema.js'
 
 // @ts-expect-error No types because module-local-dev
@@ -31,6 +32,7 @@ import QuickKeysPlugin from '../../../module-local-dev/companion-surface-xencela
 // eslint-disable-next-line n/no-missing-import
 import LoupedeckPlugin from '../../../module-local-dev/companion-surface-loupedeck/dist/main.js'
 import { createHash } from 'node:crypto'
+import { PixelFormat } from '@julusian/image-rs'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -339,6 +341,8 @@ export class SurfaceManager {
 					const surface = this.#getWrappedSurface(msg.deviceId)
 					const plugin = this.#getPluginForSurface(msg.deviceId)
 
+					let targetPixelFormat: PixelFormat | undefined
+
 					let controlId = msg.controlId
 					if (!controlId) {
 						if (!msg.keyIndex) throw new Error('No controlId or keyIndex provided for draw command')
@@ -354,14 +358,21 @@ export class SurfaceManager {
 						// Ignore a bad index. This can happen if there are gaps in the layout
 						if (!controlInfo) return
 						controlId = controlInfo[0]
+
+						// // TODO - support more pixel formats, for now this is all we can handle
+						// if (controlInfo[1].style.bitmap.format === 'rgba') {
+						// 	targetPixelFormat = controlDefinition.style.bitmap.format
+						// }
 					}
 
 					// nocommit - this needs to transform the image if provided to match the stylePreset!
 
+					const image = targetPixelFormat ? msg.image?.convertTo(targetPixelFormat) : undefined
+
 					await plugin.draw(msg.deviceId, [
 						{
 							controlId: controlId,
-							image: msg.image,
+							image: image,
 							color: msg.color,
 							text: msg.text,
 						} satisfies Complete<SurfaceDrawProps>,
@@ -719,6 +730,7 @@ export class SurfaceManager {
 						brightness: result.supportsBrightness,
 						surfaceManifest: translateModuleToSatelliteSurfaceLayout(result.surfaceLayout),
 						transferVariables: translateModuleToSatelliteTransferVariables(result.transferVariables),
+						configFields: translateModuleToSatelliteConfigFields(result.configFields),
 
 						gridSize: calculateGridSize(result.surfaceLayout),
 						fallbackBitmapSize: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,

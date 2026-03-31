@@ -4,8 +4,18 @@ import type {
 	SatelliteControlStylePreset,
 	SatelliteSurfaceLayout,
 } from './generated/SurfaceManifestSchema.js'
+import type {
+	CheckboxField,
+	ConfigField,
+	DropdownChoice,
+	DropdownField,
+	NumberField,
+	SatelliteConfigFields,
+	StaticTextField,
+	TextInputField,
+} from './generated/SatelliteConfigFieldsSchema.js'
 import { Complete } from './lib.js'
-import { SurfaceInputVariable, SurfaceOutputVariable } from '@companion-surface/base'
+import { SurfaceInputVariable, SurfaceOutputVariable, type SomeCompanionInputField } from '@companion-surface/base'
 import { DeviceRegisterInputVariable, DeviceRegisterOutputVariable } from './device-types/api.js'
 
 export function translateModuleToSatelliteSurfaceLayout(
@@ -58,6 +68,63 @@ export function translateModuleToSatelliteTransferVariables(
 				name: variable.name,
 				description: variable.description,
 			} satisfies Complete<DeviceRegisterOutputVariable>
+		}
+	})
+}
+
+export function translateModuleToSatelliteConfigFields(
+	fields: SomeCompanionInputField[] | null,
+): SatelliteConfigFields | undefined {
+	if (!fields || fields.length === 0) return undefined
+
+	return fields.map((field): ConfigField => {
+		const common = {
+			id: field.id,
+			label: field.label,
+			description: field.description,
+			tooltip: field.tooltip,
+			isVisibleExpression: field.isVisibleExpression,
+		}
+		switch (field.type) {
+			case 'static-text':
+				return {
+					...common,
+					type: 'static-text',
+					value: field.value,
+				} satisfies Complete<StaticTextField>
+			case 'textinput':
+				return {
+					...common,
+					type: 'textinput',
+					default: field.default,
+					regex: field.regex,
+					multiline: undefined,
+				} satisfies Complete<TextInputField>
+			case 'dropdown': {
+				const choices: DropdownChoice[] = field.choices.map((c) => ({ id: c.id, label: c.label }))
+				return {
+					...common,
+					type: 'dropdown',
+					choices: choices as [DropdownChoice, ...DropdownChoice[]],
+					default: field.default,
+					allowCustom: undefined,
+				} satisfies Complete<DropdownField>
+			}
+			case 'number':
+				return {
+					...common,
+					type: 'number',
+					min: field.min,
+					max: field.max,
+					default: field.default,
+					step: field.step,
+				} satisfies Complete<NumberField>
+			case 'checkbox':
+				return {
+					...common,
+					type: 'checkbox',
+					default: field.default,
+				} satisfies Complete<CheckboxField>
 		}
 	})
 }
