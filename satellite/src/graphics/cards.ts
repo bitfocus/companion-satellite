@@ -2,8 +2,10 @@ import { readFile } from 'fs/promises'
 import { Canvas, Image, loadImage } from '@napi-rs/canvas'
 import * as imageRs from '@julusian/image-rs'
 import { networkInterfaces } from 'os'
+import type { HostCardGenerator } from '@companion-surface/host'
+import { uint8ArrayToBuffer } from './lib.js'
 
-export class CardGenerator {
+export class CardGenerator implements HostCardGenerator {
 	private iconImage: Image | undefined
 
 	async loadIcon(): Promise<Image> {
@@ -59,7 +61,7 @@ export class CardGenerator {
 		context2d.fillText(`Status: ${status}`, 10, height - 50)
 
 		// return result
-		const rawImage = Buffer.from(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
+		const rawImage = uint8ArrayToBuffer(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
 
 		const computedImage = await imageRs.ImageTransformer.fromBuffer(rawImage, canvasWidth, canvasHeight, 'rgba')
 			.scale(width, height, 'Exact')
@@ -112,7 +114,7 @@ export class CardGenerator {
 		context2d.fillText(`Status: ${status}`, 10, height - 50)
 
 		// return result
-		const rawImage = Buffer.from(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
+		const rawImage = uint8ArrayToBuffer(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
 
 		const computedImage = await imageRs.ImageTransformer.fromBuffer(rawImage, canvasWidth, canvasHeight, 'rgba')
 			.scale(width, height, 'Exact')
@@ -146,7 +148,7 @@ export class CardGenerator {
 		)
 
 		// return result
-		const rawImage = Buffer.from(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
+		const rawImage = uint8ArrayToBuffer(context2d.getImageData(0, 0, canvasWidth, canvasHeight).data)
 
 		return rawImage
 	}

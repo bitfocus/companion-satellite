@@ -1,4 +1,4 @@
-import type { SurfaceGraphicsContext } from './graphics/lib.js'
+import { uint8ArrayToBuffer, type SurfaceGraphicsContext } from './graphics/lib.js'
 import type {
 	DeviceDrawImageFn,
 	SurfaceContext,
@@ -271,7 +271,7 @@ export class SurfaceProxy {
 			const xy = this.#context.pincodeMap.nextPage
 			this.#drawPincodeButton(
 				xy,
-				(width, height) => Buffer.from(this.#graphics.locking.generatePincodeChar(width, height, '+')),
+				(width, height) => uint8ArrayToBuffer(this.#graphics.locking.generatePincodeChar(width, height, '+')),
 				'#ffffff',
 				'+',
 			)
@@ -286,7 +286,9 @@ export class SurfaceProxy {
 		this.#drawPincodeButton(
 			pincodeXy,
 			(width, height) =>
-				Buffer.from(this.#graphics.locking.generatePincodeValue(width, height, this.#pincodeCharacterCount)),
+				uint8ArrayToBuffer(
+					this.#graphics.locking.generatePincodeValue(width, height, this.#pincodeCharacterCount),
+				),
 			'#ffffff',
 			'*'.repeat(this.#pincodeCharacterCount),
 		)
@@ -303,7 +305,7 @@ export class SurfaceProxy {
 
 		this.#drawPincodeButton(
 			xy,
-			(width, height) => Buffer.from(this.#graphics.locking.generatePincodeChar(width, height, key)),
+			(width, height) => uint8ArrayToBuffer(this.#graphics.locking.generatePincodeChar(width, height, key)),
 			'#ffffff',
 			`${key}`,
 		)
