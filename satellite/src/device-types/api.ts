@@ -3,7 +3,7 @@ import type { CardGenerator } from '../graphics/cards.js'
 import EventEmitter from 'events'
 import type { PixelFormat } from '@julusian/image-rs'
 import type { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
-import type { GridSize } from '../surfaceProxy.js'
+import type { GridSize } from '@companion-surface/base'
 import type { SatelliteConfigFields } from '../generated/SatelliteConfigFieldsSchema.js'
 
 export type HIDDevice = HID.Device

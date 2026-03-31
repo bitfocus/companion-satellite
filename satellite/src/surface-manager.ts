@@ -1,4 +1,4 @@
-import { CompanionSatelliteClient } from './client.js'
+import { CompanionSatelliteClient } from './client/client.js'
 import { usb } from 'usb'
 import { CardGenerator } from './graphics/cards.js'
 import { SurfaceId, SurfacePlugin, DiscoveredSurfaceInfo } from './device-types/api.js'

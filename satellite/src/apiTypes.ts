@@ -1,5 +1,5 @@
 import Conf from 'conf'
-import { CompanionSatelliteClient } from './client.js'
+import { CompanionSatelliteClient } from './client/client.js'
 import { SatelliteConfig, SatelliteConfigInstance } from './config.js'
 import type { components as openapiComponents } from './generated/openapi.js'
 

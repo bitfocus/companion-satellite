@@ -10,19 +10,15 @@ import type {
 } from './device-types/api.js'
 import type { ClientCapabilities, CompanionClient, DeviceRegisterProps } from './device-types/api.js'
 import { DrawingState } from './graphics/drawingState.js'
-import { calculateGridSize, transformButtonImage } from './device-types/lib.js'
+import { transformButtonImage } from './device-types/lib.js'
 import {
 	SatelliteConfigSize,
 	SatelliteControlDefinition,
 	SatelliteControlStylePreset,
 } from './generated/SurfaceManifestSchema.js'
 import { createLogger, Logger } from './logging.js'
-import { CompanionSatelliteClientDrawProps } from './client.js'
-
-export interface GridSize {
-	rows: number
-	columns: number
-}
+import { CompanionSatelliteClientDrawProps } from './client/client.js'
+import { calculateGridSize } from './translateSchema.js'
 
 /**
  * A wrapper around a surface to handle pincode locking and other common tasks

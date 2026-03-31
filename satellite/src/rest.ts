@@ -4,7 +4,7 @@ import { koaBody } from 'koa-body'
 import serve from 'koa-static'
 import http from 'http'
 import type Conf from 'conf'
-import type { CompanionSatelliteClient } from './client.js'
+import type { CompanionSatelliteClient } from './client/client.js'
 import type { SurfaceManager } from './surface-manager.js'
 import type { SatelliteConfig } from './config.js'
 import {
