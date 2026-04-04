@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events'
-import { DeviceRegisterPropsComplete } from '../device-types/api.js'
 import { assertNever, Complete, DEFAULT_TCP_PORT } from '../lib.js'
 import * as semver from 'semver'
 import {
@@ -663,7 +662,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		return this._registeredDevices.has(deviceId) || this._pendingDevices.has(deviceId)
 	}
 
-	public addDevice(deviceId: string, productName: string, props: DeviceRegisterPropsComplete): void {
+	public addDevice(deviceId: string, productName: string, props: DeviceRegisterProps): void {
 		if (this._registeredDevices.has(deviceId)) {
 			throw new Error('Device is already registered')
 		}
@@ -699,9 +698,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			}
 
 			if (this.supportsSurfaceManifest) {
-				// const serialArgs: SatelliteMessageArgs = this._supportsDeviceSerial
-				// 	? { SERIAL: props.serialNumber, SERIAL_IS_UNIQUE: props.serialIsUnique }
-				// 	: {}
+				const serialArgs: SatelliteMessageArgs = this._supportsDeviceSerial
+					? { SERIAL: props.serialNumber, SERIAL_IS_UNIQUE: props.serialIsUnique }
+					: {}
 
 				const configFieldsArgs: SatelliteMessageArgs =
 					props.configFields && this._supportsDeviceSerial // CONFIG_FIELDS added in v1.10.0, same as serial
@@ -711,7 +710,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
 					...commonProps,
-					// ...serialArgs,
+					...serialArgs,
 					...configFieldsArgs,
 				})
 			} else {
