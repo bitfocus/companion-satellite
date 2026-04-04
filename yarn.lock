@@ -2186,10 +2186,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/query-core@npm:5.96.0":
-  version: 5.96.0
-  resolution: "@tanstack/query-core@npm:5.96.0"
-  checksum: 10c0/a23c96c36b4624fcda18afe98e1e17fa662e4001560b6a6535fab1cfca9caed00c40834f6eb785369aa8506092005cfd623440811c718d6f083e21a00837bc84
+"@tanstack/query-core@npm:5.96.2":
+  version: 5.96.2
+  resolution: "@tanstack/query-core@npm:5.96.2"
+  checksum: 10c0/a856fb9f35ae994e855023d980ac32ce4a1eec5fd94afa3e360cc795f84494a950d0afbf465f726bd8186889d3c457762ec2f627c2fd84fc23f5f4e1d3491d89
   languageName: node
   linkType: hard
 
@@ -2208,14 +2208,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/react-query@npm:^5.96.0":
-  version: 5.96.0
-  resolution: "@tanstack/react-query@npm:5.96.0"
+"@tanstack/react-query@npm:^5.96.2":
+  version: 5.96.2
+  resolution: "@tanstack/react-query@npm:5.96.2"
   dependencies:
-    "@tanstack/query-core": "npm:5.96.0"
+    "@tanstack/query-core": "npm:5.96.2"
   peerDependencies:
     react: ^18 || ^19
-  checksum: 10c0/a83010fc5dd98af34dcc01912b6f5e5f71fa8fcf3f26b902f50978312c345074f5f431de2ce042059f52bed495ed6997bf5702aabf4bc5b10bbc9e37c5c18448
+  checksum: 10c0/68528558fc208d921dde98ded3c140409ca55836623efb4e79ee9bd308cefe567c1e9e4cce5bebaa9a72a32e5397febb484b8b6842658b2cdff28de957c11f67
   languageName: node
   linkType: hard
 
@@ -2553,12 +2553,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:^24.12.0, @types/node@npm:^24.9.0":
-  version: 24.12.0
-  resolution: "@types/node@npm:24.12.0"
+"@types/node@npm:*, @types/node@npm:^24.12.2, @types/node@npm:^24.9.0":
+  version: 24.12.2
+  resolution: "@types/node@npm:24.12.2"
   dependencies:
     undici-types: "npm:~7.16.0"
-  checksum: 10c0/8b31c0af5b5474f13048a4e77c57f22cd4f8fe6e58c4b6fde9456b0c13f46a5bfaf5744ff88fd089581de9f0d6e99c584e022681de7acb26a58d258c654c4843
+  checksum: 10c0/710050c42f89075c4479e4e1e4c2532486b0c41b1e2a8a13ad88641c88b88cdaea87414e19224f30028719737bd70e327edcaa184d50e86b9418941edd7eb02b
   languageName: node
   linkType: hard
 
@@ -3427,30 +3427,30 @@ __metadata:
   linkType: hard
 
 "brace-expansion@npm:^1.1.7":
-  version: 1.1.12
-  resolution: "brace-expansion@npm:1.1.12"
+  version: 1.1.13
+  resolution: "brace-expansion@npm:1.1.13"
   dependencies:
     balanced-match: "npm:^1.0.0"
     concat-map: "npm:0.0.1"
-  checksum: 10c0/975fecac2bb7758c062c20d0b3b6288c7cc895219ee25f0a64a9de662dbac981ff0b6e89909c3897c1f84fa353113a721923afdec5f8b2350255b097f12b1f73
+  checksum: 10c0/384c61bb329b6adfdcc0cbbdd108dc19fb5f3e84ae15a02a74f94c6c791b5a9b035aae73b2a51929a8a478e2f0f212a771eb6a8b5b514cccfb8d0c9f2ce8cbd8
   languageName: node
   linkType: hard
 
 "brace-expansion@npm:^2.0.1, brace-expansion@npm:^2.0.2":
-  version: 2.0.2
-  resolution: "brace-expansion@npm:2.0.2"
+  version: 2.0.3
+  resolution: "brace-expansion@npm:2.0.3"
   dependencies:
     balanced-match: "npm:^1.0.0"
-  checksum: 10c0/6d117a4c793488af86b83172deb6af143e94c17bc53b0b3cec259733923b4ca84679d506ac261f4ba3c7ed37c46018e2ff442f9ce453af8643ecd64f4a54e6cf
+  checksum: 10c0/468436c9b2fa6f9e64d0cff8784b21300677571a7196e258593e95e7c3db9973a80fbafdb0f01404d5d298a04dc666eae1fc3c9052e2edbb9f2510541deeddfe
   languageName: node
   linkType: hard
 
 "brace-expansion@npm:^5.0.2":
-  version: 5.0.4
-  resolution: "brace-expansion@npm:5.0.4"
+  version: 5.0.5
+  resolution: "brace-expansion@npm:5.0.5"
   dependencies:
     balanced-match: "npm:^4.0.2"
-  checksum: 10c0/359cbcfa80b2eb914ca1f3440e92313fbfe7919ee6b274c35db55bec555aded69dac5ee78f102cec90c35f98c20fa43d10936d0cd9978158823c249257e1643a
+  checksum: 10c0/4d238e14ed4f5cc9c07285550a41cef23121ca08ba99fa9eb5b55b580dcb6bf868b8210aa10526bdc9f8dc97f33ca2a7259039c4cc131a93042beddb424c48e3
   languageName: node
   linkType: hard
 
@@ -3899,7 +3899,7 @@ __metadata:
     lint-staged: "npm:^16.4.0"
     openapi-fetch: "npm:^0.17.0"
     openapi-typescript: "npm:^7.13.0"
-    p-queue: "npm:^9.1.0"
+    p-queue: "npm:^9.1.1"
     p-retry: "npm:^8.0.0"
     prettier: "npm:^3.8.1"
     semver: "npm:^7.7.4"
@@ -4553,16 +4553,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron@npm:40.8.5":
-  version: 40.8.5
-  resolution: "electron@npm:40.8.5"
+"electron@npm:41.1.1":
+  version: 41.1.1
+  resolution: "electron@npm:41.1.1"
   dependencies:
     "@electron/get": "npm:^2.0.0"
     "@types/node": "npm:^24.9.0"
     extract-zip: "npm:^2.0.1"
   bin:
     electron: cli.js
-  checksum: 10c0/3874115299b101bada7f243afd1e0479c88a11fa534171a3d60d7933f4f0c382ef8e58aeaf91c963a2bb4d087ef3cd68065796b611a1dbaeb4b1205e680a23bd
+  checksum: 10c0/b52df5c263ee612e62b7d804bf97d739f2876b5b16cf46cf99ec338d59093cb066bf85d1ad77115d4839a5ea64bba66ecb27111696a409cbe64eb81c3e71449e
   languageName: node
   linkType: hard
 
@@ -8138,13 +8138,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"p-queue@npm:^9.1.0":
-  version: 9.1.0
-  resolution: "p-queue@npm:9.1.0"
+"p-queue@npm:^9.1.1":
+  version: 9.1.1
+  resolution: "p-queue@npm:9.1.1"
   dependencies:
     eventemitter3: "npm:^5.0.1"
     p-timeout: "npm:^7.0.0"
-  checksum: 10c0/f6bb4644997c20cbbf68c0c88208283697c6c9b1e1879f2073791b1ffcb2d2eb0a9fe35c9631e0c74bd6562ef159b87b418d48df7e7b30e5ddb4d99055bb5c92
+  checksum: 10c0/d6aaf2b3f862d87aeb295eafd679d9b7be5c60e8b9ee86c0b7016355fc7fc195545e95a37066849f54d6ab4c5193924c0edbbf0bf135248e6c71e143f93d6070
   languageName: node
   linkType: hard
 
@@ -8328,9 +8328,9 @@ __metadata:
   linkType: hard
 
 "picomatch@npm:^4.0.2, picomatch@npm:^4.0.3":
-  version: 4.0.3
-  resolution: "picomatch@npm:4.0.3"
-  checksum: 10c0/9582c951e95eebee5434f59e426cddd228a7b97a0161a375aed4be244bd3fe8e3a31b846808ea14ef2c8a2527a6eeab7b3946a67d5979e81694654f939473ae2
+  version: 4.0.4
+  resolution: "picomatch@npm:4.0.4"
+  checksum: 10c0/e2c6023372cc7b5764719a5ffb9da0f8e781212fa7ca4bd0562db929df8e117460f00dff3cb7509dacfc06b86de924b247f504d0ce1806a37fac4633081466b0
   languageName: node
   linkType: hard
 
@@ -9167,13 +9167,13 @@ __metadata:
     "@types/eslint": "npm:^9.6.1"
     "@types/koa": "npm:^3.0.2"
     "@types/koa-static": "npm:^4.0.4"
-    "@types/node": "npm:^24.12.0"
+    "@types/node": "npm:^24.12.2"
     "@types/semver": "npm:^7.7.1"
     "@types/ws": "npm:^8.18.1"
     "@xencelabs-quick-keys/node": "npm:^1.0.0"
     conf: "npm:^15.1.0"
     debounce-fn: "npm:^6.0.0"
-    electron: "npm:40.8.5"
+    electron: "npm:41.1.1"
     electron-builder: "npm:^26.8.2"
     electron-store: "npm:^11.0.2"
     electron-updater: "npm:^6.8.3"
@@ -10642,7 +10642,7 @@ __metadata:
     "@tailwindcss/postcss": "npm:^4.2.2"
     "@tailwindcss/vite": "npm:^4.2.2"
     "@tanstack/react-form": "npm:^1.28.6"
-    "@tanstack/react-query": "npm:^5.96.0"
+    "@tanstack/react-query": "npm:^5.96.2"
     "@types/react": "npm:^19.2.14"
     "@types/react-dom": "npm:^19.2.3"
     "@vitejs/plugin-react": "npm:^5.2.0"
@@ -10889,11 +10889,11 @@ __metadata:
   linkType: hard
 
 "yaml@npm:^2.8.2":
-  version: 2.8.2
-  resolution: "yaml@npm:2.8.2"
+  version: 2.8.3
+  resolution: "yaml@npm:2.8.3"
   bin:
     yaml: bin.mjs
-  checksum: 10c0/703e4dc1e34b324aa66876d63618dcacb9ed49f7e7fe9b70f1e703645be8d640f68ab84f12b86df8ac960bac37acf5513e115de7c970940617ce0343c8c9cd96
+  checksum: 10c0/ddff0e11c1b467728d7eb4633db61c5f5de3d8e9373cf84d08fb0cdee03e1f58f02b9f1c51a4a8a865751695addbd465a77f73f1079be91fe5493b29c305fd77
   languageName: node
   linkType: hard
 
