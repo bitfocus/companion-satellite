@@ -1,3 +1,4 @@
+/* eslint-disable n/no-process-exit */
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import pQueue from 'p-queue'
@@ -28,6 +29,8 @@ function isSurfaceApiVersionCompatible(version: string): boolean {
 
 console.log('existing modules:\n', existingModules)
 
+const errors: Error[] = []
+
 const moduleQueue = new pQueue({
 	concurrency: 10,
 })
@@ -36,6 +39,7 @@ for (const moduleId of Object.keys(existingModules)) {
 		await pRetry(
 			async () => {
 				const res = await fetch(`${baseUrl}/v1/companion/modules/surface/${moduleId}`, {
+					signal: AbortSignal.timeout(10000),
 					headers: { 'User-Agent': userAgent },
 				})
 				if (!res.ok) {
@@ -74,13 +78,19 @@ for (const moduleId of Object.keys(existingModules)) {
 				retries: 3,
 			},
 		).catch((err) => {
-			throw new Error(`Failed to fetch ${moduleId}: ${err}`)
+			errors.push(new Error(`Failed to fetch ${moduleId}: ${err}`))
 		})
 	})
 }
 
 // Wait for all modules to be processed
 await moduleQueue.onIdle()
+
+if (errors.length > 0) {
+	console.error('Errors occurred while fetching modules:')
+	errors.forEach((err) => console.error(err.message))
+	process.exit(1)
+}
 
 console.log('All modules processed')
 
