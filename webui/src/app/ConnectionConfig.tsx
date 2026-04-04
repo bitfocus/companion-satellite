@@ -100,7 +100,13 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 											placeholder="Companion address (eg 127.0.0.1 or companion.local)"
 											value={field.state.value}
 											onBlur={field.handleBlur}
-											onChange={(e) => field.handleChange(e.target.value)}
+											onChange={(e) => {
+												let value = e.target.value
+												value = value.trim()
+												value = value.replace(/^https?:\/\//, '')
+												value = value.replace(/\/+$/, '')
+												field.handleChange(value)
+											}}
 										/>
 									</FormRow>
 								)}
