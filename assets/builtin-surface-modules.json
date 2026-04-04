@@ -1,0 +1,47 @@
+{
+	"blackmagic-controller": {
+		"version": "v1.0.3",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/blackmagic-controller/v1.0.3-daafc35e23f2958bfad64c1f29bc4ae4d28a9dbf/blackmagic-controller-v1.0.3.tgz",
+		"tarSha": "ac84682b5adf563176baaf66fa45e4e406f27a5bf09c1cd387e951b693fb70e6"
+	},
+	"contour-shuttle": {
+		"version": "v1.0.2",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/contour-shuttle/v1.0.2-8a12e6a96970700f0434a6d2193933a1ce42c8cd/contour-shuttle-v1.0.2.tgz",
+		"tarSha": "7e06a3e3ee661612858bc5ad8b24c5b7479eb6cc5dce6b9654ff9706f5d1de38"
+	},
+	"elgato-stream-deck": {
+		"version": "v1.2.3",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/elgato-stream-deck/v1.2.3-6727b3ae934a9f4aaa426a275fb2e76a16a7d227/elgato-stream-deck-v1.2.3.tgz",
+		"tarSha": "547e192b30c435dc524076066ce1ee37ece287a5dd2f2f668bbe594ff6226faa"
+	},
+	"idisplay-infinitton": {
+		"version": "v1.0.1",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/idisplay-infinitton/v1.0.1-e803b5ff8c4bb5c097873a12f90123652261fae1/idisplay-infinitton-v1.0.1.tgz",
+		"tarSha": "b9f6dedb9dbda553702d0ab648679d5a388cbe4cd0368d918ae1edfb8cf6cf05"
+	},
+	"loupedeck": {
+		"version": "v1.0.2",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/loupedeck/v1.0.2-473ac7952ecb0d3f7f4e38d104932bb25cd7c8b8/loupedeck-v1.0.2.tgz",
+		"tarSha": "4142af8275f5c0afd7b5cf8c1d629be86bf257ceb4cb1502782603877a4907ff"
+	},
+	"mirabox-stream-dock": {
+		"version": "v1.2.0",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/mirabox-stream-dock/v1.2.0-ae27380f73dc926f72391dc2e1ba7ca760bba57c/mirabox-stream-dock-v1.2.0.tgz",
+		"tarSha": "fa9305a2e8d919511443c2596af49c2a4ed5872e3ec1c721b7d4e1760e993860"
+	},
+	"vec-footpedal": {
+		"version": "v1.0.2",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/vec-footpedal/v1.0.2-bcffd4c208c8647e667684f394f2c415928d9e50/vec-footpedal-v1.0.2.tgz",
+		"tarSha": "1d59311172af507e65638f13f805c9259de91be0f6eb78d58339ae97edb4218b"
+	},
+	"xencelabs-quick-keys": {
+		"version": "v1.0.2",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/xencelabs-quick-keys/v1.0.2-743bffe542c671e596649a9cc3a207b0e9331280/xencelabs-quick-keys-v1.0.2.tgz",
+		"tarSha": "22fb3083ac0b244d1c195d44af24a7808df9c04cfcfef5f89eab682e625446ad"
+	},
+	"xkeys": {
+		"version": "v1.0.2",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/xkeys/v1.0.2-876f00ee194faa57ec14468b7019bbaa516a9e6d/xkeys-v1.0.2.tgz",
+		"tarSha": "2d8243d166fdd21208b3c008899a2a2f1c4ab4c5a4a3daebc8f49db3d65809a7"
+	}
+}
