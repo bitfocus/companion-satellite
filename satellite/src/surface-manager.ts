@@ -103,8 +103,13 @@ export class SurfaceManager {
 
 	readonly #plugins = new Map<string, PluginWrapper2>()
 
-	/** Tracks discovered device paths to their resolved surface IDs */
-	readonly #discoveredPaths = new Map<string, string>()
+	/**
+	 * Stable ID registry — key: `${baseSurfaceId}||${pluginId}:${devicePath}` → resolvedSurfaceId.
+	 * Persists across rescans so the same physical device always gets the same resolved ID.
+	 */
+	readonly #idRegistryCache = new Map<string, string>()
+	/** Reverse map: resolvedSurfaceId → cacheKey (used for collision checking during ID assignment) */
+	readonly #idRegistryReverse = new Map<string, string>()
 	/** Stashed CheckDeviceResult info from shouldOpenDiscoveredSurface, keyed by resolvedSurfaceId */
 	readonly #discoveredInfo = new Map<string, CheckDeviceResult>()
 
@@ -125,41 +130,54 @@ export class SurfaceManager {
 		try {
 			for (const rawPlugin of rawPlugins) {
 				try {
+					const pluginId = rawPlugin.info.pluginId
+					// pluginRef is set immediately after construction; PluginWrapper never calls
+					// notifyOpenedDiscoveredSurface synchronously, so this is always set in time.
+					let pluginRef: PluginWrapper2 | null = null
+
 					const hostContextFull: SurfaceHostContext = {
 						...hostContext,
-						notifyOpenedDiscoveredSurface: async (_info: OpenDeviceResult) => {
-							throw new Error('Not implemented')
+						shouldOpenDiscoveredSurface: async (
+							info: CheckDeviceResult,
+						): Promise<ShouldOpenSurfaceResult> => {
+							const resolvedSurfaceId = manager.#resolveUniqueSurfaceId(
+								info.surfaceId,
+								info.surfaceIdIsNotUnique,
+								pluginId,
+								info.devicePath,
+							)
+							manager.#discoveredInfo.set(resolvedSurfaceId, info)
+							return { shouldOpen: true, resolvedSurfaceId }
+						},
+						forgetDiscoveredSurfaces: (devicePaths: string[]) => {
+							for (const devicePath of devicePaths) {
+								manager.#forgetSurfaceId(pluginId, devicePath)
+							}
+						},
+						notifyOpenedDiscoveredSurface: async (info: OpenDeviceResult) => {
+							if (!pluginRef) throw new Error('Plugin not initialized')
+							const discoveredInfo = manager.#discoveredInfo.get(info.surfaceId)
+							if (!discoveredInfo) {
+								manager.#logger.warn(
+									`No discovered info for surface: ${info.surfaceId}, using defaults`,
+								)
+							}
+							const checkResult: CheckDeviceResult = discoveredInfo ?? {
+								devicePath: '',
+								surfaceId: info.surfaceId,
+								surfaceIdIsNotUnique: false,
+								description: info.description,
+							}
+							if (!manager.#tryAddSurfaceFromPlugin(pluginRef, checkResult, { type: 'detect', info })) {
+								manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
+							}
 						},
 					}
-					const wrappedPlugin = new PluginWrapper2(hostContextFull, rawPlugin)
+					pluginRef = new PluginWrapper2(hostContextFull, rawPlugin)
 
-					// TODO: this is pretty horrible
-					;(hostContextFull as any).notifyOpenedDiscoveredSurface = async (info: OpenDeviceResult) => {
-						// Retrieve the stashed CheckDeviceResult from shouldOpenDiscoveredSurface
-						const discoveredInfo = manager.#discoveredInfo.get(info.surfaceId)
-						if (!discoveredInfo) {
-							manager.#logger.warn(`No discovered info for surface: ${info.surfaceId}, using defaults`)
-						}
-						const checkResult: CheckDeviceResult = discoveredInfo ?? {
-							devicePath: '',
-							surfaceId: info.surfaceId,
-							surfaceIdIsNotUnique: false,
-							description: info.description,
-						}
-						if (
-							!manager.#tryAddSurfaceFromPlugin(wrappedPlugin, checkResult, {
-								type: 'detect',
-								info,
-							})
-						) {
-							manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
-						}
-					}
-
-					manager.#plugins.set(rawPlugin.info.pluginId, wrappedPlugin)
+					manager.#plugins.set(pluginId, pluginRef)
 				} catch (e) {
 					manager.#logger.error(`Failed to load plugin "${rawPlugin.info.pluginId}": ${e}`)
-					continue
 				}
 			}
 
@@ -178,7 +196,10 @@ export class SurfaceManager {
 		return manager
 	}
 
-	private createHostContext(): Omit<SurfaceHostContext, 'notifyOpenedDiscoveredSurface'> {
+	private createHostContext(): Omit<
+		SurfaceHostContext,
+		'notifyOpenedDiscoveredSurface' | 'shouldOpenDiscoveredSurface' | 'forgetDiscoveredSurfaces'
+	> {
 		const runForSurface = (surfaceId: string, fn: (surface: SurfaceInfo) => void) => {
 			try {
 				const surface = this.#getWrappedSurface(surfaceId)
@@ -201,7 +222,7 @@ export class SurfaceManager {
 				disconnected: (surfaceId: string) => {
 					this.#logger.debug(`Plugin surface disconnected: ${surfaceId}`)
 
-					// this.#ipcWrapper.sendWithNoCb('disconnect', { surfaceId, reason: null })
+					this.#cleanupSurfaceById(surfaceId)
 				},
 				inputPress: (surfaceId: string, controlId: string, pressed: boolean) => {
 					runForSurface(surfaceId, (surface) => {
@@ -243,30 +264,6 @@ export class SurfaceManager {
 						this.#client.sendFirmwareUpdateInfo(surfaceId, '')
 					}
 				},
-			},
-
-			shouldOpenDiscoveredSurface: async (info: CheckDeviceResult): Promise<ShouldOpenSurfaceResult> => {
-				const resolvedSurfaceId = this.#resolveUniqueSurfaceId(info.surfaceId)
-
-				// Track by devicePath for forgetDiscoveredSurfaces
-				if (info.devicePath) {
-					this.#discoveredPaths.set(info.devicePath, resolvedSurfaceId)
-				}
-
-				// Stash the original info so notifyOpenedDiscoveredSurface can retrieve serialNumber/serialIsUnique
-				this.#discoveredInfo.set(resolvedSurfaceId, info)
-
-				return { shouldOpen: true, resolvedSurfaceId }
-			},
-
-			forgetDiscoveredSurfaces: (devicePaths: string[]) => {
-				for (const devicePath of devicePaths) {
-					const resolvedId = this.#discoveredPaths.get(devicePath)
-					if (resolvedId) {
-						this.#discoveredPaths.delete(devicePath)
-						this.#discoveredInfo.delete(resolvedId)
-					}
-				}
 			},
 
 			connectionsFound: (_connectionInfos) => {
@@ -507,9 +504,7 @@ export class SurfaceManager {
 
 	#onUsbDetach = (_dev: usb.Device): void => {
 		// Rescan after a short timeout
-		// setTimeout(() => this.scanDevices(), 100)
-		// console.log('Lost a device', dev.deviceDescriptor)
-		// this.cleanupDeviceById(dev.serialNumber)
+		setTimeout(() => this.scanForSurfaces(), 1000)
 	}
 
 	#cleanupSurfaceById(surfaceId: string): void {
@@ -589,6 +584,7 @@ export class SurfaceManager {
 							for (const [pluginId, plugin] of this.#plugins.entries()) {
 								const info = await plugin.checkHidDevice(hidDevice)
 								if (!info || !this.isPluginEnabled(pluginId)) continue
+								info.surfaceId = 'abc123'
 
 								this.#tryAddSurfaceFromPlugin(plugin, info, {
 									type: 'hid',
@@ -701,9 +697,17 @@ export class SurfaceManager {
 	): boolean {
 		// For the 'detect' path, PluginWrapper already called shouldOpenDiscoveredSurface
 		// and the OpenDeviceResult.surfaceId is already the resolvedSurfaceId.
-		// For 'hid'/'scan' paths, we resolve the ID ourselves.
+		// For 'hid'/'scan' paths, we resolve the ID ourselves using the stable cache.
+		const devicePath = openInfo.type === 'hid' ? openInfo.hid.path : pluginInfo.devicePath
 		const resolvedSurfaceId =
-			openInfo.type === 'detect' ? openInfo.info.surfaceId : this.#resolveUniqueSurfaceId(pluginInfo.surfaceId)
+			openInfo.type === 'detect'
+				? openInfo.info.surfaceId
+				: this.#resolveUniqueSurfaceId(
+						pluginInfo.surfaceId,
+						pluginInfo.surfaceIdIsNotUnique,
+						plugin.info.pluginId,
+						devicePath,
+					)
 
 		if (this.#pendingSurfaces.has(resolvedSurfaceId) || this.#surfaces.has(resolvedSurfaceId)) return false
 		this.#pendingSurfaces.add(resolvedSurfaceId)
@@ -769,21 +773,50 @@ export class SurfaceManager {
 	}
 
 	/**
-	 * Resolve a unique surface ID, appending a counter suffix if the base ID is already in use.
+	 * Return a stable collision-resolved surface ID for a device.
+	 *
+	 * The cache key is `{baseSurfaceId}||{pluginId}:{devicePath}`. If the same
+	 * (surfaceId, pluginId, devicePath) tuple has been seen before, the same
+	 * resolved ID is returned — regardless of whether the device is currently open.
+	 * This prevents re-scans from generating new IDs for already-open devices.
+	 *
+	 * Collisions (two different devices sharing the same base surfaceId) are broken
+	 * by appending `-dev2`, `-dev3`, … matching Companion's suffix convention.
 	 */
-	#resolveUniqueSurfaceId(baseSurfaceId: string): string {
-		if (!this.#pendingSurfaces.has(baseSurfaceId) && !this.#surfaces.has(baseSurfaceId)) {
-			return baseSurfaceId
-		}
+	#resolveUniqueSurfaceId(
+		baseSurfaceId: string,
+		surfaceIdIsNotUnique: boolean,
+		pluginId: string,
+		devicePath: string,
+	): string {
+		const cacheKey = `${baseSurfaceId}||${pluginId}:${devicePath}`
 
-		let counter = 2
-		while (
-			this.#pendingSurfaces.has(`${baseSurfaceId}-${counter}`) ||
-			this.#surfaces.has(`${baseSurfaceId}-${counter}`)
-		) {
-			counter++
+		const cached = this.#idRegistryCache.get(cacheKey)
+		if (cached !== undefined) return cached
+
+		for (let i = 1; ; i++) {
+			const resolvedId = i > 1 || surfaceIdIsNotUnique ? `${baseSurfaceId}-dev${i}` : baseSurfaceId
+			if (!this.#idRegistryReverse.has(resolvedId)) {
+				this.#idRegistryCache.set(cacheKey, resolvedId)
+				this.#idRegistryReverse.set(resolvedId, cacheKey)
+				return resolvedId
+			}
 		}
-		return `${baseSurfaceId}-${counter}`
+	}
+
+	/**
+	 * Remove the ID registry entry for a device that is no longer present.
+	 * Called from the per-plugin forgetDiscoveredSurfaces handler.
+	 */
+	#forgetSurfaceId(pluginId: string, devicePath: string): void {
+		const pathSuffix = `||${pluginId}:${devicePath}`
+		for (const [key, resolvedId] of this.#idRegistryCache.entries()) {
+			if (key.endsWith(pathSuffix)) {
+				this.#idRegistryCache.delete(key)
+				this.#idRegistryReverse.delete(resolvedId)
+				break
+			}
+		}
 	}
 
 	#statusCardTimer: NodeJS.Timeout | undefined
