@@ -178,6 +178,8 @@ export interface components {
             pluginId: string;
             /** @description Plugin name of the surface */
             pluginName: string;
+            /** @description Version of the plugin */
+            version: string;
             /** @description Comment about the plugin */
             pluginComment?: string[];
         };

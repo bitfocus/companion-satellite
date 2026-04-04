@@ -12,7 +12,7 @@ import {
 	ShouldOpenSurfaceResult,
 	SurfaceHostContext,
 } from '@companion-surface/host'
-import { HIDDevice, SurfaceDrawProps, SurfacePlugin as SurfacePlugin2 } from '@companion-surface/base'
+import { HIDDevice, SurfaceDrawProps } from '@companion-surface/base'
 import type { SurfaceSchemaLayoutDefinition } from '@companion-surface/base'
 import { LockingGraphicsGeneratorImpl } from './graphics/locking.js'
 import {
@@ -21,16 +21,7 @@ import {
 	translateModuleToSatelliteConfigFields,
 	calculateGridSize,
 } from './translateSchema.js'
-
-// @ts-expect-error No types because module-local-dev
-// eslint-disable-next-line n/no-missing-import
-import StreamDeckPlugin from '../../../module-local-dev/companion-surface-elgato-stream-deck/dist/main.js'
-// @ts-expect-error No types because module-local-dev
-// eslint-disable-next-line n/no-missing-import
-import QuickKeysPlugin from '../../../module-local-dev/companion-surface-xencelabs-quick-keys/dist/main.js'
-// @ts-expect-error No types because module-local-dev
-// eslint-disable-next-line n/no-missing-import
-import LoupedeckPlugin from '../../../module-local-dev/companion-surface-loupedeck/dist/main.js'
+import { loadSurfacePlugins, type LoadedPlugin } from './surface-plugin-loader.js'
 import { createHash } from 'node:crypto'
 import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
 
@@ -40,44 +31,9 @@ HID.devices()
 
 export type SurfaceId = string
 
-interface RawPluginsInfo {
-	info: ApiSurfacePluginInfo
-	plugin: SurfacePlugin2<unknown>
-}
-
-const rawPlugins: RawPluginsInfo[] = [
-	{
-		info: {
-			pluginId: 'elgato-stream-deck',
-			pluginName: 'Elgato Stream Deck',
-		},
-		plugin: StreamDeckPlugin,
-	},
-	{
-		info: {
-			pluginId: 'xencelabs-quick-keys',
-			pluginName: 'Xencelabs Quick Keys',
-		},
-		plugin: QuickKeysPlugin,
-	},
-	{
-		info: {
-			pluginId: 'loupedeck',
-			pluginName: 'Loupedeck',
-		},
-		plugin: LoupedeckPlugin,
-	},
-	// new StreamDeckPlugin(),
-	// new InfinittonPlugin(),
-	// new LoupedeckPlugin(),
-	// new QuickKeysPlugin(),
-	// new BlackmagicControllerPlugin(),
-	// new ContourShuttlePlugin(),
-]
-
-class PluginWrapper2 extends PluginWrapper<unknown> {
+class PluginWrapperExt extends PluginWrapper<unknown> {
 	readonly info: ApiSurfacePluginInfo
-	constructor(host: SurfaceHostContext, plugin: RawPluginsInfo) {
+	constructor(host: SurfaceHostContext, plugin: LoadedPlugin) {
 		super(host, plugin.plugin)
 
 		this.info = plugin.info
@@ -101,7 +57,7 @@ export class SurfaceManager {
 	readonly #pendingSurfaces: Set<SurfaceId>
 	readonly #client: CompanionSatelliteClient
 
-	readonly #plugins = new Map<string, PluginWrapper2>()
+	readonly #plugins = new Map<string, PluginWrapperExt>()
 
 	/**
 	 * Stable ID registry — key: `${baseSurfaceId}||${pluginId}:${devicePath}` → resolvedSurfaceId.
@@ -127,13 +83,15 @@ export class SurfaceManager {
 
 		const hostContext = manager.createHostContext()
 
+		const rawPlugins = await loadSurfacePlugins()
+
 		try {
 			for (const rawPlugin of rawPlugins) {
 				try {
 					const pluginId = rawPlugin.info.pluginId
 					// pluginRef is set immediately after construction; PluginWrapper never calls
 					// notifyOpenedDiscoveredSurface synchronously, so this is always set in time.
-					let pluginRef: PluginWrapper2 | null = null
+					let pluginRef: PluginWrapperExt | null = null
 
 					const hostContextFull: SurfaceHostContext = {
 						...hostContext,
@@ -173,7 +131,7 @@ export class SurfaceManager {
 							}
 						},
 					}
-					pluginRef = new PluginWrapper2(hostContextFull, rawPlugin)
+					pluginRef = new PluginWrapperExt(hostContextFull, rawPlugin)
 
 					manager.#plugins.set(pluginId, pluginRef)
 				} catch (e) {
@@ -486,7 +444,7 @@ export class SurfaceManager {
 		if (!surface) throw new Error(`Missing device for serial: "${surfaceId}"`)
 		return surface
 	}
-	#getPluginForSurface(surfaceId: string): PluginWrapper2 {
+	#getPluginForSurface(surfaceId: string): PluginWrapperExt {
 		const surface = this.#getWrappedSurface(surfaceId)
 		const plugin = this.#plugins.get(surface.pluginId)
 		if (!plugin) throw new Error(`Missing plugin for surface: "${surfaceId}"`)
@@ -668,7 +626,7 @@ export class SurfaceManager {
 			}
 		}
 
-		// Disable any surfaces whose plugin has beendisabled
+		// Disable any surfaces whose plugin has been disabled
 		for (const [surfaceId, surface] of this.#surfaces.entries()) {
 			if (this.isPluginEnabled(surface.pluginId)) continue
 
@@ -680,7 +638,7 @@ export class SurfaceManager {
 	}
 
 	#tryAddSurfaceFromPlugin(
-		plugin: PluginWrapper2,
+		plugin: PluginWrapperExt,
 		pluginInfo: CheckDeviceResult,
 		openInfo:
 			| {

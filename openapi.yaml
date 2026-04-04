@@ -291,6 +291,9 @@ components:
         pluginName:
           type: string
           description: Plugin name of the surface
+        version:
+          type: string
+          description: Version of the plugin
         pluginComment:
           type: array
           items:
@@ -299,3 +302,4 @@ components:
       required:
         - pluginId
         - pluginName
+        - version

@@ -31,7 +31,7 @@ export function SurfacePluginsTab(): JSX.Element {
 			<p className="text-sm text-gray-500 p-1">
 				Here you can enable or disable support for the different surface types.
 				<br />
-				In the future, we expect to make these be installable plugins.
+				Unlike Companion, these plugins cannot be updated without updating Satellite.
 			</p>
 
 			{surfacePlugins.isLoading || surfacePluginsEnabled.isLoading ? (
@@ -87,7 +87,11 @@ function SurfacePluginsConfig({
 						name={plugin.pluginId}
 						children={(field) => (
 							<>
-								<Label className="justify-self-end content-center col-span-2" htmlFor={field.name}>
+								<Label
+									className="justify-self-end content-center col-span-2"
+									htmlFor={field.name}
+									title={`v${plugin.version}`}
+								>
 									{plugin.pluginName}
 								</Label>
 								<div className="col-span-3 content-center">
@@ -121,7 +125,7 @@ function SurfacePluginsConfig({
 					children={([canSubmit, isSubmitting, isDirty]) => (
 						<div className="col-span-3 col-start-3 flex justify-start">
 							<Button type="submit" disabled={!canSubmit || !isDirty}>
-								{isSubmitting ? '...' : 'Submit'}
+								{isSubmitting ? '...' : 'Save'}
 							</Button>
 						</div>
 					)}
