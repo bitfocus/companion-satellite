@@ -329,7 +329,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this._lastReceivedAt = Date.now()
 		this.receiveBuffer += data
 
-		let i = -1
+		let i: number
 		let offset = 0
 		while ((i = this.receiveBuffer.indexOf('\n', offset)) !== -1) {
 			let line = this.receiveBuffer.substring(offset, i)

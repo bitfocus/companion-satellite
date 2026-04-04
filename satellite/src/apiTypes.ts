@@ -1,6 +1,6 @@
 import Conf from 'conf'
-import { CompanionSatelliteClient } from './client/client.js'
-import { SatelliteConfig, SatelliteConfigInstance } from './config.js'
+import type { CompanionSatelliteClient } from './client/client.js'
+import type { SatelliteConfig, SatelliteConfigInstance } from './config.js'
 import type { components as openapiComponents } from './generated/openapi.js'
 
 export type ApiStatusResponse = openapiComponents['schemas']['StatusResponse']

@@ -2,8 +2,7 @@
 	"extends": "@tsconfig/node24/tsconfig.json",
 	"include": ["**/*.ts", "**/*.cts", "**/*.mts"],
 	"compilerOptions": {
-		"outDir": "./dist",
-		"baseUrl": "./",
+		"rootDir": "./",
 		"paths": {
 			"*": ["./node_modules/*"],
 		},

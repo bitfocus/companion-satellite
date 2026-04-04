@@ -4,6 +4,7 @@
 		//
 		{ "path": "satellite" },
 		{ "path": "webui" },
-		{ "path": "tools" }
+		{ "path": "webui/tsconfig.node.json" },
+		{ "path": "tools" },
 	]
 }

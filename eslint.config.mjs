@@ -1,4 +1,3 @@
-/* eslint-disable n/no-extraneous-import */
 // @ts-check
 
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'

@@ -6,9 +6,10 @@
 		"module": "ESNext",
 		"skipLibCheck": true,
 
-		"baseUrl": ".",
+		"rootDir": "./src",
 		"paths": {
 			"@/*": ["./src/*"]
+			// "@app/*": ["../app/*"]
 		},
 
 		/* Bundler mode */
@@ -26,5 +27,5 @@
 		"noFallthroughCasesInSwitch": true
 	},
 	"include": ["src"],
-	"references": [{ "path": "./tsconfig.node.json" }]
+	"references": [{ "path": "../satellite/tsconfig.build.json" }]
 }

@@ -69,8 +69,6 @@ async function fetchSinglePackage(moduleId: string, moduleInfo: Record<string, a
 	// Download into memory with a size limit
 	const chunks: Uint8Array[] = []
 	let bytesReceived = 0
-	// @ts-expect-error Something..
-	// eslint-disable-next-line @typescript-eslint/await-thenable
 	for await (const chunk of response.body as ReadableStream<Uint8Array>) {
 		bytesReceived += chunk.byteLength
 		if (bytesReceived > MAX_MODULE_TAR_SIZE) {
