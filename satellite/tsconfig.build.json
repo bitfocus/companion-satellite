@@ -4,7 +4,7 @@
 	"exclude": ["node_modules/**", "src/**/*spec.ts", "src/**/__tests__/*", "src/**/__mocks__/*"],
 	"compilerOptions": {
 		"outDir": "./dist",
-		"baseUrl": "./",
+		"rootDir": "./src",
 		"paths": {
 			"*": ["./node_modules/*"],
 			"{{PACKAGE-NAME}}": ["./src/index.ts"]
@@ -13,6 +13,7 @@
 		"lib": ["dom"],
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
-		"declaration": true
+		"declaration": true,
+		"composite": true
 	}
 }

@@ -59,7 +59,7 @@
     "semver": "^7.7.4",
     "tar-fs": "^3.1.2",
     "tsx": "^4.21.0",
-    "typescript": "~5.9.3",
+    "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.0",
     "zx": "^8.8.5"
   },
