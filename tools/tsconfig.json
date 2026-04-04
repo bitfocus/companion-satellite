@@ -11,6 +11,9 @@
 		"lib": ["dom"],
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
-		"declaration": true
+		"declaration": true,
+		"esModuleInterop": true,
+		"noEmit": true,
+		"allowImportingTsExtensions": true
 	}
 }
