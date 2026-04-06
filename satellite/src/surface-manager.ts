@@ -553,7 +553,7 @@ export class SurfaceManager {
 				.then(async (devices) => {
 					await Promise.all(
 						devices.map(async (device) => {
-							if (!device.path || !device.serialNumber) return
+							if (!device.path) return
 
 							const hidDevice: HIDDevice = {
 								vendorId: device.vendorId,
@@ -574,9 +574,10 @@ export class SurfaceManager {
 							} satisfies Complete<HIDDevice>
 
 							for (const [pluginId, plugin] of this.#plugins.entries()) {
+								if (!this.isPluginEnabled(pluginId)) continue
+
 								const info = await plugin.checkHidDevice(hidDevice)
-								if (!info || !this.isPluginEnabled(pluginId)) continue
-								info.surfaceId = 'abc123'
+								if (!info) continue
 
 								this.#tryAddSurfaceFromPlugin(plugin, info, {
 									type: 'hid',
