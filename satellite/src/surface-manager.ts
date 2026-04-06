@@ -384,10 +384,42 @@ export class SurfaceManager {
 				async (msg) => {
 					const plugin = this.#getPluginForSurface(msg.deviceId)
 
-					await plugin.readySurface(msg.deviceId, {}) // Config for future use
+					let config: Record<string, unknown> = {}
+					if (this.#client.supportsDeviceSerial) {
+						// Companion (v1.10+) sends DEVICE-CONFIG immediately after acknowledging ADD-DEVICE
+						// if there is stored config. Wait briefly to pick it up before calling readySurface.
+						config = await new Promise<Record<string, unknown>>((resolve) => {
+							const timer = setTimeout(() => {
+								client.off('deviceConfig', onConfig)
+								resolve({})
+							}, 100)
+							const onConfig = (cfgMsg: { deviceId: string; config: Record<string, unknown> }) => {
+								if (cfgMsg.deviceId !== msg.deviceId) return
+								clearTimeout(timer)
+								client.off('deviceConfig', onConfig)
+								resolve(cfgMsg.config)
+							}
+							client.on('deviceConfig', onConfig)
+						})
+					}
+
+					await plugin.readySurface(msg.deviceId, config)
 				},
 				(e) => {
 					this.#logger.error(`Setup device: ${e}`)
+				},
+			),
+		)
+		client.on(
+			'deviceConfig',
+			wrapAsync(
+				async (msg) => {
+					const plugin = this.#getPluginForSurface(msg.deviceId)
+
+					await plugin.updateConfig(msg.deviceId, msg.config)
+				},
+				(e) => {
+					this.#logger.error(`Device config update: ${e}`)
 				},
 			),
 		)
