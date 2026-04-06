@@ -668,9 +668,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 
 		const pendingTime = this._pendingDevices.get(deviceId)
-		if (pendingTime && pendingTime < Date.now() - 10000) {
+		if (pendingTime && pendingTime > Date.now() - 10000) {
 			throw new Error('Device is already being added')
 		}
+		if (pendingTime) this._pendingDevices.delete(deviceId)
 
 		if (this._connected && this.socket) {
 			this._pendingDevices.set(deviceId, Date.now())

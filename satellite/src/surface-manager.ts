@@ -301,7 +301,8 @@ export class SurfaceManager {
 
 					let controlId = msg.controlId
 					if (!controlId) {
-						if (!msg.keyIndex) throw new Error('No controlId or keyIndex provided for draw command')
+						if (typeof msg.keyIndex !== 'number')
+							throw new Error('No controlId or keyIndex provided for draw command')
 
 						const row = Math.floor(msg.keyIndex / surface.registerProps.gridSize.columns)
 						const column = msg.keyIndex % surface.registerProps.gridSize.columns

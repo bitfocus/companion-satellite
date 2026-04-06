@@ -141,7 +141,7 @@ const options: electronBuilder.Configuration = {
 		},
 		{
 			from: builtinSurfaceCacheDir,
-			to: 'builtin-surface-modules', // TODO - check this is what it will load from
+			to: 'modules',
 		},
 	],
 	electronFuses: {
