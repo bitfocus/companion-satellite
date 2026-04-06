@@ -51,6 +51,5 @@ jobs:
           branch: 'chore/update-raspberry-pi-os-image'
           committer: 'Companion Bot <companion-module-bot@users.noreply.github.com>'
           author: 'Companion Bot <companion-module-bot@users.noreply.github.com>'
-          push-to-fork: companion-module-bot/${{ github.event.repository.name }}
           add-paths: |
             pi-image/satellitepi.pkr.hcl
