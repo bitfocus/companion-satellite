@@ -35,9 +35,9 @@
 		"tarSha": "1d59311172af507e65638f13f805c9259de91be0f6eb78d58339ae97edb4218b"
 	},
 	"xencelabs-quick-keys": {
-		"version": "v1.0.2",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/xencelabs-quick-keys/v1.0.2-743bffe542c671e596649a9cc3a207b0e9331280/xencelabs-quick-keys-v1.0.2.tgz",
-		"tarSha": "22fb3083ac0b244d1c195d44af24a7808df9c04cfcfef5f89eab682e625446ad"
+		"version": "v1.0.3",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/xencelabs-quick-keys/v1.0.3-a184938b03d3fc740f2cf2b23c1202863230463c/xencelabs-quick-keys-v1.0.3.tgz",
+		"tarSha": "83baf0898f17d38ec6da8ff055337ffc243d8cfd81fd078ca0aa61e3bdff9129"
 	},
 	"xkeys": {
 		"version": "v1.0.2",
