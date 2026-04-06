@@ -88,14 +88,14 @@ function replaceHclValues(hclStr, newUrl, newChecksum) {
 	return out
 }
 
-// Usage: node tools/update_raspbian_image.mjs [--dry-run|-n] [--help]
+// Usage: node tools/update_rpi_os_image.mjs [--dry-run|-n] [--help]
 //
 // Fetches the Raspberry Pi imaging utility JSON and updates
 // `companionpi.pkr.hcl` `iso_url` and `iso_checksum` fields.
 // Use --dry-run to preview changes before writing.
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
-	console.log('Usage: node tools/update_raspbian_image.mjs [--dry-run|-n] [--help]')
+	console.log('Usage: node tools/update_rpi_os_image.mjs [--dry-run|-n] [--help]')
 	console.log('Fetch imaging JSON and update companionpi.pkr.hcl with latest raspios_lite_arm64 image and checksum.')
 	process.exit(0)
 }

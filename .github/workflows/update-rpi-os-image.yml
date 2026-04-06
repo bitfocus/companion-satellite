@@ -1,4 +1,4 @@
-name: Check for Raspbian image update
+name: Check for Raspberry Pi OS image update
 on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -14,7 +14,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  update-raspbian-image:
+  update-rpi-os-image:
     if: ${{ github.repository_owner == 'bitfocus' }}
 
     runs-on: ubuntu-latest
@@ -39,16 +39,16 @@ jobs:
 
       - name: Run script
         run: |
-          node tools/update_raspbian_image.mjs
+          node tools/update_rpi_os_image.mjs
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
-          commit-message: 'chore: update Raspbian image'
-          title: 'chore: update Raspbian image'
-          body: 'This PR updates the Raspbian image.'
+          commit-message: 'chore: update Raspberry Pi OS image'
+          title: 'chore: update Raspberry Pi OS image'
+          body: 'This PR updates the Raspberry Pi OS image.'
           delete-branch: true
-          branch: 'chore/update-raspbian-image'
+          branch: 'chore/update-raspberry-pi-os-image'
           committer: 'Companion Bot <companion-module-bot@users.noreply.github.com>'
           author: 'Companion Bot <companion-module-bot@users.noreply.github.com>'
           add-paths: |
