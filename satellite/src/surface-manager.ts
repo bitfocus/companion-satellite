@@ -385,9 +385,11 @@ export class SurfaceManager {
 					const plugin = this.#getPluginForSurface(msg.deviceId)
 
 					let config: Record<string, unknown> = {}
-					if (this.#client.supportsDeviceSerial) {
+					const surface = this.#getWrappedSurface(msg.deviceId)
+					if (this.#client.supportsDeviceSerial && surface.registerProps.configFields?.length) {
 						// Companion (v1.10+) sends DEVICE-CONFIG immediately after acknowledging ADD-DEVICE
-						// if there is stored config. Wait briefly to pick it up before calling readySurface.
+						// if there is stored config. Only wait if this surface has config fields — otherwise
+						// DEVICE-CONFIG is never sent and we'd needlessly delay readySurface.
 						config = await new Promise<Record<string, unknown>>((resolve) => {
 							const timer = setTimeout(() => {
 								client.off('deviceConfig', onConfig)
