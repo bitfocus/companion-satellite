@@ -342,8 +342,24 @@ export class SurfaceManager {
 						}
 					}
 
+					// Parse the page-number from the location
+					let pageNumber: number | undefined = undefined
+					if (typeof msg.location === 'string') {
+						const locationParts = msg.location.split('/')
+						if (locationParts.length === 3) {
+							pageNumber = Number(locationParts[0])
+							if (isNaN(pageNumber)) {
+								this.#logger.warn(`Received invalid page number: ${locationParts[0]}`)
+								pageNumber = undefined
+							}
+						} else {
+							this.#logger.warn(`Received invalid location format: ${msg.location}`)
+						}
+					}
+
 					await plugin.draw(msg.deviceId, [
 						{
+							pageNumber,
 							controlId: controlId,
 							image: image,
 							color: msg.color,
