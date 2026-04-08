@@ -102,6 +102,18 @@ export function ensureFieldsPopulated(store: Conf<SatelliteConfig>): void {
 		}
 	}
 
+	// Translate renamed plugins
+	const enabledPlugins = store.get('surfacePluginsEnabled') ?? {}
+	const renamedIds: Record<string, string> = {
+		'elgato-streamdeck': 'elgato-stream-deck',
+		infinitton: 'idisplay-infinitton',
+	}
+	for (const [oldId, newId] of Object.entries(renamedIds)) {
+		if (enabledPlugins[newId] === undefined && enabledPlugins[oldId] !== undefined) {
+			store.set(`surfacePluginsEnabled.${newId}`, !!enabledPlugins[oldId])
+		}
+	}
+
 	// Ensure that the store with the filled in defaults is written to disk
 	// eslint-disable-next-line no-self-assign
 	store.store = store.store

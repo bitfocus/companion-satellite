@@ -142,9 +142,12 @@ export class SurfaceManager {
 			}
 
 			// Initialize all the plugins
-			await Promise.all(
+			await Promise.allSettled(
 				Array.from(manager.#plugins.entries()).map(async ([pluginId, plugin]) => {
-					if (manager.isPluginEnabled(pluginId)) await plugin.init()
+					if (!manager.isPluginEnabled(pluginId)) return
+					await plugin.init().catch((e) => {
+						manager.#logger.error(`Plugin "${pluginId}" init failed: ${e}`)
+					})
 				}),
 			)
 
@@ -756,6 +759,11 @@ export class SurfaceManager {
 		pOpen
 			.then(async (result) => {
 				if (!result) return
+
+				// Ensure the plugin is still enabled and the same instance
+				if (!this.isPluginEnabled(plugin.info.pluginId) || this.#plugins.get(plugin.info.pluginId) !== plugin) {
+					return
+				}
 
 				let bitmapSize = result.surfaceLayout.stylePresets.default.bitmap
 				if (!bitmapSize) {
