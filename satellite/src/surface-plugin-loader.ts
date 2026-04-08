@@ -1,6 +1,6 @@
 import { createLogger } from './logging.js'
 import { readdir, stat } from 'node:fs/promises'
-import { join, dirname, resolve } from 'node:path'
+import { join, dirname, resolve, relative, isAbsolute } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { readFile } from 'node:fs/promises'
 import type { ApiSurfacePluginInfo } from './apiTypes.js'
@@ -84,7 +84,16 @@ export async function loadSurfacePlugins(): Promise<LoadedPlugin[]> {
 			}
 
 			// The entrypoint is relative to the companion/ subdirectory
-			const entrypointAbsolute = resolve(join(moduleDir, 'companion'), manifest.runtime.entrypoint)
+			const companionDir = join(moduleDir, 'companion')
+			const entrypointAbsolute = resolve(companionDir, manifest.runtime.entrypoint)
+			// Guard against path traversal (e.g. entrypoint: "../../malicious.js")
+			const relativeEntrypoint = relative(companionDir, entrypointAbsolute)
+			if (relativeEntrypoint.startsWith('..') || isAbsolute(relativeEntrypoint)) {
+				logger.error(
+					`Skipping "${entry}": entrypoint "${manifest.runtime.entrypoint}" escapes the companion/ directory`,
+				)
+				continue
+			}
 			let pluginDefault: SurfacePlugin<unknown>
 			try {
 				const mod = (await import(pathToFileURL(entrypointAbsolute).href)) as {
