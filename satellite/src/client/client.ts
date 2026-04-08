@@ -1,5 +1,4 @@
 import { EventEmitter } from 'events'
-import { DeviceRegisterPropsComplete } from '../device-types/api.js'
 import { assertNever, Complete, DEFAULT_TCP_PORT } from '../lib.js'
 import * as semver from 'semver'
 import {
@@ -49,6 +48,7 @@ export interface DeviceRegisterProps {
 	surfaceManifest: SatelliteSurfaceLayout
 	transferVariables: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable> | undefined
 	configFields: SatelliteConfigFields | undefined
+	canChangePage: { label: string } | undefined
 
 	gridSize: GridSize
 	fallbackBitmapSize: number
@@ -651,6 +651,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
+	public changePage(deviceId: string, forward: boolean): void {
+		if (this._connected && this.socket) {
+			this.sendMessage('CHANGE-PAGE', null, deviceId, {
+				DIRECTION: forward ? 1 : 0,
+			})
+		}
+	}
+
 	public sendFirmwareUpdateInfo(deviceId: string, updateUrl: string): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('FIRMWARE-UPDATE-INFO', null, deviceId, {
@@ -663,15 +671,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		return this._registeredDevices.has(deviceId) || this._pendingDevices.has(deviceId)
 	}
 
-	public addDevice(deviceId: string, productName: string, props: DeviceRegisterPropsComplete): void {
+	public addDevice(deviceId: string, productName: string, props: DeviceRegisterProps): void {
 		if (this._registeredDevices.has(deviceId)) {
 			throw new Error('Device is already registered')
 		}
 
 		const pendingTime = this._pendingDevices.get(deviceId)
-		if (pendingTime && pendingTime < Date.now() - 10000) {
+		if (pendingTime && pendingTime > Date.now() - 10000) {
 			throw new Error('Device is already being added')
 		}
+		if (pendingTime) this._pendingDevices.delete(deviceId)
 
 		if (this._connected && this.socket) {
 			this._pendingDevices.set(deviceId, Date.now())
@@ -699,20 +708,26 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			}
 
 			if (this.supportsSurfaceManifest) {
-				// const serialArgs: SatelliteMessageArgs = this._supportsDeviceSerial
-				// 	? { SERIAL: props.serialNumber, SERIAL_IS_UNIQUE: props.serialIsUnique }
-				// 	: {}
+				const serialArgs: SatelliteMessageArgs = this._supportsDeviceSerial
+					? { SERIAL: props.serialNumber, SERIAL_IS_UNIQUE: props.serialIsUnique }
+					: {}
 
 				const configFieldsArgs: SatelliteMessageArgs =
 					props.configFields && this._supportsDeviceSerial // CONFIG_FIELDS added in v1.10.0, same as serial
 						? { CONFIG_FIELDS: Buffer.from(JSON.stringify(props.configFields)).toString('base64') }
 						: {}
 
+				const canChangePageArgs: SatelliteMessageArgs =
+					props.canChangePage && this._supportsDeviceSerial // CAN_CHANGE_PAGE added in v1.10.0
+						? { CAN_CHANGE_PAGE: props.canChangePage.label }
+						: {}
+
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
 					...commonProps,
-					// ...serialArgs,
+					...serialArgs,
 					...configFieldsArgs,
+					...canChangePageArgs,
 				})
 			} else {
 				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)

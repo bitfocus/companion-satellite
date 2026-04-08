@@ -85,9 +85,10 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 		},
 		description: 'Enabled Surface Plugins',
 		default: {
-			'elgato-streamdeck': true,
+			'elgato-stream-deck': true,
 			loupedeck: true,
-			infinitton: true,
+			'idisplay-infinitton': true,
+			'mirabox-stream-dock': true,
 		},
 	},
 }
@@ -98,6 +99,18 @@ export function ensureFieldsPopulated(store: Conf<SatelliteConfig>): void {
 		if (store.get(key) === undefined && schema.default !== undefined) {
 			// Ensure values are written to disk
 			store.set(key, schema.default)
+		}
+	}
+
+	// Translate renamed plugins
+	const enabledPlugins = store.get('surfacePluginsEnabled') ?? {}
+	const renamedIds: Record<string, string> = {
+		'elgato-streamdeck': 'elgato-stream-deck',
+		infinitton: 'idisplay-infinitton',
+	}
+	for (const [oldId, newId] of Object.entries(renamedIds)) {
+		if (enabledPlugins[newId] === undefined && enabledPlugins[oldId] !== undefined) {
+			store.set(`surfacePluginsEnabled.${newId}`, !!enabledPlugins[oldId])
 		}
 	}
 
