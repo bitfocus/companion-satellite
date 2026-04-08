@@ -85,9 +85,10 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 		},
 		description: 'Enabled Surface Plugins',
 		default: {
-			'elgato-streamdeck': true,
+			'elgato-stream-deck': true,
 			loupedeck: true,
-			infinitton: true,
+			'idisplay-infinitton': true,
+			'mirabox-stream-dock': true,
 		},
 	},
 }
