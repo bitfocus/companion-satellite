@@ -55,6 +55,8 @@ export class SurfaceManager {
 	readonly #surfaces: Map<SurfaceId, SurfaceInfo>
 	/** Surfaces which are in the process of being opened */
 	readonly #pendingSurfaces: Set<SurfaceId>
+	/** Surfaces currently between newDevice and readySurface completing — suppress duplicate deviceConfig updates */
+	readonly #readyingSurfaces: Set<SurfaceId>
 	readonly #client: CompanionSatelliteClient
 
 	readonly #plugins = new Map<string, PluginWrapperExt>()
@@ -239,6 +241,7 @@ export class SurfaceManager {
 		this.#enabledPluginsConfig = enabledPluginsConfig
 		this.#surfaces = new Map()
 		this.#pendingSurfaces = new Set()
+		this.#readyingSurfaces = new Set()
 
 		usb.on('attach', this.#onUsbAttach)
 		usb.on('detach', this.#onUsbDetach)
@@ -387,26 +390,31 @@ export class SurfaceManager {
 
 					let config: Record<string, unknown> = {}
 					const surface = this.#getWrappedSurface(msg.deviceId)
-					if (this.#client.supportsDeviceSerial && surface.registerProps.configFields?.length) {
-						// Companion (v1.10+) sends DEVICE-CONFIG immediately after acknowledging ADD-DEVICE
-						// if there is stored config. Only wait if this surface has config fields — otherwise
-						// DEVICE-CONFIG is never sent and we'd needlessly delay readySurface.
-						config = await new Promise<Record<string, unknown>>((resolve) => {
-							const timer = setTimeout(() => {
-								client.off('deviceConfig', onConfig)
-								resolve({})
-							}, 100)
-							const onConfig = (cfgMsg: { deviceId: string; config: Record<string, unknown> }) => {
-								if (cfgMsg.deviceId !== msg.deviceId) return
-								clearTimeout(timer)
-								client.off('deviceConfig', onConfig)
-								resolve(cfgMsg.config)
-							}
-							client.on('deviceConfig', onConfig)
-						})
-					}
+					this.#readyingSurfaces.add(msg.deviceId)
+					try {
+						if (this.#client.supportsDeviceSerial && surface.registerProps.configFields?.length) {
+							// Companion (v1.10+) sends DEVICE-CONFIG immediately after acknowledging ADD-DEVICE
+							// if there is stored config. Only wait if this surface has config fields — otherwise
+							// DEVICE-CONFIG is never sent and we'd needlessly delay readySurface.
+							config = await new Promise<Record<string, unknown>>((resolve) => {
+								const timer = setTimeout(() => {
+									client.off('deviceConfig', onConfig)
+									resolve({})
+								}, 100)
+								const onConfig = (cfgMsg: { deviceId: string; config: Record<string, unknown> }) => {
+									if (cfgMsg.deviceId !== msg.deviceId) return
+									clearTimeout(timer)
+									client.off('deviceConfig', onConfig)
+									resolve(cfgMsg.config)
+								}
+								client.on('deviceConfig', onConfig)
+							})
+						}
 
-					await plugin.readySurface(msg.deviceId, config)
+						await plugin.readySurface(msg.deviceId, config)
+					} finally {
+						this.#readyingSurfaces.delete(msg.deviceId)
+					}
 				},
 				(e) => {
 					this.#logger.error(`Setup device: ${e}`)
@@ -417,6 +425,9 @@ export class SurfaceManager {
 			'deviceConfig',
 			wrapAsync(
 				async (msg) => {
+					// Suppress the initial config packet that newDevice already consumed for readySurface()
+					if (this.#readyingSurfaces.has(msg.deviceId)) return
+
 					const plugin = this.#getPluginForSurface(msg.deviceId)
 
 					await plugin.updateConfig(msg.deviceId, msg.config)
