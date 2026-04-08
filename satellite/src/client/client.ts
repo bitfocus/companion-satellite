@@ -48,6 +48,7 @@ export interface DeviceRegisterProps {
 	surfaceManifest: SatelliteSurfaceLayout
 	transferVariables: Array<DeviceRegisterInputVariable | DeviceRegisterOutputVariable> | undefined
 	configFields: SatelliteConfigFields | undefined
+	canChangePage: { label: string } | undefined
 
 	gridSize: GridSize
 	fallbackBitmapSize: number
@@ -650,6 +651,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
+	public changePage(deviceId: string, forward: boolean): void {
+		if (this._connected && this.socket) {
+			this.sendMessage('CHANGE-PAGE', null, deviceId, {
+				DIRECTION: forward ? 1 : 0,
+			})
+		}
+	}
+
 	public sendFirmwareUpdateInfo(deviceId: string, updateUrl: string): void {
 		if (this._connected && this.socket) {
 			this.sendMessage('FIRMWARE-UPDATE-INFO', null, deviceId, {
@@ -708,11 +717,17 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 						? { CONFIG_FIELDS: Buffer.from(JSON.stringify(props.configFields)).toString('base64') }
 						: {}
 
+				const canChangePageArgs: SatelliteMessageArgs =
+					props.canChangePage && this._supportsDeviceSerial // CAN_CHANGE_PAGE added in v1.10.0
+						? { CAN_CHANGE_PAGE: props.canChangePage.label }
+						: {}
+
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
 					...commonProps,
 					...serialArgs,
 					...configFieldsArgs,
+					...canChangePageArgs,
 				})
 			} else {
 				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)

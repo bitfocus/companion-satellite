@@ -214,8 +214,8 @@ export class SurfaceManager {
 				pincodeEntry: (surfaceId: string, char: number) => {
 					this.#client.pincodeKey(surfaceId, char)
 				},
-				changePage: (_surfaceId: string, _forward: boolean) => {
-					// Not implemented in satellite protocol
+				changePage: (surfaceId: string, forward: boolean) => {
+					this.#client.changePage(surfaceId, forward)
 				},
 				firmwareUpdateInfo: (surfaceId: string, info) => {
 					if (info?.updateUrl) {
@@ -755,6 +755,7 @@ export class SurfaceManager {
 						surfaceManifest: translateModuleToSatelliteSurfaceLayout(result.surfaceLayout),
 						transferVariables: translateModuleToSatelliteTransferVariables(result.transferVariables),
 						configFields: translateModuleToSatelliteConfigFields(result.configFields),
+						canChangePage: result.canChangePage,
 
 						gridSize: calculateGridSize(result.surfaceLayout),
 						fallbackBitmapSize: bitmapSize ? Math.min(bitmapSize.h, bitmapSize.w) : 0,
