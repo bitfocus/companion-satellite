@@ -55,7 +55,7 @@ export class SurfaceManager {
 	readonly #surfaces: Map<SurfaceId, SurfaceInfo>
 	/** Surfaces which are in the process of being opened */
 	readonly #pendingSurfaces: Set<SurfaceId>
-	/** Surfaces currently between newDevice and readySurface completing — suppress duplicate deviceConfig updates */
+	/** Surfaces waiting for their initial DEVICE-CONFIG packet — suppresses that packet in the global deviceConfig handler */
 	readonly #readyingSurfaces: Set<SurfaceId>
 	readonly #client: CompanionSatelliteClient
 
@@ -147,6 +147,9 @@ export class SurfaceManager {
 					if (manager.isPluginEnabled(pluginId)) await plugin.init()
 				}),
 			)
+
+			// Initial scan for surfaces after plugins are loaded
+			manager.scanForSurfaces()
 		} catch (e) {
 			// Something failed, cleanup
 			await Promise.allSettled(Array.from(manager.#plugins.values()).map(async (p) => p.destroy()))
@@ -250,8 +253,6 @@ export class SurfaceManager {
 
 		this.#statusString = 'Connecting'
 		this.#showStatusCard(this.#statusString, true)
-
-		this.scanForSurfaces()
 
 		client.on('connected', () => {
 			this.#logger.info('connected')
@@ -406,31 +407,30 @@ export class SurfaceManager {
 
 					let config: Record<string, unknown> = {}
 					const surface = this.#getWrappedSurface(msg.deviceId)
-					this.#readyingSurfaces.add(msg.deviceId)
-					try {
-						if (this.#client.supportsDeviceSerial && surface.registerProps.configFields?.length) {
-							// Companion (v1.10+) sends DEVICE-CONFIG immediately after acknowledging ADD-DEVICE
-							// if there is stored config. Only wait if this surface has config fields — otherwise
-							// DEVICE-CONFIG is never sent and we'd needlessly delay readySurface.
-							config = await new Promise<Record<string, unknown>>((resolve) => {
-								const timer = setTimeout(() => {
-									client.off('deviceConfig', onConfig)
-									resolve({})
-								}, 100)
-								const onConfig = (cfgMsg: { deviceId: string; config: Record<string, unknown> }) => {
-									if (cfgMsg.deviceId !== msg.deviceId) return
-									clearTimeout(timer)
-									client.off('deviceConfig', onConfig)
-									resolve(cfgMsg.config)
-								}
-								client.on('deviceConfig', onConfig)
-							})
-						}
 
-						await plugin.readySurface(msg.deviceId, config)
-					} finally {
-						this.#readyingSurfaces.delete(msg.deviceId)
+					if (this.#client.supportsDeviceSerial && surface.registerProps.configFields?.length) {
+						this.#readyingSurfaces.add(msg.deviceId)
+						// Companion (v1.10+) sends DEVICE-CONFIG immediately after acknowledging ADD-DEVICE
+						// if there is stored config. Only wait if this surface has config fields — otherwise
+						// DEVICE-CONFIG is never sent and we'd needlessly delay readySurface.
+						config = await new Promise<Record<string, unknown>>((resolve) => {
+							const timer = setTimeout(() => {
+								client.off('deviceConfig', onConfig)
+								resolve({})
+							}, 100)
+							const onConfig = (cfgMsg: { deviceId: string; config: Record<string, unknown> }) => {
+								if (cfgMsg.deviceId !== msg.deviceId) return
+								clearTimeout(timer)
+								client.off('deviceConfig', onConfig)
+								resolve(cfgMsg.config)
+							}
+							client.on('deviceConfig', onConfig)
+						}).finally(() => {
+							this.#readyingSurfaces.delete(msg.deviceId)
+						})
 					}
+
+					await plugin.readySurface(msg.deviceId, config)
 				},
 				(e) => {
 					this.#logger.error(`Setup device: ${e}`)
@@ -441,7 +441,7 @@ export class SurfaceManager {
 			'deviceConfig',
 			wrapAsync(
 				async (msg) => {
-					// Suppress the initial config packet that newDevice already consumed for readySurface()
+					// Suppress the initial packet already consumed by the newDevice handler
 					if (this.#readyingSurfaces.has(msg.deviceId)) return
 
 					const plugin = this.#getPluginForSurface(msg.deviceId)
@@ -579,7 +579,7 @@ export class SurfaceManager {
 		void Promise.allSettled([
 			HID.devicesAsync()
 				.then(async (devices) => {
-					await Promise.all(
+					await Promise.allSettled(
 						devices.map(async (device) => {
 							if (!device.path) return
 
@@ -602,16 +602,20 @@ export class SurfaceManager {
 							} satisfies Complete<HIDDevice>
 
 							for (const [pluginId, plugin] of this.#plugins.entries()) {
-								if (!this.isPluginEnabled(pluginId)) continue
+								try {
+									if (!this.isPluginEnabled(pluginId)) continue
 
-								const info = await plugin.checkHidDevice(hidDevice)
-								if (!info) continue
+									const info = await plugin.checkHidDevice(hidDevice)
+									if (!info) continue
 
-								this.#tryAddSurfaceFromPlugin(plugin, info, {
-									type: 'hid',
-									hid: hidDevice,
-								})
-								return
+									this.#tryAddSurfaceFromPlugin(plugin, info, {
+										type: 'hid',
+										hid: hidDevice,
+									})
+									return
+								} catch (e) {
+									this.#logger.error(`Plugin "${pluginId}" HID check failed: ${e}`)
+								}
 							}
 						}),
 					)
