@@ -86,11 +86,11 @@ export async function loadSurfacePlugins(): Promise<LoadedPlugin[]> {
 			// The entrypoint is relative to the companion/ subdirectory
 			const companionDir = join(moduleDir, 'companion')
 			const entrypointAbsolute = resolve(companionDir, manifest.runtime.entrypoint)
-			// Guard against path traversal (e.g. entrypoint: "../../malicious.js")
-			const relativeEntrypoint = relative(companionDir, entrypointAbsolute)
-			if (relativeEntrypoint.startsWith('..') || isAbsolute(relativeEntrypoint)) {
+			// Guard against path traversal (e.g. entrypoint: "../../malicious.js").
+			const relativeToModule = relative(moduleDir, entrypointAbsolute)
+			if (relativeToModule.startsWith('..') || isAbsolute(relativeToModule)) {
 				logger.error(
-					`Skipping "${entry}": entrypoint "${manifest.runtime.entrypoint}" escapes the companion/ directory`,
+					`Skipping "${entry}": entrypoint "${manifest.runtime.entrypoint}" escapes the plugin directory`,
 				)
 				continue
 			}
