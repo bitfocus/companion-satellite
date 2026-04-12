@@ -72,6 +72,7 @@ if [ -n "$SELECTED_URL" ]; then
 	mv /tmp/satellite-update/resources/app /opt/companion-satellite/satellite
 	mkdir /opt/companion-satellite/webui
 	mv /tmp/satellite-update/resources/webui /opt/companion-satellite/webui/dist
+	[ -d /tmp/satellite-update/resources/node-runtimes ] && mv /tmp/satellite-update/resources/node-runtimes /opt/companion-satellite/node-runtimes
 	# mv /tmp/satellite-update/*.rules /opt/companion-satellite/
 	rm -R /tmp/satellite-update
 

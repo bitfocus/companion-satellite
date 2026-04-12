@@ -2,6 +2,7 @@
 import { fs, usePowerShell, argv } from 'zx'
 import electronBuilder from 'electron-builder'
 import { fetchBuiltinSurfaceModules } from './fetch_builtin_modules.mts'
+import { fetchNodejs, platformInfoFromStrings } from './fetch_nodejs.mts'
 
 if (process.platform === 'win32') {
 	usePowerShell() // to enable powershell
@@ -36,6 +37,17 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 	console.error('Unknown platform')
 	process.exit(1)
 }
+
+// Download Node.js binary for the target platform
+const nodePlatformInfo = platformInfoFromStrings(
+	platform === 'win-x64' || platform === 'win32-x64'
+		? 'win32'
+		: platform === 'mac-x64' || platform === 'darwin-x64' || platform === 'mac-arm64' || platform === 'darwin-arm64'
+			? 'darwin'
+			: 'linux',
+	platform.split('-').pop()!,
+)
+const nodeVersions = await fetchNodejs(nodePlatformInfo)
 
 // Download surface modules
 const builtinSurfaceCacheDir = await fetchBuiltinSurfaceModules()
@@ -143,6 +155,10 @@ const options: electronBuilder.Configuration = {
 			from: builtinSurfaceCacheDir,
 			to: 'modules',
 		},
+		...Array.from(nodeVersions.entries()).map(([name, runtimeDir]) => ({
+			from: runtimeDir,
+			to: `node-runtimes/${name}`,
+		})),
 	],
 	electronFuses: {
 		runAsNode: false,
