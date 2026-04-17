@@ -72,12 +72,6 @@ export class SurfaceManager {
 	): Promise<SurfaceManager> {
 		const manager = new SurfaceManager(client, enabledPluginsConfig)
 
-		const nodeJsPath = await getNodeJsPath(isPackaged)
-		if (!nodeJsPath) {
-			manager.#logger.warn('No bundled Node.js binary found — surface plugins unavailable')
-			return manager
-		}
-
 		const entrypointPath = getSurfaceEntrypointPath(isPackaged)
 		const childNodePath = getChildNodePath(isPackaged)
 
@@ -166,6 +160,14 @@ export class SurfaceManager {
 			for (const rawPlugin of rawPlugins) {
 				try {
 					const pluginId = rawPlugin.info.pluginId
+
+					const nodeJsPath = await getNodeJsPath(rawPlugin.runtimeType, isPackaged)
+					if (!nodeJsPath) {
+						manager.#logger.warn(
+							`Skipping plugin "${pluginId}": no bundled Node.js binary found for runtime "${rawPlugin.runtimeType}"`,
+						)
+						continue
+					}
 
 					const monitor = new RespawnMonitor([nodeJsPath, entrypointPath], {
 						stdio: ['pipe', 'pipe', 'pipe', 'ipc'],

@@ -1,4 +1,5 @@
 import { createLogger } from '../logging.js'
+import { uint8ArrayToBuffer } from '../graphics/lib.js'
 import type { RespawnMonitor } from '../lib/respawn.js'
 import { IpcWrapper, type IpcEventHandlers } from '../lib/ipc-wrapper.js'
 import type {
@@ -238,7 +239,7 @@ export class ChildHandler {
 				surfaceId,
 				drawProps: drawProps.map((d) => ({
 					...d,
-					image: d.image ? Buffer.from(d.image).toString('base64') : undefined,
+					image: d.image ? uint8ArrayToBuffer(d.image).toString('base64') : undefined,
 				})),
 			})
 	}

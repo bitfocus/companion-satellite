@@ -1,7 +1,6 @@
 import { createLogger } from './logging.js'
 import { readdir, stat } from 'node:fs/promises'
-import { join, dirname, resolve, relative, isAbsolute } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join, resolve, relative, isAbsolute } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import type { ApiSurfacePluginInfo } from './apiTypes.js'
 import { validateSurfaceManifest, type SurfaceModuleManifest } from '@companion-surface/base'
@@ -10,6 +9,8 @@ const logger = createLogger('SurfacePluginLoader')
 
 export interface LoadedPlugin {
 	info: ApiSurfacePluginInfo
+	/** Runtime type declared in the manifest (e.g. 'node22'), used to select the Node.js binary */
+	runtimeType: string
 	/** Absolute path to the companion/manifest.json */
 	manifestPath: string
 	/** Absolute path to the plugin entrypoint file */
@@ -28,7 +29,7 @@ export interface LoadedPlugin {
  * levels below the repository root, so `../..` resolves identically in both.
  */
 async function findPluginsDir(): Promise<string> {
-	const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+	const repoRoot = resolve(import.meta.dirname, '../..')
 	const prodDir = join(repoRoot, 'modules')
 	try {
 		const s = await stat(prodDir)
@@ -107,6 +108,7 @@ export async function loadSurfacePlugins(): Promise<LoadedPlugin[]> {
 					pluginName: manifest.name,
 					version: manifest.version,
 				},
+				runtimeType: manifest.runtime.type,
 				manifestPath: join(companionDir, 'manifest.json'),
 				entrypointPath: entrypointAbsolute,
 				usbIds: (manifest.usbIds ?? []).map((u) => ({
