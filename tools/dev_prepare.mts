@@ -1,4 +1,4 @@
-import { usePowerShell } from 'zx'
+import { $, usePowerShell } from 'zx'
 import { fetchBuiltinSurfaceModules } from './fetch_builtin_modules.mts'
 import { fetchNodejs, currentPlatformInfo } from './fetch_nodejs.mts'
 
@@ -11,3 +11,6 @@ await fetchNodejs(currentPlatformInfo())
 
 console.log('Ensuring builtin modules are installed')
 await fetchBuiltinSurfaceModules()
+
+console.log('Building satellite')
+await $`yarn workspace satellite build:main`

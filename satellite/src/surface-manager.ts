@@ -1,44 +1,31 @@
 import { CompanionSatelliteClient, DeviceRegisterProps } from './client/client.js'
 import { usb } from 'usb'
-import { CardGenerator } from './graphics/cards.js'
 import * as HID from 'node-hid'
 import { Complete, wrapAsync } from './lib.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 import { createLogger } from './logging.js'
-import {
-	CheckDeviceResult,
-	OpenDeviceResult,
-	PluginWrapper,
-	ShouldOpenSurfaceResult,
-	SurfaceHostContext,
-} from '@companion-surface/host'
-import { HIDDevice, SurfaceDrawProps } from '@companion-surface/base'
+import { HIDDevice, OpenDeviceResult } from '@companion-surface/host'
+import { SurfaceDrawProps } from '@companion-surface/base'
 import type { SurfaceSchemaLayoutDefinition } from '@companion-surface/base'
-import { LockingGraphicsGeneratorImpl } from './graphics/locking.js'
 import {
 	translateModuleToSatelliteSurfaceLayout,
 	translateModuleToSatelliteTransferVariables,
 	translateModuleToSatelliteConfigFields,
 	calculateGridSize,
 } from './translateSchema.js'
-import { loadSurfacePlugins, type LoadedPlugin } from './surface-plugin-loader.js'
+import { loadSurfacePlugins } from './surface-plugin-loader.js'
 import { createHash } from 'node:crypto'
 import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
+import { ChildHandler, type ChildHandlerDependencies } from './surface-thread/child-handler.js'
+import { RespawnMonitor } from './lib/respawn.js'
+import { getNodeJsPath, getSurfaceEntrypointPath, getChildNodePath } from './node-path.js'
+import { type CheckDeviceInfo } from './surface-thread/ipc-types.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
 HID.devices()
 
 export type SurfaceId = string
-
-class PluginWrapperExt extends PluginWrapper<unknown> {
-	readonly info: ApiSurfacePluginInfo
-	constructor(host: SurfaceHostContext, plugin: LoadedPlugin) {
-		super(host, plugin.plugin)
-
-		this.info = plugin.info
-	}
-}
 
 interface SurfaceInfo {
 	readonly pluginId: string
@@ -59,7 +46,8 @@ export class SurfaceManager {
 	readonly #readyingSurfaces: Set<SurfaceId>
 	readonly #client: CompanionSatelliteClient
 
-	readonly #plugins = new Map<string, PluginWrapperExt>()
+	readonly #plugins = new Map<string, ChildHandler>()
+	readonly #monitors = new Map<string, RespawnMonitor>()
 
 	/**
 	 * Stable ID registry — key: `${baseSurfaceId}||${pluginId}:${devicePath}` → resolvedSurfaceId.
@@ -68,8 +56,8 @@ export class SurfaceManager {
 	readonly #idRegistryCache = new Map<string, string>()
 	/** Reverse map: resolvedSurfaceId → cacheKey (used for collision checking during ID assignment) */
 	readonly #idRegistryReverse = new Map<string, string>()
-	/** Stashed CheckDeviceResult info from shouldOpenDiscoveredSurface, keyed by resolvedSurfaceId */
-	readonly #discoveredInfo = new Map<string, CheckDeviceResult>()
+	/** Stash of original (pre-resolve) surfaceId + uniqueness flag, keyed by resolvedSurfaceId */
+	readonly #discoveredCheckBases = new Map<string, { surfaceId: string; surfaceIdIsNotUnique: boolean }>()
 
 	#enabledPluginsConfig: ApiSurfacePluginsEnabled = {}
 
@@ -80,166 +68,178 @@ export class SurfaceManager {
 	public static async create(
 		client: CompanionSatelliteClient,
 		enabledPluginsConfig: ApiSurfacePluginsEnabled,
+		isPackaged: boolean,
 	): Promise<SurfaceManager> {
 		const manager = new SurfaceManager(client, enabledPluginsConfig)
 
-		const hostContext = manager.createHostContext()
+		const nodeJsPath = await getNodeJsPath(isPackaged)
+		if (!nodeJsPath) {
+			manager.#logger.warn('No bundled Node.js binary found — surface plugins unavailable')
+			return manager
+		}
+
+		const entrypointPath = getSurfaceEntrypointPath(isPackaged)
+		const childNodePath = getChildNodePath(isPackaged)
 
 		const rawPlugins = await loadSurfacePlugins()
+
+		const deps: ChildHandlerDependencies = {
+			resolveUniqueSurfaceId(baseSurfaceId, surfaceIdIsNotUnique, pluginId, devicePath) {
+				const resolved = manager.#resolveUniqueSurfaceId(
+					baseSurfaceId,
+					surfaceIdIsNotUnique,
+					pluginId,
+					devicePath,
+				)
+				manager.#discoveredCheckBases.set(resolved, { surfaceId: baseSurfaceId, surfaceIdIsNotUnique })
+				return resolved
+			},
+			forgetSurfaceId(pluginId, devicePath) {
+				manager.#forgetSurfaceId(pluginId, devicePath)
+			},
+			notifyOpenedDiscoveredSurface(pluginId, info) {
+				const handler = manager.#plugins.get(pluginId)
+				if (!handler) {
+					manager.#logger.warn(`notifyOpenedDiscoveredSurface: no handler for plugin "${pluginId}"`)
+					return
+				}
+				const checkBase = manager.#discoveredCheckBases.get(info.surfaceId)
+				const checkInfo: CheckDeviceInfo = {
+					devicePath: '',
+					surfaceId: checkBase?.surfaceId ?? info.surfaceId,
+					surfaceIdIsNotUnique: checkBase?.surfaceIdIsNotUnique ?? false,
+					description: info.description,
+				}
+				if (!manager.#tryAddSurfaceFromPlugin(handler, checkInfo, { type: 'detect', info })) {
+					manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
+				}
+			},
+			onSurfaceDisconnected(surfaceId) {
+				manager.#logger.debug(`Plugin surface disconnected: ${surfaceId}`)
+				manager.#cleanupSurfaceById(surfaceId)
+			},
+			onInputPress(surfaceId, controlId, pressed) {
+				try {
+					const surface = manager.#getWrappedSurface(surfaceId)
+					const control = surface.registerProps.surfaceManifest.controls[controlId]
+					if (!control) throw new Error(`Unknown control id: ${controlId}`)
+					if (pressed) {
+						manager.#client.keyDown(surfaceId, controlId, control)
+					} else {
+						manager.#client.keyUp(surfaceId, controlId, control)
+					}
+				} catch (e) {
+					manager.#logger.error(`Input press for "${surfaceId}" failed: ${e}`)
+				}
+			},
+			onInputRotate(surfaceId, controlId, delta) {
+				try {
+					const surface = manager.#getWrappedSurface(surfaceId)
+					const control = surface.registerProps.surfaceManifest.controls[controlId]
+					if (!control) throw new Error(`Unknown control id: ${controlId}`)
+					if (delta < 0) {
+						manager.#client.rotateLeft(surfaceId, controlId, control)
+					} else if (delta > 0) {
+						manager.#client.rotateRight(surfaceId, controlId, control)
+					}
+				} catch (e) {
+					manager.#logger.error(`Input rotate for "${surfaceId}" failed: ${e}`)
+				}
+			},
+			onChangePage(surfaceId, forward) {
+				manager.#client.changePage(surfaceId, forward)
+			},
+			onPincodeEntry(surfaceId, keycode) {
+				manager.#client.pincodeKey(surfaceId, keycode)
+			},
+			onSetVariableValue(surfaceId, name, value) {
+				manager.#client.sendVariableValue(surfaceId, name, value as string)
+			},
+			onFirmwareUpdateInfo(surfaceId, updateUrl) {
+				manager.#client.sendFirmwareUpdateInfo(surfaceId, updateUrl ?? '')
+			},
+		}
+
+		const startupPromises: Array<Promise<void>> = []
 
 		try {
 			for (const rawPlugin of rawPlugins) {
 				try {
 					const pluginId = rawPlugin.info.pluginId
-					// pluginRef is set immediately after construction; PluginWrapper never calls
-					// notifyOpenedDiscoveredSurface synchronously, so this is always set in time.
-					let pluginRef: PluginWrapperExt | null = null
 
-					const hostContextFull: SurfaceHostContext = {
-						...hostContext,
-						shouldOpenDiscoveredSurface: async (
-							info: CheckDeviceResult,
-						): Promise<ShouldOpenSurfaceResult> => {
-							const resolvedSurfaceId = manager.#resolveUniqueSurfaceId(
-								info.surfaceId,
-								info.surfaceIdIsNotUnique,
-								pluginId,
-								info.devicePath,
-							)
-							manager.#discoveredInfo.set(resolvedSurfaceId, info)
-							return { shouldOpen: true, resolvedSurfaceId }
+					const monitor = new RespawnMonitor([nodeJsPath, entrypointPath], {
+						stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+						env: {
+							...process.env,
+							MODULE_ENTRYPOINT: rawPlugin.entrypointPath,
+							MODULE_MANIFEST: rawPlugin.manifestPath,
+							NODE_PATH: childNodePath,
 						},
-						forgetDiscoveredSurfaces: (devicePaths: string[]) => {
-							for (const devicePath of devicePaths) {
-								manager.#forgetSurfaceId(pluginId, devicePath)
-							}
-						},
-						notifyOpenedDiscoveredSurface: async (info: OpenDeviceResult) => {
-							if (!pluginRef) throw new Error('Plugin not initialized')
-							const discoveredInfo = manager.#discoveredInfo.get(info.surfaceId)
-							if (!discoveredInfo) {
-								manager.#logger.warn(
-									`No discovered info for surface: ${info.surfaceId}, using defaults`,
-								)
-							}
-							const checkResult: CheckDeviceResult = discoveredInfo ?? {
-								devicePath: '',
-								surfaceId: info.surfaceId,
-								surfaceIdIsNotUnique: false,
-								description: info.description,
-							}
-							if (!manager.#tryAddSurfaceFromPlugin(pluginRef, checkResult, { type: 'detect', info })) {
-								manager.#logger.warn(`Surface already exists: ${info.surfaceId}`)
-							}
-						},
-					}
-					pluginRef = new PluginWrapperExt(hostContextFull, rawPlugin)
+					})
 
-					manager.#plugins.set(pluginId, pluginRef)
+					const {
+						promise: registered,
+						resolve: resolveRegister,
+						reject: rejectRegister,
+					} = Promise.withResolvers<void>()
+
+					const handler = new ChildHandler(rawPlugin.info, rawPlugin.usbIds, monitor, deps, async (token) => {
+						if (token !== handler.getVerificationToken()) {
+							const err = new Error(`Plugin "${pluginId}" sent invalid verification token`)
+							manager.#logger.error(err.message)
+							rejectRegister(err)
+							throw err
+						}
+						resolveRegister()
+					})
+
+					// Inject the verification token into the child's environment now that the
+					// handler (and its token) have been constructed.
+					monitor.env = { ...monitor.env, VERIFICATION_TOKEN: handler.getVerificationToken() }
+
+					manager.#plugins.set(pluginId, handler)
+					manager.#monitors.set(pluginId, monitor)
+
+					monitor.on('stdout', (data: Buffer) =>
+						manager.#logger.debug(`[${pluginId}] stdout: ${data.toString().trim()}`),
+					)
+					monitor.on('stderr', (data: Buffer) =>
+						manager.#logger.warn(`[${pluginId}] stderr: ${data.toString().trim()}`),
+					)
+					monitor.on('crash', () => manager.#logger.error(`[${pluginId}] process crashed`))
+					monitor.start()
+
+					const startupPromise = registered
+						.then(async () => {
+							if (manager.isPluginEnabled(pluginId)) {
+								await handler.init()
+							}
+						})
+						.catch((e) => {
+							manager.#logger.error(`Plugin "${pluginId}" startup failed: ${e}`)
+						})
+					startupPromises.push(startupPromise)
 				} catch (e) {
-					manager.#logger.error(`Failed to load plugin "${rawPlugin.info.pluginId}": ${e}`)
+					manager.#logger.error(`Failed to create handler for plugin "${rawPlugin.info.pluginId}": ${e}`)
 				}
 			}
 
-			// Initialize all the plugins
-			await Promise.allSettled(
-				Array.from(manager.#plugins.entries()).map(async ([pluginId, plugin]) => {
-					if (!manager.isPluginEnabled(pluginId)) return
-					await plugin.init().catch((e) => {
-						manager.#logger.error(`Plugin "${pluginId}" init failed: ${e}`)
-					})
-				}),
-			)
+			// Wait for all plugins to start up before triggering the initial scan
+			await Promise.allSettled(startupPromises)
 
 			// Initial scan for surfaces after plugins are loaded
 			manager.scanForSurfaces()
 		} catch (e) {
 			// Something failed, cleanup
-			await Promise.allSettled(Array.from(manager.#plugins.values()).map(async (p) => p.destroy()))
+			await Promise.allSettled(
+				Array.from(manager.#monitors.values()).map(
+					async (monitor) => new Promise<void>((res) => monitor.stop(res)),
+				),
+			)
 			throw e
 		}
 
 		return manager
-	}
-
-	private createHostContext(): Omit<
-		SurfaceHostContext,
-		'notifyOpenedDiscoveredSurface' | 'shouldOpenDiscoveredSurface' | 'forgetDiscoveredSurfaces'
-	> {
-		const runForSurface = (surfaceId: string, fn: (surface: SurfaceInfo) => void) => {
-			try {
-				const surface = this.#getWrappedSurface(surfaceId)
-
-				fn(surface)
-			} catch (e) {
-				this.#logger.error(`Surface event for "${surfaceId}" failed: ${e}`)
-			}
-		}
-
-		return {
-			lockingGraphics: new LockingGraphicsGeneratorImpl(),
-			cardsGenerator: new CardGenerator(),
-
-			capabilities: {
-				// Nothing yet
-			},
-
-			surfaceEvents: {
-				disconnected: (surfaceId: string) => {
-					this.#logger.debug(`Plugin surface disconnected: ${surfaceId}`)
-
-					this.#cleanupSurfaceById(surfaceId)
-				},
-				inputPress: (surfaceId: string, controlId: string, pressed: boolean) => {
-					runForSurface(surfaceId, (surface) => {
-						const control = surface.registerProps.surfaceManifest.controls[controlId]
-						if (!control) throw new Error(`Unknown control id: ${controlId}`)
-
-						if (pressed) {
-							this.#client.keyDown(surfaceId, controlId, control)
-						} else {
-							this.#client.keyUp(surfaceId, controlId, control)
-						}
-					})
-				},
-				inputRotate: (surfaceId: string, controlId: string, delta: number) => {
-					runForSurface(surfaceId, (surface) => {
-						const control = surface.registerProps.surfaceManifest.controls[controlId]
-						if (!control) throw new Error(`Unknown control id: ${controlId}`)
-
-						if (delta < 0) {
-							this.#client.rotateLeft(surfaceId, controlId, control)
-						} else if (delta > 0) {
-							this.#client.rotateRight(surfaceId, controlId, control)
-						}
-					})
-				},
-				setVariableValue: (surfaceId: string, name: string, value: any) => {
-					this.#client.sendVariableValue(surfaceId, name, value)
-				},
-				pincodeEntry: (surfaceId: string, char: number) => {
-					this.#client.pincodeKey(surfaceId, char)
-				},
-				changePage: (surfaceId: string, forward: boolean) => {
-					this.#client.changePage(surfaceId, forward)
-				},
-				firmwareUpdateInfo: (surfaceId: string, info) => {
-					if (info?.updateUrl) {
-						this.#client.sendFirmwareUpdateInfo(surfaceId, info.updateUrl)
-					} else {
-						this.#client.sendFirmwareUpdateInfo(surfaceId, '')
-					}
-				},
-			},
-
-			connectionsFound: (_connectionInfos) => {
-				// Not used by satellite
-			},
-
-			connectionsForgotten: (_connectionIds) => {
-				// Not used by satellite
-			},
-		}
 	}
 
 	private constructor(client: CompanionSatelliteClient, enabledPluginsConfig: ApiSurfacePluginsEnabled) {
@@ -496,11 +496,12 @@ export class SurfaceManager {
 		usb.off('attach', this.#onUsbAttach)
 		usb.off('detach', this.#onUsbDetach)
 
-		// Cleanup all the plugins
+		for (const handler of this.#plugins.values()) {
+			handler.destroy()
+		}
+
 		await Promise.allSettled(
-			Array.from(this.#plugins.values()).map(async (plugin) => {
-				await plugin.destroy()
-			}),
+			Array.from(this.#monitors.values()).map(async (monitor) => new Promise<void>((res) => monitor.stop(res))),
 		)
 	}
 
@@ -509,7 +510,7 @@ export class SurfaceManager {
 		if (!surface) throw new Error(`Missing device for serial: "${surfaceId}"`)
 		return surface
 	}
-	#getPluginForSurface(surfaceId: string): PluginWrapperExt {
+	#getPluginForSurface(surfaceId: string): ChildHandler {
 		const surface = this.#getWrappedSurface(surfaceId)
 		const plugin = this.#plugins.get(surface.pluginId)
 		if (!plugin) throw new Error(`Missing plugin for surface: "${surfaceId}"`)
@@ -583,42 +584,49 @@ export class SurfaceManager {
 			HID.devicesAsync()
 				.then(async (devices) => {
 					await Promise.allSettled(
-						devices.map(async (device) => {
-							if (!device.path) return
+						Array.from(this.#plugins.entries()).map(async ([pluginId, plugin]) => {
+							try {
+								if (!this.isPluginEnabled(pluginId)) return
 
-							const hidDevice: HIDDevice = {
-								vendorId: device.vendorId,
-								productId: device.productId,
-								path: device.path,
-								serialNumber:
-									device.serialNumber ||
-									createHash('sha1')
-										.update(`${device.vendorId}:${device.productId}`)
-										.digest('hex')
-										.slice(0, 20),
-								manufacturer: device.manufacturer,
-								product: device.product,
-								release: device.release,
-								interface: device.interface,
-								usagePage: device.usagePage,
-								usage: device.usage,
-							} satisfies Complete<HIDDevice>
+								const relevant = devices.filter(
+									(d) => d.path && plugin.isRelevantHidDevice(d.vendorId, d.productId),
+								)
+								if (relevant.length === 0) return
 
-							for (const [pluginId, plugin] of this.#plugins.entries()) {
-								try {
-									if (!this.isPluginEnabled(pluginId)) continue
+								const hidDevices: HIDDevice[] = relevant.map(
+									(device) =>
+										({
+											vendorId: device.vendorId,
+											productId: device.productId,
+											path: device.path!,
+											serialNumber:
+												device.serialNumber ||
+												createHash('sha1')
+													.update(`${device.vendorId}:${device.productId}`)
+													.digest('hex')
+													.slice(0, 20),
+											manufacturer: device.manufacturer,
+											product: device.product,
+											release: device.release,
+											interface: device.interface,
+											usagePage: device.usagePage,
+											usage: device.usage,
+										}) satisfies Complete<HIDDevice>,
+								)
 
-									const info = await plugin.checkHidDevice(hidDevice)
-									if (!info) continue
-
-									this.#tryAddSurfaceFromPlugin(plugin, info, {
-										type: 'hid',
-										hid: hidDevice,
-									})
-									return
-								} catch (e) {
-									this.#logger.error(`Plugin "${pluginId}" HID check failed: ${e}`)
+								const results = await plugin.checkHidDevices(hidDevices)
+								for (const info of results) {
+									const hid = hidDevices.find((d) => d.path === info.devicePath)
+									if (!hid) {
+										this.#logger.warn(
+											`Plugin "${pluginId}" returned unknown devicePath: ${info.devicePath}`,
+										)
+										continue
+									}
+									this.#tryAddSurfaceFromPlugin(plugin, info, { type: 'hid', hid })
 								}
+							} catch (e) {
+								this.#logger.error(`Plugin "${pluginId}" HID check failed: ${e}`)
 							}
 						}),
 					)
@@ -690,9 +698,7 @@ export class SurfaceManager {
 					this.#logger.error(`Plugin "${pluginId}" init failed: ${e}`)
 				})
 			} else {
-				plugin.destroy().catch((e) => {
-					this.#logger.error(`Plugin "${pluginId}" destroy failed: ${e}`)
-				})
+				plugin.destroy()
 			}
 		}
 
@@ -708,8 +714,8 @@ export class SurfaceManager {
 	}
 
 	#tryAddSurfaceFromPlugin(
-		plugin: PluginWrapperExt,
-		pluginInfo: CheckDeviceResult,
+		plugin: ChildHandler,
+		pluginInfo: CheckDeviceInfo,
 		openInfo:
 			| {
 					type: 'scan'
@@ -800,7 +806,7 @@ export class SurfaceManager {
 			.finally(() => {
 				this.#pendingSurfaces.delete(resolvedSurfaceId)
 				// Clean up stashed discovery info
-				this.#discoveredInfo.delete(resolvedSurfaceId)
+				this.#discoveredCheckBases.delete(resolvedSurfaceId)
 			})
 
 		return true

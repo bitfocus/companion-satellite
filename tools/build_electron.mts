@@ -3,6 +3,7 @@ import { fs, usePowerShell, argv } from 'zx'
 import electronBuilder from 'electron-builder'
 import { fetchBuiltinSurfaceModules } from './fetch_builtin_modules.mts'
 import { fetchNodejs, platformInfoFromStrings } from './fetch_nodejs.mts'
+import { buildSurfaceThreadEntrypoint } from './build_thread.mts'
 
 if (process.platform === 'win32') {
 	usePowerShell() // to enable powershell
@@ -51,6 +52,10 @@ const nodeVersions = await fetchNodejs(nodePlatformInfo)
 
 // Download surface modules
 const builtinSurfaceCacheDir = await fetchBuiltinSurfaceModules()
+
+// Build the surface-thread entrypoint bundle
+console.log('Building surface thread entrypoint')
+await buildSurfaceThreadEntrypoint()
 
 // HACK: skip this as it is trying to rebuild everything from source and failing
 // if (!platform) {
@@ -146,6 +151,7 @@ const options: electronBuilder.Configuration = {
 		],
 	},
 	files: ['**/*', 'assets/*', '!.nvmrc', '!.node_version', '!docs', '!samples', '!src', '!tools', '!pi-image'],
+	asarUnpack: ['**/node_modules/@companion-surface/**', '**/node_modules/@napi-rs/**'],
 	extraResources: [
 		{
 			from: '../webui/dist',
@@ -154,6 +160,10 @@ const options: electronBuilder.Configuration = {
 		{
 			from: builtinSurfaceCacheDir,
 			to: 'modules',
+		},
+		{
+			from: '../satellite/dist/surface-entrypoint.cjs',
+			to: 'surface-entrypoint.cjs',
 		},
 		...Array.from(nodeVersions.entries()).map(([name, runtimeDir]) => ({
 			from: runtimeDir,
