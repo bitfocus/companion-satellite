@@ -1,15 +1,16 @@
-import { usePowerShell } from 'zx'
+import { $, usePowerShell } from 'zx'
 import { fetchBuiltinSurfaceModules } from './fetch_builtin_modules.mts'
+import { fetchNodejs, currentPlatformInfo } from './fetch_nodejs.mts'
 
 if (process.platform === 'win32') {
 	usePowerShell() // to enable powershell
 }
 
-// console.log('Ensuring nodejs binaries are available')
-
-// const platformInfo = determinePlatformInfo(undefined)
-// await fetchNodejs(platformInfo)
+console.log('Ensuring nodejs binaries are available')
+await fetchNodejs(currentPlatformInfo())
 
 console.log('Ensuring builtin modules are installed')
-
 await fetchBuiltinSurfaceModules()
+
+console.log('Building satellite')
+await $`yarn workspace satellite build:main`

@@ -3,11 +3,7 @@
 	"include": ["**/*.ts", "**/*.cts", "**/*.mts"],
 	"compilerOptions": {
 		"rootDir": "./",
-		"paths": {
-			"*": ["./node_modules/*"],
-		},
 		"types": ["node"],
-		"lib": ["dom"],
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
 		"declaration": true,

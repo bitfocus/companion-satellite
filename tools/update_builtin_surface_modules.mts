@@ -45,7 +45,7 @@ for (const moduleId of Object.keys(existingModules)) {
 				if (!res.ok) {
 					throw new Error(`Error fetching module ${moduleId}: ${res.status} ${res.statusText}`)
 				}
-				const moduleInfoData = await res.json()
+				const moduleInfoData: any = await res.json()
 
 				// This assumes the modules are ordered with newest first
 				const latestCompatibleVersion =

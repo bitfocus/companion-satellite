@@ -1,16 +1,22 @@
 import { createLogger } from './logging.js'
 import { readdir, stat } from 'node:fs/promises'
-import { join, dirname, resolve, relative, isAbsolute } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { join, resolve, relative, isAbsolute } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import type { ApiSurfacePluginInfo } from './apiTypes.js'
-import { validateSurfaceManifest, type SurfaceModuleManifest, type SurfacePlugin } from '@companion-surface/base'
+import { validateSurfaceManifest, type SurfaceModuleManifest } from '@companion-surface/base'
 
 const logger = createLogger('SurfacePluginLoader')
 
 export interface LoadedPlugin {
 	info: ApiSurfacePluginInfo
-	plugin: SurfacePlugin<unknown>
+	/** Runtime type declared in the manifest (e.g. 'node22'), used to select the Node.js binary */
+	runtimeType: string
+	/** Absolute path to the companion/manifest.json */
+	manifestPath: string
+	/** Absolute path to the plugin entrypoint file */
+	entrypointPath: string
+	/** USB device IDs declared in the manifest, for HID pre-filtering */
+	usbIds: Array<{ vendorId: number; productIds: number[] }>
 }
 
 /**
@@ -23,7 +29,7 @@ export interface LoadedPlugin {
  * levels below the repository root, so `../..` resolves identically in both.
  */
 async function findPluginsDir(): Promise<string> {
-	const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..')
+	const repoRoot = resolve(import.meta.dirname, '../..')
 	const prodDir = join(repoRoot, 'modules')
 	try {
 		const s = await stat(prodDir)
@@ -94,21 +100,6 @@ export async function loadSurfacePlugins(): Promise<LoadedPlugin[]> {
 				)
 				continue
 			}
-			let pluginDefault: SurfacePlugin<unknown>
-			try {
-				const mod = (await import(pathToFileURL(entrypointAbsolute).href)) as {
-					default: SurfacePlugin<unknown>
-				}
-				pluginDefault = mod.default
-			} catch (e) {
-				logger.error(`Skipping "${entry}": failed to import plugin from "${entrypointAbsolute}": ${e}`)
-				continue
-			}
-
-			if (!pluginDefault) {
-				logger.error(`Skipping "${entry}": plugin module has no default export`)
-				continue
-			}
 
 			seenIds.set(pluginId, entry)
 			plugins.push({
@@ -117,9 +108,15 @@ export async function loadSurfacePlugins(): Promise<LoadedPlugin[]> {
 					pluginName: manifest.name,
 					version: manifest.version,
 				},
-				plugin: pluginDefault,
+				runtimeType: manifest.runtime.type,
+				manifestPath: join(companionDir, 'manifest.json'),
+				entrypointPath: entrypointAbsolute,
+				usbIds: (manifest.usbIds ?? []).map((u) => ({
+					vendorId: u.vendorId,
+					productIds: u.productIds,
+				})),
 			})
-			logger.debug(`Loaded plugin: ${pluginId} ("${manifest.name}") from "${entry}"`)
+			logger.debug(`Found plugin: ${pluginId} ("${manifest.name}") from "${entry}"`)
 		} catch (e) {
 			logger.error(`Failed to load plugin from "${entry}": ${e}`)
 		}
