@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [2.9.0](https://github.com/bitfocus/companion-satellite/compare/v2.8.0...v2.9.0) (2026-04-19)
+
+
+### Features
+
+* use surface modules ([#230](https://github.com/bitfocus/companion-satellite/issues/230)) ([edc1bab](https://github.com/bitfocus/companion-satellite/commit/edc1babee77272779c53700f782fb7dfe03f3c7d))
+
 ## [2.8.0](https://github.com/bitfocus/companion-satellite/compare/v2.7.0...v2.8.0) (2026-03-03)
 
 
