@@ -1,5 +1,4 @@
 import { createLogger } from '../logging.js'
-import { uint8ArrayToBuffer } from '../graphics/lib.js'
 import type { RespawnMonitor } from '../lib/respawn.js'
 import { IpcWrapper, type IpcEventHandlers } from '../lib/ipc-wrapper.js'
 import type {
@@ -11,6 +10,7 @@ import type {
 	HostToSurfaceModuleEvents,
 	InputPressMessage,
 	InputRotateMessage,
+	IpcDrawProps,
 	LogMessageMessage,
 	NotifyConnectionsForgottenMessage,
 	NotifyConnectionsFoundMessage,
@@ -229,16 +229,10 @@ export class ChildHandler {
 		await this.#ipcWrapper.sendWithCb('blankSurface', { surfaceId })
 	}
 
-	async draw(
-		surfaceId: string,
-		drawProps: Array<{ controlId: string; image?: Uint8Array; color?: string; text?: string; pageNumber?: number }>,
-	): Promise<void> {
+	async draw(surfaceId: string, drawProps: Array<IpcDrawProps>): Promise<void> {
 		await this.#ipcWrapper.sendWithCb('drawControls', {
 			surfaceId,
-			drawProps: drawProps.map((d) => ({
-				...d,
-				image: d.image ? uint8ArrayToBuffer(d.image).toString('base64') : undefined,
-			})),
+			drawProps,
 		})
 	}
 

@@ -30,7 +30,7 @@ export interface CompanionSatelliteClientDrawProps {
 	deviceId: string
 	keyIndex: number | undefined
 	controlId: string | undefined
-	image?: Buffer
+	image?: string // base64
 	color?: string // hex
 	textColor?: string // hex
 	text?: string
@@ -462,7 +462,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			return
 		}
 
-		const image = typeof params.BITMAP === 'string' ? Buffer.from(params.BITMAP, 'base64') : undefined
+		const image = typeof params.BITMAP === 'string' ? params.BITMAP : undefined
 		const text = typeof params.TEXT === 'string' ? Buffer.from(params.TEXT, 'base64').toString() : undefined
 		const color = typeof params.COLOR === 'string' ? params.COLOR : undefined
 		const textColor = typeof params.TEXTCOLOR === 'string' ? params.TEXTCOLOR : undefined

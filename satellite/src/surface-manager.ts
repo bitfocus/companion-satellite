@@ -4,12 +4,7 @@ import * as HID from 'node-hid'
 import { Complete, wrapAsync } from './lib.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 import { createLogger } from './logging.js'
-import {
-	HIDDevice,
-	OpenDeviceResult,
-	type SurfaceDrawProps,
-	type SurfaceSchemaLayoutDefinition,
-} from '@companion-surface/host'
+import { HIDDevice, OpenDeviceResult, type SurfaceSchemaLayoutDefinition } from '@companion-surface/host'
 import {
 	translateModuleToSatelliteSurfaceLayout,
 	translateModuleToSatelliteTransferVariables,
@@ -23,7 +18,7 @@ import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
 import { ChildHandler, type ChildHandlerDependencies } from './surface-thread/child-handler.js'
 import { RespawnMonitor } from './lib/respawn.js'
 import { getNodeJsPath, getSurfaceEntrypointPath, getChildNodePath } from './node-path.js'
-import { type CheckDeviceInfo } from './surface-thread/ipc-types.js'
+import { IpcDrawProps, type CheckDeviceInfo } from './surface-thread/ipc-types.js'
 
 // Force into hidraw mode
 HID.setDriverType('hidraw')
@@ -348,19 +343,19 @@ export class SurfaceManager {
 						surface.surfaceLayout.stylePresets[presetName] ?? surface.surfaceLayout.stylePresets['default']
 					const bitmap = preset?.bitmap
 
-					let image: Uint8Array | undefined
+					let image: string | undefined
 					if (msg.image && bitmap) {
 						const format: PixelFormat = bitmap.format ?? 'rgb'
 						if (format === 'rgb') {
 							image = msg.image
 						} else {
 							const computed = await ImageTransformer.fromBuffer(
-								msg.image,
+								Buffer.from(msg.image, 'base64'),
 								bitmap.w,
 								bitmap.h,
 								'rgb',
 							).toBuffer(format)
-							image = computed.buffer
+							image = computed.buffer.toString('base64')
 						}
 					}
 
@@ -386,7 +381,7 @@ export class SurfaceManager {
 							image: image,
 							color: msg.color,
 							text: msg.text,
-						} satisfies Complete<SurfaceDrawProps>,
+						} satisfies Complete<IpcDrawProps>,
 					])
 				},
 				(e) => {
