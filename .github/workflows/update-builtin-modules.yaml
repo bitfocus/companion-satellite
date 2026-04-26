@@ -42,11 +42,21 @@ jobs:
         run: |
           yarn tsx tools/update_builtin_surface_modules.mts
 
+      - name: Build commit message
+        id: commit-msg
+        run: |
+          UPDATED=$(cat /tmp/updated-surface-modules.txt)
+          if [ -z "$UPDATED" ]; then
+            echo "message=chore: update builtin surface modules" >> "$GITHUB_OUTPUT"
+          else
+            echo "message=feat: update ${UPDATED} surface modules" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v8
         with:
-          commit-message: 'chore: update builtin surface modules'
-          title: 'chore: update builtin surface modules'
+          commit-message: ${{ steps.commit-msg.outputs.message }}
+          title: ${{ steps.commit-msg.outputs.message }}
           body: 'This PR updates the builtin surface modules in the Companion.'
           delete-branch: true
           branch: 'chore/update-builtin-surface-modules'

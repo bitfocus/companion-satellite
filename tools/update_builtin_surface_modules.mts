@@ -17,6 +17,9 @@ const validSurfaceApiRange = new semver.Range(
 const builtinSurfaceModulesPath = path.join(import.meta.dirname, '../assets/builtin-surface-modules.json')
 
 const existingModules = JSON.parse(await fs.readFile(builtinSurfaceModulesPath, 'utf8'))
+const oldVersions: Record<string, string> = Object.fromEntries(
+	Object.entries(existingModules).map(([id, info]: [string, any]) => [id, info.version]),
+)
 
 const baseUrl = process.env.STAGING_MODULE_API
 	? 'https://developer-staging.bitfocus.io/api'
@@ -97,4 +100,9 @@ console.log('All modules processed')
 
 await fs.writeFile(builtinSurfaceModulesPath, JSON.stringify(existingModules, null, '\t') + '\n')
 
+const updatedModules = Object.keys(existingModules).filter((id) => existingModules[id].version !== oldVersions[id])
 console.log('Done updating builtin surface modules.', existingModules)
+console.log('Updated modules:', updatedModules)
+
+const updatedModulesPath = '/tmp/updated-surface-modules.txt'
+await fs.writeFile(updatedModulesPath, updatedModules.join(', '))
