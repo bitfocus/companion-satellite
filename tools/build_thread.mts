@@ -23,12 +23,9 @@ export async function buildSurfaceThreadEntrypoint(): Promise<void> {
 		format: 'esm',
 		outfile: join(repoRoot, 'satellite/dist/surface-entrypoint.mjs'),
 		external: [
-			// All node_modules are supplied via NODE_PATH at runtime
-			'@companion-surface/*',
-			'node-hid',
+			// TODO: Can these be optimised?
 			'@napi-rs/*',
 			'@julusian/*',
-			'usb',
 		],
 		// Keep native require calls intact
 		treeShaking: true,
