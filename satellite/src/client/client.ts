@@ -12,7 +12,7 @@ import {
 import { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 import { SatelliteConfigFields } from '../generated/SatelliteConfigFieldsSchema.js'
 import { parseLineParameters } from './parser.js'
-import type { GridSize } from '@companion-surface/base'
+import type { GridSize } from '@companion-surface/host'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently

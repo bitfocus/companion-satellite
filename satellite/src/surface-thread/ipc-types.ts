@@ -5,8 +5,9 @@ import type {
 	SurfaceDrawProps,
 	OpenDeviceResult,
 	SurfaceFirmwareUpdateInfo,
+	SomeCompanionInputField,
+	OptionsObject,
 } from '@companion-surface/host'
-import type { SomeCompanionInputField, OptionsObject } from '@companion-surface/base'
 import type { JsonValue } from 'type-fest'
 
 export type SurfaceIpcWrapper = IpcWrapper<SurfaceModuleToHostEvents, HostToSurfaceModuleEvents>

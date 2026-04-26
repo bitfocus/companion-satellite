@@ -1,4 +1,10 @@
-import type { SurfaceSchemaLayoutDefinition } from '@companion-surface/host'
+import type {
+	SurfaceSchemaLayoutDefinition,
+	GridSize,
+	SurfaceInputVariable,
+	SurfaceOutputVariable,
+	SomeCompanionInputField,
+} from '@companion-surface/host'
 import type {
 	SatelliteControlDefinition,
 	SatelliteControlStylePreset,
@@ -15,12 +21,6 @@ import type {
 	TextInputField,
 } from './generated/SatelliteConfigFieldsSchema.js'
 import { Complete } from './lib.js'
-import type {
-	GridSize,
-	SurfaceInputVariable,
-	SurfaceOutputVariable,
-	SomeCompanionInputField,
-} from '@companion-surface/base'
 import type { DeviceRegisterInputVariable, DeviceRegisterOutputVariable } from './client/client.js'
 
 export function calculateGridSize(surfaceLayout: SurfaceSchemaLayoutDefinition): GridSize {
