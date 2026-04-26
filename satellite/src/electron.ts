@@ -28,7 +28,6 @@ import {
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
-import { ElectronUpdater } from './electronUpdater.js'
 import { setMaxListeners } from 'events'
 
 // Ensure there isn't another instance of companion running already
@@ -50,7 +49,7 @@ const appConfig = new electronStore<SatelliteConfig>({
 setMaxListeners(0, appConfig.events)
 ensureFieldsPopulated(appConfig)
 
-const electronUpdater = new ElectronUpdater()
+// const electronUpdater = new ElectronUpdater()
 
 let tray: Tray | undefined
 let configWindow: BrowserWindow | undefined
@@ -145,7 +144,7 @@ trayMenu.append(
 		},
 	}),
 )
-trayMenu.append(electronUpdater.menuItem)
+// trayMenu.append(electronUpdater.menuItem)
 trayMenu.append(
 	new MenuItem({
 		label: 'About',
@@ -181,7 +180,7 @@ app.whenReady()
 	.then(async () => {
 		console.log('App ready')
 
-		electronUpdater.check()
+		// electronUpdater.check()
 
 		tryConnect()
 		restartRestApi()

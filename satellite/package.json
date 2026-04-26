@@ -44,7 +44,6 @@
 		"conf": "^15.1.0",
 		"debounce-fn": "^6.0.0",
 		"electron-store": "^11.0.2",
-		"electron-updater": "^6.8.4",
 		"exit-hook": "^5.1.0",
 		"koa": "^3.2.0",
 		"koa-body": "^7.0.1",
