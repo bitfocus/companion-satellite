@@ -170,6 +170,10 @@ const options: electronBuilder.Configuration = {
 			from: '../assets/nodejs-versions.json',
 			to: 'assets/nodejs-versions.json',
 		},
+		{
+			from: './assets/icon.png',
+			to: 'assets/icon.png',
+		},
 		...nodeVersions.entries().map(([name, runtimeDir]) => ({
 			from: runtimeDir,
 			to: `node-runtimes/${name}`,
