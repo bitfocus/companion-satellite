@@ -171,7 +171,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		this.debug = !!options.debug
 
-		this.initSocket()
+		// Don't auto initSocket, as that can trigger an uncaught error
 	}
 
 	private initSocket(): void {

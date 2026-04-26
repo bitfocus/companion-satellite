@@ -208,7 +208,21 @@ export class ChildHandler {
 		await this.#ipcWrapper.sendWithCb('init', {})
 	}
 
+	/**
+	 * Tell the child to stop (plugin disabled). Keeps the IPC listener active so
+	 * the monitor can respawn and re-register normally.
+	 */
 	destroy(): void {
+		this.#ipcWrapper.sendWithCb('destroy', {}).catch((e) => {
+			this.#logger.warn(`Destroy errored: ${e}`)
+		})
+	}
+
+	/**
+	 * Full cleanup for app shutdown: unsubscribes the IPC listener then tells the
+	 * child to stop.
+	 */
+	dispose(): void {
 		this.#unsubListeners()
 		this.#ipcWrapper.sendWithCb('destroy', {}).catch((e) => {
 			this.#logger.warn(`Destroy errored: ${e}`)

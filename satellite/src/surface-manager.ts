@@ -26,6 +26,12 @@ HID.devices()
 
 export type SurfaceId = string
 
+interface PluginEntry {
+	readonly handler: ChildHandler
+	readonly monitor: RespawnMonitor
+	initialized: boolean
+}
+
 interface SurfaceInfo {
 	readonly pluginId: string
 	readonly productName: string
@@ -45,8 +51,7 @@ export class SurfaceManager {
 	readonly #readyingSurfaces: Set<SurfaceId>
 	readonly #client: CompanionSatelliteClient
 
-	readonly #plugins = new Map<string, ChildHandler>()
-	readonly #monitors = new Map<string, RespawnMonitor>()
+	readonly #plugins = new Map<string, PluginEntry>()
 
 	/**
 	 * Stable ID registry — key: `${baseSurfaceId}||${pluginId}:${devicePath}` → resolvedSurfaceId.
@@ -91,7 +96,7 @@ export class SurfaceManager {
 				manager.#forgetSurfaceId(pluginId, devicePath)
 			},
 			notifyOpenedDiscoveredSurface(pluginId, info) {
-				const handler = manager.#plugins.get(pluginId)
+				const handler = manager.#plugins.get(pluginId)?.handler
 				if (!handler) {
 					manager.#logger.warn(`notifyOpenedDiscoveredSurface: no handler for plugin "${pluginId}"`)
 					return
@@ -203,13 +208,23 @@ export class SurfaceManager {
 						// Resolve the one-time startup promise (no-op on re-registration after crash).
 						resolveRegister()
 						// Re-init on every registration so the respawned process starts scanning.
+						// Do NOT await — a timeout/failure here must not propagate back through the
+						// register response, which would cause the child to call process.exit(11).
 						if (manager.isPluginEnabled(pluginId)) {
-							await handler.init()
+							handler
+								.init()
+								.then(() => {
+									const entry = manager.#plugins.get(pluginId)
+									if (entry) entry.initialized = true
+									manager.scanForSurfaces()
+								})
+								.catch((e) => {
+									manager.#logger.error(`Plugin "${pluginId}" init failed: ${e}`)
+								})
 						}
 					})
 
-					manager.#plugins.set(pluginId, handler)
-					manager.#monitors.set(pluginId, monitor)
+					manager.#plugins.set(pluginId, { handler, monitor, initialized: false })
 
 					monitor.on('stdout', (data: Buffer) =>
 						manager.#logger.debug(`[${pluginId}] stdout: ${data.toString().trim()}`),
@@ -220,6 +235,9 @@ export class SurfaceManager {
 					monitor.on('crash', () => manager.#logger.error(`[${pluginId}] process crashed`))
 					monitor.on('sleep', () => {
 						manager.#logger.warn(`[${pluginId}] process exited, restarting`)
+						// Mark as not initialized until the respawned process completes init().
+						const entry = manager.#plugins.get(pluginId)
+						if (entry) entry.initialized = false
 						// Clean up all surfaces belonging to this plugin — the child process
 						// no longer has those device connections and will rediscover on respawn.
 						for (const surfaceId of manager.#surfaces.keys().toArray()) {
@@ -239,15 +257,16 @@ export class SurfaceManager {
 				}
 			}
 
-			// Wait for all plugins to start up before triggering the initial scan
+			// Wait for all plugins to start up before triggering the initial scan.
+			// init() calls are fire-and-forget; we wait for the register promise only.
 			await Promise.allSettled(startupPromises)
 
-			// Initial scan for surfaces after plugins are loaded
-			manager.scanForSurfaces()
+			// init() results arrive asynchronously; each one triggers its own scan
+			// via the onRegister callback above, so no explicit scan needed here.
 		} catch (e) {
 			// Something failed, cleanup
 			await Promise.allSettled(
-				manager.#monitors.values().map(async (monitor) => new Promise<void>((res) => monitor.stop(res))),
+				manager.#plugins.values().map(async ({ monitor }) => new Promise<void>((res) => monitor.stop(res))),
 			)
 			throw e
 		}
@@ -509,13 +528,10 @@ export class SurfaceManager {
 		usb.off('attach', this.#onUsbAttach)
 		usb.off('detach', this.#onUsbDetach)
 
-		for (const handler of this.#plugins.values()) {
-			handler.destroy()
+		for (const { handler, monitor } of this.#plugins.values()) {
+			handler.dispose()
+			await new Promise<void>((res) => monitor.stop(res))
 		}
-
-		await Promise.allSettled(
-			this.#monitors.values().map(async (monitor) => new Promise<void>((res) => monitor.stop(res))),
-		)
 	}
 
 	#getWrappedSurface(surfaceId: string): SurfaceInfo {
@@ -525,9 +541,9 @@ export class SurfaceManager {
 	}
 	#getPluginForSurface(surfaceId: string): ChildHandler {
 		const surface = this.#getWrappedSurface(surfaceId)
-		const plugin = this.#plugins.get(surface.pluginId)
-		if (!plugin) throw new Error(`Missing plugin for surface: "${surfaceId}"`)
-		return plugin
+		const entry = this.#plugins.get(surface.pluginId)
+		if (!entry) throw new Error(`Missing plugin for surface: "${surfaceId}"`)
+		return entry.handler
 	}
 
 	#onUsbAttach = (dev: usb.Device): void => {
@@ -564,7 +580,7 @@ export class SurfaceManager {
 				// If it is still in the process of initialising skip it
 				if (this.#pendingSurfaces.has(surface.surfaceId)) continue
 
-				const plugin = this.#plugins.get(surface.pluginId)
+				const plugin = this.#plugins.get(surface.pluginId)?.handler
 				if (!plugin) throw new Error(`Missing plugin for surface: "${surface.surfaceId}"`)
 
 				plugin.showStatus(surface.surfaceId, this.#client.displayHost, this.#statusString).catch((e) => {
@@ -597,10 +613,10 @@ export class SurfaceManager {
 			HID.devicesAsync()
 				.then(async (devices) => {
 					await Promise.allSettled(
-						this.#plugins.entries().map(async ([pluginId, plugin]) => {
+						this.#plugins.entries().map(async ([pluginId, { handler: plugin, initialized }]) => {
 							try {
 								if (!this.isPluginEnabled(pluginId)) return
-
+								if (!initialized) return
 								const relevant = devices.filter(
 									(d) => d.path && plugin.isRelevantHidDevice(d.vendorId, d.productId),
 								)
@@ -648,9 +664,10 @@ export class SurfaceManager {
 					this.#logger.error(`HID scan failed: ${e}`)
 				}),
 
-			...this.#plugins.entries().map(async ([pluginId, plugin]) => {
+			...this.#plugins.entries().map(async ([pluginId, { handler: plugin, initialized }]) => {
 				try {
 					if (!this.isPluginEnabled(pluginId)) return
+					if (!initialized) return
 
 					const surfaceInfos = await plugin.scanForDevices()
 					for (const surfaceInfo of surfaceInfos) {
@@ -677,7 +694,7 @@ export class SurfaceManager {
 			.values()
 			.map((surface) => ({
 				pluginId: surface.pluginId,
-				pluginName: this.#plugins.get(surface.pluginId)?.info?.pluginName ?? 'Unknown',
+				pluginName: this.#plugins.get(surface.pluginId)?.handler.info?.pluginName ?? 'Unknown',
 				surfaceId: surface.surfaceId,
 				productName: surface.productName,
 			}))
@@ -691,7 +708,7 @@ export class SurfaceManager {
 	public getAvailablePluginsInfo(): ApiSurfacePluginInfo[] {
 		return this.#plugins
 			.values()
-			.map((plugin) => plugin.info)
+			.map(({ handler }) => handler.info)
 			.toArray()
 			.sort((a, b) => a.pluginName.localeCompare(b.pluginName))
 	}
@@ -705,17 +722,24 @@ export class SurfaceManager {
 		this.#enabledPluginsConfig = enabledPlugins
 
 		// call init/destroy as needed
-		for (const [pluginId, plugin] of this.#plugins.entries()) {
+		for (const [pluginId, entry] of this.#plugins.entries()) {
 			const wasEnabled = oldEnabledPlugins[pluginId] ?? false
 			const isEnabled = this.isPluginEnabled(pluginId)
 			if (wasEnabled === isEnabled) continue
 
 			if (isEnabled) {
-				plugin.init().catch((e) => {
-					this.#logger.error(`Plugin "${pluginId}" init failed: ${e}`)
-				})
+				entry.handler
+					.init()
+					.then(() => {
+						entry.initialized = true
+						this.scanForSurfaces()
+					})
+					.catch((e) => {
+						this.#logger.error(`Plugin "${pluginId}" init failed: ${e}`)
+					})
 			} else {
-				plugin.destroy()
+				entry.initialized = false
+				entry.handler.destroy()
 			}
 		}
 
@@ -784,7 +808,7 @@ export class SurfaceManager {
 				if (!result) return
 
 				// Ensure the plugin is still enabled and the same instance
-				if (!this.isPluginEnabled(plugin.info.pluginId) || this.#plugins.get(plugin.info.pluginId) !== plugin) {
+				if (!this.isPluginEnabled(plugin.info.pluginId) || this.#plugins.get(plugin.info.pluginId)?.handler !== plugin) {
 					return
 				}
 
@@ -903,7 +927,7 @@ export class SurfaceManager {
 			const plugin = this.#plugins.get(dev.pluginId)
 			if (!plugin) continue
 
-			plugin.showStatus(dev.surfaceId, this.#client.displayHost, message).catch((e) => {
+			plugin.handler.showStatus(dev.surfaceId, this.#client.displayHost, message).catch((e) => {
 				this.#logger.error(`Show status failed for "${dev.surfaceId}": ${e}`)
 			})
 		}
