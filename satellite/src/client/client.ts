@@ -113,6 +113,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsSurfaceManifest = false
 	private _supportsDeviceSerial = false
 	private _supportsSubscriptions = false
+	private _supportsNonSquareBitmaps = false
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -141,6 +142,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get supportsSubscriptions(): boolean {
 		return this._supportsSubscriptions
+	}
+	public get supportsNonSquareBitmaps(): boolean {
+		return this._supportsNonSquareBitmaps
 	}
 
 	public get displayHost(): string {
@@ -578,6 +582,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this._supportsSubscriptions = params.SUBSCRIPTIONS === '1' || params.SUBSCRIPTIONS === true
 		if (this._supportsSubscriptions) {
 			this.emit('log', 'Companion supports button subscriptions')
+		}
+		this._supportsNonSquareBitmaps = params.NONSQUARE === '1' || params.NONSQUARE === true
+		if (this._supportsNonSquareBitmaps) {
+			this.emit('log', 'Companion supports non-square bitmaps')
 		}
 	}
 

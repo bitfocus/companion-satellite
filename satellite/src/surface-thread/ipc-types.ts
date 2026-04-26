@@ -33,8 +33,12 @@ export interface SurfaceModuleToHostEvents {
 	'firmware-update-info': (msg: FirmwareUpdateInfoMessage) => never
 }
 
+export interface InitMessage {
+	supportsNonSquareButtons: boolean | undefined
+}
+
 export interface HostToSurfaceModuleEvents {
-	init: (msg: Record<string, never>) => void
+	init: (msg: InitMessage) => void
 	destroy: (msg: Record<string, never>) => void
 
 	checkHidDevices: (msg: CheckHidDevicesMessage) => CheckHidDevicesResponseMessage

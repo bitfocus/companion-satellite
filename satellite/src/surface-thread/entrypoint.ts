@@ -1,6 +1,6 @@
 /* eslint-disable n/no-process-exit */
 import { IpcWrapper, type IpcCallMessagePacket, type IpcResponseMessagePacket } from '../lib/ipc-wrapper.js'
-import type { SurfaceModuleToHostEvents, HostToSurfaceModuleEvents, CheckDeviceInfo } from './ipc-types.js'
+import type { SurfaceModuleToHostEvents, HostToSurfaceModuleEvents, CheckDeviceInfo, InitMessage } from './ipc-types.js'
 import {
 	type SurfaceModuleManifest,
 	registerLoggingSink,
@@ -34,13 +34,18 @@ async function main() {
 	const logger = createModuleLogger('Entrypoint')
 
 	let plugin: PluginWrapper | null = null
+	let hostContext: HostContext | null = null
 	let pluginInitialized = false
 
 	const ipcWrapper = new IpcWrapper<SurfaceModuleToHostEvents, HostToSurfaceModuleEvents>(
 		{
-			init: async () => {
+			init: async (msg: InitMessage) => {
 				if (pluginInitialized) throw new Error('Already initialized')
 				if (!plugin) throw new Error('Plugin not loaded')
+				if (!hostContext) throw new Error('HostContext not created')
+
+				// This is safe, as the plugin doesn't have access to the capabilities until we call init
+				hostContext.capabilities.supportsNonSquareButtons = msg.supportsNonSquareButtons
 
 				await plugin.init()
 
@@ -217,7 +222,8 @@ async function main() {
 	const moduleConstructor = isSurfaceModule(moduleImport) ? moduleImport : moduleImport.default
 	if (!isSurfaceModule(moduleConstructor)) throw new Error(`Module entrypoint did not return a valid surface plugin`)
 
-	plugin = new PluginWrapper(new HostContext(ipcWrapper), moduleConstructor)
+	hostContext = new HostContext(ipcWrapper)
+	plugin = new PluginWrapper(hostContext, moduleConstructor)
 
 	const pluginFeatures = plugin.getPluginFeatures()
 	ipcWrapper

@@ -65,6 +65,8 @@ export class SurfaceManager {
 
 	#enabledPluginsConfig: ApiSurfacePluginsEnabled = {}
 
+	#supportsNonSquareButtons: boolean = false
+
 	#statusString: string
 	#scanIsRunning = false
 	#scanPending = false
@@ -212,7 +214,7 @@ export class SurfaceManager {
 						// register response, which would cause the child to call process.exit(11).
 						if (manager.isPluginEnabled(pluginId)) {
 							handler
-								.init()
+								.init(manager.#supportsNonSquareButtons)
 								.then(() => {
 									const entry = manager.#plugins.get(pluginId)
 									if (entry) entry.initialized = true
@@ -293,6 +295,19 @@ export class SurfaceManager {
 			this.#logger.info('connected')
 
 			this.#showStatusCard('Connected', false)
+
+			const newSupportsNonSquareButtons: boolean | undefined = client.supportsNonSquareBitmaps
+			if (newSupportsNonSquareButtons !== this.#supportsNonSquareButtons) {
+				this.#logger.info(
+					`supportsNonSquareButtons changed from ${this.#supportsNonSquareButtons} to ${newSupportsNonSquareButtons}, restarting all modules`,
+				)
+				this.#supportsNonSquareButtons = newSupportsNonSquareButtons
+				for (const [, entry] of this.#plugins.entries()) {
+					if (entry.initialized) {
+						entry.handler.destroy()
+					}
+				}
+			}
 
 			this.syncCapabilitiesAndRegisterAllDevices()
 		})
@@ -729,7 +744,7 @@ export class SurfaceManager {
 
 			if (isEnabled) {
 				entry.handler
-					.init()
+					.init(this.#supportsNonSquareButtons)
 					.then(() => {
 						entry.initialized = true
 						this.scanForSurfaces()
@@ -808,7 +823,10 @@ export class SurfaceManager {
 				if (!result) return
 
 				// Ensure the plugin is still enabled and the same instance
-				if (!this.isPluginEnabled(plugin.info.pluginId) || this.#plugins.get(plugin.info.pluginId)?.handler !== plugin) {
+				if (
+					!this.isPluginEnabled(plugin.info.pluginId) ||
+					this.#plugins.get(plugin.info.pluginId)?.handler !== plugin
+				) {
 					return
 				}
 
