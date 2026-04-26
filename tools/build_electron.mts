@@ -152,7 +152,7 @@ const options: electronBuilder.Configuration = {
 		],
 	},
 	files: ['**/*', 'assets/*', '!.nvmrc', '!.node_version', '!docs', '!samples', '!src', '!tools', '!pi-image'],
-	asarUnpack: ['**/node_modules/@companion-surface/**', '**/node_modules/@napi-rs/**'],
+	asarUnpack: ['**/node_modules/@napi-rs/**'],
 	extraResources: [
 		{
 			from: '../webui/dist',
@@ -165,6 +165,10 @@ const options: electronBuilder.Configuration = {
 		{
 			from: '../satellite/dist/surface-entrypoint.mjs',
 			to: 'surface-entrypoint.mjs',
+		},
+		{
+			from: '../assets/nodejs-versions.json',
+			to: 'assets/nodejs-versions.json',
 		},
 		...nodeVersions.entries().map(([name, runtimeDir]) => ({
 			from: runtimeDir,

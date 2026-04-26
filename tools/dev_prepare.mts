@@ -13,4 +13,4 @@ console.log('Ensuring builtin modules are installed')
 await fetchBuiltinSurfaceModules()
 
 console.log('Building satellite')
-await $`yarn workspace satellite build:main`
+await $`yarn run build:ts`
