@@ -160,8 +160,6 @@ export class SurfaceManager {
 			},
 		}
 
-		const startupPromises: Array<Promise<void>> = []
-
 		try {
 			for (const rawPlugin of rawPlugins) {
 				try {
@@ -192,23 +190,14 @@ export class SurfaceManager {
 						stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
 					})
 
-					const {
-						promise: registered,
-						resolve: resolveRegister,
-						reject: rejectRegister,
-					} = Promise.withResolvers<void>()
-
 					// `handler` is captured by the onRegister closure below; it will be
 					// assigned before the closure is ever invoked (IPC is async).
 					const handler = new ChildHandler(rawPlugin.info, rawPlugin.usbIds, monitor, deps, async (token) => {
 						if (token !== verificationToken) {
 							const err = new Error(`Plugin "${pluginId}" sent invalid verification token`)
 							manager.#logger.error(err.message)
-							rejectRegister(err)
 							throw err
 						}
-						// Resolve the one-time startup promise (no-op on re-registration after crash).
-						resolveRegister()
 						// Re-init on every registration so the respawned process starts scanning.
 						// Do NOT await — a timeout/failure here must not propagate back through the
 						// register response, which would cause the child to call process.exit(11).
@@ -250,23 +239,11 @@ export class SurfaceManager {
 					})
 					if (manager.isPluginEnabled(pluginId)) {
 						monitor.start()
-						startupPromises.push(
-							registered.catch((e) => {
-								manager.#logger.error(`Plugin "${pluginId}" startup failed: ${e}`)
-							}),
-						)
 					}
 				} catch (e) {
 					manager.#logger.error(`Failed to create handler for plugin "${rawPlugin.info.pluginId}": ${e}`)
 				}
 			}
-
-			// Wait for all plugins to start up before triggering the initial scan.
-			// init() calls are fire-and-forget; we wait for the register promise only.
-			await Promise.allSettled(startupPromises)
-
-			// init() results arrive asynchronously; each one triggers its own scan
-			// via the onRegister callback above, so no explicit scan needed here.
 		} catch (e) {
 			// Something failed, cleanup
 			await Promise.allSettled(

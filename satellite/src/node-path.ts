@@ -55,7 +55,9 @@ export async function getNodeJsPath(runtimeType: string, isPackaged: boolean): P
 export function getSurfaceEntrypointPath(isPackaged: boolean): string {
 	if (isPackaged) {
 		const resourcesPath = (process as any).resourcesPath as string
-		return join(resourcesPath, 'surface-entrypoint.mjs')
+		// The entrypoint is in asarUnpack so it lives adjacent to node_modules,
+		// allowing Node.js ESM resolution to walk up and find @napi-rs/canvas etc.
+		return join(resourcesPath, 'app.asar.unpacked', 'dist', 'surface-entrypoint.mjs')
 	} else if (process.env.NODE_ENV === 'development') {
 		// Dev (tsx): use tsc-compiled output
 		return join(import.meta.dirname, '../dist/surface-thread/entrypoint.js')
