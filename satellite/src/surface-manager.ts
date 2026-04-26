@@ -237,9 +237,7 @@ export class SurfaceManager {
 		} catch (e) {
 			// Something failed, cleanup
 			await Promise.allSettled(
-				Array.from(manager.#monitors.values()).map(
-					async (monitor) => new Promise<void>((res) => monitor.stop(res)),
-				),
+				manager.#monitors.values().map(async (monitor) => new Promise<void>((res) => monitor.stop(res))),
 			)
 			throw e
 		}
@@ -506,7 +504,7 @@ export class SurfaceManager {
 		}
 
 		await Promise.allSettled(
-			Array.from(this.#monitors.values()).map(async (monitor) => new Promise<void>((res) => monitor.stop(res))),
+			this.#monitors.values().map(async (monitor) => new Promise<void>((res) => monitor.stop(res))),
 		)
 	}
 
@@ -550,7 +548,7 @@ export class SurfaceManager {
 	}
 
 	public syncCapabilitiesAndRegisterAllDevices(): void {
-		this.#logger.debug(`registerAll ${Array.from(this.#surfaces.keys()).join(',')}`)
+		this.#logger.debug(`registerAll ${this.#surfaces.keys().toArray().join(',')}`)
 		for (const surface of this.#surfaces.values()) {
 			try {
 				// If it is still in the process of initialising skip it
@@ -589,7 +587,7 @@ export class SurfaceManager {
 			HID.devicesAsync()
 				.then(async (devices) => {
 					await Promise.allSettled(
-						Array.from(this.#plugins.entries()).map(async ([pluginId, plugin]) => {
+						this.#plugins.entries().map(async ([pluginId, plugin]) => {
 							try {
 								if (!this.isPluginEnabled(pluginId)) return
 
@@ -640,7 +638,7 @@ export class SurfaceManager {
 					this.#logger.error(`HID scan failed: ${e}`)
 				}),
 
-			...Array.from(this.#plugins.entries()).map(async ([pluginId, plugin]) => {
+			...this.#plugins.entries().map(async ([pluginId, plugin]) => {
 				try {
 					if (!this.isPluginEnabled(pluginId)) return
 
@@ -665,13 +663,15 @@ export class SurfaceManager {
 	 * List all of the currently open surfaces
 	 */
 	public getOpenSurfacesInfo(): ApiSurfaceInfo[] {
-		return Array.from(this.#surfaces.values())
+		return this.#surfaces
+			.values()
 			.map((surface) => ({
 				pluginId: surface.pluginId,
 				pluginName: this.#plugins.get(surface.pluginId)?.info?.pluginName ?? 'Unknown',
 				surfaceId: surface.surfaceId,
 				productName: surface.productName,
 			}))
+			.toArray()
 			.sort((a, b) => a.surfaceId.localeCompare(b.surfaceId))
 	}
 
@@ -679,8 +679,10 @@ export class SurfaceManager {
 	 * List all of the available/installed plugins
 	 */
 	public getAvailablePluginsInfo(): ApiSurfacePluginInfo[] {
-		return Array.from(this.#plugins.values())
+		return this.#plugins
+			.values()
 			.map((plugin) => plugin.info)
+			.toArray()
 			.sort((a, b) => a.pluginName.localeCompare(b.pluginName))
 	}
 
@@ -758,7 +760,7 @@ export class SurfaceManager {
 		this.#logger.debug(
 			`adding new surface: ${resolvedSurfaceId} (serial=${serialNumber}, unique=${serialIsUnique})`,
 		)
-		this.#logger.debug(`existing = ${JSON.stringify(Array.from(this.#surfaces.keys()))}`)
+		this.#logger.debug(`existing = ${JSON.stringify(this.#surfaces.keys().toArray())}`)
 
 		const pOpen =
 			openInfo.type === 'hid'

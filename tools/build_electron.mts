@@ -165,7 +165,7 @@ const options: electronBuilder.Configuration = {
 			from: '../satellite/dist/surface-entrypoint.cjs',
 			to: 'surface-entrypoint.cjs',
 		},
-		...Array.from(nodeVersions.entries()).map(([name, runtimeDir]) => ({
+		...nodeVersions.entries().map(([name, runtimeDir]) => ({
 			from: runtimeDir,
 			to: `node-runtimes/${name}`,
 		})),
