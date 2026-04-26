@@ -77,7 +77,7 @@ async function getChildPids(pid: number): Promise<number[]> {
 }
 
 export function kill(pid: number, sig = 'SIGTERM'): void {
-	if (typeof pid !== 'number' || isNaN(pid)) {
+	if (typeof pid !== 'number' || !Number.isInteger(pid) || pid <= 0) {
 		throw new Error('Invalid PID: ' + pid)
 	}
 
