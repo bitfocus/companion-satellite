@@ -115,7 +115,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsSubscriptions = false
 	private _supportsNonSquareBitmaps = false
 	private _pendingConnected = false
-	private _capsTimer: NodeJS.Timeout | undefined = undefined
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -205,11 +204,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 				this._supportsSubscriptions = false
 				this._pendingConnected = false
-				if (this._capsTimer) {
-					clearTimeout(this._capsTimer)
-					this._capsTimer = undefined
-				}
-
 				if (this._connected) {
 					this.emit('disconnected')
 				} else {
@@ -448,20 +442,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		// Defer emitting connected until CAPS is received (added in API 1.10.0)
 		this._pendingConnected = true
-		if (this._capsTimer) clearTimeout(this._capsTimer)
-
 		const expectCaps = !!this._companionApiVersion && semver.lte('1.10.0', this._companionApiVersion)
-		if (expectCaps) {
-			// Defensive fallback: if CAPS never arrives, complete connection after 500ms
-			this._capsTimer = setTimeout(() => {
-				this._capsTimer = undefined
-				this.emit('log', 'CAPS not received within timeout, completing connection without capabilities')
-				this.completeConnection()
-			}, 500)
-		} else {
+		if (!expectCaps) {
 			// Older Companion versions don't send CAPS, complete immediately
 			this.completeConnection()
 		}
+		// For API >= 1.10.0, CAPS is required by spec — wait for it unconditionally.
+		// If it never arrives the ping-timeout will disconnect and trigger a reconnect.
 	}
 
 	private handleState(params: Record<string, string | boolean>): void {
@@ -600,11 +587,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private handleCaps(params: Record<string, string | boolean>): void {
-		if (this._capsTimer) {
-			clearTimeout(this._capsTimer)
-			this._capsTimer = undefined
-		}
-
 		this._supportsSubscriptions = params.SUBSCRIPTIONS === '1' || params.SUBSCRIPTIONS === true
 		if (this._supportsSubscriptions) {
 			this.emit('log', 'Companion supports button subscriptions')
