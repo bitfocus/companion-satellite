@@ -29,9 +29,6 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 } else if (platform === 'linux-x64') {
 	platformInfo = { platform: 'linux', arch: electronBuilder.Arch.x64 }
 	// nodePreGypArgs = ['--target_platform=linux', '--target_arch=x64', '--target_libc=glibc']
-} else if (platform === 'linux-arm7') {
-	platformInfo = { platform: 'linux', arch: electronBuilder.Arch.armv7l }
-	// nodePreGypArgs = ['--target_platform=linux', '--target_arch=arm', '--target_libc=glibc']
 } else if (platform === 'linux-arm64') {
 	platformInfo = { platform: 'linux', arch: electronBuilder.Arch.arm64 }
 	// nodePreGypArgs = ['--target_platform=linux', '--target_arch=arm64', '--target_libc=glibc']

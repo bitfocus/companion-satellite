@@ -13,7 +13,7 @@ const cacheRuntimeDir = path.join(cacheRoot, 'node-runtime')
 export interface NodePlatformInfo {
 	/** e.g. 'linux', 'darwin', 'win' */
 	runtimePlatform: string
-	/** e.g. 'x64', 'arm64', 'armv7l' */
+	/** e.g. 'x64', 'arm64' */
 	runtimeArch: string
 	/** process.platform equivalent: 'linux', 'darwin', 'win32' */
 	nodePlatform: string
@@ -32,9 +32,6 @@ export function platformInfoFromStrings(platform: string, arch: string): NodePla
 			return { runtimePlatform: 'linux', runtimeArch: 'x64', nodePlatform: 'linux', nodeArch: 'x64' }
 		case 'linux-arm64':
 			return { runtimePlatform: 'linux', runtimeArch: 'arm64', nodePlatform: 'linux', nodeArch: 'arm64' }
-		case 'linux-arm':
-		case 'linux-armv7l':
-			return { runtimePlatform: 'linux', runtimeArch: 'armv7l', nodePlatform: 'linux', nodeArch: 'arm' }
 		case 'darwin-x64':
 			return { runtimePlatform: 'darwin', runtimeArch: 'x64', nodePlatform: 'darwin', nodeArch: 'x64' }
 		case 'darwin-arm64':
@@ -80,13 +77,23 @@ async function fetchSingleVersion(platformInfo: NodePlatformInfo, nodeVersion: s
 
 		const response = await fetch(tarUrl)
 		if (!response.ok || !response.body) throw new Error(`Failed to download ${tarUrl}: ${response.statusText}`)
-		await streamPipeline(response.body, createWriteStream(tarPath))
+		const tmpTarPath = `${tarPath}.tmp`
+		try {
+			await streamPipeline(response.body, createWriteStream(tmpTarPath))
+			await fs.move(tmpTarPath, tarPath, { overwrite: true })
+		} catch (e) {
+			await fs.remove(tmpTarPath).catch(() => {})
+			throw e
+		}
 	}
 
 	const runtimeDir = path.join(cacheRuntimeDir, `${platformInfo.nodePlatform}-${platformInfo.nodeArch}-${nodeVersion}`)
 
 	if (!(await fs.pathExists(runtimeDir))) {
 		console.log(`Extracting Node.js ${nodeVersion}...`)
+
+		const stagingDir = `${runtimeDir}.partial`
+		await fs.remove(stagingDir)
 
 		if (isZip) {
 			const tmpDir = path.join(cacheRuntimeDir, `tmp-${nodeVersion}`)
@@ -98,24 +105,26 @@ async function fetchSingleVersion(platformInfo: NodePlatformInfo, nodeVersion: s
 			}
 			await fs.move(
 				path.join(tmpDir, `node-v${nodeVersion}-${platformInfo.runtimePlatform}-${platformInfo.runtimeArch}`),
-				runtimeDir,
+				stagingDir,
 			)
 			await fs.remove(tmpDir)
-			await fs.remove(path.join(runtimeDir, 'node_modules/npm'))
-			await fs.remove(path.join(runtimeDir, 'npm'))
-			await fs.remove(path.join(runtimeDir, 'npx'))
+			await fs.remove(path.join(stagingDir, 'node_modules/npm'))
+			await fs.remove(path.join(stagingDir, 'npm'))
+			await fs.remove(path.join(stagingDir, 'npx'))
 		} else {
-			await fs.mkdirp(runtimeDir)
-			await $`tar -xzf ${tarPath} --strip-components=1 -C ${runtimeDir}`
-			await fs.remove(path.join(runtimeDir, 'lib/node_modules/npm'))
+			await fs.mkdirp(stagingDir)
+			await $`tar -xzf ${tarPath} --strip-components=1 -C ${stagingDir}`
+			await fs.remove(path.join(stagingDir, 'lib/node_modules/npm'))
 			if (platformInfo.runtimePlatform === 'darwin') {
-				await fs.remove(path.join(runtimeDir, 'bin/npm'))
-				await fs.remove(path.join(runtimeDir, 'bin/npx'))
+				await fs.remove(path.join(stagingDir, 'bin/npm'))
+				await fs.remove(path.join(stagingDir, 'bin/npx'))
 			}
 		}
 
-		await fs.remove(path.join(runtimeDir, 'share'))
-		await fs.remove(path.join(runtimeDir, 'include'))
+		await fs.remove(path.join(stagingDir, 'share'))
+		await fs.remove(path.join(stagingDir, 'include'))
+
+		await fs.move(stagingDir, runtimeDir)
 
 		console.log(`Node.js ${nodeVersion} ready at ${runtimeDir}`)
 	}

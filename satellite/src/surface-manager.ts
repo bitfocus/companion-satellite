@@ -248,12 +248,14 @@ export class SurfaceManager {
 							}
 						}
 					})
-					monitor.start()
-
-					const startupPromise = registered.catch((e) => {
-						manager.#logger.error(`Plugin "${pluginId}" startup failed: ${e}`)
-					})
-					startupPromises.push(startupPromise)
+					if (manager.isPluginEnabled(pluginId)) {
+						monitor.start()
+						startupPromises.push(
+							registered.catch((e) => {
+								manager.#logger.error(`Plugin "${pluginId}" startup failed: ${e}`)
+							}),
+						)
+					}
 				} catch (e) {
 					manager.#logger.error(`Failed to create handler for plugin "${rawPlugin.info.pluginId}": ${e}`)
 				}
@@ -746,18 +748,14 @@ export class SurfaceManager {
 			if (wasEnabled === isEnabled) continue
 
 			if (isEnabled) {
-				entry.handler
-					.init(this.#supportsNonSquareButtons)
-					.then(() => {
-						entry.initialized = true
-						this.scanForSurfaces()
-					})
-					.catch((e) => {
-						this.#logger.error(`Plugin "${pluginId}" init failed: ${e}`)
-					})
+				// Spawn the child process. When it starts it will send 'register', which triggers
+				// the onRegister callback in create() — that callback calls handler.init().
+				entry.monitor.start()
 			} else {
 				entry.initialized = false
+				// Gracefully close open devices, then stop the monitor so it doesn't respawn.
 				entry.handler.destroy()
+				entry.monitor.stop()
 			}
 		}
 

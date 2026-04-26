@@ -82,7 +82,9 @@ export function kill(pid: number, sig = 'SIGTERM'): void {
 	}
 
 	if (process.platform === 'win32') {
-		exec('taskkill /pid ' + pid + ' /T /F')
+		exec(`taskkill /pid ${pid} /T /F`, (err) => {
+			if (err) console.warn(`taskkill failed for PID ${pid}:`, err.message)
+		})
 		return
 	}
 
