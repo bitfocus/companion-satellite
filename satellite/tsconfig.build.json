@@ -5,12 +5,7 @@
 	"compilerOptions": {
 		"outDir": "./dist",
 		"rootDir": "./src",
-		"paths": {
-			"*": ["./node_modules/*"],
-			"{{PACKAGE-NAME}}": ["./src/index.ts"]
-		},
 		"types": ["node"],
-		"lib": ["dom"],
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
 		"declaration": true,

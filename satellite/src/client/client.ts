@@ -12,7 +12,7 @@ import {
 import { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 import { SatelliteConfigFields } from '../generated/SatelliteConfigFieldsSchema.js'
 import { parseLineParameters } from './parser.js'
-import type { GridSize } from '@companion-surface/base'
+import type { GridSize } from '@companion-surface/host'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
 const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet has been received recently
@@ -30,7 +30,7 @@ export interface CompanionSatelliteClientDrawProps {
 	deviceId: string
 	keyIndex: number | undefined
 	controlId: string | undefined
-	image?: Buffer
+	image?: string // base64
 	color?: string // hex
 	textColor?: string // hex
 	text?: string
@@ -113,6 +113,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsSurfaceManifest = false
 	private _supportsDeviceSerial = false
 	private _supportsSubscriptions = false
+	private _supportsNonSquareBitmaps = false
+	private _pendingConnected = false
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -141,6 +143,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get supportsSubscriptions(): boolean {
 		return this._supportsSubscriptions
+	}
+	public get supportsNonSquareBitmaps(): boolean {
+		return this._supportsNonSquareBitmaps
 	}
 
 	public get displayHost(): string {
@@ -171,7 +176,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		this.debug = !!options.debug
 
-		this.initSocket()
+		// Don't auto initSocket, as that can trigger an uncaught error
 	}
 
 	private initSocket(): void {
@@ -198,7 +203,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._pendingDevices.clear()
 
 				this._supportsSubscriptions = false
-
+				this._pendingConnected = false
 				if (this._connected) {
 					this.emit('disconnected')
 				} else {
@@ -432,11 +437,18 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._supportsDeviceSerial) {
 			this.emit('log', 'Companion supports separate serial value')
 		}
+		this._supportsNonSquareBitmaps = false
+		this._supportsSubscriptions = false
 
-		// report the connection as ready
-		setImmediate(() => {
-			this.emit('connected')
-		})
+		// Defer emitting connected until CAPS is received (added in API 1.10.0)
+		this._pendingConnected = true
+		const expectCaps = !!this._companionApiVersion && semver.lte('1.10.0', this._companionApiVersion)
+		if (!expectCaps) {
+			// Older Companion versions don't send CAPS, complete immediately
+			this.completeConnection()
+		}
+		// For API >= 1.10.0, CAPS is required by spec — wait for it unconditionally.
+		// If it never arrives the ping-timeout will disconnect and trigger a reconnect.
 	}
 
 	private handleState(params: Record<string, string | boolean>): void {
@@ -462,7 +474,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			return
 		}
 
-		const image = typeof params.BITMAP === 'string' ? Buffer.from(params.BITMAP, 'base64') : undefined
+		const image = typeof params.BITMAP === 'string' ? params.BITMAP : undefined
 		const text = typeof params.TEXT === 'string' ? Buffer.from(params.TEXT, 'base64').toString() : undefined
 		const color = typeof params.COLOR === 'string' ? params.COLOR : undefined
 		const textColor = typeof params.TEXTCOLOR === 'string' ? params.TEXTCOLOR : undefined
@@ -579,6 +591,20 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._supportsSubscriptions) {
 			this.emit('log', 'Companion supports button subscriptions')
 		}
+		this._supportsNonSquareBitmaps = params.NONSQUARE === '1' || params.NONSQUARE === true
+		if (this._supportsNonSquareBitmaps) {
+			this.emit('log', 'Companion supports non-square bitmaps')
+		}
+
+		this.completeConnection()
+	}
+
+	private completeConnection(): void {
+		if (!this._pendingConnected) return
+		this._pendingConnected = false
+		setImmediate(() => {
+			this.emit('connected')
+		})
 	}
 
 	private handleDeviceConfig(params: Record<string, string | boolean>): void {

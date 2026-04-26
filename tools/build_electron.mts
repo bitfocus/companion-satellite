@@ -1,7 +1,10 @@
+/* eslint-disable n/no-extraneous-import */
 /* eslint-disable n/no-process-exit */
 import { fs, usePowerShell, argv } from 'zx'
 import electronBuilder from 'electron-builder'
 import { fetchBuiltinSurfaceModules } from './fetch_builtin_modules.mts'
+import { fetchNodejs, platformInfoFromStrings } from './fetch_nodejs.mts'
+import { buildSurfaceThreadEntrypoint } from './build_thread.mts'
 
 if (process.platform === 'win32') {
 	usePowerShell() // to enable powershell
@@ -26,9 +29,6 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 } else if (platform === 'linux-x64') {
 	platformInfo = { platform: 'linux', arch: electronBuilder.Arch.x64 }
 	// nodePreGypArgs = ['--target_platform=linux', '--target_arch=x64', '--target_libc=glibc']
-} else if (platform === 'linux-arm7') {
-	platformInfo = { platform: 'linux', arch: electronBuilder.Arch.armv7l }
-	// nodePreGypArgs = ['--target_platform=linux', '--target_arch=arm', '--target_libc=glibc']
 } else if (platform === 'linux-arm64') {
 	platformInfo = { platform: 'linux', arch: electronBuilder.Arch.arm64 }
 	// nodePreGypArgs = ['--target_platform=linux', '--target_arch=arm64', '--target_libc=glibc']
@@ -37,8 +37,23 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 	process.exit(1)
 }
 
+// Download Node.js binary for the target platform
+const nodePlatformInfo = platformInfoFromStrings(
+	platform === 'win-x64' || platform === 'win32-x64'
+		? 'win32'
+		: platform === 'mac-x64' || platform === 'darwin-x64' || platform === 'mac-arm64' || platform === 'darwin-arm64'
+			? 'darwin'
+			: 'linux',
+	platform.split('-').pop()!,
+)
+const nodeVersions = await fetchNodejs(nodePlatformInfo)
+
 // Download surface modules
 const builtinSurfaceCacheDir = await fetchBuiltinSurfaceModules()
+
+// Build the surface-thread entrypoint bundle
+console.log('Building surface thread entrypoint')
+await buildSurfaceThreadEntrypoint()
 
 // HACK: skip this as it is trying to rebuild everything from source and failing
 // if (!platform) {
@@ -134,6 +149,7 @@ const options: electronBuilder.Configuration = {
 		],
 	},
 	files: ['**/*', 'assets/*', '!.nvmrc', '!.node_version', '!docs', '!samples', '!src', '!tools', '!pi-image'],
+	asarUnpack: ['**/node_modules/@napi-rs/**'],
 	extraResources: [
 		{
 			from: '../webui/dist',
@@ -143,6 +159,22 @@ const options: electronBuilder.Configuration = {
 			from: builtinSurfaceCacheDir,
 			to: 'modules',
 		},
+		{
+			from: '../satellite/dist/surface-entrypoint.mjs',
+			to: 'surface-entrypoint.mjs',
+		},
+		{
+			from: '../assets/nodejs-versions.json',
+			to: 'assets/nodejs-versions.json',
+		},
+		{
+			from: './assets/icon.png',
+			to: 'assets/icon.png',
+		},
+		...nodeVersions.entries().map(([name, runtimeDir]) => ({
+			from: runtimeDir,
+			to: `node-runtimes/${name}`,
+		})),
 	],
 	electronFuses: {
 		runAsNode: false,

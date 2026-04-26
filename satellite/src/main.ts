@@ -32,7 +32,7 @@ logger.info(`Starting with config: ${appConfig.path}`)
 const webRoot = fileURLToPath(new URL('../../webui/dist', import.meta.url))
 
 const client = new CompanionSatelliteClient({ debug: true })
-const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfacePluginsEnabled'))
+const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfacePluginsEnabled'), false)
 const server = new RestServer(webRoot, appConfig, client, surfaceManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 

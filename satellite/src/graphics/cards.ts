@@ -10,7 +10,12 @@ export class CardGenerator implements HostCardGenerator {
 
 	async loadIcon(): Promise<Image> {
 		if (!this.iconImage) {
-			const rawData = await readFile(new URL('../../assets/icon.png', import.meta.url))
+			const rawData = await readFile(
+				new URL(
+					process.env.NODE_ENV === 'development' ? '../../assets/icon.png' : './assets/icon.png',
+					import.meta.url,
+				),
+			)
 
 			this.iconImage = await loadImage(rawData)
 		}

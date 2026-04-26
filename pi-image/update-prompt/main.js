@@ -3,7 +3,7 @@ import semver from 'semver'
 import * as inquirer from '@inquirer/prompts'
 import fs from 'fs'
 
-const ALLOWED_VERSIONS = '^1.5.0 || ^2.0.0'
+const ALLOWED_VERSIONS = '^1.5.0 || ^2.0.0 || ^3.0.0-0 || ^3.0.0'
 
 /** @type {string | undefined} */
 let currentVersion

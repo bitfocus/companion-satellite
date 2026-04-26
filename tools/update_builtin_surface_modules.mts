@@ -4,6 +4,7 @@ import path from 'node:path'
 import pQueue from 'p-queue'
 import pRetry from 'p-retry'
 import semver from 'semver'
+// eslint-disable-next-line n/no-extraneous-import
 import basePkg from '@companion-surface/base/package.json' with { type: 'json' }
 
 const SURFACE_BASE_VERSION = basePkg.version
@@ -16,6 +17,9 @@ const validSurfaceApiRange = new semver.Range(
 const builtinSurfaceModulesPath = path.join(import.meta.dirname, '../assets/builtin-surface-modules.json')
 
 const existingModules = JSON.parse(await fs.readFile(builtinSurfaceModulesPath, 'utf8'))
+const oldVersions: Record<string, string> = Object.fromEntries(
+	Object.entries(existingModules).map(([id, info]: [string, any]) => [id, info.version]),
+)
 
 const baseUrl = process.env.STAGING_MODULE_API
 	? 'https://developer-staging.bitfocus.io/api'
@@ -45,7 +49,7 @@ for (const moduleId of Object.keys(existingModules)) {
 				if (!res.ok) {
 					throw new Error(`Error fetching module ${moduleId}: ${res.status} ${res.statusText}`)
 				}
-				const moduleInfoData = await res.json()
+				const moduleInfoData: any = await res.json()
 
 				// This assumes the modules are ordered with newest first
 				const latestCompatibleVersion =
@@ -96,4 +100,9 @@ console.log('All modules processed')
 
 await fs.writeFile(builtinSurfaceModulesPath, JSON.stringify(existingModules, null, '\t') + '\n')
 
+const updatedModules = Object.keys(existingModules).filter((id) => existingModules[id].version !== oldVersions[id])
 console.log('Done updating builtin surface modules.', existingModules)
+console.log('Updated modules:', updatedModules)
+
+const updatedModulesPath = '/tmp/updated-surface-modules.txt'
+await fs.writeFile(updatedModulesPath, updatedModules.join(', '))
