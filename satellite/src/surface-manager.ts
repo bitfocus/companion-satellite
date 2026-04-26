@@ -176,7 +176,6 @@ export class SurfaceManager {
 					const verificationToken = nanoid()
 
 					const monitor = new RespawnMonitor([nodeJsPath, entrypointPath], {
-						stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
 						env: {
 							...process.env,
 							MODULE_ENTRYPOINT: rawPlugin.entrypointPath,
@@ -184,6 +183,11 @@ export class SurfaceManager {
 							NODE_PATH: childNodePath,
 							VERIFICATION_TOKEN: verificationToken,
 						},
+						maxRestarts: -1,
+						kill: 5000,
+						cwd: rawPlugin.basePath,
+						fork: false,
+						stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
 					})
 
 					const {
@@ -192,6 +196,8 @@ export class SurfaceManager {
 						reject: rejectRegister,
 					} = Promise.withResolvers<void>()
 
+					// `handler` is captured by the onRegister closure below; it will be
+					// assigned before the closure is ever invoked (IPC is async).
 					const handler = new ChildHandler(rawPlugin.info, rawPlugin.usbIds, monitor, deps, async (token) => {
 						if (token !== verificationToken) {
 							const err = new Error(`Plugin "${pluginId}" sent invalid verification token`)
@@ -199,7 +205,12 @@ export class SurfaceManager {
 							rejectRegister(err)
 							throw err
 						}
+						// Resolve the one-time startup promise (no-op on re-registration after crash).
 						resolveRegister()
+						// Re-init on every registration so the respawned process starts scanning.
+						if (manager.isPluginEnabled(pluginId)) {
+							await handler.init()
+						}
 					})
 
 					manager.#plugins.set(pluginId, handler)
@@ -212,17 +223,21 @@ export class SurfaceManager {
 						manager.#logger.warn(`[${pluginId}] stderr: ${data.toString().trim()}`),
 					)
 					monitor.on('crash', () => manager.#logger.error(`[${pluginId}] process crashed`))
+					monitor.on('sleep', () => {
+						manager.#logger.warn(`[${pluginId}] process exited, restarting`)
+						// Clean up all surfaces belonging to this plugin — the child process
+						// no longer has those device connections and will rediscover on respawn.
+						for (const surfaceId of manager.#surfaces.keys().toArray()) {
+							if (manager.#surfaces.get(surfaceId)?.pluginId === pluginId) {
+								manager.#cleanupSurfaceById(surfaceId)
+							}
+						}
+					})
 					monitor.start()
 
-					const startupPromise = registered
-						.then(async () => {
-							if (manager.isPluginEnabled(pluginId)) {
-								await handler.init()
-							}
-						})
-						.catch((e) => {
-							manager.#logger.error(`Plugin "${pluginId}" startup failed: ${e}`)
-						})
+					const startupPromise = registered.catch((e) => {
+						manager.#logger.error(`Plugin "${pluginId}" startup failed: ${e}`)
+					})
 					startupPromises.push(startupPromise)
 				} catch (e) {
 					manager.#logger.error(`Failed to create handler for plugin "${rawPlugin.info.pluginId}": ${e}`)

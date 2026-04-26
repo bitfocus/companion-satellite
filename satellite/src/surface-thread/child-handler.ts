@@ -22,7 +22,7 @@ import type {
 	ShouldOpenDeviceResponseMessage,
 	SurfaceModuleToHostEvents,
 } from './ipc-types.js'
-import type { HIDDevice, CheckDeviceResult, OpenDeviceResult } from '@companion-surface/host'
+import type { HIDDevice, OpenDeviceResult } from '@companion-surface/host'
 import type { ApiSurfacePluginInfo } from '../apiTypes.js'
 import { assertNever } from '../lib.js'
 
@@ -287,10 +287,5 @@ export class ChildHandler {
 			if (entry.vendorId === vendorId && entry.productIds.includes(productId)) return true
 		}
 		return false
-	}
-
-	/** Check whether this device's surfaceId belongs to this plugin — used to find the owning plugin for a given device */
-	checkDeviceResult(result: CheckDeviceResult): boolean {
-		return !!result
 	}
 }

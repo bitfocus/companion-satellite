@@ -3,7 +3,7 @@ import { readdir, stat } from 'node:fs/promises'
 import { join, resolve, relative, isAbsolute } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import type { ApiSurfacePluginInfo } from './apiTypes.js'
-import { validateSurfaceManifest, type SurfaceModuleManifest } from '@companion-surface/base'
+import { validateSurfaceManifest, type SurfaceModuleManifest } from '@companion-surface/host'
 
 const logger = createLogger('SurfacePluginLoader')
 
@@ -11,6 +11,8 @@ export interface LoadedPlugin {
 	info: ApiSurfacePluginInfo
 	/** Runtime type declared in the manifest (e.g. 'node22'), used to select the Node.js binary */
 	runtimeType: string
+	/** Absolute path to the plugin package root directory */
+	basePath: string
 	/** Absolute path to the companion/manifest.json */
 	manifestPath: string
 	/** Absolute path to the plugin entrypoint file */
@@ -109,6 +111,7 @@ export async function loadSurfacePlugins(): Promise<LoadedPlugin[]> {
 					version: manifest.version,
 				},
 				runtimeType: manifest.runtime.type,
+				basePath: moduleDir,
 				manifestPath: join(companionDir, 'manifest.json'),
 				entrypointPath: entrypointAbsolute,
 				usbIds: (manifest.usbIds ?? []).map((u) => ({
