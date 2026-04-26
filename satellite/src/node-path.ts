@@ -55,13 +55,13 @@ export async function getNodeJsPath(runtimeType: string, isPackaged: boolean): P
 export function getSurfaceEntrypointPath(isPackaged: boolean): string {
 	if (isPackaged) {
 		const resourcesPath = (process as any).resourcesPath as string
-		return join(resourcesPath, 'surface-entrypoint.cjs')
+		return join(resourcesPath, 'surface-entrypoint.mjs')
 	} else if (process.env.NODE_ENV === 'development') {
 		// Dev (tsx): use tsc-compiled output
 		return join(import.meta.dirname, '../dist/surface-thread/entrypoint.js')
 	} else {
-		// Pi headless (compiled): surface-entrypoint.cjs is in the same dist/ dir as this file
-		return join(import.meta.dirname, 'surface-entrypoint.cjs')
+		// Pi headless (compiled): surface-entrypoint.mjs is in the same dist/ dir as this file
+		return join(import.meta.dirname, 'surface-entrypoint.mjs')
 	}
 }
 

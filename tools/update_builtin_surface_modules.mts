@@ -4,6 +4,7 @@ import path from 'node:path'
 import pQueue from 'p-queue'
 import pRetry from 'p-retry'
 import semver from 'semver'
+// eslint-disable-next-line n/no-extraneous-import
 import basePkg from '@companion-surface/base/package.json' with { type: 'json' }
 
 const SURFACE_BASE_VERSION = basePkg.version

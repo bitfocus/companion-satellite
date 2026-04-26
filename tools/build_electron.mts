@@ -1,3 +1,4 @@
+/* eslint-disable n/no-extraneous-import */
 /* eslint-disable n/no-process-exit */
 import { fs, usePowerShell, argv } from 'zx'
 import electronBuilder from 'electron-builder'
@@ -162,8 +163,8 @@ const options: electronBuilder.Configuration = {
 			to: 'modules',
 		},
 		{
-			from: '../satellite/dist/surface-entrypoint.cjs',
-			to: 'surface-entrypoint.cjs',
+			from: '../satellite/dist/surface-entrypoint.mjs',
+			to: 'surface-entrypoint.mjs',
 		},
 		...nodeVersions.entries().map(([name, runtimeDir]) => ({
 			from: runtimeDir,

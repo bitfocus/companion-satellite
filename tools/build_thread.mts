@@ -20,8 +20,8 @@ export async function buildSurfaceThreadEntrypoint(): Promise<void> {
 		bundle: true,
 		platform: 'node',
 		target: 'node22',
-		format: 'cjs',
-		outfile: join(repoRoot, 'satellite/dist/surface-entrypoint.cjs'),
+		format: 'esm',
+		outfile: join(repoRoot, 'satellite/dist/surface-entrypoint.mjs'),
 		external: [
 			// All node_modules are supplied via NODE_PATH at runtime
 			'@companion-surface/*',
