@@ -24,6 +24,7 @@ import type {
 } from './ipc-types.js'
 import type { HIDDevice, CheckDeviceResult, OpenDeviceResult } from '@companion-surface/host'
 import type { ApiSurfacePluginInfo } from '../apiTypes.js'
+import { assertNever } from '../lib.js'
 
 export interface ChildHandlerDependencies {
 	/** Resolve + register a unique surface ID — returns the stable resolved ID */
@@ -118,12 +119,23 @@ export class ChildHandler {
 				// Not used by satellite
 			},
 			'log-message': async (msg: LogMessageMessage) => {
-				const source = msg.source ? `[${msg.source}]` : ''
-				const logFn = this.#logger[msg.level as keyof typeof this.#logger]
-				if (typeof logFn === 'function') {
-					;(logFn as (m: string) => void).call(this.#logger, `${source} ${msg.message}`)
-				} else {
-					this.#logger.info(`${source} [${msg.level}] ${msg.message}`)
+				switch (msg.level) {
+					case 'debug':
+						this.#logger.debug({ name: msg.source }, msg.message)
+						break
+					case 'info':
+						this.#logger.info({ name: msg.source }, msg.message)
+						break
+					case 'warn':
+						this.#logger.warn({ name: msg.source }, msg.message)
+						break
+					case 'error':
+						this.#logger.error({ name: msg.source }, msg.message)
+						break
+					default:
+						assertNever(msg.level)
+						this.#logger.info({ name: msg.source }, msg.message)
+						break
 				}
 			},
 			'input-press': async (msg: InputPressMessage) => {
@@ -142,10 +154,7 @@ export class ChildHandler {
 				this.#deps.onSetVariableValue(msg.surfaceId, msg.name, msg.value)
 			},
 			'firmware-update-info': async (msg: FirmwareUpdateInfoMessage) => {
-				this.#deps.onFirmwareUpdateInfo(
-					msg.surfaceId,
-					msg.updateInfo?.updateUrl ?? null,
-				)
+				this.#deps.onFirmwareUpdateInfo(msg.surfaceId, msg.updateInfo?.updateUrl ?? null)
 			},
 		}
 
@@ -178,9 +187,7 @@ export class ChildHandler {
 		this.#logger.debug(`Registered with features: ${JSON.stringify(this.#features)}`)
 	}
 
-	async #handleShouldOpenDiscoveredSurface(
-		msg: ShouldOpenDeviceMessage,
-	): Promise<ShouldOpenDeviceResponseMessage> {
+	async #handleShouldOpenDiscoveredSurface(msg: ShouldOpenDeviceMessage): Promise<ShouldOpenDeviceResponseMessage> {
 		const resolvedSurfaceId = this.#deps.resolveUniqueSurfaceId(
 			msg.info.surfaceId,
 			msg.info.surfaceIdIsNotUnique,
@@ -211,40 +218,36 @@ export class ChildHandler {
 	// ── Surface-level commands (fire and forget) ──────────────────────────────
 
 	async showStatus(surfaceId: string, displayHost: string, message: string): Promise<void> {
-		await this.#ipcWrapper
-			.sendWithCb('showStatus', { surfaceId, displayHost, message })
-			
+		await this.#ipcWrapper.sendWithCb('showStatus', { surfaceId, displayHost, message })
 	}
 
 	async setBrightness(surfaceId: string, brightness: number): Promise<void> {
-		await this.#ipcWrapper
-			.sendWithCb('setBrightness', { surfaceId, brightness })
+		await this.#ipcWrapper.sendWithCb('setBrightness', { surfaceId, brightness })
 	}
 
 	async blankSurface(surfaceId: string): Promise<void> {
-		await this.#ipcWrapper
-			.sendWithCb('blankSurface', { surfaceId })
+		await this.#ipcWrapper.sendWithCb('blankSurface', { surfaceId })
 	}
 
-	async draw(surfaceId: string, drawProps: Array<{ controlId: string; image?: Uint8Array; color?: string; text?: string; pageNumber?: number }>): Promise<void> {
-		await this.#ipcWrapper
-			.sendWithCb('drawControls', {
-				surfaceId,
-				drawProps: drawProps.map((d) => ({
-					...d,
-					image: d.image ? uint8ArrayToBuffer(d.image).toString('base64') : undefined,
-				})),
-			})
+	async draw(
+		surfaceId: string,
+		drawProps: Array<{ controlId: string; image?: Uint8Array; color?: string; text?: string; pageNumber?: number }>,
+	): Promise<void> {
+		await this.#ipcWrapper.sendWithCb('drawControls', {
+			surfaceId,
+			drawProps: drawProps.map((d) => ({
+				...d,
+				image: d.image ? uint8ArrayToBuffer(d.image).toString('base64') : undefined,
+			})),
+		})
 	}
 
 	async showLockedStatus(surfaceId: string, locked: boolean, characterCount: number): Promise<void> {
-		await this.#ipcWrapper
-			.sendWithCb('setLocked', { surfaceId, locked, characterCount })
+		await this.#ipcWrapper.sendWithCb('setLocked', { surfaceId, locked, characterCount })
 	}
 
 	async onVariableValue(surfaceId: string, name: string, value: unknown): Promise<void> {
-		await this.#ipcWrapper
-			.sendWithCb('setOutputVariable', { surfaceId, name, value: value as any })
+		await this.#ipcWrapper.sendWithCb('setOutputVariable', { surfaceId, name, value: value as any })
 	}
 
 	async readySurface(surfaceId: string, config: Record<string, unknown>): Promise<void> {
