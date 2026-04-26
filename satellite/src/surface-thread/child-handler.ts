@@ -24,7 +24,6 @@ import type {
 } from './ipc-types.js'
 import type { HIDDevice, CheckDeviceResult, OpenDeviceResult } from '@companion-surface/host'
 import type { ApiSurfacePluginInfo } from '../apiTypes.js'
-import { nanoid } from 'nanoid'
 
 export interface ChildHandlerDependencies {
 	/** Resolve + register a unique surface ID — returns the stable resolved ID */
@@ -67,7 +66,6 @@ export class ChildHandler {
 	readonly #unsubListeners: () => void
 
 	readonly info: ApiSurfacePluginInfo
-	readonly #verificationToken: string
 
 	#features: ChildHandlerFeatures = {
 		supportsDetection: false,
@@ -94,7 +92,6 @@ export class ChildHandler {
 		this.info = info
 		this.usbIds = usbIds
 		this.#deps = deps
-		this.#verificationToken = nanoid()
 
 		const handlers: IpcEventHandlers<SurfaceModuleToHostEvents> = {
 			register: async (msg: RegisterMessage) => {
@@ -169,10 +166,6 @@ export class ChildHandler {
 		}
 		monitor.on('message', messageHandler)
 		this.#unsubListeners = () => monitor.off('message', messageHandler)
-	}
-
-	getVerificationToken(): string {
-		return this.#verificationToken
 	}
 
 	#onRegister(msg: RegisterMessage): void {

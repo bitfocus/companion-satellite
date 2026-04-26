@@ -4,9 +4,12 @@ import * as HID from 'node-hid'
 import { Complete, wrapAsync } from './lib.js'
 import { ApiSurfaceInfo, ApiSurfacePluginInfo, ApiSurfacePluginsEnabled } from './apiTypes.js'
 import { createLogger } from './logging.js'
-import { HIDDevice, OpenDeviceResult } from '@companion-surface/host'
-import { SurfaceDrawProps } from '@companion-surface/base'
-import type { SurfaceSchemaLayoutDefinition } from '@companion-surface/base'
+import {
+	HIDDevice,
+	OpenDeviceResult,
+	type SurfaceDrawProps,
+	type SurfaceSchemaLayoutDefinition,
+} from '@companion-surface/host'
 import {
 	translateModuleToSatelliteSurfaceLayout,
 	translateModuleToSatelliteTransferVariables,
@@ -14,6 +17,7 @@ import {
 	calculateGridSize,
 } from './translateSchema.js'
 import { loadSurfacePlugins } from './surface-plugin-loader.js'
+import { nanoid } from 'nanoid'
 import { createHash } from 'node:crypto'
 import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
 import { ChildHandler, type ChildHandlerDependencies } from './surface-thread/child-handler.js'
@@ -169,6 +173,8 @@ export class SurfaceManager {
 						continue
 					}
 
+					const verificationToken = nanoid()
+
 					const monitor = new RespawnMonitor([nodeJsPath, entrypointPath], {
 						stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
 						env: {
@@ -176,6 +182,7 @@ export class SurfaceManager {
 							MODULE_ENTRYPOINT: rawPlugin.entrypointPath,
 							MODULE_MANIFEST: rawPlugin.manifestPath,
 							NODE_PATH: childNodePath,
+							VERIFICATION_TOKEN: verificationToken,
 						},
 					})
 
@@ -186,7 +193,7 @@ export class SurfaceManager {
 					} = Promise.withResolvers<void>()
 
 					const handler = new ChildHandler(rawPlugin.info, rawPlugin.usbIds, monitor, deps, async (token) => {
-						if (token !== handler.getVerificationToken()) {
+						if (token !== verificationToken) {
 							const err = new Error(`Plugin "${pluginId}" sent invalid verification token`)
 							manager.#logger.error(err.message)
 							rejectRegister(err)
@@ -194,10 +201,6 @@ export class SurfaceManager {
 						}
 						resolveRegister()
 					})
-
-					// Inject the verification token into the child's environment now that the
-					// handler (and its token) have been constructed.
-					monitor.env = { ...monitor.env, VERIFICATION_TOKEN: handler.getVerificationToken() }
 
 					manager.#plugins.set(pluginId, handler)
 					manager.#monitors.set(pluginId, monitor)
