@@ -304,6 +304,7 @@ export class SurfaceManager {
 				this.#supportsNonSquareButtons = newSupportsNonSquareButtons
 				for (const [, entry] of this.#plugins.entries()) {
 					if (entry.initialized) {
+						entry.initialized = false
 						entry.handler.destroy()
 					}
 				}
@@ -558,6 +559,7 @@ export class SurfaceManager {
 		const surface = this.#getWrappedSurface(surfaceId)
 		const entry = this.#plugins.get(surface.pluginId)
 		if (!entry) throw new Error(`Missing plugin for surface: "${surfaceId}"`)
+		if (!entry.initialized) throw new Error(`Plugin for "${surfaceId}" is not yet initialized`)
 		return entry.handler
 	}
 
@@ -595,10 +597,11 @@ export class SurfaceManager {
 				// If it is still in the process of initialising skip it
 				if (this.#pendingSurfaces.has(surface.surfaceId)) continue
 
-				const plugin = this.#plugins.get(surface.pluginId)?.handler
-				if (!plugin) throw new Error(`Missing plugin for surface: "${surface.surfaceId}"`)
+				const entry = this.#plugins.get(surface.pluginId)
+				if (!entry) throw new Error(`Missing plugin for surface: "${surface.surfaceId}"`)
+				if (!entry.initialized) continue
 
-				plugin.showStatus(surface.surfaceId, this.#client.displayHost, this.#statusString).catch((e) => {
+				entry.handler.showStatus(surface.surfaceId, this.#client.displayHost, this.#statusString).catch((e) => {
 					this.#logger.error(`Show status failed for "${surface.surfaceId}": ${e}`)
 				})
 
@@ -628,12 +631,12 @@ export class SurfaceManager {
 			HID.devicesAsync()
 				.then(async (devices) => {
 					await Promise.allSettled(
-						this.#plugins.entries().map(async ([pluginId, { handler: plugin, initialized }]) => {
+						this.#plugins.entries().map(async ([pluginId, entry]) => {
 							try {
 								if (!this.isPluginEnabled(pluginId)) return
-								if (!initialized) return
+								if (!entry.initialized) return
 								const relevant = devices.filter(
-									(d) => d.path && plugin.isRelevantHidDevice(d.vendorId, d.productId),
+									(d) => d.path && entry.handler.isRelevantHidDevice(d.vendorId, d.productId),
 								)
 								if (relevant.length === 0) return
 
@@ -658,7 +661,7 @@ export class SurfaceManager {
 										}) satisfies Complete<HIDDevice>,
 								)
 
-								const results = await plugin.checkHidDevices(hidDevices)
+								const results = await entry.handler.checkHidDevices(hidDevices)
 								for (const info of results) {
 									const hid = hidDevices.find((d) => d.path === info.devicePath)
 									if (!hid) {
@@ -667,7 +670,7 @@ export class SurfaceManager {
 										)
 										continue
 									}
-									this.#tryAddSurfaceFromPlugin(plugin, info, { type: 'hid', hid })
+									this.#tryAddSurfaceFromPlugin(entry.handler, info, { type: 'hid', hid })
 								}
 							} catch (e) {
 								this.#logger.error(`Plugin "${pluginId}" HID check failed: ${e}`)
@@ -679,14 +682,14 @@ export class SurfaceManager {
 					this.#logger.error(`HID scan failed: ${e}`)
 				}),
 
-			...this.#plugins.entries().map(async ([pluginId, { handler: plugin, initialized }]) => {
+			...this.#plugins.entries().map(async ([pluginId, entry]) => {
 				try {
 					if (!this.isPluginEnabled(pluginId)) return
-					if (!initialized) return
+					if (!entry.initialized) return
 
-					const surfaceInfos = await plugin.scanForDevices()
+					const surfaceInfos = await entry.handler.scanForDevices()
 					for (const surfaceInfo of surfaceInfos) {
-						this.#tryAddSurfaceFromPlugin(plugin, surfaceInfo, { type: 'scan' })
+						this.#tryAddSurfaceFromPlugin(entry.handler, surfaceInfo, { type: 'scan' })
 					}
 				} catch (e) {
 					this.#logger.error(`Plugin "${pluginId}" scan failed: ${e}`)

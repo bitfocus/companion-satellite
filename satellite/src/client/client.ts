@@ -114,6 +114,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsDeviceSerial = false
 	private _supportsSubscriptions = false
 	private _supportsNonSquareBitmaps = false
+	private _pendingConnected = false
+	private _capsTimer: NodeJS.Timeout | undefined = undefined
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -202,6 +204,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._pendingDevices.clear()
 
 				this._supportsSubscriptions = false
+				this._pendingConnected = false
+				if (this._capsTimer) {
+					clearTimeout(this._capsTimer)
+					this._capsTimer = undefined
+				}
 
 				if (this._connected) {
 					this.emit('disconnected')
@@ -436,11 +443,25 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._supportsDeviceSerial) {
 			this.emit('log', 'Companion supports separate serial value')
 		}
+		this._supportsNonSquareBitmaps = false
+		this._supportsSubscriptions = false
 
-		// report the connection as ready
-		setImmediate(() => {
-			this.emit('connected')
-		})
+		// Defer emitting connected until CAPS is received (added in API 1.10.0)
+		this._pendingConnected = true
+		if (this._capsTimer) clearTimeout(this._capsTimer)
+
+		const expectCaps = !!this._companionApiVersion && semver.lte('1.10.0', this._companionApiVersion)
+		if (expectCaps) {
+			// Defensive fallback: if CAPS never arrives, complete connection after 500ms
+			this._capsTimer = setTimeout(() => {
+				this._capsTimer = undefined
+				this.emit('log', 'CAPS not received within timeout, completing connection without capabilities')
+				this.completeConnection()
+			}, 500)
+		} else {
+			// Older Companion versions don't send CAPS, complete immediately
+			this.completeConnection()
+		}
 	}
 
 	private handleState(params: Record<string, string | boolean>): void {
@@ -579,6 +600,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private handleCaps(params: Record<string, string | boolean>): void {
+		if (this._capsTimer) {
+			clearTimeout(this._capsTimer)
+			this._capsTimer = undefined
+		}
+
 		this._supportsSubscriptions = params.SUBSCRIPTIONS === '1' || params.SUBSCRIPTIONS === true
 		if (this._supportsSubscriptions) {
 			this.emit('log', 'Companion supports button subscriptions')
@@ -587,6 +613,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._supportsNonSquareBitmaps) {
 			this.emit('log', 'Companion supports non-square bitmaps')
 		}
+
+		this.completeConnection()
+	}
+
+	private completeConnection(): void {
+		if (!this._pendingConnected) return
+		this._pendingConnected = false
+		setImmediate(() => {
+			this.emit('connected')
+		})
 	}
 
 	private handleDeviceConfig(params: Record<string, string | boolean>): void {
