@@ -13,11 +13,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "NODE_ENV=development tsx watch src/main.ts config.json",
-		"dev:electron": "run build:main && electron dist/electron.js",
-		"build": "rimraf dist && run build:main",
-		"build:main": "run -T tsc -p tsconfig.build.json",
-		"check-types": "run build:main --noEmit",
-		"watch-types": "run build:main --noEmit --watch"
+		"dev:electron": "run build:main && electron dist/electron.js"
 	},
 	"devDependencies": {
 		"@types/eslint": "^9.6.1",
