@@ -524,7 +524,7 @@ export class SurfaceManager {
 		usb.off('detach', this.#onUsbDetach)
 
 		for (const { handler, monitor } of this.#plugins.values()) {
-			handler.dispose()
+			await handler.dispose()
 			await new Promise<void>((res) => monitor.stop(res))
 		}
 	}

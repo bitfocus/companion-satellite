@@ -222,9 +222,9 @@ export class ChildHandler {
 	 * Full cleanup for app shutdown: unsubscribes the IPC listener then tells the
 	 * child to stop.
 	 */
-	dispose(): void {
+	async dispose(): Promise<void> {
 		this.#unsubListeners()
-		this.#ipcWrapper.sendWithCb('destroy', {}).catch((e) => {
+		await this.#ipcWrapper.sendWithCb('destroy', {}).catch((e) => {
 			this.#logger.warn(`Destroy errored: ${e}`)
 		})
 	}
