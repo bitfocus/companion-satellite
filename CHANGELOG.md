@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.0.0](https://github.com/bitfocus/companion-satellite/compare/v2.8.0...v3.0.0) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* run surface modules in processes ([#278](https://github.com/bitfocus/companion-satellite/issues/278))
+* remove auto-updater
+
+### Features
+
+* remove auto-updater ([3dbc625](https://github.com/bitfocus/companion-satellite/commit/3dbc625b778a72ab7c1161902d2cc1156d120521))
+* run surface modules in processes ([#278](https://github.com/bitfocus/companion-satellite/issues/278)) ([06f86ce](https://github.com/bitfocus/companion-satellite/commit/06f86ceafd6247d3e18b04c3c484b54c57b5d390))
+* support lock state rotation ([8da86c4](https://github.com/bitfocus/companion-satellite/commit/8da86c43a04913eda550946b5f28c8a66baadaff))
+* use surface modules ([#230](https://github.com/bitfocus/companion-satellite/issues/230)) ([edc1bab](https://github.com/bitfocus/companion-satellite/commit/edc1babee77272779c53700f782fb7dfe03f3c7d))
+
+
+### Bug Fixes
+
+* not clearing panels on exit ([a4aa4f0](https://github.com/bitfocus/companion-satellite/commit/a4aa4f06980763b638f69d4651948acee8420b74))
+* strip url prefix for companion address [#266](https://github.com/bitfocus/companion-satellite/issues/266) ([247f449](https://github.com/bitfocus/companion-satellite/commit/247f449e478d0748708511b48763db3215782f2f))
+
 ## [2.8.0](https://github.com/bitfocus/companion-satellite/compare/v2.7.0...v2.8.0) (2026-03-03)
 
 
