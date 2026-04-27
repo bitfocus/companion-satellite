@@ -78,7 +78,7 @@ export class RestServer {
 			}
 
 			if (host && typeof host === 'string') {
-				this.appConfig.set('remoteIp', host)
+				this.appConfig.set('remoteIp', sanitizeHost(host))
 
 				ctx.body = 'OK'
 			} else {
@@ -122,7 +122,7 @@ export class RestServer {
 				const host = body.host
 				if (host !== undefined) {
 					if (typeof host === 'string') {
-						partialConfig.host = host
+						partialConfig.host = sanitizeHost(host)
 					} else {
 						ctx.status = 400
 						ctx.body = 'Invalid host'
@@ -246,4 +246,13 @@ export class RestServer {
 
 function bodyIsObject(body: JsonValue | undefined): body is Record<string, JsonValue> {
 	return typeof body === 'object' && body !== null && !Array.isArray(body)
+}
+
+function sanitizeHost(host: string): string {
+	const trimmed = host.trim()
+	try {
+		return new URL(trimmed).hostname
+	} catch {
+		return trimmed.replace(/\/.*$/, '')
+	}
 }

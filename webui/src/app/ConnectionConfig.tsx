@@ -45,8 +45,7 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 			const savedData = await api.saveConfig(value)
 
 			console.log('new', savedData)
-			// TODO - this doesn't work
-			// form.reset(savedData)
+			form.reset(savedData)
 			await queryClient.invalidateQueries({ queryKey: [CONNECTION_STATUS_QUERY_KEY] })
 		},
 	})
