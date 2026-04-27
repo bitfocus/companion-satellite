@@ -200,6 +200,7 @@ export interface SetLockedMessage {
 	surfaceId: string
 	locked: boolean
 	characterCount: number
+	rotation?: 0 | 90 | -90 | 180
 }
 
 export interface SetOutputVariableMessage {

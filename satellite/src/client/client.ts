@@ -83,7 +83,7 @@ export type CompanionSatelliteClientEvents = {
 	newDevice: [{ deviceId: string }]
 	clearDeck: [{ deviceId: string }]
 	variableValue: [{ deviceId: string; name: string; value: string }]
-	lockedState: [{ deviceId: string; locked: boolean; characterCount: number }]
+	lockedState: [{ deviceId: string; locked: boolean; characterCount: number; rotation?: 0 | 90 | -90 | 180 }]
 	deviceErrored: [{ deviceId: string; message: string }]
 	deviceConfig: [{ deviceId: string; config: Record<string, unknown> }]
 }
@@ -540,10 +540,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			return
 		}
 
+		const rotationRaw = typeof params.ROTATION === 'string' ? Number(params.ROTATION) : undefined
+		const rotation =
+			rotationRaw === 0 || rotationRaw === 90 || rotationRaw === -90 || rotationRaw === 180
+				? rotationRaw
+				: undefined
 		this.emit('lockedState', {
 			deviceId: params.DEVICEID,
 			locked: params.LOCKED === '1',
 			characterCount: Number(params.CHARACTER_COUNT),
+			rotation,
 		})
 	}
 
@@ -729,7 +735,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				PRODUCT_NAME: productName,
 				VARIABLES: transferVariables,
 				BRIGHTNESS: props.brightness,
-				// PINCODE_LOCK: props.pincodeMap ? 'FULL' : '', // nocommit - verify
 				PINCODE_LOCK: 'FULL',
 			}
 

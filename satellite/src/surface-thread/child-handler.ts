@@ -250,8 +250,13 @@ export class ChildHandler {
 		})
 	}
 
-	async showLockedStatus(surfaceId: string, locked: boolean, characterCount: number): Promise<void> {
-		await this.#ipcWrapper.sendWithCb('setLocked', { surfaceId, locked, characterCount })
+	async showLockedStatus(
+		surfaceId: string,
+		locked: boolean,
+		characterCount: number,
+		rotation?: 0 | 90 | -90 | 180,
+	): Promise<void> {
+		await this.#ipcWrapper.sendWithCb('setLocked', { surfaceId, locked, characterCount, rotation })
 	}
 
 	async onVariableValue(surfaceId: string, name: string, value: unknown): Promise<void> {

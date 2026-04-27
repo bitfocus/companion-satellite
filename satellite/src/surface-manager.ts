@@ -422,7 +422,7 @@ export class SurfaceManager {
 				async (msg) => {
 					const plugin = this.#getPluginForSurface(msg.deviceId)
 
-					await plugin.showLockedStatus(msg.deviceId, msg.locked, msg.characterCount)
+					await plugin.showLockedStatus(msg.deviceId, msg.locked, msg.characterCount, msg.rotation)
 				},
 				(e) => {
 					this.#logger.error(`Clear deck: ${e}`)
