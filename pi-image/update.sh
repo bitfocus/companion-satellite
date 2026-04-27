@@ -74,6 +74,8 @@ if [ -n "$SELECTED_URL" ]; then
 	mv /tmp/satellite-update/resources/webui /opt/companion-satellite/webui/dist
 	[ -d /tmp/satellite-update/resources/node-runtimes ] && mv /tmp/satellite-update/resources/node-runtimes /opt/companion-satellite/node-runtimes
 	[ -f /tmp/satellite-update/resources/surface-entrypoint.mjs ] && mv /tmp/satellite-update/resources/surface-entrypoint.mjs /opt/companion-satellite/satellite/dist/surface-entrypoint.mjs
+	[ -d /tmp/satellite-update/resources/assets ] && mv /tmp/satellite-update/resources/assets /opt/companion-satellite/assets
+	[ -d /tmp/satellite-update/resources/modules ] && mv /tmp/satellite-update/resources/modules /opt/companion-satellite/modules
 	# mv /tmp/satellite-update/*.rules /opt/companion-satellite/
 	rm -R /tmp/satellite-update
 
