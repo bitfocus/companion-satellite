@@ -3642,6 +3642,7 @@ __metadata:
     tsx: "npm:^4.21.0"
     typescript: "npm:~6.0.3"
     typescript-eslint: "npm:^8.58.0"
+    udev-generator: "npm:^1.0.2"
     zx: "npm:^8.8.5"
   languageName: unknown
   linkType: soft
@@ -9891,6 +9892,13 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: 10c0/2f25c74e65663c248fa1ade2b8459d9ce5372ff9dad07067310f132966ebec1d93f6c42f0baf77a6b6a7a91460463f708e6887013aaade22111037457c6b25df
+  languageName: node
+  linkType: hard
+
+"udev-generator@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "udev-generator@npm:1.0.2"
+  checksum: 10c0/459bb86f738ac1a7c0659628e61c933d14440ca2e2a98f671d8675a45d69e63e26f212bfab3c2206aeb5bb4ac8f55a9793b188cc34fa37a9f75124b34b2f0a17
   languageName: node
   linkType: hard
 

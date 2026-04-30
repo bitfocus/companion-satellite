@@ -4,8 +4,10 @@ import path from 'node:path'
 import pQueue from 'p-queue'
 import pRetry from 'p-retry'
 import semver from 'semver'
+import { generateUdevFile, type UdevRuleDefinition } from 'udev-generator'
 // eslint-disable-next-line n/no-extraneous-import
 import basePkg from '@companion-surface/base/package.json' with { type: 'json' }
+import { fetchBuiltinSurfaceModules } from './fetch_builtin_modules.mts'
 
 const SURFACE_BASE_VERSION = basePkg.version
 const surfaceVersion = semver.parse(SURFACE_BASE_VERSION)
@@ -106,3 +108,24 @@ console.log('Updated modules:', updatedModules)
 
 const updatedModulesPath = '/tmp/updated-surface-modules.txt'
 await fs.writeFile(updatedModulesPath, updatedModules.join(', '))
+
+// Fetch updated modules and regenerate udev rules
+const cacheDir = await fetchBuiltinSurfaceModules()
+
+const udevRules: UdevRuleDefinition[] = []
+for (const moduleId of Object.keys(existingModules)) {
+	const manifestPath = path.join(cacheDir, moduleId, 'companion', 'manifest.json')
+	try {
+		const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'))
+		for (const usbId of manifest.usbIds ?? []) {
+			udevRules.push({ vendorId: usbId.vendorId, productIds: usbId.productIds })
+		}
+	} catch {
+		console.warn(`Could not read manifest for ${moduleId}, skipping udev rules`)
+	}
+}
+
+const rulesContent = generateUdevFile(udevRules, { mode: 'headless', userGroup: 'satellite' })
+const rulesPath = path.join(import.meta.dirname, '../satellite/assets/linux/50-satellite.rules')
+await fs.writeFile(rulesPath, rulesContent)
+console.log('Generated udev rules:', rulesPath)

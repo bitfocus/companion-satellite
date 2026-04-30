@@ -64,4 +64,5 @@ jobs:
           author: 'Companion Bot <companion-module-bot@users.noreply.github.com>'
           add-paths: |
             assets/builtin-surface-modules.json
+            satellite/assets/linux/50-satellite.rules
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
