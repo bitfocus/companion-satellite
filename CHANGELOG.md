@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.0.1](https://github.com/bitfocus/companion-satellite/compare/v3.0.0...v3.0.1) (2026-04-30)
+
+
+### Bug Fixes
+
+* support lock state rotation ([1897d01](https://github.com/bitfocus/companion-satellite/commit/1897d01c1d5b62a49be627041744fefcb4357956))
+* update udev rules ([62507f5](https://github.com/bitfocus/companion-satellite/commit/62507f535da40fb9514d20d2fab21b384e940376))
+
 ## [3.0.0](https://github.com/bitfocus/companion-satellite/compare/v2.8.0...v3.0.0) (2026-04-27)
 
 
