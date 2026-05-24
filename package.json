@@ -68,7 +68,7 @@
     "zx": "^8.8.5"
   },
   "resolutions": {
-    "node-gyp": "^12.2.0"
+    "node-gyp": "^12.3.0"
   },
   "engines": {
     "node": "^24.13"
