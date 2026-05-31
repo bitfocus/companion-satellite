@@ -110,7 +110,7 @@ trayMenu.append(
 				width: 720,
 				minWidth: 500,
 				maxWidth: isProduction ? 720 : undefined,
-				height: 900,
+				height: 960,
 				minHeight: 500,
 				autoHideMenuBar: isProduction,
 				webPreferences: {
@@ -252,7 +252,6 @@ function trayAbout() {
 		width: 400,
 		height: 400,
 		autoHideMenuBar: isProduction,
-		icon: fileURLToPath(new URL('../assets/icon.png', import.meta.url)),
 		resizable: !isProduction,
 		webPreferences: {
 			preload: fileURLToPath(new URL('../dist/aboutPreload.cjs', import.meta.url)),
