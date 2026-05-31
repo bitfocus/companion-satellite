@@ -219,14 +219,22 @@ export class ChildHandler {
 	}
 
 	/**
-	 * Full cleanup for app shutdown: unsubscribes the IPC listener then tells the
-	 * child to stop.
+	 * Full cleanup for app shutdown: tells the child to stop, then unsubscribes
+	 * the IPC listener so the response can be received before we stop listening.
 	 */
 	async dispose(): Promise<void> {
-		this.#unsubListeners()
 		await this.#ipcWrapper.sendWithCb('destroy', {}).catch((e) => {
 			this.#logger.warn(`Destroy errored: ${e}`)
 		})
+		this.#unsubListeners()
+	}
+
+	/**
+	 * Unsubscribe IPC listeners without sending a destroy message.
+	 * Use when the child process is not currently running (e.g. sleeping between restarts).
+	 */
+	cancelListeners(): void {
+		this.#unsubListeners()
 	}
 
 	// ── Surface-level commands (fire and forget) ──────────────────────────────

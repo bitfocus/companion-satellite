@@ -524,7 +524,16 @@ export class SurfaceManager {
 		usb.off('detach', this.#onUsbDetach)
 
 		for (const { handler, monitor } of this.#plugins.values()) {
-			await handler.dispose()
+			// Prevent the monitor from respawning the child after it exits
+			monitor.shouldRestart = false
+			if (monitor.child) {
+				// Child is running — send a graceful destroy over IPC
+				await handler.dispose()
+			} else {
+				// Child isn't running (sleeping between restart attempts) —
+				// skip the IPC destroy to avoid a 5 s timeout, just clean up listeners
+				handler.cancelListeners()
+			}
 			await new Promise<void>((res) => monitor.stop(res))
 		}
 	}
