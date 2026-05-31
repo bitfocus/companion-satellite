@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.1.0](https://github.com/bitfocus/companion-satellite/compare/v3.0.1...v3.1.0) (2026-05-31)
+
+
+### Features
+
+* update elgato-stream-deck surface modules ([#298](https://github.com/bitfocus/companion-satellite/issues/298)) ([a651028](https://github.com/bitfocus/companion-satellite/commit/a651028bba819cd4cf2347f9f49a6bce6a13bbd4))
+
+
+### Bug Fixes
+
+* about window icon ([3ea9283](https://github.com/bitfocus/companion-satellite/commit/3ea9283d55f6885434633088bf3d4613d5d4278b))
+* add windows installer icon ([4b3d112](https://github.com/bitfocus/companion-satellite/commit/4b3d11239c38813bdd65f2b361ccc2ec6ebae6e7))
+* handle shutdown failures better ([5c0f085](https://github.com/bitfocus/companion-satellite/commit/5c0f085dc3ff71620cb1f6b95f7f4bcb79cad0ac))
+* logo not showing on pi-image [#291](https://github.com/bitfocus/companion-satellite/issues/291) ([5c5f7ac](https://github.com/bitfocus/companion-satellite/commit/5c5f7ac87cee1283c42b55ebdb55a0f97a4d0b67))
+* update windows icons ([dd727a8](https://github.com/bitfocus/companion-satellite/commit/dd727a8f20bd51e4822927e047fe624fac8191d1))
+
 ## [3.0.1](https://github.com/bitfocus/companion-satellite/compare/v3.0.0...v3.0.1) (2026-04-30)
 
 
