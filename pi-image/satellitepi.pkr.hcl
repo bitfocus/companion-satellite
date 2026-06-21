@@ -18,8 +18,8 @@ variable "build" {
 }
 
 source "arm-image" "satellitepi" {
-  iso_checksum              = "sha256:4cd31df026fd82243805a326dc0cafd7383f7e3d30c9413e7044d507aae281e2"
-  iso_url                   = "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2026-04-21/2026-04-21-raspios-trixie-arm64-lite.img.xz"
+  iso_checksum              = "sha256:acff736ca7945e3b305f07cda4abdb870910e12634991da69783611756e381b3"
+  iso_url                   = "https://downloads.raspberrypi.com/raspios_lite_arm64/images/raspios_lite_arm64-2026-06-19/2026-06-18-raspios-trixie-arm64-lite.img.xz"
   last_partition_extra_size = 2147483648
   qemu_binary               = "qemu-aarch64-static"
 }
