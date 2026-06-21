@@ -1619,13 +1619,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@julusian/segfault-raub@npm:^2.3.2":
-  version: 2.3.2
-  resolution: "@julusian/segfault-raub@npm:2.3.2"
+"@julusian/segfault-raub@npm:^2.3.3":
+  version: 2.3.3
+  resolution: "@julusian/segfault-raub@npm:2.3.3"
   dependencies:
     node-gyp: "npm:latest"
     pkg-prebuilds: "npm:^1.0.0"
-  checksum: 10c0/6c55e43f4cca27280b2d8e7d1b3cbee5b3c2d5c2ea58607b5d10a5f2a12d762c714e994f7571d6bc1a0eaec0f8eef5a8e4b731a32220cd19d824e44c60e58104
+  checksum: 10c0/92ba703d2ca8f749935d42c0684cb14244fbd54b4f0790e2ca6735803a51f26767dd2c0bb6ea11df1a4cdaefab912d8df34a6d6596ae33b7d4aec7bcc20b3189
   languageName: node
   linkType: hard
 
@@ -1784,9 +1784,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@napi-rs/canvas-win32-arm64-msvc@npm:1.0.0":
+"@napi-rs/canvas-win32-arm64-msvc@npm:@julusian/canvas-win32-arm64-msvc@1.0.0":
   version: 1.0.0
-  resolution: "@napi-rs/canvas-win32-arm64-msvc@npm:1.0.0"
+  resolution: "@julusian/canvas-win32-arm64-msvc@npm:1.0.0"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
@@ -8518,14 +8518,12 @@ __metadata:
   linkType: hard
 
 "pkg-prebuilds@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "pkg-prebuilds@npm:1.0.0"
-  dependencies:
-    yargs: "npm:^17.7.2"
+  version: 1.1.0
+  resolution: "pkg-prebuilds@npm:1.1.0"
   bin:
     pkg-prebuilds-copy: bin/copy.mjs
     pkg-prebuilds-verify: bin/verify.mjs
-  checksum: 10c0/a955b097d3693216c06015fe03ae5866da5f1d2ec6a75971194e3cf5c342e1fdde27786bf0cce85814183cd98aecaf732ae1373fc2389a576daca2f3375661ae
+  checksum: 10c0/14894c0b3cffd81d53ebc47565854360b63eec72c862afa750c3f496a27f3ff9f1e992d9e728a948ad8e2ddecb91c80543a135908c59e28ef7eebf47c89de3e0
   languageName: node
   linkType: hard
 
@@ -9259,7 +9257,7 @@ __metadata:
     "@companion-surface/host": "npm:^1.3.2"
     "@julusian/bonjour-service": "npm:^1.4.2"
     "@julusian/image-rs": "npm:^2.1.1"
-    "@julusian/segfault-raub": "npm:^2.3.2"
+    "@julusian/segfault-raub": "npm:^2.3.3"
     "@koa/router": "npm:^15.5.0"
     "@napi-rs/canvas": "npm:^1.0.0"
     "@types/eslint": "npm:^9.6.1"

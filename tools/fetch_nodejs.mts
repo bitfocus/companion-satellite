@@ -38,6 +38,8 @@ export function platformInfoFromStrings(platform: string, arch: string): NodePla
 			return { runtimePlatform: 'darwin', runtimeArch: 'arm64', nodePlatform: 'darwin', nodeArch: 'arm64' }
 		case 'win32-x64':
 			return { runtimePlatform: 'win', runtimeArch: 'x64', nodePlatform: 'win32', nodeArch: 'x64' }
+		case 'win32-arm64':
+			return { runtimePlatform: 'win', runtimeArch: 'arm64', nodePlatform: 'win32', nodeArch: 'arm64' }
 		default:
 			throw new Error(`Unsupported platform/arch: ${key}`)
 	}
