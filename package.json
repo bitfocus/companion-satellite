@@ -68,7 +68,8 @@
     "zx": "^8.8.5"
   },
   "resolutions": {
-    "node-gyp": "^12.3.0"
+    "node-gyp": "^12.3.0",
+    "@napi-rs/canvas-win32-arm64-msvc@npm:1.0.0": "npm:@julusian/canvas-win32-arm64-msvc@1.0.0"
   },
   "engines": {
     "node": "^24.13"
