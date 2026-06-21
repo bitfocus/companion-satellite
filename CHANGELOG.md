@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.2.0](https://github.com/bitfocus/companion-satellite/compare/v3.1.0...v3.2.0) (2026-06-21)
+
+
+### Features
+
+* auto add firewall rules ([b430870](https://github.com/bitfocus/companion-satellite/commit/b430870cc4ab523cee1482e218486834a8cc6033))
+* windows arm64 build ([#314](https://github.com/bitfocus/companion-satellite/issues/314)) ([7597a03](https://github.com/bitfocus/companion-satellite/commit/7597a03558633f16c07f925daffae6d3e13669ee))
+
+
+### Bug Fixes
+
+* update elgato-stream-deck surface modules ([#302](https://github.com/bitfocus/companion-satellite/issues/302)) ([7c6fced](https://github.com/bitfocus/companion-satellite/commit/7c6fced9bcc8413990644e3d294dc6fba3f27986))
+
 ## [3.1.0](https://github.com/bitfocus/companion-satellite/compare/v3.0.1...v3.1.0) (2026-05-31)
 
 
