@@ -140,6 +140,7 @@ const options: electronBuilder.Configuration = {
 		oneClick: false,
 		allowElevation: true,
 		artifactName: 'companion-satellite-${arch}.exe',
+		include: 'installer.nsh',
 	},
 	linux: {
 		target: 'tar.gz',
