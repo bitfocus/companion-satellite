@@ -26,6 +26,9 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 } else if (platform === 'win-x64' || platform === 'win32-x64') {
 	platformInfo = { platform: 'win', arch: electronBuilder.Arch.x64 }
 	// nodePreGypArgs = ['--target_platform=win32', '--target_arch=x64', '--target_libc=unknown']
+} else if (platform === 'win-arm64' || platform === 'win32-arm64') {
+	platformInfo = { platform: 'win', arch: electronBuilder.Arch.arm64 }
+	// nodePreGypArgs = ['--target_platform=win32', '--target_arch=arm64', '--target_libc=unknown']
 } else if (platform === 'linux-x64') {
 	platformInfo = { platform: 'linux', arch: electronBuilder.Arch.x64 }
 	// nodePreGypArgs = ['--target_platform=linux', '--target_arch=x64', '--target_libc=glibc']
@@ -39,9 +42,9 @@ if (platform === 'mac-x64' || platform === 'darwin-x64') {
 
 // Download Node.js binary for the target platform
 const nodePlatformInfo = platformInfoFromStrings(
-	platform === 'win-x64' || platform === 'win32-x64'
+	platform.startsWith('win')
 		? 'win32'
-		: platform === 'mac-x64' || platform === 'darwin-x64' || platform === 'mac-arm64' || platform === 'darwin-arm64'
+		: platform.startsWith('mac') || platform.startsWith('darwin')
 			? 'darwin'
 			: 'linux',
 	platform.split('-').pop()!,
@@ -136,7 +139,7 @@ const options: electronBuilder.Configuration = {
 		perMachine: true,
 		oneClick: false,
 		allowElevation: true,
-		artifactName: 'companion-satellite-x64.exe',
+		artifactName: 'companion-satellite-${arch}.exe',
 	},
 	linux: {
 		target: 'tar.gz',
