@@ -360,7 +360,12 @@ export class SurfaceManager {
 					let image: string | undefined
 					if (msg.image && bitmap) {
 						const format: PixelFormat = bitmap.format ?? 'rgb'
-						if (format === 'rgb') {
+						if (msg.image.startsWith('data:')) {
+							// Compressed bitmap (png/webp) streamed by Companion (API v1.12+).
+							// Decode it directly to the surface's pixel format.
+							const computed = await ImageTransformer.fromImageDataUrl(msg.image).toBuffer(format)
+							image = computed.buffer.toString('base64')
+						} else if (format === 'rgb') {
 							image = msg.image
 						} else {
 							const computed = await ImageTransformer.fromBuffer(

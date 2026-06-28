@@ -22,6 +22,11 @@ const RECONNECT_DELAY_UNSUPPORTED = 30000
 
 const MINIMUM_PROTOCOL_VERSION = '1.7.0' // Companion 3.4
 
+// Compressed bitmap encodings we can decode (via @julusian/image-rs), in order of preference.
+// Companion advertises which it can stream via the CAPS `BITMAP_FORMATS` field (API v1.12+).
+// We negotiate the first of these that is available, falling back to raw `rgb` otherwise.
+const PREFERRED_BITMAP_FORMATS = ['webp', 'png'] as const
+
 export interface CompanionSatelliteClientOptions {
 	debug?: boolean
 }
@@ -30,7 +35,7 @@ export interface CompanionSatelliteClientDrawProps {
 	deviceId: string
 	keyIndex: number | undefined
 	controlId: string | undefined
-	image?: string // base64
+	image?: string // base64 raw rgb pixels, or a `data:` url for compressed (png/webp) bitmaps
 	color?: string // hex
 	textColor?: string // hex
 	text?: string
@@ -114,6 +119,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsDeviceSerial = false
 	private _supportsSubscriptions = false
 	private _supportsNonSquareBitmaps = false
+	private _companionBitmapFormats: string[] = []
 	private _pendingConnected = false
 
 	public get connectionDetails(): SomeConnectionDetails {
@@ -146,6 +152,17 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get supportsNonSquareBitmaps(): boolean {
 		return this._supportsNonSquareBitmaps
+	}
+
+	/**
+	 * The compressed bitmap encoding negotiated with Companion, or `rgb` if none is available.
+	 * Compressed bitmaps arrive as self-describing data urls, raw `rgb` as base64 pixel data.
+	 */
+	private get negotiatedBitmapFormat(): 'rgb' | (typeof PREFERRED_BITMAP_FORMATS)[number] {
+		for (const format of PREFERRED_BITMAP_FORMATS) {
+			if (this._companionBitmapFormats.includes(format)) return format
+		}
+		return 'rgb'
 	}
 
 	public get displayHost(): string {
@@ -203,6 +220,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._pendingDevices.clear()
 
 				this._supportsSubscriptions = false
+				this._companionBitmapFormats = []
 				this._pendingConnected = false
 				if (this._connected) {
 					this.emit('disconnected')
@@ -439,6 +457,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 		this._supportsNonSquareBitmaps = false
 		this._supportsSubscriptions = false
+		this._companionBitmapFormats = []
 
 		// Defer emitting connected until CAPS is received (added in API 1.10.0)
 		this._pendingConnected = true
@@ -602,6 +621,18 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this.emit('log', 'Companion supports non-square bitmaps')
 		}
 
+		// BITMAP_FORMATS is a comma-separated list of bitmap encodings Companion can stream (API v1.12+)
+		this._companionBitmapFormats =
+			typeof params.BITMAP_FORMATS === 'string'
+				? params.BITMAP_FORMATS.split(',')
+						.map((f) => f.trim().toLowerCase())
+						.filter(Boolean)
+				: []
+		const negotiatedBitmapFormat = this.negotiatedBitmapFormat
+		if (negotiatedBitmapFormat !== 'rgb') {
+			this.emit('log', `Companion supports compressed bitmaps, using '${negotiatedBitmapFormat}'`)
+		}
+
 		this.completeConnection()
 	}
 
@@ -753,12 +784,19 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 						? { CAN_CHANGE_PAGE: props.canChangePage.label }
 						: {}
 
+				// BITMAP_FORMAT requests a compressed bitmap encoding from Companion (API v1.12+).
+				// Omit it to keep the default `rgb` encoding when no compressed format was negotiated.
+				const bitmapFormat = this.negotiatedBitmapFormat
+				const bitmapFormatArgs: SatelliteMessageArgs =
+					bitmapFormat !== 'rgb' ? { BITMAP_FORMAT: bitmapFormat } : {}
+
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
 					...commonProps,
 					...serialArgs,
 					...configFieldsArgs,
 					...canChangePageArgs,
+					...bitmapFormatArgs,
 				})
 			} else {
 				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)
