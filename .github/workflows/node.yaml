@@ -7,6 +7,9 @@ on:
 
 permissions: {}
 
+env:
+  API_PRODUCT: companion-satellite
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -90,20 +93,38 @@ jobs:
           yarn --cwd webui install
           yarn dist
 
-      - name: Upload build
-        uses: bitfocus/actions/upload-and-notify@main
+      - name: Upload build (beta)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && github.ref == 'refs/heads/main' }}
         with:
-          long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: main
-
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          s3-host: ${{ secrets.S3_HOST }}
-          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-host: ${{ vars.S3_HOST }}
+          s3-bucket: ${{ vars.S3_BUCKET }}
           s3-access-key: ${{ secrets.S3_KEY }}
           s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          api-product: companion-satellite
+          api-version: ${{ steps.filenames.outputs.longversion }}
+          api-branch: 'beta'
+          api-product: ${{ env.API_PRODUCT }}
+          api-target: 'linux-tgz'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+      - name: Upload build (stable)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && startsWith(github.ref, 'refs/tags/') }}
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          s3-host: ${{ vars.RELEASE_S3_HOST }}
+          s3-bucket: ${{ vars.RELEASE_S3_BUCKET }}/${{ env.API_PRODUCT }}
+          s3-access-key: ${{ secrets.RELEASE_S3_KEY }}
+          s3-secret-key: ${{ secrets.RELEASE_S3_SECRET }}
+
+          public-bucket-url: ${{ vars.RELEASE_S3_URL }}/${{ env.API_PRODUCT }}
+
+          api-version: ${{ github.ref_name }}
+          api-branch: 'stable'
+          api-product: ${{ env.API_PRODUCT }}
           api-target: 'linux-tgz'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
@@ -166,20 +187,38 @@ jobs:
           yarn --cwd webui install
           yarn dist linux-arm64
 
-      - name: Upload build
-        uses: bitfocus/actions/upload-and-notify@main
+      - name: Upload build (beta)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && github.ref == 'refs/heads/main' }}
         with:
-          long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: main
-
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          s3-host: ${{ secrets.S3_HOST }}
-          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-host: ${{ vars.S3_HOST }}
+          s3-bucket: ${{ vars.S3_BUCKET }}
           s3-access-key: ${{ secrets.S3_KEY }}
           s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          api-product: companion-satellite
+          api-version: ${{ steps.filenames.outputs.longversion }}
+          api-branch: 'beta'
+          api-product: ${{ env.API_PRODUCT }}
+          api-target: 'linux-arm64-tgz'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+      - name: Upload build (stable)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && startsWith(github.ref, 'refs/tags/') }}
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          s3-host: ${{ vars.RELEASE_S3_HOST }}
+          s3-bucket: ${{ vars.RELEASE_S3_BUCKET }}/${{ env.API_PRODUCT }}
+          s3-access-key: ${{ secrets.RELEASE_S3_KEY }}
+          s3-secret-key: ${{ secrets.RELEASE_S3_SECRET }}
+
+          public-bucket-url: ${{ vars.RELEASE_S3_URL }}/${{ env.API_PRODUCT }}
+
+          api-version: ${{ github.ref_name }}
+          api-branch: 'stable'
+          api-product: ${{ env.API_PRODUCT }}
           api-target: 'linux-arm64-tgz'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
@@ -269,20 +308,38 @@ jobs:
           CSC_LINK: c:\\actions-runner-bitfocusas\\codesign.cer
           BF_CODECERT_KEY: ${{ secrets.BF_CODECERT_KEY }}
 
-      - name: Upload build
-        uses: bitfocus/actions/upload-and-notify@main
+      - name: Upload build (beta)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && github.ref == 'refs/heads/main' }}
         with:
-          long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: main
-
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          s3-host: ${{ secrets.S3_HOST }}
-          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-host: ${{ vars.S3_HOST }}
+          s3-bucket: ${{ vars.S3_BUCKET }}
           s3-access-key: ${{ secrets.S3_KEY }}
           s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          api-product: companion-satellite
+          api-version: ${{ steps.filenames.outputs.longversion }}
+          api-branch: 'beta'
+          api-product: ${{ env.API_PRODUCT }}
+          api-target: 'win-x64'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+      - name: Upload build (stable)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && startsWith(github.ref, 'refs/tags/') }}
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          s3-host: ${{ vars.RELEASE_S3_HOST }}
+          s3-bucket: ${{ vars.RELEASE_S3_BUCKET }}/${{ env.API_PRODUCT }}
+          s3-access-key: ${{ secrets.RELEASE_S3_KEY }}
+          s3-secret-key: ${{ secrets.RELEASE_S3_SECRET }}
+
+          public-bucket-url: ${{ vars.RELEASE_S3_URL }}/${{ env.API_PRODUCT }}
+
+          api-version: ${{ github.ref_name }}
+          api-branch: 'stable'
+          api-product: ${{ env.API_PRODUCT }}
           api-target: 'win-x64'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
@@ -372,20 +429,38 @@ jobs:
           CSC_LINK: c:\\actions-runner-bitfocusas\\codesign.cer
           BF_CODECERT_KEY: ${{ secrets.BF_CODECERT_KEY }}
 
-      - name: Upload build
-        uses: bitfocus/actions/upload-and-notify@main
+      - name: Upload build (beta)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && github.ref == 'refs/heads/main' }}
         with:
-          long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: main
-
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          s3-host: ${{ secrets.S3_HOST }}
-          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-host: ${{ vars.S3_HOST }}
+          s3-bucket: ${{ vars.S3_BUCKET }}
           s3-access-key: ${{ secrets.S3_KEY }}
           s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          api-product: companion-satellite
+          api-version: ${{ steps.filenames.outputs.longversion }}
+          api-branch: 'beta'
+          api-product: ${{ env.API_PRODUCT }}
+          api-target: 'win-arm64'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+      - name: Upload build (stable)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && startsWith(github.ref, 'refs/tags/') }}
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          s3-host: ${{ vars.RELEASE_S3_HOST }}
+          s3-bucket: ${{ vars.RELEASE_S3_BUCKET }}/${{ env.API_PRODUCT }}
+          s3-access-key: ${{ secrets.RELEASE_S3_KEY }}
+          s3-secret-key: ${{ secrets.RELEASE_S3_SECRET }}
+
+          public-bucket-url: ${{ vars.RELEASE_S3_URL }}/${{ env.API_PRODUCT }}
+
+          api-version: ${{ github.ref_name }}
+          api-branch: 'stable'
+          api-product: ${{ env.API_PRODUCT }}
           api-target: 'win-arm64'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
@@ -450,20 +525,38 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
 
-      - name: Upload build
-        uses: bitfocus/actions/upload-and-notify@main
+      - name: Upload build (beta)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && github.ref == 'refs/heads/main' }}
         with:
-          long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: main
-
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          s3-host: ${{ secrets.S3_HOST }}
-          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-host: ${{ vars.S3_HOST }}
+          s3-bucket: ${{ vars.S3_BUCKET }}
           s3-access-key: ${{ secrets.S3_KEY }}
           s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          api-product: companion-satellite
+          api-version: ${{ steps.filenames.outputs.longversion }}
+          api-branch: 'beta'
+          api-product: ${{ env.API_PRODUCT }}
+          api-target: 'mac-intel'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+      - name: Upload build (stable)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && startsWith(github.ref, 'refs/tags/') }}
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          s3-host: ${{ vars.RELEASE_S3_HOST }}
+          s3-bucket: ${{ vars.RELEASE_S3_BUCKET }}/${{ env.API_PRODUCT }}
+          s3-access-key: ${{ secrets.RELEASE_S3_KEY }}
+          s3-secret-key: ${{ secrets.RELEASE_S3_SECRET }}
+
+          public-bucket-url: ${{ vars.RELEASE_S3_URL }}/${{ env.API_PRODUCT }}
+
+          api-version: ${{ github.ref_name }}
+          api-branch: 'stable'
+          api-product: ${{ env.API_PRODUCT }}
           api-target: 'mac-intel'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
@@ -528,20 +621,38 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLETEAMID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLEIDPASS }}
 
-      - name: Upload build
-        uses: bitfocus/actions/upload-and-notify@main
+      - name: Upload build (beta)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && github.ref == 'refs/heads/main' }}
         with:
-          long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: main
-
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          s3-host: ${{ secrets.S3_HOST }}
-          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-host: ${{ vars.S3_HOST }}
+          s3-bucket: ${{ vars.S3_BUCKET }}
           s3-access-key: ${{ secrets.S3_KEY }}
           s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          api-product: companion-satellite
+          api-version: ${{ steps.filenames.outputs.longversion }}
+          api-branch: 'beta'
+          api-product: ${{ env.API_PRODUCT }}
+          api-target: 'mac-arm'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+      - name: Upload build (stable)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && startsWith(github.ref, 'refs/tags/') }}
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          s3-host: ${{ vars.RELEASE_S3_HOST }}
+          s3-bucket: ${{ vars.RELEASE_S3_BUCKET }}/${{ env.API_PRODUCT }}
+          s3-access-key: ${{ secrets.RELEASE_S3_KEY }}
+          s3-secret-key: ${{ secrets.RELEASE_S3_SECRET }}
+
+          public-bucket-url: ${{ vars.RELEASE_S3_URL }}/${{ env.API_PRODUCT }}
+
+          api-version: ${{ github.ref_name }}
+          api-branch: 'stable'
+          api-product: ${{ env.API_PRODUCT }}
           api-target: 'mac-arm'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
 
@@ -633,19 +744,37 @@ jobs:
 
           sudo xz image
 
-      - name: Upload build
-        uses: bitfocus/actions/upload-and-notify@main
+      - name: Upload build (beta)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && github.ref == 'refs/heads/main' }}
         with:
-          long-version: ${{ steps.filenames.outputs.longversion }}
-          beta-branch: main
-
           source-filename: ${{ steps.filenames.outputs.sourcename }}
           destination-filename: ${{ steps.filenames.outputs.targetname }}
-          s3-host: ${{ secrets.S3_HOST }}
-          s3-bucket: ${{ secrets.S3_BUCKET }}/companion-satellite
+          s3-host: ${{ vars.S3_HOST }}
+          s3-bucket: ${{ vars.S3_BUCKET }}
           s3-access-key: ${{ secrets.S3_KEY }}
           s3-secret-key: ${{ secrets.S3_SECRET }}
 
-          api-product: companion-satellite
+          api-version: ${{ steps.filenames.outputs.longversion }}
+          api-branch: 'beta'
+          api-product: ${{ env.API_PRODUCT }}
+          api-target: 'linux-img'
+          api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
+      - name: Upload build (stable)
+        uses: bitfocus/actions/upload-and-notify-for-branch@main
+        if: ${{ github.repository_owner == 'bitfocus' && startsWith(github.ref, 'refs/tags/') }}
+        with:
+          source-filename: ${{ steps.filenames.outputs.sourcename }}
+          destination-filename: ${{ steps.filenames.outputs.targetname }}
+          s3-host: ${{ vars.RELEASE_S3_HOST }}
+          s3-bucket: ${{ vars.RELEASE_S3_BUCKET }}/${{ env.API_PRODUCT }}
+          s3-access-key: ${{ secrets.RELEASE_S3_KEY }}
+          s3-secret-key: ${{ secrets.RELEASE_S3_SECRET }}
+
+          public-bucket-url: ${{ vars.RELEASE_S3_URL }}/${{ env.API_PRODUCT }}
+
+          api-version: ${{ github.ref_name }}
+          api-branch: 'stable'
+          api-product: ${{ env.API_PRODUCT }}
           api-target: 'linux-img'
           api-secret: ${{ secrets.BITFOCUS_API_PROJECT_SECRET }}
