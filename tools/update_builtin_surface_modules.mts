@@ -125,7 +125,15 @@ for (const moduleId of Object.keys(existingModules)) {
 	}
 }
 
-const rulesContent = generateUdevFile(udevRules, { mode: 'headless', userGroup: 'satellite' })
-const rulesPath = path.join(import.meta.dirname, '../satellite/assets/linux/50-satellite.rules')
-await fs.writeFile(rulesPath, rulesContent)
-console.log('Generated udev rules:', rulesPath)
+const linuxAssetsDir = path.join(import.meta.dirname, '../satellite/assets/linux')
+
+// Headless rules grant access via a dedicated `satellite` group (used by the
+// install script / systemd setups). Desktop rules use uaccess so the logged-in
+// user gets access automatically, without any group membership.
+const headlessRulesPath = path.join(linuxAssetsDir, '50-satellite.rules')
+await fs.writeFile(headlessRulesPath, generateUdevFile(udevRules, { mode: 'headless', userGroup: 'satellite' }))
+console.log('Generated udev rules:', headlessRulesPath)
+
+const desktopRulesPath = path.join(linuxAssetsDir, '50-satellite-desktop.rules')
+await fs.writeFile(desktopRulesPath, generateUdevFile(udevRules, { mode: 'desktop' }))
+console.log('Generated udev rules:', desktopRulesPath)

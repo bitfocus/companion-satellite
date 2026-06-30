@@ -1,33 +1,69 @@
-# Quickstart guide
+# Companion Satellite for Linux
 
-1. Headless Companion Satellite
+This archive contains a desktop build of Companion Satellite. There are two ways
+to set it up:
 
-   If you want to run satellite on a headless machine, consider using the install script
+1. Desktop installation (recommended)
 
-   This can be run with:
+   Run the included installer:
+   $ ./install.sh
+
+   It can install either system-wide (to /opt/companion-satellite, asking for
+   your administrator password) or just for the current user (to
+   ~/.local/share/companion-satellite). The installer:
+   - copies this build to the chosen location,
+   - adds Companion Satellite to your application menu with an icon,
+   - installs the udev rules so it can access USB surfaces (see below),
+   - checks for the required system libraries.
+
+   You can also pass --system or --user to skip the prompt, and --force to
+   overwrite an existing install.
+
+   Once installed it appears in your application menu, or you can launch it
+   directly with /opt/companion-satellite/companion-satellite (or the
+   equivalent path under ~/.local/share for a user install).
+
+2. Headless / server installation
+
+   If you want to run Satellite on a headless machine, use the install script,
+   which sets up and manages dependencies, udev rules and updates for you:
    $ curl https://raw.githubusercontent.com/bitfocus/companion-satellite/main/pi-image/install.sh | bash
 
-   The benefit of this approach is that it will setup and manage any required dependencies, udev rules for you, and provide you with an easy script to run to perform an update.
+   See the repository at https://github.com/bitfocus/companion-satellite for
+   more details.
 
-   Alternatively, you are able to set it up yourself and define a systemd unit to launch it or do whatever you wish. For examples on how to do this, check the scripts in the repository https://github.com/bitfocus/companion-satellite
+## Required dependencies
 
-2. Required Dependencies
+Companion Satellite needs a few system libraries that aren't installed by
+default on some Debian and Ubuntu systems. install.sh checks for them, but you
+can install them yourself with:
 
-   Satellite requires some dependencies that aren't included by default on some Debian and Ubuntu installations.
+$ sudo apt-get update
+$ sudo apt-get install -y libusb-1.0-0-dev libudev-dev libfontconfig1
 
-   $ apt-get update
-   $ apt-get install -y libusb-1.0-0-dev libudev-dev libfontconfig1
+## Udev rules (USB device access)
 
-3. Udev rules
+For Satellite to access your Stream Decks, Loupedecks, X-keys or other supported
+USB surfaces, some udev rules must be installed. install.sh does this for you,
+but if you skipped that step or want to do it manually, run as root:
 
-   For Satellite to be able to access your Streamdecks, Loupedecks, xkeys or other supported USB devices, some udev rules must be setup.
-   You can do this by running as root:
-   $ cp 50-satellite.rules /etc/udev/rules.d/50-satellite.rules
-   $ udevadm control --reload-rules
-   And replugging any usb devices that Satellite should be able to use.
+$ cp 50-satellite-desktop.rules /etc/udev/rules.d/50-satellite-desktop.rules
+$ udevadm control --reload-rules
+$ udevadm trigger
 
-   Sometimes this file can change, when adding support for new devices, so it can be a good idea to update it when updating Satellite.
+Then replug any USB devices Satellite should be able to use. These desktop rules
+use uaccess, so the logged-in user is granted access automatically - there is no
+group to join and no need to log out and back in.
 
-4. Launching
+(For headless/server setups there is also a 50-satellite.rules file, which grants
+access via a dedicated `satellite` group instead of the current user session - the
+headless install script uses that one.)
 
-   To run Satellite, either run companion-satellite to get the desktop build, or run `node dist/main.js` to start it headless.
+These rules occasionally change as support for new devices is added, so it's
+worth re-running install.sh (or repeating the steps above) when you update
+Satellite.
+
+## Troubleshooting
+
+If launching fails with a GTK 2/3 vs GTK 4 error, append --gtk-version=3 to the
+launch command.

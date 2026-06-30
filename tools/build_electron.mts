@@ -65,6 +65,13 @@ await buildSurfaceThreadEntrypoint()
 // }
 // console.log('pregyp args:', nodePreGypArgs)
 
+// For linux, the desktop installer needs the app icon at the root of the archive.
+// electron-builder treats `assets/icon.png` as a build resource, so place a copy
+// alongside the other `assets/linux` files (which get copied to the archive root).
+if (platformInfo.platform === 'linux') {
+	await fs.copy('./satellite/assets/icon.png', './satellite/assets/linux/icon.png')
+}
+
 // perform the electron build
 await fs.remove('./electron-output')
 
@@ -144,6 +151,7 @@ const options: electronBuilder.Configuration = {
 	},
 	linux: {
 		target: 'tar.gz',
+		executableName: 'companion-satellite',
 		artifactName: 'companion-satellite-${arch}.tar.gz',
 		extraFiles: [
 			{

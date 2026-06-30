@@ -7,6 +7,9 @@ electron-output
 .cache
 *.tsbuildinfo
 
+# Generated at build time from satellite/assets/icon.png for the linux installer
+satellite/assets/linux/icon.png
+
 # Yarn 3 files
 .pnp.*
 .yarn/*

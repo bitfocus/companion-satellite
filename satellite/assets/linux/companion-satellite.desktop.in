@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Companion Satellite
+GenericName=Companion Satellite
+Comment=Connect surfaces to Bitfocus Companion over the network
+Exec=@EXEC_PATH@ %U
+Icon=@ICON_NAME@
+Terminal=false
+Categories=AudioVideo;Utility;
+StartupWMClass=companion-satellite
+Keywords=streamdeck;loupedeck;xkeys;companion;satellite;bitfocus;
