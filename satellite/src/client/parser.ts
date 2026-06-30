@@ -48,7 +48,7 @@ export function parseLineParameters(line: string): Record<string, string | boole
 		}
 	}
 
-	const res: Record<string, string | boolean> = {}
+	const res: Record<string, string | boolean> = Object.create(null)
 
 	for (const fragment of fragments) {
 		// Split on the first `=` only, keeping the rest of the value intact. A
