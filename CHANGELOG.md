@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.3.0](https://github.com/bitfocus/companion-satellite/compare/v3.2.0...v3.3.0) (2026-06-30)
+
+
+### Features
+
+* add installer script for linux ([d52d81a](https://github.com/bitfocus/companion-satellite/commit/d52d81a2464ae18140427db58ca505584b3784c4))
+* support compressed images from Companion 5.0 ([4ef2e35](https://github.com/bitfocus/companion-satellite/commit/4ef2e357cfe50de3115fa894a69ff4d1dd98a1fa))
+
+
+### Bug Fixes
+
+* ensure parsing of long base64 strings ([9bf5869](https://github.com/bitfocus/companion-satellite/commit/9bf5869f868d1d3381a4c653400476d207555376))
+
 ## [3.2.0](https://github.com/bitfocus/companion-satellite/compare/v3.1.0...v3.2.0) (2026-06-21)
 
 
