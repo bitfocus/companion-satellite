@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.3.1](https://github.com/bitfocus/companion-satellite/compare/v3.3.0...v3.3.1) (2026-07-12)
+
+
+### Bug Fixes
+
+* add timeout for  firmware update check requests ([f1259d5](https://github.com/bitfocus/companion-satellite/commit/f1259d5d823b89241a4c1f28d946fe0c6dbef35b))
+
 ## [3.3.0](https://github.com/bitfocus/companion-satellite/compare/v3.2.0...v3.3.0) (2026-06-30)
 
 
