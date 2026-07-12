@@ -1321,6 +1321,76 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@node-usb/usb-darwin-arm64@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-darwin-arm64@npm:3.0.1"
+  conditions: os=darwin & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-darwin-x64@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-darwin-x64@npm:3.0.1"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-linux-arm-gnueabihf@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-linux-arm-gnueabihf@npm:3.0.1"
+  conditions: os=linux & cpu=arm
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-linux-arm64-gnu@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-linux-arm64-gnu@npm:3.0.1"
+  conditions: os=linux & cpu=arm64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-linux-arm64-musl@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-linux-arm64-musl@npm:3.0.1"
+  conditions: os=linux & cpu=arm64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-linux-x64-gnu@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-linux-x64-gnu@npm:3.0.1"
+  conditions: os=linux & cpu=x64 & libc=glibc
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-linux-x64-musl@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-linux-x64-musl@npm:3.0.1"
+  conditions: os=linux & cpu=x64 & libc=musl
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-win32-arm64-msvc@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-win32-arm64-msvc@npm:3.0.1"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-win32-ia32-msvc@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-win32-ia32-msvc@npm:3.0.1"
+  conditions: os=win32 & cpu=ia32
+  languageName: node
+  linkType: hard
+
+"@node-usb/usb-win32-x64-msvc@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@node-usb/usb-win32-x64-msvc@npm:3.0.1"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -2230,10 +2300,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/w3c-web-usb@npm:^1.0.6":
-  version: 1.0.10
-  resolution: "@types/w3c-web-usb@npm:1.0.10"
-  checksum: 10c0/3df5733a334c5fd22ef3fa1e97a70c029542591058d11905d1304c26bab8705d975168818b5b7ec21fef5591cdea776dbdb31d4c04aa433e7fe7d61dd7ebdecf
+"@types/w3c-web-usb@npm:^1.0.14":
+  version: 1.0.14
+  resolution: "@types/w3c-web-usb@npm:1.0.14"
+  checksum: 10c0/34b460f6b78309a86c61cbbb72aa0d632901088c03b55675dbf1eb17bd1cc49faa2b9156ecefa243169a5716d4df93688e58246a38a880c4b5b583d19d86ceb1
   languageName: node
   linkType: hard
 
@@ -6891,32 +6961,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-addon-api@npm:^8.0.0":
-  version: 8.5.0
-  resolution: "node-addon-api@npm:8.5.0"
-  dependencies:
-    node-gyp: "npm:latest"
-  checksum: 10c0/e4de0b4e70998fed7ef41933946f60565fc3a17cb83b7d626a0c0bb1f734cf7852e0e596f12681e7c8ed424163ee3cdbb4f0abaa9cc269d03f48834c263ba162
-  languageName: node
-  linkType: hard
-
 "node-api-version@npm:^0.2.1":
   version: 0.2.1
   resolution: "node-api-version@npm:0.2.1"
   dependencies:
     semver: "npm:^7.3.5"
   checksum: 10c0/3fe6c273e4f9dd184bb8b959ba3d8afae7eade663611d82c8538c79ac3a7b8f1d136632ceb4bf8cdc46a851fc169407746996cf7d1096de9a186e0e70fca95fa
-  languageName: node
-  linkType: hard
-
-"node-gyp-build@npm:^4.5.0":
-  version: 4.8.4
-  resolution: "node-gyp-build@npm:4.8.4"
-  bin:
-    node-gyp-build: bin.js
-    node-gyp-build-optional: optional.js
-    node-gyp-build-test: build-test.js
-  checksum: 10c0/444e189907ece2081fe60e75368784f7782cfddb554b60123743dfb89509df89f1f29c03bbfa16b3a3e0be3f48799a4783f487da6203245fa5bed239ba7407e1
   languageName: node
   linkType: hard
 
@@ -8204,7 +8254,7 @@ __metadata:
     tslib: "npm:^2.8.1"
     tsx: "npm:^4.23.0"
     type-fest: "npm:^5.8.0"
-    usb: "npm:^2.18.0"
+    usb: "npm:^3.0.1"
     ws: "npm:^8.21.0"
   languageName: unknown
   linkType: soft
@@ -9369,15 +9419,43 @@ __metadata:
   languageName: node
   linkType: hard
 
-"usb@npm:^2.18.0":
-  version: 2.18.0
-  resolution: "usb@npm:2.18.0"
+"usb@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "usb@npm:3.0.1"
   dependencies:
-    "@types/w3c-web-usb": "npm:^1.0.6"
-    node-addon-api: "npm:^8.0.0"
-    node-gyp: "npm:latest"
-    node-gyp-build: "npm:^4.5.0"
-  checksum: 10c0/20c2e63b8cbc0f4913914f40a3598e359c7d1906781e86d2b7b9a09650750b6e4cdfe4eb489881c2883b0ebba2a177a657226f0b50984a1d14d14baa671aafb9
+    "@node-usb/usb-darwin-arm64": "npm:3.0.1"
+    "@node-usb/usb-darwin-x64": "npm:3.0.1"
+    "@node-usb/usb-linux-arm-gnueabihf": "npm:3.0.1"
+    "@node-usb/usb-linux-arm64-gnu": "npm:3.0.1"
+    "@node-usb/usb-linux-arm64-musl": "npm:3.0.1"
+    "@node-usb/usb-linux-x64-gnu": "npm:3.0.1"
+    "@node-usb/usb-linux-x64-musl": "npm:3.0.1"
+    "@node-usb/usb-win32-arm64-msvc": "npm:3.0.1"
+    "@node-usb/usb-win32-ia32-msvc": "npm:3.0.1"
+    "@node-usb/usb-win32-x64-msvc": "npm:3.0.1"
+    "@types/w3c-web-usb": "npm:^1.0.14"
+  dependenciesMeta:
+    "@node-usb/usb-darwin-arm64":
+      optional: true
+    "@node-usb/usb-darwin-x64":
+      optional: true
+    "@node-usb/usb-linux-arm-gnueabihf":
+      optional: true
+    "@node-usb/usb-linux-arm64-gnu":
+      optional: true
+    "@node-usb/usb-linux-arm64-musl":
+      optional: true
+    "@node-usb/usb-linux-x64-gnu":
+      optional: true
+    "@node-usb/usb-linux-x64-musl":
+      optional: true
+    "@node-usb/usb-win32-arm64-msvc":
+      optional: true
+    "@node-usb/usb-win32-ia32-msvc":
+      optional: true
+    "@node-usb/usb-win32-x64-msvc":
+      optional: true
+  checksum: 10c0/4804ff89c21c03b651d5ccc29d7ec70417d28d040ce3899e4ea033fba8de6d890bf0e1d82f3fc829e14bb231908211de6cc0cc42081a5521f38fed9ce3069d61
   languageName: node
   linkType: hard
 

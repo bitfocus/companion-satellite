@@ -262,10 +262,12 @@ export class SurfaceManager {
 		this.#pendingSurfaces = new Set()
 		this.#readyingSurfaces = new Set()
 
-		usb.on('attach', this.#onUsbAttach)
-		usb.on('detach', this.#onUsbDetach)
-		// Don't block process exit with the watching
-		usb.unrefHotplugEvents()
+		try {
+			usb.addEventListener('connect', this.#onUsbAttach)
+			usb.addEventListener('disconnect', this.#onUsbDetach)
+		} catch (e) {
+			this.#logger.error(`Failed to enable usb hotplug: ${e}`)
+		}
 
 		this.#statusString = 'Connecting'
 		this.#showStatusCard(this.#statusString, true)
@@ -525,8 +527,8 @@ export class SurfaceManager {
 	}
 
 	public async close(): Promise<void> {
-		usb.off('attach', this.#onUsbAttach)
-		usb.off('detach', this.#onUsbDetach)
+		usb.removeEventListener('connect', this.#onUsbAttach)
+		usb.removeEventListener('disconnect', this.#onUsbDetach)
 
 		for (const { handler, monitor } of this.#plugins.values()) {
 			// Prevent the monitor from respawning the child after it exits
@@ -556,8 +558,8 @@ export class SurfaceManager {
 		return entry.handler
 	}
 
-	#onUsbAttach = (dev: usb.Device): void => {
-		this.#logger.debug(`Found a usb device: ${JSON.stringify(dev.deviceDescriptor)}`)
+	#onUsbAttach = (_dev: unknown): void => {
+		this.#logger.debug(`Found a usb device`)
 
 		// most of the time it is available now
 		this.scanForSurfaces()
@@ -565,7 +567,7 @@ export class SurfaceManager {
 		setTimeout(() => this.scanForSurfaces(), 1000)
 	}
 
-	#onUsbDetach = (_dev: usb.Device): void => {
+	#onUsbDetach = (_dev: unknown): void => {
 		// Rescan after a short timeout
 		setTimeout(() => this.scanForSurfaces(), 1000)
 	}
