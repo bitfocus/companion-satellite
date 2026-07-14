@@ -49,6 +49,7 @@ export function translateModuleToSatelliteSurfaceLayout(
 			text: preset.text,
 			textStyle: preset.textStyle,
 			colors: preset.colors,
+			leds: preset.leds ? { segments: preset.leds.segments, mode: preset.leds.mode } : undefined,
 		} satisfies Complete<SatelliteControlStylePreset>
 	}
 
@@ -61,6 +62,32 @@ export function translateModuleToSatelliteSurfaceLayout(
 	}
 
 	return translatedLayout
+}
+
+/**
+ * Remove manifest features that the connected Companion is too old to understand, before the manifest
+ * is sent as `LAYOUT_MANIFEST`. Companion validates the manifest strictly (`additionalProperties: false`),
+ * so an unknown property would cause it to reject the whole manifest and fail to register the surface.
+ *
+ * Returns a copy; the input is not mutated.
+ */
+export function stripUnsupportedManifestFeatures(
+	manifest: SatelliteSurfaceLayout,
+	support: { supportsLeds: boolean },
+): SatelliteSurfaceLayout {
+	// `leds` was added in API v1.13.0
+	if (support.supportsLeds) return manifest
+
+	const stylePresets: SatelliteSurfaceLayout['stylePresets'] = { default: {} }
+	for (const [presetId, preset] of Object.entries(manifest.stylePresets)) {
+		const { leds: _leds, ...rest } = preset
+		stylePresets[presetId] = rest
+	}
+
+	return {
+		...manifest,
+		stylePresets,
+	}
 }
 
 export function translateModuleToSatelliteTransferVariables(
