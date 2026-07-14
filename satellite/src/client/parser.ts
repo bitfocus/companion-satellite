@@ -1,3 +1,16 @@
+// Keys that could pollute the prototype chain if the parsed params were ever copied onto a
+// normal object downstream. The result object is prototype-less (`Object.create(null)`) so these
+// are harmless on it directly, but we drop them anyway to match Companion's own parser hardening.
+const BANNED_PROPS = new Set([
+	'__proto__',
+	'constructor',
+	'prototype',
+	'__defineGetter__',
+	'__defineSetter__',
+	'__lookupGetter__',
+	'__lookupSetter__',
+])
+
 export function parseLineParameters(line: string): Record<string, string | boolean> {
 	const makeSafe = (index: number): number => {
 		return index === -1 ? Number.POSITIVE_INFINITY : index
@@ -30,7 +43,7 @@ export function parseLineParameters(line: string): Record<string, string | boole
 			if (c == '\\') {
 				// If char is a slash, the character following it is of interest
 				// Future: does this consider non \" chars?
-				fragments[fragments.length - 1] += line[o + 1]
+				fragments[fragments.length - 1] += line[o + 1] ?? ''
 
 				i = o + 2
 			} else {
@@ -57,9 +70,13 @@ export function parseLineParameters(line: string): Record<string, string | boole
 		// `data:` url bitmap, breaking image decoding.
 		const splitIndex = fragment.indexOf('=')
 		if (splitIndex === -1) {
+			// Skip empty fragments (from consecutive/leading/trailing spaces) and dangerous keys
+			if (fragment === '' || BANNED_PROPS.has(fragment)) continue
 			res[fragment] = true
 		} else {
-			res[fragment.substring(0, splitIndex)] = fragment.substring(splitIndex + 1)
+			const key = fragment.substring(0, splitIndex)
+			if (key === '' || BANNED_PROPS.has(key)) continue
+			res[key] = fragment.substring(splitIndex + 1)
 		}
 	}
 
