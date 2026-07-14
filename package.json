@@ -24,6 +24,7 @@
   "scripts": {
     "postinstall": "husky && tsx ./tools/dev_prepare.mts",
     "dev": "tsx ./tools/dev_prepare.mts && yarn workspace satellite dev",
+    "dev:seed-surface": "tsx ./tools/seed_builtin_module.mts",
     "dev:electron": "yarn workspace satellite dev:electron",
     "dev:webui": "yarn workspace webui dev",
     "build:openapi": "openapi-typescript ./openapi.yaml -o ./satellite/src/generated/openapi.ts",
