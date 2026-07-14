@@ -66,6 +66,7 @@ export class SurfaceManager {
 	#enabledPluginsConfig: ApiSurfacePluginsEnabled = {}
 
 	#supportsNonSquareButtons: boolean = false
+	#supportsLeds: boolean = false
 
 	#statusString: string
 	#scanIsRunning = false
@@ -203,7 +204,7 @@ export class SurfaceManager {
 						// register response, which would cause the child to call process.exit(11).
 						if (manager.isPluginEnabled(pluginId)) {
 							handler
-								.init(manager.#supportsNonSquareButtons)
+								.init(manager.#supportsNonSquareButtons, manager.#supportsLeds)
 								.then(() => {
 									const entry = manager.#plugins.get(pluginId)
 									if (entry) entry.initialized = true
@@ -277,12 +278,19 @@ export class SurfaceManager {
 
 			this.#showStatusCard('Connected', false)
 
-			const newSupportsNonSquareButtons: boolean | undefined = client.supportsNonSquareBitmaps
-			if (newSupportsNonSquareButtons !== this.#supportsNonSquareButtons) {
+			// A module reads host capabilities once at init() time, so any change requires restarting
+			// all modules so they re-init (and re-evaluate whether to declare e.g. `leds`).
+			const newSupportsNonSquareButtons: boolean = client.supportsNonSquareBitmaps
+			const newSupportsLeds: boolean = client.supportsLeds
+			if (
+				newSupportsNonSquareButtons !== this.#supportsNonSquareButtons ||
+				newSupportsLeds !== this.#supportsLeds
+			) {
 				this.#logger.info(
-					`supportsNonSquareButtons changed from ${this.#supportsNonSquareButtons} to ${newSupportsNonSquareButtons}, restarting all modules`,
+					`Host capabilities changed (supportsNonSquareButtons: ${this.#supportsNonSquareButtons}->${newSupportsNonSquareButtons}, supportsLeds: ${this.#supportsLeds}->${newSupportsLeds}), restarting all modules`,
 				)
 				this.#supportsNonSquareButtons = newSupportsNonSquareButtons
+				this.#supportsLeds = newSupportsLeds
 				for (const [, entry] of this.#plugins.entries()) {
 					if (entry.initialized) {
 						entry.initialized = false
@@ -402,6 +410,7 @@ export class SurfaceManager {
 							image: image,
 							color: msg.color,
 							text: msg.text,
+							leds: preset?.leds ? msg.leds : undefined,
 						} satisfies Complete<IpcDrawProps>,
 					])
 				},

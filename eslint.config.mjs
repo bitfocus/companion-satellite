@@ -104,6 +104,7 @@ export default [
 			'**/node_modules/*',
 			'**/electron-output/*',
 			'webui/vite.config.ts',
+			'**/vitest.config.ts',
 			'pi-image/**/*',
 			'.cache/**/*',
 		],
