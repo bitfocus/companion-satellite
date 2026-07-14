@@ -20,9 +20,9 @@
 		"tarSha": "b9f6dedb9dbda553702d0ab648679d5a388cbe4cd0368d918ae1edfb8cf6cf05"
 	},
 	"loupedeck": {
-		"version": "v1.1.0",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/loupedeck/v1.1.0-1714a92fa9ed2f04ae116de058870c4611313c00/loupedeck-v1.1.0.tgz",
-		"tarSha": "003b33f16c732280fd7367cdd5e02bebb72f1ecddd79940b47372f7f5a26ff00"
+		"version": "v1.1.1",
+		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/loupedeck/v1.1.1-f93dd8b847388d37aaa0576743260b6f729262fb/loupedeck-v1.1.1.tgz",
+		"tarSha": "d9b5b23cc6528d661242accb1a4a5e18d7f9b840453ef1cf6e15ce916b0f4ebd"
 	},
 	"mirabox-stream-dock": {
 		"version": "v1.2.0",
