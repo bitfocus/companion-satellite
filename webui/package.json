@@ -31,7 +31,7 @@
 		"@types/react": "^19.2.17",
 		"@types/react-dom": "^19.2.3",
 		"@vitejs/plugin-react": "^6.0.3",
-		"postcss": "^8.5.16",
+		"postcss": "^8.5.18",
 		"tailwindcss": "^4.3.2",
 		"vite": "^8.1.4"
 	},
