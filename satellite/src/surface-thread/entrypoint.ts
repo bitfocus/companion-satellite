@@ -46,6 +46,7 @@ async function main() {
 
 				// This is safe, as the plugin doesn't have access to the capabilities until we call init
 				hostContext.capabilities.supportsNonSquareButtons = msg.supportsNonSquareButtons
+				hostContext.capabilities.supportsLeds = msg.supportsLeds
 
 				await plugin.init()
 
@@ -157,6 +158,7 @@ async function main() {
 					msg.drawProps.map((d) => ({
 						...d,
 						image: d.image ? Buffer.from(d.image, 'base64') : undefined,
+						leds: d.leds ? Buffer.from(d.leds, 'base64') : undefined,
 					})),
 				)
 			},
