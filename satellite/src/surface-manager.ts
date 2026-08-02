@@ -137,10 +137,8 @@ export class SurfaceManager {
 					const surface = manager.#getWrappedSurface(surfaceId)
 					const control = surface.registerProps.surfaceManifest.controls[controlId]
 					if (!control) throw new Error(`Unknown control id: ${controlId}`)
-					if (delta < 0) {
-						manager.#client.rotateLeft(surfaceId, controlId, control)
-					} else if (delta > 0) {
-						manager.#client.rotateRight(surfaceId, controlId, control)
+					if (Number.isFinite(delta) && delta !== 0) {
+						manager.#client.rotate(surfaceId, controlId, control, delta)
 					}
 				} catch (e) {
 					manager.#logger.error(`Input rotate for "${surfaceId}" failed: ${e}`)

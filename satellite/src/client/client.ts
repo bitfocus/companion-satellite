@@ -680,21 +680,18 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			})
 		}
 	}
-	public rotateLeft(deviceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void {
+	public rotate(
+		deviceId: string,
+		controlId: string,
+		controlDefinition: SatelliteControlDefinition,
+		delta: number,
+	): void {
 		if (this._connected && this.socket) {
+			// DIRECTION carries the signed rotation amount; older Companion reads only its sign.
 			this.sendMessage('KEY-ROTATE', null, deviceId, {
 				CONTROLID: controlId,
 				KEY: `${controlDefinition.row}/${controlDefinition.column}`,
-				DIRECTION: false,
-			})
-		}
-	}
-	public rotateRight(deviceId: string, controlId: string, controlDefinition: SatelliteControlDefinition): void {
-		if (this._connected && this.socket) {
-			this.sendMessage('KEY-ROTATE', null, deviceId, {
-				CONTROLID: controlId,
-				KEY: `${controlDefinition.row}/${controlDefinition.column}`,
-				DIRECTION: true,
+				DIRECTION: delta,
 			})
 		}
 	}
