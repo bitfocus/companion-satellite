@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.4.0](https://github.com/bitfocus/companion-satellite/compare/v3.3.1...v3.4.0) (2026-08-02)
+
+
+### Features
+
+* allow modules to use node26 ([06e7393](https://github.com/bitfocus/companion-satellite/commit/06e73930bd71488aca14382a6762b742a0773a19))
+* prepare for surface api 1.4 precise rotation ([7f5b507](https://github.com/bitfocus/companion-satellite/commit/7f5b50773557d9e6ea03c0a74166f677c70a902a))
+* update elgato-stream-deck surface modules ([#332](https://github.com/bitfocus/companion-satellite/issues/332)) ([acb096a](https://github.com/bitfocus/companion-satellite/commit/acb096a1f52efd5714a9a1af54cc0e8623bd9957))
+* update loupedeck surface modules ([#322](https://github.com/bitfocus/companion-satellite/issues/322)) ([2fa0d6f](https://github.com/bitfocus/companion-satellite/commit/2fa0d6f468ed6a5e9e43db09db61ed83e35ff904))
+* update loupedeck surface modules ([#324](https://github.com/bitfocus/companion-satellite/issues/324)) ([f90ce53](https://github.com/bitfocus/companion-satellite/commit/f90ce5323e21d296ae23f61a21ed43cbd51f8bc0))
+* update node-usb to 3.0 ([1d191a7](https://github.com/bitfocus/companion-satellite/commit/1d191a74e548f82d927e876c3cd8a4ee82bcac59))
+
+
+### Bug Fixes
+
+* guard against shutdown leaks better ([4bfb5b2](https://github.com/bitfocus/companion-satellite/commit/4bfb5b26f892b7ad54654017455c7f6311495be1))
+* macos mdns collision messages ([ec55062](https://github.com/bitfocus/companion-satellite/commit/ec55062dc8fdc1974901f5f13e52ecba03155572))
+* quirks in satellite protocol parsing ([36767c3](https://github.com/bitfocus/companion-satellite/commit/36767c3fe5873a6a41675e92bd92918d2c6fe4d9))
+
 ## [3.3.1](https://github.com/bitfocus/companion-satellite/compare/v3.3.0...v3.3.1) (2026-07-12)
 
 
