@@ -25,6 +25,13 @@ async function main() {
 
 	if (!process.send) throw new Error('Module is not being run with ipc')
 
+	// The parent (surface-manager) is the sole orchestrator of shutdown, via the IPC
+	// 'destroy' message. Ignore termination signals so a group-wide SIGINT (Ctrl-C) or
+	// systemd SIGTERM cannot kill us before the parent sends 'destroy' and we reset the
+	// surfaces. RespawnMonitor's `kill: 5000` SIGKILL remains the ultimate fallback.
+	process.on('SIGINT', () => {})
+	process.on('SIGTERM', () => {})
+
 	console.log(`Starting up surface module: ${manifestJson.id}`)
 
 	const verificationToken = process.env.VERIFICATION_TOKEN
@@ -197,6 +204,23 @@ async function main() {
 		5000,
 	)
 	process.on('message', (msg) => ipcWrapper.receivedMessage(msg as IpcCallMessagePacket | IpcResponseMessagePacket))
+
+	// Safety net: if the parent dies/crashes without sending 'destroy', the IPC channel
+	// closes. Since we now ignore signals, this is the only thing that reaps us — attempt a
+	// best-effort surface reset, then exit. Hard-bounded so a hung destroy still exits.
+	let disconnecting = false
+	process.on('disconnect', () => {
+		if (disconnecting) return
+		disconnecting = true
+		const forceExit = setTimeout(() => process.exit(1), 2000)
+		forceExit.unref?.()
+		Promise.resolve()
+			.then(async () => {
+				if (plugin && pluginInitialized) await plugin.destroy()
+			})
+			.catch(() => {})
+			.finally(() => process.exit(1))
+	})
 
 	registerLoggingSink((source, level, message) => {
 		if (!process.send) {

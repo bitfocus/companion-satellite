@@ -52,7 +52,9 @@ asyncExitHook(
 		process.exit(0)
 	},
 	{
-		wait: 2000,
+		// Give the parallel surface resets + logger flush room to finish, but stay under
+		// `tsx watch`'s hardcoded 5000ms SIGKILL (used by the dev script).
+		wait: 4000,
 	},
 )
 

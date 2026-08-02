@@ -530,19 +530,23 @@ export class SurfaceManager {
 		usb.removeEventListener('connect', this.#onUsbAttach)
 		usb.removeEventListener('disconnect', this.#onUsbDetach)
 
-		for (const { handler, monitor } of this.#plugins.values()) {
-			// Prevent the monitor from respawning the child after it exits
-			monitor.shouldRestart = false
-			if (monitor.child) {
-				// Child is running — send a graceful destroy over IPC
-				await handler.dispose()
-			} else {
-				// Child isn't running (sleeping between restart attempts) —
-				// skip the IPC destroy to avoid a 5 s timeout, just clean up listeners
-				handler.cancelListeners()
-			}
-			await new Promise<void>((res) => monitor.stop(res))
-		}
+		// Shut down all plugins in parallel so they all reset their surfaces within the
+		// caller's shutdown window (the exit-hook `wait` in main.ts), rather than sequentially.
+		await Promise.allSettled(
+			this.#plugins.values().map(async ({ handler, monitor }) => {
+				// Prevent the monitor from respawning the child after it exits
+				monitor.shouldRestart = false
+				if (monitor.child) {
+					// Child is running — send a graceful destroy over IPC
+					await handler.dispose()
+				} else {
+					// Child isn't running (sleeping between restart attempts) —
+					// skip the IPC destroy to avoid a 5 s timeout, just clean up listeners
+					handler.cancelListeners()
+				}
+				await new Promise<void>((res) => monitor.stop(res))
+			}),
+		)
 	}
 
 	#getWrappedSurface(surfaceId: string): SurfaceInfo {

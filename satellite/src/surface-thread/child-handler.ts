@@ -223,7 +223,9 @@ export class ChildHandler {
 	 * the IPC listener so the response can be received before we stop listening.
 	 */
 	async dispose(): Promise<void> {
-		await this.#ipcWrapper.sendWithCb('destroy', {}).catch((e) => {
+		// Use a shorter-than-default timeout so a stuck plugin fails fast and stays inside
+		// the app's shutdown window (the exit-hook `wait` in main.ts).
+		await this.#ipcWrapper.sendWithCb('destroy', {}, undefined, 2500).catch((e) => {
 			this.#logger.warn(`Destroy errored: ${e}`)
 		})
 		this.#unsubListeners()
