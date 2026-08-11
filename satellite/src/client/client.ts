@@ -19,6 +19,8 @@ const PING_IDLE_TIMEOUT = 1000 // Pings are allowed to be late if another packet
 const PING_INTERVAL = 100
 const RECONNECT_DELAY = 1000
 const RECONNECT_DELAY_UNSUPPORTED = 30000
+const HANDSHAKE_TIMEOUT = 10000
+const DEVICE_REGISTRATION_TIMEOUT = 10000
 
 const MINIMUM_PROTOCOL_VERSION = '1.7.0' // Companion 3.4
 
@@ -29,6 +31,28 @@ const PREFERRED_BITMAP_FORMATS = ['webp', 'png'] as const
 
 export interface CompanionSatelliteClientOptions {
 	debug?: boolean
+	/** @internal Allows the transport to be replaced in focused client tests. */
+	socketFactory?: CompanionSatelliteSocketFactory
+}
+
+export type CompanionSatelliteSocketFactory = (
+	options: ICompanionSatelliteClientOptions,
+	details: SomeConnectionDetails,
+) => ICompanionSatelliteClient
+
+function createCompanionSatelliteSocket(
+	options: ICompanionSatelliteClientOptions,
+	details: SomeConnectionDetails,
+): ICompanionSatelliteClient {
+	switch (details.mode) {
+		case 'tcp':
+			return new CompanionSatelliteTcpClient(options, details)
+		case 'ws':
+			return new CompanionSatelliteWsClient(options, details)
+		default:
+			assertNever(details)
+			throw new Error('Invalid connection mode')
+	}
 }
 
 export interface CompanionSatelliteClientDrawProps {
@@ -95,11 +119,13 @@ export type CompanionSatelliteClientEvents = {
 
 export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteClientEvents> {
 	private readonly debug: boolean
+	private readonly socketFactory: CompanionSatelliteSocketFactory
 	private socket: ICompanionSatelliteClient | undefined
 
 	private receiveBuffer = ''
 
 	private _pingInterval: NodeJS.Timeout | undefined
+	private _handshakeTimeout: NodeJS.Timeout | undefined
 	private _pingUnackedCount = 0
 	private _lastReceivedAt = 0
 	private _connected = false
@@ -109,6 +135,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private _registeredDevices = new Set<string>()
 	private _pendingDevices = new Map<string, number>() // Time submitted
+	private _pendingDeviceTimeouts = new Map<string, NodeJS.Timeout>()
 
 	private _companionVersion: string | null = null
 	private _companionApiVersion: string | null = null
@@ -192,6 +219,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		super()
 
 		this.debug = !!options.debug
+		this.socketFactory = options.socketFactory ?? createCompanionSatelliteSocket
 
 		// Don't auto initSocket, as that can trigger an uncaught error
 	}
@@ -209,15 +237,22 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		const socketOptions: ICompanionSatelliteClientOptions = {
 			onError: (e) => {
+				if (this.socket !== socket) return
 				this.emit('error', e)
 			},
 			onClose: () => {
+				// A superseded socket can report close after its replacement is already
+				// active. It must not reset the replacement's connection state.
+				if (this.socket !== socket) return
+				this.socket = undefined
+
 				if (this.debug) {
 					this.emit('log', 'Connection closed')
 				}
 
 				this._registeredDevices.clear()
-				this._pendingDevices.clear()
+				this.clearPendingDevices()
+				this.clearHandshakeTimeout()
 
 				this._supportsSubscriptions = false
 				this._companionBitmapFormats = []
@@ -235,7 +270,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					this._pingInterval = undefined
 				}
 
-				if (!this._retryConnectTimeout && this.socket === socket) {
+				if (!this._retryConnectTimeout && this._connectionActive) {
 					this._retryConnectTimeout = setTimeout(
 						() => {
 							this._retryConnectTimeout = undefined
@@ -246,14 +281,22 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					)
 				}
 			},
-			onData: (d) => this._handleReceivedData(d),
+			onData: (d) => {
+				if (this.socket !== socket) return
+				this._handleReceivedData(d)
+			},
 			onConnect: () => {
+				if (this.socket !== socket) {
+					socket.destroy()
+					return
+				}
+
 				if (this.debug) {
 					this.emit('log', 'Connected')
 				}
 
 				this._registeredDevices.clear()
-				this._pendingDevices.clear()
+				this.clearPendingDevices()
 
 				this._connected = true
 				this._pingUnackedCount = 0
@@ -262,6 +305,15 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				if (!this._pingInterval) {
 					this._pingInterval = setInterval(() => this.sendPing(), PING_INTERVAL)
 				}
+
+				this.clearHandshakeTimeout()
+				this._handshakeTimeout = setTimeout(() => {
+					this._handshakeTimeout = undefined
+					if (this.socket !== socket) return
+
+					this.emit('log', 'Satellite handshake timeout')
+					socket.destroy()
+				}, HANDSHAKE_TIMEOUT)
 
 				if (!this.socket) {
 					// should never hit, but just in case
@@ -273,19 +325,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			},
 		}
 
-		let socket: ICompanionSatelliteClient
-		switch (this._connectionDetails.mode) {
-			case 'tcp':
-				socket = new CompanionSatelliteTcpClient(socketOptions, this._connectionDetails)
-				break
-			case 'ws':
-				socket = new CompanionSatelliteWsClient(socketOptions, this._connectionDetails)
-				break
-			default:
-				assertNever(this._connectionDetails)
-				this.socket = undefined
-				throw new Error('Invalid connection mode')
-		}
+		const socket = this.socketFactory(socketOptions, this._connectionDetails)
 		this.socket = socket
 
 		this.emit('log', `Connecting to ${formatConnectionUrl(this._connectionDetails)}`)
@@ -335,6 +375,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			clearInterval(this._pingInterval)
 			delete this._pingInterval
 		}
+		this.clearHandshakeTimeout()
+		this.clearPendingDevices()
 
 		if (!this._connected) {
 			return
@@ -590,25 +632,27 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 
 	private handleAddedDevice(params: Record<string, string | boolean>): void {
+		const deviceId = typeof params.DEVICEID === 'string' ? params.DEVICEID : undefined
+		if (deviceId) this.clearPendingDevice(deviceId)
+
 		if (!params.OK || params.ERROR) {
 			this.emit('log', `Add device failed: ${JSON.stringify(params)}`)
-			if (typeof params.DEVICEID === 'string') {
+			if (deviceId) {
 				this.emit('deviceErrored', {
-					deviceId: params.DEVICEID,
+					deviceId,
 					message: `${params.MESSAGE || 'Unknown Error'}`,
 				})
 			}
 			return
 		}
-		if (typeof params.DEVICEID !== 'string') {
+		if (!deviceId) {
 			this.emit('log', 'Missing DEVICEID in ADD-DEVICE response')
 			return
 		}
 
-		this._registeredDevices.add(params.DEVICEID)
-		this._pendingDevices.delete(params.DEVICEID)
+		this._registeredDevices.add(deviceId)
 
-		this.emit('newDevice', { deviceId: params.DEVICEID })
+		this.emit('newDevice', { deviceId })
 	}
 
 	private handleCaps(params: Record<string, string | boolean>): void {
@@ -639,6 +683,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private completeConnection(): void {
 		if (!this._pendingConnected) return
 		this._pendingConnected = false
+		this.clearHandshakeTimeout()
 		setImmediate(() => {
 			this.emit('connected')
 		})
@@ -740,11 +785,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (pendingTime && pendingTime > Date.now() - 10000) {
 			throw new Error('Device is already being added')
 		}
-		if (pendingTime) this._pendingDevices.delete(deviceId)
+		if (pendingTime) this.clearPendingDevice(deviceId)
 
 		if (this._connected && this.socket) {
-			this._pendingDevices.set(deviceId, Date.now())
-
 			const transferVariables = Buffer.from(JSON.stringify(props.transferVariables ?? [])).toString('base64')
 
 			const neededColours = new Set<string>()
@@ -809,16 +852,56 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					...commonProps,
 				})
 			}
+
+			this._pendingDevices.set(deviceId, Date.now())
+			this.clearPendingDeviceTimeout(deviceId)
+			this._pendingDeviceTimeouts.set(
+				deviceId,
+				setTimeout(() => {
+					this._pendingDeviceTimeouts.delete(deviceId)
+					if (!this._pendingDevices.delete(deviceId)) return
+
+					this.emit('log', `Add device timeout: ${deviceId}`)
+					this.emit('deviceErrored', {
+						deviceId,
+						message: 'Timed out waiting for Companion to add device',
+					})
+				}, DEVICE_REGISTRATION_TIMEOUT),
+			)
 		}
 	}
 
 	public removeDevice(deviceId: string): void {
 		if (this._connected && this.socket) {
 			this._registeredDevices.delete(deviceId)
-			this._pendingDevices.delete(deviceId)
+			this.clearPendingDevice(deviceId)
 
 			this.sendMessage('REMOVE-DEVICE', null, deviceId, {})
 		}
+	}
+
+	private clearHandshakeTimeout(): void {
+		if (this._handshakeTimeout) {
+			clearTimeout(this._handshakeTimeout)
+			this._handshakeTimeout = undefined
+		}
+	}
+
+	private clearPendingDeviceTimeout(deviceId: string): void {
+		const timeout = this._pendingDeviceTimeouts.get(deviceId)
+		if (timeout) clearTimeout(timeout)
+		this._pendingDeviceTimeouts.delete(deviceId)
+	}
+
+	private clearPendingDevice(deviceId: string): void {
+		this._pendingDevices.delete(deviceId)
+		this.clearPendingDeviceTimeout(deviceId)
+	}
+
+	private clearPendingDevices(): void {
+		this._pendingDevices.clear()
+		for (const timeout of this._pendingDeviceTimeouts.values()) clearTimeout(timeout)
+		this._pendingDeviceTimeouts.clear()
 	}
 
 	private sendMessage(
