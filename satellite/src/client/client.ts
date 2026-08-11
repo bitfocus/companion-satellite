@@ -378,15 +378,15 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.clearHandshakeTimeout()
 		this.clearPendingDevices()
 
-		if (!this._connected) {
-			return
-		}
+		const socket = this.socket
+		if (!socket) return
 
 		try {
-			this.socket?.end()
-			this.socket = undefined
+			// Keep this socket current until onClose performs the state teardown.
+			// A replacement connect will supersede it in initSocket instead.
+			socket.end()
 		} catch (e) {
-			this.socket = undefined
+			if (this.socket === socket) this.socket = undefined
 			throw e
 		}
 	}
@@ -830,7 +830,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				const bitmapFormatArgs: SatelliteMessageArgs =
 					bitmapFormat !== 'rgb' ? { BITMAP_FORMAT: bitmapFormat } : {}
 
-				this.sendMessage('ADD-DEVICE', null, deviceId, {
+				this.sendDeviceRegistration(deviceId, {
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
 					...commonProps,
 					...serialArgs,
@@ -842,7 +842,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)
 				const needsTextStyle = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.textStyle)
 
-				this.sendMessage('ADD-DEVICE', null, deviceId, {
+				this.sendDeviceRegistration(deviceId, {
 					KEYS_TOTAL: props.gridSize.columns * props.gridSize.rows,
 					KEYS_PER_ROW: props.gridSize.columns,
 					BITMAPS: props.fallbackBitmapSize,
@@ -852,22 +852,6 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					...commonProps,
 				})
 			}
-
-			this._pendingDevices.set(deviceId, Date.now())
-			this.clearPendingDeviceTimeout(deviceId)
-			this._pendingDeviceTimeouts.set(
-				deviceId,
-				setTimeout(() => {
-					this._pendingDeviceTimeouts.delete(deviceId)
-					if (!this._pendingDevices.delete(deviceId)) return
-
-					this.emit('log', `Add device timeout: ${deviceId}`)
-					this.emit('deviceErrored', {
-						deviceId,
-						message: 'Timed out waiting for Companion to add device',
-					})
-				}, DEVICE_REGISTRATION_TIMEOUT),
-			)
 		}
 	}
 
@@ -902,6 +886,31 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this._pendingDevices.clear()
 		for (const timeout of this._pendingDeviceTimeouts.values()) clearTimeout(timeout)
 		this._pendingDeviceTimeouts.clear()
+	}
+
+	private sendDeviceRegistration(deviceId: string, args: SatelliteMessageArgs): void {
+		this._pendingDevices.set(deviceId, Date.now())
+		this.clearPendingDeviceTimeout(deviceId)
+		this._pendingDeviceTimeouts.set(
+			deviceId,
+			setTimeout(() => {
+				this._pendingDeviceTimeouts.delete(deviceId)
+				if (!this._pendingDevices.delete(deviceId)) return
+
+				this.emit('log', `Add device timeout: ${deviceId}`)
+				this.emit('deviceErrored', {
+					deviceId,
+					message: 'Timed out waiting for Companion to add device',
+				})
+			}, DEVICE_REGISTRATION_TIMEOUT),
+		)
+
+		try {
+			this.sendMessage('ADD-DEVICE', null, deviceId, args)
+		} catch (e) {
+			this.clearPendingDevice(deviceId)
+			throw e
+		}
 	}
 
 	private sendMessage(

@@ -6,6 +6,7 @@ class FakeSocket implements ICompanionSatelliteClient {
 	readonly writes: string[] = []
 	destroyed = false
 	autoPong = false
+	ackDeviceSynchronously = false
 
 	constructor(private readonly options: ICompanionSatelliteClientOptions) {}
 
@@ -24,6 +25,9 @@ class FakeSocket implements ICompanionSatelliteClient {
 	write(data: string): void {
 		this.writes.push(data)
 		if (this.autoPong && data === 'PING\n') this.receive('PONG\n')
+		if (this.ackDeviceSynchronously && data.startsWith('ADD-DEVICE ')) {
+			this.receive('ADD-DEVICE OK DEVICEID="deck-1"\n')
+		}
 	}
 
 	end(): void {}
@@ -77,6 +81,10 @@ describe('CompanionSatelliteClient recovery', () => {
 
 		expect(socket.destroyed).toBe(true)
 		expect(logs).toContain('Satellite handshake timeout')
+
+		socket.close()
+		await vi.advanceTimersByTimeAsync(1000)
+		expect(sockets).toHaveLength(2)
 	})
 
 	it('ignores a delayed close callback from a superseded socket', async () => {
@@ -90,6 +98,22 @@ describe('CompanionSatelliteClient recovery', () => {
 		sockets[0].close()
 
 		expect(client.connected).toBe(true)
+	})
+
+	it('lets the active close callback finish an explicit disconnect', async () => {
+		const { client, sockets } = createClient()
+		const disconnected = vi.fn()
+		client.on('disconnected', disconnected)
+
+		await client.connect({ mode: 'tcp', host: '127.0.0.1', port: 16622 })
+		sockets[0].connect()
+		client.disconnect()
+		sockets[0].close()
+
+		expect(client.connected).toBe(false)
+		expect(disconnected).toHaveBeenCalledOnce()
+		await vi.advanceTimersByTimeAsync(1000)
+		expect(sockets).toHaveLength(1)
 	})
 
 	it('releases a device for an isolated retry when registration is not acknowledged', async () => {
@@ -109,16 +133,16 @@ describe('CompanionSatelliteClient recovery', () => {
 		expect(deviceErrors).toEqual(['deck-1'])
 	})
 
-	it('cancels the registration watchdog after Companion acknowledges the device', async () => {
+	it('cancels the registration watchdog after a synchronous acknowledgement', async () => {
 		const { client, sockets } = createClient()
 		const deviceErrors: string[] = []
 		client.on('deviceErrored', ({ deviceId }) => deviceErrors.push(deviceId))
 
 		await client.connect({ mode: 'tcp', host: '127.0.0.1', port: 16622 })
 		sockets[0].autoPong = true
+		sockets[0].ackDeviceSynchronously = true
 		sockets[0].connect()
 		client.addDevice('deck-1', 'Test Deck', registerProps)
-		sockets[0].receive('ADD-DEVICE OK DEVICEID="deck-1"\n')
 
 		await vi.advanceTimersByTimeAsync(10000)
 
