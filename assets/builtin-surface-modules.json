@@ -1,47 +1,47 @@
 {
 	"blackmagic-controller": {
 		"version": "v1.0.5",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/blackmagic-controller/v1.0.5-9dcda0321c79e296610ae4080aa7005eced222ac/blackmagic-controller-v1.0.5.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/blackmagic-controller/v1.0.5-9dcda0321c79e296610ae4080aa7005eced222ac/blackmagic-controller-v1.0.5.tgz",
 		"tarSha": "2e719075e47c48122efb4cb61d88bc5c512533fe0de9e40cc7acb5f7bf1d3ea7"
 	},
 	"contour-shuttle": {
 		"version": "v1.0.2",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/contour-shuttle/v1.0.2-8a12e6a96970700f0434a6d2193933a1ce42c8cd/contour-shuttle-v1.0.2.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/contour-shuttle/v1.0.2-8a12e6a96970700f0434a6d2193933a1ce42c8cd/contour-shuttle-v1.0.2.tgz",
 		"tarSha": "7e06a3e3ee661612858bc5ad8b24c5b7479eb6cc5dce6b9654ff9706f5d1de38"
 	},
 	"elgato-stream-deck": {
 		"version": "v1.4.6",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/elgato-stream-deck/v1.4.6-c7ea9961c73fc6bf184b563d03c64b5607312d8d/elgato-stream-deck-v1.4.6.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/elgato-stream-deck/v1.4.6-c7ea9961c73fc6bf184b563d03c64b5607312d8d/elgato-stream-deck-v1.4.6.tgz",
 		"tarSha": "d336209f66a8db2872dc24a51db76a7d5f58596c14890e6489b0e34f8baa3a7f"
 	},
 	"idisplay-infinitton": {
 		"version": "v1.0.1",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/idisplay-infinitton/v1.0.1-e803b5ff8c4bb5c097873a12f90123652261fae1/idisplay-infinitton-v1.0.1.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/idisplay-infinitton/v1.0.1-e803b5ff8c4bb5c097873a12f90123652261fae1/idisplay-infinitton-v1.0.1.tgz",
 		"tarSha": "b9f6dedb9dbda553702d0ab648679d5a388cbe4cd0368d918ae1edfb8cf6cf05"
 	},
 	"loupedeck": {
 		"version": "v1.1.1",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/loupedeck/v1.1.1-f93dd8b847388d37aaa0576743260b6f729262fb/loupedeck-v1.1.1.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/loupedeck/v1.1.1-f93dd8b847388d37aaa0576743260b6f729262fb/loupedeck-v1.1.1.tgz",
 		"tarSha": "d9b5b23cc6528d661242accb1a4a5e18d7f9b840453ef1cf6e15ce916b0f4ebd"
 	},
 	"mirabox-stream-dock": {
 		"version": "v1.2.0",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/mirabox-stream-dock/v1.2.0-ae27380f73dc926f72391dc2e1ba7ca760bba57c/mirabox-stream-dock-v1.2.0.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/mirabox-stream-dock/v1.2.0-ae27380f73dc926f72391dc2e1ba7ca760bba57c/mirabox-stream-dock-v1.2.0.tgz",
 		"tarSha": "fa9305a2e8d919511443c2596af49c2a4ed5872e3ec1c721b7d4e1760e993860"
 	},
 	"vec-footpedal": {
 		"version": "v1.0.2",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/vec-footpedal/v1.0.2-bcffd4c208c8647e667684f394f2c415928d9e50/vec-footpedal-v1.0.2.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/vec-footpedal/v1.0.2-bcffd4c208c8647e667684f394f2c415928d9e50/vec-footpedal-v1.0.2.tgz",
 		"tarSha": "1d59311172af507e65638f13f805c9259de91be0f6eb78d58339ae97edb4218b"
 	},
 	"xencelabs-quick-keys": {
 		"version": "v1.0.3",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/xencelabs-quick-keys/v1.0.3-a184938b03d3fc740f2cf2b23c1202863230463c/xencelabs-quick-keys-v1.0.3.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/xencelabs-quick-keys/v1.0.3-a184938b03d3fc740f2cf2b23c1202863230463c/xencelabs-quick-keys-v1.0.3.tgz",
 		"tarSha": "83baf0898f17d38ec6da8ff055337ffc243d8cfd81fd078ca0aa61e3bdff9129"
 	},
 	"xkeys": {
 		"version": "v1.0.2",
-		"tarUrl": "https://s4.bitfocus.io/developer-module-builds/surface/xkeys/v1.0.2-876f00ee194faa57ec14468b7019bbaa516a9e6d/xkeys-v1.0.2.tgz",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/xkeys/v1.0.2-876f00ee194faa57ec14468b7019bbaa516a9e6d/xkeys-v1.0.2.tgz",
 		"tarSha": "2d8243d166fdd21208b3c008899a2a2f1c4ab4c5a4a3daebc8f49db3d65809a7"
 	}
 }
