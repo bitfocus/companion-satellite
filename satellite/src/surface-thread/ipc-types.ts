@@ -36,6 +36,7 @@ export interface SurfaceModuleToHostEvents {
 
 export interface InitMessage {
 	supportsNonSquareButtons: boolean | undefined
+	supportsLeds: boolean | undefined
 }
 
 export interface HostToSurfaceModuleEvents {
@@ -188,8 +189,9 @@ export interface DrawControlMessage {
 	drawProps: IpcDrawProps[]
 }
 
-export interface IpcDrawProps extends Omit<SurfaceDrawProps, 'image'> {
+export interface IpcDrawProps extends Omit<SurfaceDrawProps, 'image' | 'leds'> {
 	image?: string // base64-encoded
+	leds?: string // base64-encoded (packed raw rgb, 3 bytes per segment)
 }
 
 export interface BlankSurfaceMessage {

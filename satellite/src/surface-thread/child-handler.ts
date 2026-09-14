@@ -204,8 +204,8 @@ export class ChildHandler {
 		}
 	}
 
-	async init(supportsNonSquareButtons: boolean | undefined): Promise<void> {
-		await this.#ipcWrapper.sendWithCb('init', { supportsNonSquareButtons })
+	async init(supportsNonSquareButtons: boolean | undefined, supportsLeds: boolean | undefined): Promise<void> {
+		await this.#ipcWrapper.sendWithCb('init', { supportsNonSquareButtons, supportsLeds })
 	}
 
 	/**
