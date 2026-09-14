@@ -68,7 +68,7 @@
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.63.0",
     "udev-generator": "^1.0.2",
-    "vitest": "^4.1.10",
+    "vitest": "^4.1.11",
     "zx": "^8.8.5"
   },
   "resolutions": {
