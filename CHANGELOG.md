@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.4.1](https://github.com/bitfocus/companion-satellite/compare/v3.4.0...v3.4.1) (2026-09-27)
+
+
+### Bug Fixes
+
+* update elgato-stream-deck surface modules ([#357](https://github.com/bitfocus/companion-satellite/issues/357)) ([41949a9](https://github.com/bitfocus/companion-satellite/commit/41949a91760a5e23419baea6d86aa88d6b35faea))
+
 ## [3.4.0](https://github.com/bitfocus/companion-satellite/compare/v3.3.1...v3.4.0) (2026-08-02)
 
 
