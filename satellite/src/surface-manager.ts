@@ -409,6 +409,7 @@ export class SurfaceManager {
 							color: msg.color,
 							text: msg.text,
 							leds: preset?.leds ? msg.leds : undefined,
+							pressed: msg.pressed ?? false,
 						} satisfies Complete<IpcDrawProps>,
 					])
 				},
