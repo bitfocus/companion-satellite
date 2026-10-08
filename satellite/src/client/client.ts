@@ -12,6 +12,7 @@ import {
 import { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
 import { SatelliteConfigFields } from '../generated/SatelliteConfigFieldsSchema.js'
 import { parseLineParameters } from './parser.js'
+import { stripUnsupportedManifestFeatures } from '../translateSchema.js'
 import type { GridSize } from '@companion-surface/host'
 
 const PING_UNACKED_LIMIT = 15 // Arbitrary number
@@ -43,6 +44,7 @@ export interface CompanionSatelliteClientDrawProps {
 	type?: string
 	pressed?: boolean
 	location?: string
+	leds?: string // base64 packed raw rgb, 3 bytes per LED segment
 }
 
 export interface DeviceRegisterProps {
@@ -119,8 +121,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsDeviceSerial = false
 	private _supportsSubscriptions = false
 	private _supportsNonSquareBitmaps = false
+	private _supportsLedsCapability = false
 	private _companionBitmapFormats: string[] = []
 	private _pendingConnected = false
+	/** True once BEGIN (and CAPS, when expected) have been processed for the current socket */
+	private _handshakeComplete = false
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -152,6 +157,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	}
 	public get supportsNonSquareBitmaps(): boolean {
 		return this._supportsNonSquareBitmaps
+	}
+	/** Whether Companion supports addressable-LED controls (`leds` capability, API v1.13.0+) */
+	public get supportsLeds(): boolean {
+		return this._supportsLedsCapability
 	}
 
 	/**
@@ -222,6 +231,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._supportsSubscriptions = false
 				this._companionBitmapFormats = []
 				this._pendingConnected = false
+				this._handshakeComplete = false
 				if (this._connected) {
 					this.emit('disconnected')
 				} else {
@@ -256,6 +266,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._pendingDevices.clear()
 
 				this._connected = true
+				this._handshakeComplete = false
 				this._pingUnackedCount = 0
 				this.receiveBuffer = ''
 
@@ -455,6 +466,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._supportsDeviceSerial) {
 			this.emit('log', 'Companion supports separate serial value')
 		}
+		this._supportsLedsCapability = !!this._companionApiVersion && semver.lte('1.13.0', this._companionApiVersion)
+		if (this._supportsLedsCapability) {
+			this.emit('log', 'Companion supports addressable LEDs')
+		}
 		this._supportsNonSquareBitmaps = false
 		this._supportsSubscriptions = false
 		this._companionBitmapFormats = []
@@ -501,6 +516,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		const type = typeof params.TYPE === 'string' ? params.TYPE : undefined
 		const pressed = typeof params.PRESSED === 'string' ? params.PRESSED === '1' : undefined
 		const location = typeof params.LOCATION === 'string' ? params.LOCATION : undefined
+		// LEDS is always base64 of a packed raw-rgb buffer (3 bytes per segment), never a data url.
+		const leds = typeof params.LEDS === 'string' ? params.LEDS : undefined
 
 		this.emit('draw', {
 			deviceId: params.DEVICEID,
@@ -514,6 +531,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			type,
 			pressed,
 			location,
+			leds,
 		} satisfies Complete<CompanionSatelliteClientDrawProps>)
 	}
 	private handleClear(params: Record<string, string | boolean>): void {
@@ -639,7 +657,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private completeConnection(): void {
 		if (!this._pendingConnected) return
 		this._pendingConnected = false
+		const socket = this.socket
 		setImmediate(() => {
+			if (!this._connected || this.socket !== socket) return
+			this._handshakeComplete = true
 			this.emit('connected')
 		})
 	}
@@ -742,7 +763,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 		if (pendingTime) this._pendingDevices.delete(deviceId)
 
-		if (this._connected && this.socket) {
+		// Wait for the handshake, as the capability flags are not valid until then. Any surfaces opened
+		// before then get registered by the 'connected' handler.
+		if (this._handshakeComplete && this.socket) {
 			this._pendingDevices.set(deviceId, Date.now())
 
 			const transferVariables = Buffer.from(JSON.stringify(props.transferVariables ?? [])).toString('base64')
@@ -787,8 +810,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				const bitmapFormatArgs: SatelliteMessageArgs =
 					bitmapFormat !== 'rgb' ? { BITMAP_FORMAT: bitmapFormat } : {}
 
+				// Strip manifest features the connected Companion is too old to understand, so it
+				// doesn't reject the whole manifest (it validates with `additionalProperties: false`).
+				const manifest = stripUnsupportedManifestFeatures(props.surfaceManifest, {
+					supportsLeds: this._supportsLedsCapability,
+				})
+
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
-					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(props.surfaceManifest)).toString('base64'),
+					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(manifest)).toString('base64'),
 					...commonProps,
 					...serialArgs,
 					...configFieldsArgs,
