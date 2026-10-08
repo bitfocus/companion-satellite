@@ -124,6 +124,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsLedsCapability = false
 	private _companionBitmapFormats: string[] = []
 	private _pendingConnected = false
+	/** True once BEGIN (and CAPS, when expected) have been processed for the current socket */
+	private _handshakeComplete = false
 
 	public get connectionDetails(): SomeConnectionDetails {
 		return this._connectionDetails
@@ -229,6 +231,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._supportsSubscriptions = false
 				this._companionBitmapFormats = []
 				this._pendingConnected = false
+				this._handshakeComplete = false
 				if (this._connected) {
 					this.emit('disconnected')
 				} else {
@@ -263,6 +266,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._pendingDevices.clear()
 
 				this._connected = true
+				this._handshakeComplete = false
 				this._pingUnackedCount = 0
 				this.receiveBuffer = ''
 
@@ -653,7 +657,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private completeConnection(): void {
 		if (!this._pendingConnected) return
 		this._pendingConnected = false
+		const socket = this.socket
 		setImmediate(() => {
+			if (!this._connected || this.socket !== socket) return
+			this._handshakeComplete = true
 			this.emit('connected')
 		})
 	}
@@ -756,7 +763,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 		if (pendingTime) this._pendingDevices.delete(deviceId)
 
-		if (this._connected && this.socket) {
+		// Wait for the handshake, as the capability flags are not valid until then. Any surfaces opened
+		// before then get registered by the 'connected' handler.
+		if (this._handshakeComplete && this.socket) {
 			this._pendingDevices.set(deviceId, Date.now())
 
 			const transferVariables = Buffer.from(JSON.stringify(props.transferVariables ?? [])).toString('base64')
