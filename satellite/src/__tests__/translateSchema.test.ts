@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { SurfaceSchemaLayoutDefinition } from '@companion-surface/host'
 import { stripUnsupportedManifestFeatures, translateModuleToSatelliteSurfaceLayout } from '../translateSchema.js'
-import type { SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
+import type { SatelliteSurfaceLayout } from '@companion-app/satellite-protocol/schemas'
 
 describe('translateModuleToSatelliteSurfaceLayout', () => {
 	it('passes leds config through unchanged', () => {

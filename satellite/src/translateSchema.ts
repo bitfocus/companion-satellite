@@ -9,7 +9,7 @@ import type {
 	SatelliteControlDefinition,
 	SatelliteControlStylePreset,
 	SatelliteSurfaceLayout,
-} from './generated/SurfaceManifestSchema.js'
+} from '@companion-app/satellite-protocol/schemas'
 import type {
 	CheckboxField,
 	ConfigField,
@@ -19,7 +19,7 @@ import type {
 	SatelliteConfigFields,
 	StaticTextField,
 	TextInputField,
-} from './generated/SatelliteConfigFieldsSchema.js'
+} from '@companion-app/satellite-protocol/schemas'
 import { Complete } from './lib.js'
 import type { DeviceRegisterInputVariable, DeviceRegisterOutputVariable } from './client/client.js'
 

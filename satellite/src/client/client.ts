@@ -1,6 +1,5 @@
 import { EventEmitter } from 'events'
 import { assertNever, Complete, DEFAULT_TCP_PORT } from '../lib.js'
-import * as semver from 'semver'
 import {
 	CompanionSatelliteTcpClient,
 	CompanionSatelliteWsClient,
@@ -9,9 +8,21 @@ import {
 	ICompanionSatelliteClientOptions,
 	SomeConnectionDetails,
 } from './socketImplementations.js'
-import { SatelliteControlDefinition, SatelliteSurfaceLayout } from '../generated/SurfaceManifestSchema.js'
-import { SatelliteConfigFields } from '../generated/SatelliteConfigFieldsSchema.js'
-import { parseLineParameters } from './parser.js'
+import type {
+	SatelliteConfigFields,
+	SatelliteControlDefinition,
+	SatelliteSurfaceLayout,
+} from '@companion-app/satellite-protocol/schemas'
+import {
+	formatSatelliteMessage,
+	parseLineParameters,
+	SatelliteLineBuffer,
+	splitSatelliteCommand,
+	type ParsedParams,
+	type SatelliteMessageArgs,
+} from '@companion-app/satellite-protocol/codec'
+import { MAX_LINE_LENGTH } from '@companion-app/satellite-protocol/constants'
+import { getSatelliteFeatures, isApiVersionAtLeast } from '@companion-app/satellite-protocol/versions'
 import { stripUnsupportedManifestFeatures } from '../translateSchema.js'
 import type { GridSize } from '@companion-surface/host'
 
@@ -99,7 +110,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private readonly debug: boolean
 	private socket: ICompanionSatelliteClient | undefined
 
-	private receiveBuffer = ''
+	private readonly lineBuffer = new SatelliteLineBuffer(MAX_LINE_LENGTH)
 
 	private _pingInterval: NodeJS.Timeout | undefined
 	private _pingUnackedCount = 0
@@ -238,7 +249,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					this._companionUnsupported = false
 				}
 				this._connected = false
-				this.receiveBuffer = ''
+				this.lineBuffer.clear()
 
 				if (this._pingInterval) {
 					clearInterval(this._pingInterval)
@@ -268,7 +279,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 				this._connected = true
 				this._handshakeComplete = false
 				this._pingUnackedCount = 0
-				this.receiveBuffer = ''
+				this.lineBuffer.clear()
 
 				if (!this._pingInterval) {
 					this._pingInterval = setInterval(() => this.sendPing(), PING_INTERVAL)
@@ -362,24 +373,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 	private _handleReceivedData(data: string): void {
 		this._lastReceivedAt = Date.now()
-		this.receiveBuffer += data
-
-		let i: number
-		let offset = 0
-		while ((i = this.receiveBuffer.indexOf('\n', offset)) !== -1) {
-			let line = this.receiveBuffer.substring(offset, i)
-			if (line.endsWith('\r')) line = line.substring(0, line.length - 1)
-
-			offset = i + 1
-			this.handleCommand(line)
+		const { lines, overflow } = this.lineBuffer.push(data)
+		for (const line of lines) this.handleCommand(line)
+		if (overflow) {
+			this.emit('log', 'Received line too long, reconnecting')
+			this.socket?.destroy()
 		}
-		this.receiveBuffer = this.receiveBuffer.substring(offset)
 	}
 
 	private handleCommand(line: string): void {
-		const i = line.indexOf(' ')
-		const cmd = i === -1 ? line : line.slice(0, i)
-		const body = i === -1 ? '' : line.slice(i + 1)
+		const { command: cmd, body } = splitSatelliteCommand(line)
 		const params = parseLineParameters(body)
 
 		switch (cmd.toUpperCase()) {
@@ -437,13 +440,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 	}
 
-	private handleBegin(params: Record<string, string | boolean>): void {
+	private handleBegin(params: ParsedParams): void {
 		this._companionVersion = typeof params.CompanionVersion === 'string' ? params.CompanionVersion : null
 		this._companionApiVersion = typeof params.ApiVersion === 'string' ? params.ApiVersion : null
 
-		// Check if the companion is supported
-		this._companionUnsupported =
-			!this._companionApiVersion || semver.lt(this._companionApiVersion, MINIMUM_PROTOCOL_VERSION)
+		const apiVersion = this._companionApiVersion ?? ''
+
+		// Check if the companion is supported. A malformed version is treated as unsupported
+		this._companionUnsupported = !isApiVersionAtLeast(apiVersion, MINIMUM_PROTOCOL_VERSION)
 		if (this._companionUnsupported) {
 			this.emit(
 				'log',
@@ -454,19 +458,20 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 
 		// Perform api version checks
-		this._supportsLocalLockState = !!this._companionApiVersion && semver.lte('1.8.0', this._companionApiVersion)
+		const features = getSatelliteFeatures(apiVersion, null)
+		this._supportsLocalLockState = features.lockState
 		if (this._supportsLocalLockState) {
 			this.emit('log', 'Companion supports delegating locking drawing')
 		}
-		this._supportsSurfaceManifest = !!this._companionApiVersion && semver.lte('1.9.0', this._companionApiVersion)
+		this._supportsSurfaceManifest = features.surfaceManifest
 		if (this._supportsSurfaceManifest) {
 			this.emit('log', 'Companion supports surface manifest')
 		}
-		this._supportsDeviceSerial = !!this._companionApiVersion && semver.lte('1.10.0', this._companionApiVersion)
+		this._supportsDeviceSerial = features.deviceSerial
 		if (this._supportsDeviceSerial) {
 			this.emit('log', 'Companion supports separate serial value')
 		}
-		this._supportsLedsCapability = !!this._companionApiVersion && semver.lte('1.13.0', this._companionApiVersion)
+		this._supportsLedsCapability = features.leds
 		if (this._supportsLedsCapability) {
 			this.emit('log', 'Companion supports addressable LEDs')
 		}
@@ -476,7 +481,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		// Defer emitting connected until CAPS is received (added in API 1.10.0)
 		this._pendingConnected = true
-		const expectCaps = !!this._companionApiVersion && semver.lte('1.10.0', this._companionApiVersion)
+		const expectCaps = features.caps
 		if (!expectCaps) {
 			// Older Companion versions don't send CAPS, complete immediately
 			this.completeConnection()
@@ -485,7 +490,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		// If it never arrives the ping-timeout will disconnect and trigger a reconnect.
 	}
 
-	private handleState(params: Record<string, string | boolean>): void {
+	private handleState(params: ParsedParams): void {
 		if (typeof params.DEVICEID !== 'string') {
 			this.emit('log', 'Missing DEVICEID in KEY-STATE response')
 			return
@@ -534,7 +539,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			leds,
 		} satisfies Complete<CompanionSatelliteClientDrawProps>)
 	}
-	private handleClear(params: Record<string, string | boolean>): void {
+	private handleClear(params: ParsedParams): void {
 		if (typeof params.DEVICEID !== 'string') {
 			this.emit('log', 'Mising DEVICEID in KEYS-CLEAR response')
 			return
@@ -542,7 +547,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 		this.emit('clearDeck', { deviceId: params.DEVICEID })
 	}
-	private handleVariableValue(params: Record<string, string | boolean>) {
+	private handleVariableValue(params: ParsedParams) {
 		if (typeof params.DEVICEID !== 'string') {
 			this.emit('log', 'Mising DEVICEID in VARIABLE-VALUE response')
 			return
@@ -563,7 +568,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		})
 	}
 
-	private handleLockedState(params: Record<string, string | boolean>) {
+	private handleLockedState(params: ParsedParams) {
 		if (typeof params.DEVICEID !== 'string') {
 			this.emit('log', 'Mising DEVICEID in LOCKED-STATE response')
 			return
@@ -590,7 +595,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		})
 	}
 
-	private handleBrightness(params: Record<string, string | boolean>): void {
+	private handleBrightness(params: ParsedParams): void {
 		if (typeof params.DEVICEID !== 'string') {
 			this.emit('log', 'Missing DEVICEID in BRIGHTNESS response')
 			return
@@ -607,7 +612,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.emit('brightness', { deviceId: params.DEVICEID, percent })
 	}
 
-	private handleAddedDevice(params: Record<string, string | boolean>): void {
+	private handleAddedDevice(params: ParsedParams): void {
 		if (!params.OK || params.ERROR) {
 			this.emit('log', `Add device failed: ${JSON.stringify(params)}`)
 			if (typeof params.DEVICEID === 'string') {
@@ -629,12 +634,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this.emit('newDevice', { deviceId: params.DEVICEID })
 	}
 
-	private handleCaps(params: Record<string, string | boolean>): void {
-		this._supportsSubscriptions = params.SUBSCRIPTIONS === '1' || params.SUBSCRIPTIONS === true
+	private handleCaps(params: ParsedParams): void {
+		const features = getSatelliteFeatures(this._companionApiVersion ?? '', params)
+
+		this._supportsSubscriptions = features.subscriptions
 		if (this._supportsSubscriptions) {
 			this.emit('log', 'Companion supports button subscriptions')
 		}
-		this._supportsNonSquareBitmaps = params.NONSQUARE === '1' || params.NONSQUARE === true
+		this._supportsNonSquareBitmaps = features.nonSquareBitmaps
 		if (this._supportsNonSquareBitmaps) {
 			this.emit('log', 'Companion supports non-square bitmaps')
 		}
@@ -665,7 +672,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		})
 	}
 
-	private handleDeviceConfig(params: Record<string, string | boolean>): void {
+	private handleDeviceConfig(params: ParsedParams): void {
 		if (typeof params.DEVICEID !== 'string') {
 			this.emit('log', 'Missing DEVICEID in DEVICE-CONFIG response')
 			return
@@ -856,25 +863,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		deviceId: string | null,
 		args: SatelliteMessageArgs,
 	): void {
-		const chunks: string[] = [messageName]
-		if (status) chunks.push(status)
-		if (deviceId) chunks.push(`DEVICEID="${deviceId}"`)
-
-		for (const [key, value] of Object.entries(args)) {
-			let valueStr: string
-			if (typeof value === 'boolean') {
-				valueStr = value ? '1' : '0'
-			} else if (typeof value === 'number') {
-				valueStr = value.toString()
-			} else {
-				valueStr = `"${value}"`
-			}
-			chunks.push(`${key}=${valueStr}`)
+		let message: string
+		try {
+			message = formatSatelliteMessage(messageName, status, deviceId, args)
+		} catch (e) {
+			// Reached from device events, so don't let a bad value escape into an emitter
+			this.emit('log', `Failed to send ${messageName}: ${e instanceof Error ? e.message : e}`)
+			return
 		}
-
-		chunks.push('\n')
-		this.socket?.write(chunks.join(' '))
+		this.socket?.write(message)
 	}
 }
-
-type SatelliteMessageArgs = Record<string, string | number | boolean>
