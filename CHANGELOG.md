@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.6.0](https://github.com/bitfocus/companion-satellite/compare/v3.5.0...v3.6.0) (2026-10-21)
+
+
+### Features
+
+* update mirabox-stream-dock surface modules ([#375](https://github.com/bitfocus/companion-satellite/issues/375)) ([700b22a](https://github.com/bitfocus/companion-satellite/commit/700b22a79a0a5abd25499c0fb46fd28b34677af4))
+
 ## [3.5.0](https://github.com/bitfocus/companion-satellite/compare/v3.4.1...v3.5.0) (2026-10-08)
 
 
