@@ -25,9 +25,9 @@
 		"tarSha": "d9b5b23cc6528d661242accb1a4a5e18d7f9b840453ef1cf6e15ce916b0f4ebd"
 	},
 	"mirabox-stream-dock": {
-		"version": "v1.2.0",
-		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/mirabox-stream-dock/v1.2.0-ae27380f73dc926f72391dc2e1ba7ca760bba57c/mirabox-stream-dock-v1.2.0.tgz",
-		"tarSha": "fa9305a2e8d919511443c2596af49c2a4ed5872e3ec1c721b7d4e1760e993860"
+		"version": "v1.3.0",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/mirabox-stream-dock/v1.3.0-fbb174f49016-3e03352b8d3d/mirabox-stream-dock-v1.3.0.tgz",
+		"tarSha": "3e03352b8d3d634de4442d7623d28a39d343014370485723849f77a9434a4f09"
 	},
 	"vec-footpedal": {
 		"version": "v1.0.2",
