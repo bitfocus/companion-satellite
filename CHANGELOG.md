@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.6.1](https://github.com/bitfocus/companion-satellite/compare/v3.6.0...v3.6.1) (2026-10-22)
+
+
+### Bug Fixes
+
+* update electron and dependencies ([8d153b1](https://github.com/bitfocus/companion-satellite/commit/8d153b1f1064c7a06d0c9fa941112d765d1875d1))
+
 ## [3.6.0](https://github.com/bitfocus/companion-satellite/compare/v3.5.0...v3.6.0) (2026-10-21)
 
 
