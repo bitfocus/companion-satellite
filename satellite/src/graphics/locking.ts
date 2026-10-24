@@ -1,5 +1,10 @@
 import type { SurfaceRotation, SurfaceSchemaBitmapConfig } from '@companion-surface/host'
-import { Canvas } from '@napi-rs/canvas'
+import { Canvas, GlobalFonts } from '@napi-rs/canvas'
+
+const lockingFont = process.platform === 'win32' &&
+	GlobalFonts.registerFromPath(`${process.env.WINDIR ?? 'C:\\Windows'}/Fonts/arial.ttf`, 'KGHArial')
+		? 'KGHArial'
+		: 'sans-serif'
 import type { LockingGraphicsGenerator } from '@companion-surface/host'
 import * as imageRs from '@julusian/image-rs'
 
@@ -20,7 +25,7 @@ export class LockingGraphicsGeneratorImpl implements LockingGraphicsGenerator {
 		context2d.fillRect(0, 0, bitmapStyle.w, bitmapStyle.h)
 
 		// Draw centered text
-		context2d.font = `${Math.floor(bitmapStyle.h * 0.7)}px`
+		context2d.font = `${Math.floor(bitmapStyle.h * 0.7)}px ${lockingFont}`
 		context2d.textAlign = 'center'
 		context2d.textBaseline = 'middle'
 		context2d.fillStyle = '#ffffff'
@@ -55,31 +60,31 @@ export class LockingGraphicsGeneratorImpl implements LockingGraphicsGenerator {
 			context2d.textBaseline = 'middle'
 
 			// Draw heading
-			context2d.font = `${Math.floor(bitmapStyle.h * 0.4)}px`
+			context2d.font = `${Math.floor(bitmapStyle.h * 0.4)}px ${lockingFont}`
 			context2d.fillStyle = '#ffc600'
 			const textWidth = context2d.measureText('Lockout').width
 			if (textWidth > bitmapStyle.w * 0.5) {
-				context2d.font = `${Math.floor(bitmapStyle.h * 0.25)}px`
+				context2d.font = `${Math.floor(bitmapStyle.h * 0.25)}px ${lockingFont}`
 			}
 
 			context2d.fillText('Lockout', bitmapStyle.w * 0.25, bitmapStyle.h * 0.5)
 
 			// Draw progress
 			context2d.fillStyle = '#ffffff'
-			context2d.font = `${Math.floor(bitmapStyle.h * 0.2)}px`
+			context2d.font = `${Math.floor(bitmapStyle.h * 0.2)}px ${lockingFont}`
 			context2d.fillText('*'.repeat(charCount), bitmapStyle.w * 0.75, bitmapStyle.h * 0.5)
 		} else {
 			context2d.textAlign = 'center'
 			context2d.textBaseline = 'middle'
 
 			// Draw heading
-			context2d.font = `${Math.floor(bitmapStyle.h * 0.2)}px`
+			context2d.font = `${Math.floor(bitmapStyle.h * 0.2)}px ${lockingFont}`
 			context2d.fillStyle = '#ffc600'
 			context2d.fillText('Lockout', bitmapStyle.w / 2, bitmapStyle.h * 0.2)
 
 			// Draw progress
 			context2d.fillStyle = '#ffffff'
-			context2d.font = `${Math.floor(bitmapStyle.h * 0.2)}px`
+			context2d.font = `${Math.floor(bitmapStyle.h * 0.2)}px ${lockingFont}`
 			context2d.fillText('*'.repeat(charCount), bitmapStyle.w / 2, bitmapStyle.h * 0.65)
 		}
 
