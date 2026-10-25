@@ -44,6 +44,11 @@ jobs:
 
   Linux-x64:
     runs-on: ubuntu-22.04
+    # A newer push to the same branch supersedes this build. Tag builds are never cancelled.
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-linux-x64
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v7
@@ -138,6 +143,10 @@ jobs:
 
   Linux-arm64:
     runs-on: ubuntu-22.04-arm
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-linux-arm64
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v7
@@ -232,6 +241,9 @@ jobs:
 
   Windows-x64:
     runs-on: ${{ (startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build-signed]')) && fromJSON('["self-hosted", "Windows", "codecert", "X64"]') || 'windows-latest'}}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-win32-x64
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
     env:
       # the wincert machine has issues using the default cache location
@@ -353,6 +365,9 @@ jobs:
 
   Windows-arm64:
     runs-on: ${{ (startsWith(github.ref, 'refs/tags/') || contains(github.event.head_commit.message, '[build-signed]')) && fromJSON('["self-hosted", "Windows", "codecert", "X64"]') || 'windows-11-arm'}}
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-win32-arm64
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
     env:
       # the wincert machine has issues using the default cache location
@@ -474,6 +489,10 @@ jobs:
 
   Mac-x64:
     runs-on: macos-26
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-osx-x64
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v7
@@ -570,6 +589,10 @@ jobs:
 
   Mac-arm64:
     runs-on: macos-26
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}-osx-arm64
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v7
@@ -675,8 +698,8 @@ jobs:
       - Linux-arm64
 
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
-      cancel-in-progress: false
+      group: ${{ github.workflow }}-${{ github.ref }}-pi-img
+      cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
     steps:
       - name: Checkout Repository
