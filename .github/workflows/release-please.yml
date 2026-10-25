@@ -9,6 +9,11 @@ permissions:
 
 name: release-please
 
+# Queue runs rather than overlapping them; cancelling mid-run could leave a tag without its release
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 jobs:
   release-please:
     runs-on: ubuntu-latest
