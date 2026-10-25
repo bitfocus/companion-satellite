@@ -65,4 +65,5 @@ jobs:
           add-paths: |
             assets/builtin-surface-modules.json
             satellite/assets/linux/50-satellite.rules
+            satellite/assets/linux/50-satellite-desktop.rules
           token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
