@@ -152,7 +152,8 @@ export class SurfaceManager {
 				manager.#client.pincodeKey(surfaceId, keycode)
 			},
 			onSetVariableValue(surfaceId, name, value) {
-				manager.#client.sendVariableValue(surfaceId, name, value as string)
+				const coercedValue = typeof value !== 'string' ? String(value) : value
+				manager.#client.sendVariableValue(surfaceId, name, coercedValue)
 			},
 			onFirmwareUpdateInfo(surfaceId, updateUrl) {
 				manager.#client.sendFirmwareUpdateInfo(surfaceId, updateUrl ?? '')
