@@ -58,8 +58,10 @@ async function getLatestBuildsForBranch(branch, targetCount) {
  * @returns {Promise<void>}
  */
 async function selectBuildOfType(type, targetBuild) {
-	const candidates = await getLatestBuildsForBranch(type, 1)
-	const selectedBuild = targetBuild ? candidates.find((c) => c.name == targetBuild) : candidates[0]
+	// When a specific build is requested, search back through recent builds rather than only the newest
+	const candidates = await getLatestBuildsForBranch(type, targetBuild ? 30 : 1)
+	const stripV = (/** @type {string} */ v) => String(v).replace(/^v/i, '')
+	const selectedBuild = targetBuild ? candidates.find((c) => stripV(c.name) === stripV(targetBuild)) : candidates[0]
 	if (selectedBuild) {
 		if (selectedBuild.name === currentVersion) {
 			console.log(`The latest build of ${type} (${selectedBuild.name}) is already installed`)
