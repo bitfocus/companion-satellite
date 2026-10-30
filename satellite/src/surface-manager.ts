@@ -152,7 +152,19 @@ export class SurfaceManager {
 				manager.#client.pincodeKey(surfaceId, keycode)
 			},
 			onSetVariableValue(surfaceId, name, value) {
-				manager.#client.sendVariableValue(surfaceId, name, value as string)
+				if (typeof value === 'string') {
+					manager.#client.sendVariableValue(surfaceId, name, value)
+					return
+				}
+				if (typeof value === 'number') {
+					manager.#client.sendVariableValue(surfaceId, name, String(value))
+					return
+				}
+				if (typeof value === 'undefined') {
+					manager.#client.sendVariableValue(surfaceId, name, '')
+					return
+				}
+				manager.#client.sendVariableValue(surfaceId, name, JSON.stringify(value))
 			},
 			onFirmwareUpdateInfo(surfaceId, updateUrl) {
 				manager.#client.sendFirmwareUpdateInfo(surfaceId, updateUrl ?? '')
