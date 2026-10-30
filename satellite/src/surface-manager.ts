@@ -160,6 +160,10 @@ export class SurfaceManager {
 					manager.#client.sendVariableValue(surfaceId, name, String(value))
 					return
 				}
+				if (typeof value === 'undefined') {
+					manager.#client.sendVariableValue(surfaceId, name, '')
+					return
+				}
 				manager.#client.sendVariableValue(surfaceId, name, JSON.stringify(value))
 			},
 			onFirmwareUpdateInfo(surfaceId, updateUrl) {
