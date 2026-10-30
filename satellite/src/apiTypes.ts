@@ -46,6 +46,8 @@ export function compileConfig(appConfig: Conf<SatelliteConfig>): ApiConfigData {
 		httpPort: appConfig.get('restPort'),
 
 		mdnsEnabled: appConfig.get('mdnsEnabled'),
+
+		bitmapCacheSize: appConfig.get('bitmapCacheSize'),
 	}
 }
 
@@ -60,6 +62,8 @@ export function updateConfig(appConfig: SatelliteConfigInstance, newConfig: ApiC
 
 	if (newConfig.mdnsEnabled !== undefined) appConfig.set('mdnsEnabled', newConfig.mdnsEnabled)
 	if (newConfig.installationName !== undefined) appConfig.set('installationName', newConfig.installationName)
+
+	if (newConfig.bitmapCacheSize !== undefined) appConfig.set('bitmapCacheSize', newConfig.bitmapCacheSize)
 }
 
 export function updateSurfacePluginsEnabledConfig(

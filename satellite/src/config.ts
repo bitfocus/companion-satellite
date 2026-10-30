@@ -3,6 +3,7 @@ import path from 'path'
 import os from 'os'
 import { customAlphabet } from 'nanoid'
 import { SomeConnectionDetails } from './client/socketImplementations.js'
+import type { CompanionSatelliteClient } from './client/client.js'
 import { assertNever, DEFAULT_TCP_PORT, DEFAULT_WS_PORT } from './lib.js'
 import debounceFn from 'debounce-fn'
 import { setMaxListeners } from 'events'
@@ -10,6 +11,18 @@ import { setMaxListeners } from 'events'
 const nanoidHex = customAlphabet('0123456789abcdef')
 
 export type SatelliteConfigInstance = Conf<SatelliteConfig>
+
+export type BitmapCacheSize = 'off' | 'low' | 'medium' | 'high'
+
+/**
+ * The number of full size bitmaps to cache for each button of the connected surfaces, for each cache size
+ */
+const BITMAP_CACHE_BITMAPS_PER_BUTTON: Record<BitmapCacheSize, number> = {
+	off: 0,
+	low: 4,
+	medium: 16,
+	high: 64,
+}
 
 export interface SatelliteConfig {
 	remoteProtocol: 'tcp' | 'ws'
@@ -23,6 +36,8 @@ export interface SatelliteConfig {
 	restPort: number
 
 	mdnsEnabled: boolean
+
+	bitmapCacheSize: BitmapCacheSize
 
 	surfacePluginsEnabled: Record<string, boolean>
 }
@@ -74,6 +89,13 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 		type: 'boolean',
 		description: 'Enable mDNS announcement',
 		default: true,
+	},
+
+	bitmapCacheSize: {
+		type: 'string',
+		enum: ['off', 'low', 'medium', 'high'],
+		description: 'Size of the cache of button bitmaps, so that Companion only has to send each one once',
+		default: 'medium',
 	},
 
 	surfacePluginsEnabled: {
@@ -165,4 +187,15 @@ export function listenToConnectionConfigChanges(config: SatelliteConfigInstance,
 	config.onDidChange('remoteIp', debounceConnect)
 	config.onDidChange('remotePort', debounceConnect)
 	config.onDidChange('remoteWsAddress', debounceConnect)
+}
+
+export function listenToBitmapCacheConfigChanges(
+	config: SatelliteConfigInstance,
+	client: CompanionSatelliteClient,
+): void {
+	const update = () =>
+		client.setBitmapCacheBitmapsPerButton(BITMAP_CACHE_BITMAPS_PER_BUTTON[config.get('bitmapCacheSize')] ?? 0)
+
+	config.onDidChange('bitmapCacheSize', update)
+	update()
 }

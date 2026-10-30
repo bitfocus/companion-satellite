@@ -167,6 +167,21 @@ export class RestServer {
 					}
 				}
 
+				const bitmapCacheSize = body.bitmapCacheSize
+				if (bitmapCacheSize !== undefined) {
+					if (
+						bitmapCacheSize === 'off' ||
+						bitmapCacheSize === 'low' ||
+						bitmapCacheSize === 'medium' ||
+						bitmapCacheSize === 'high'
+					) {
+						partialConfig.bitmapCacheSize = bitmapCacheSize
+					} else {
+						ctx.status = 400
+						ctx.body = 'Invalid bitmapCacheSize'
+					}
+				}
+
 				// Ensure some fields cannot be changed
 				const tmpPartialConfig: ApiConfigDataUpdateElectron = partialConfig
 				delete tmpPartialConfig.httpEnabled

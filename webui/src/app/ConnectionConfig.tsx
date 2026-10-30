@@ -17,6 +17,13 @@ const PROTOCOL_ITEMS = [
 	{ value: 'ws', label: 'WebSocket (Advanced)' },
 ]
 
+const BITMAP_CACHE_SIZE_ITEMS = [
+	{ value: 'off', label: 'Off' },
+	{ value: 'low', label: 'Low' },
+	{ value: 'medium', label: 'Medium (Default)' },
+	{ value: 'high', label: 'High' },
+]
+
 export function ConnectionConfig(): JSX.Element {
 	const api = useSatelliteApi()
 	const config = useQuery({ queryKey: [CONNECTION_CONFIG_QUERY_KEY], queryFn: api.getConfig, refetchInterval: 5000 })
@@ -195,6 +202,45 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 								onBlur={field.handleBlur}
 								onChange={(e) => field.handleChange(e.target.value)}
 							/>
+						</FormRow>
+					)}
+				/>
+
+				<hr className="col-span-3 col-start-2" />
+
+				<legend className="col-span-3 col-start-2 px-1">Bitmap Cache</legend>
+
+				<form.Field
+					name="bitmapCacheSize"
+					children={(field) => (
+						<FormRow
+							label="Cache Size"
+							htmlFor={field.name}
+							hint={
+								<>
+									Cache button images, so that Companion only has to send each one once. This reduces network usage,
+									especially for animated buttons. Requires Companion 5.2 or later.
+									<br />A larger cache can hold longer animations, but uses more memory. It grows with the number of
+									buttons on the connected surfaces.
+								</>
+							}
+						>
+							<Select
+								value={field.state.value}
+								items={BITMAP_CACHE_SIZE_ITEMS}
+								onValueChange={(value) => field.handleChange(value as ApiConfigData['bitmapCacheSize'])}
+							>
+								<SelectTrigger id={field.name} name={field.name} className="w-full">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									{BITMAP_CACHE_SIZE_ITEMS.map((value) => (
+										<SelectItem key={value.value} value={value.value}>
+											{value.label}
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
 						</FormRow>
 					)}
 				/>

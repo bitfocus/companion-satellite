@@ -12,6 +12,7 @@ import {
 	ensureFieldsPopulated,
 	getConnectionDetailsFromConfig,
 	listenToConnectionConfigChanges,
+	listenToBitmapCacheConfigChanges,
 } from './config.js'
 import {
 	ApiConfigData,
@@ -69,6 +70,7 @@ const server = new RestServer(webRoot, appConfig, client, surfaceManager)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 listenToConnectionConfigChanges(appConfig, tryConnect)
+listenToBitmapCacheConfigChanges(appConfig, client)
 appConfig.onDidChange(
 	'surfacePluginsEnabled',
 	debounceFn(() => surfaceManager.updatePluginsEnabled(appConfig.get('surfacePluginsEnabled')), {

@@ -217,6 +217,11 @@ components:
           type: boolean
           description: Enable mDNS announcement to allow automatic discovery of the Companion Satellite
 
+        bitmapCacheSize:
+          type: string
+          enum: ['off', 'low', 'medium', 'high']
+          description: Size of the cache of button bitmaps, so that Companion only has to send each one once. The cache grows with the number and resolution of the buttons on the connected surfaces
+
         httpEnabled:
           type: boolean
           description: Enable the HTTP api. This is readonly in the HTTP api
@@ -230,6 +235,7 @@ components:
         - wsAddress
         - installationName
         - mdnsEnabled
+        - bitmapCacheSize
         - httpEnabled
         - httpPort
 
@@ -256,6 +262,11 @@ components:
         mdnsEnabled:
           type: boolean
           description: Enable mDNS announcement to allow automatic discovery of the Companion Satellite
+
+        bitmapCacheSize:
+          type: string
+          enum: ['off', 'low', 'medium', 'high']
+          description: Size of the cache of button bitmaps, so that Companion only has to send each one once. The cache grows with the number and resolution of the buttons on the connected surfaces
 
     SurfaceInfo:
       type: object
