@@ -4,11 +4,21 @@ import { Bonjour, Service } from '@julusian/bonjour-service'
 import os from 'os'
 import debounceFn from 'debounce-fn'
 
+/**
+ * Service types to announce as.
+ * `companion-satellite` is longer than the 15 character limit for mdns service types, so is being replaced by `comp-sat-app`
+ * TODO: drop the legacy `companion-satellite` type once enough Companion versions browse for `comp-sat-app`
+ */
+const SERVICE_TYPES: { type: string; legacy: boolean }[] = [
+	{ type: 'comp-sat-app', legacy: false },
+	{ type: 'companion-satellite', legacy: true },
+]
+
 export class MdnsAnnouncer {
 	readonly #appConfig: Conf<SatelliteConfig>
 	readonly #bonjour = new Bonjour()
 
-	#bonjourService: Service | null = null
+	#bonjourServices: Service[] = []
 
 	constructor(appConfig: Conf<SatelliteConfig>) {
 		this.#appConfig = appConfig
@@ -33,37 +43,42 @@ export class MdnsAnnouncer {
 
 	start(): void {
 		if (!this.#appConfig.get('mdnsEnabled')) return
-		if (this.#bonjourService) return
+		if (this.#bonjourServices.length > 0) return
 
-		try {
-			const restEnabled = this.#appConfig.get('restEnabled')
-			const restPort = this.#appConfig.get('restPort')
-			const installationName = this.#appConfig.get('installationName') || os.hostname() || 'Unnamed Satellite'
+		const restEnabled = this.#appConfig.get('restEnabled')
+		const restPort = this.#appConfig.get('restPort')
+		const installationName = this.#appConfig.get('installationName') || os.hostname() || 'Unnamed Satellite'
 
-			this.#bonjourService = this.#bonjour.publish(
-				{
-					name: installationName,
-					type: 'companion-satellite',
-					protocol: 'tcp',
-					port: restPort || 9999,
-					txt: {
-						restEnabled: restEnabled,
-					},
-					ttl: 150,
-				},
-				{
-					announceOnInterval: 60 * 1000,
-				},
-			)
-		} catch (e) {
-			console.error('Failed to setup mdns publisher', e)
+		for (const { type, legacy } of SERVICE_TYPES) {
+			try {
+				this.#bonjourServices.push(
+					this.#bonjour.publish(
+						{
+							name: installationName,
+							type,
+							protocol: 'tcp',
+							port: restPort || 9999,
+							txt: {
+								restEnabled: restEnabled,
+							},
+							ttl: 150,
+							allowInvalidType: legacy,
+						},
+						{
+							announceOnInterval: 60 * 1000,
+						},
+					),
+				)
+			} catch (e) {
+				console.error(`Failed to setup mdns publisher for ${type}`, e)
+			}
 		}
 	}
 
 	stop(): void {
-		if (this.#bonjourService) {
-			this.#bonjourService.stop?.()
-			this.#bonjourService = null
+		for (const service of this.#bonjourServices) {
+			service.stop?.()
 		}
+		this.#bonjourServices = []
 	}
 }
