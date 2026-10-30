@@ -400,12 +400,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@companion-app/satellite-protocol@npm:^0.1.0":
-  version: 0.1.0
-  resolution: "@companion-app/satellite-protocol@npm:0.1.0"
+"@companion-app/satellite-protocol@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@companion-app/satellite-protocol@npm:0.2.1"
   dependencies:
-    zod: "npm:^4.6.5"
-  checksum: 10c0/a4fd6f7af093f631171ebe10dd00d3f9ed0937aa0a336003919b4a43e00194e6eb77951786f108c390c1424bff69177c4acc31618c1facff0aa13c263624150f
+    zod: "npm:^4.6.7"
+  checksum: 10c0/cb1b58e5997a62b4e666b908f6f34e0d587e302bdb5cdbae1521e0e7d6b47a46e3de94039dc2a9a9ea7952d2d74d260a47eea9d6bc18b1fe08ce5f02b5ae9231
   languageName: node
   linkType: hard
 
@@ -8323,7 +8323,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "satellite@workspace:satellite"
   dependencies:
-    "@companion-app/satellite-protocol": "npm:^0.1.0"
+    "@companion-app/satellite-protocol": "npm:^0.2.1"
     "@companion-surface/host": "npm:^1.4.2"
     "@julusian/bonjour-service": "npm:^1.4.6"
     "@julusian/image-rs": "npm:^2.5.0"
@@ -10068,7 +10068,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.25 || ^4.0, zod@npm:^3.25.0 || ^4.0.0, zod@npm:^4.2.0, zod@npm:^4.4.3, zod@npm:^4.5.4, zod@npm:^4.6.5":
+"zod@npm:^3.25 || ^4.0, zod@npm:^3.25.0 || ^4.0.0, zod@npm:^4.2.0, zod@npm:^4.4.3, zod@npm:^4.5.4, zod@npm:^4.6.7":
   version: 4.6.7
   resolution: "zod@npm:4.6.7"
   checksum: 10c0/4ce2eb14034317b7254e347ca37b5ad591cf8333147030cf05b9b5d31692d45073f7f2747aa50cf8c6b29012194d2b22978cecc89969cf34a0d18e89d0ee7d7b

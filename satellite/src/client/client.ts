@@ -18,6 +18,9 @@ import {
 	parseLineParameters,
 	SatelliteLineBuffer,
 	splitSatelliteCommand,
+	decodeSatelliteVariableValue,
+	encodeSatelliteVariableValue,
+	parseSatelliteVariableEncoding,
 	type ParsedParams,
 	type SatelliteMessageArgs,
 } from '@companion-app/satellite-protocol/codec'
@@ -38,6 +41,9 @@ const MINIMUM_PROTOCOL_VERSION = '1.7.0' // Companion 3.4
 // Companion advertises which it can stream via the CAPS `BITMAP_FORMATS` field (API v1.12+).
 // We negotiate the first of these that is available, falling back to raw `rgb` otherwise.
 const PREFERRED_BITMAP_FORMATS = ['webp', 'png'] as const
+
+// Upper bound on the steps sent for a single rotation, matching what Companion will accept
+const MAX_ROTATION_STEPS = 100
 
 export interface CompanionSatelliteClientOptions {
 	debug?: boolean
@@ -100,7 +106,7 @@ export type CompanionSatelliteClientEvents = {
 	brightness: [{ deviceId: string; percent: number }]
 	newDevice: [{ deviceId: string }]
 	clearDeck: [{ deviceId: string }]
-	variableValue: [{ deviceId: string; name: string; value: string }]
+	variableValue: [{ deviceId: string; name: string; value: unknown }]
 	lockedState: [{ deviceId: string; locked: boolean; characterCount: number; rotation?: 0 | 90 | -90 | 180 }]
 	deviceErrored: [{ deviceId: string; message: string }]
 	deviceConfig: [{ deviceId: string; config: Record<string, unknown> }]
@@ -133,6 +139,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsSubscriptions = false
 	private _supportsNonSquareBitmaps = false
 	private _supportsLedsCapability = false
+	private _supportsRotaryAmount = false
+	private _supportsJsonVariableValues = false
 	private _companionBitmapFormats: string[] = []
 	private _pendingConnected = false
 	/** True once BEGIN (and CAPS, when expected) have been processed for the current socket */
@@ -475,8 +483,13 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._supportsLedsCapability) {
 			this.emit('log', 'Companion supports addressable LEDs')
 		}
+		this._supportsJsonVariableValues = features.jsonVariableValues
+		if (this._supportsJsonVariableValues) {
+			this.emit('log', 'Companion supports json variable values')
+		}
 		this._supportsNonSquareBitmaps = false
 		this._supportsSubscriptions = false
+		this._supportsRotaryAmount = false
 		this._companionBitmapFormats = []
 
 		// Defer emitting connected until CAPS is received (added in API 1.10.0)
@@ -561,10 +574,25 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			return
 		}
 
+		// ENCODING is only sent as json, when VARIABLE_ENCODING=json was requested in ADD-DEVICE (API v1.16+)
+		const encoding = parseSatelliteVariableEncoding(params.ENCODING)
+		if (!encoding) {
+			this.emit('log', `Unknown ENCODING in VARIABLE-VALUE response: ${params.ENCODING}`)
+			return
+		}
+
+		let value: unknown
+		try {
+			value = decodeSatelliteVariableValue(Buffer.from(params.VALUE, 'base64').toString(), encoding)
+		} catch (_e) {
+			this.emit('log', 'Bad VALUE in VARIABLE-VALUE response')
+			return
+		}
+
 		this.emit('variableValue', {
 			deviceId: params.DEVICEID,
 			name: params.VARIABLE,
-			value: Buffer.from(params.VALUE, 'base64').toString(),
+			value,
 		})
 	}
 
@@ -645,6 +673,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (this._supportsNonSquareBitmaps) {
 			this.emit('log', 'Companion supports non-square bitmaps')
 		}
+		this._supportsRotaryAmount = features.rotaryAmount
+		if (this._supportsRotaryAmount) {
+			this.emit('log', 'Companion supports rotation amounts')
+		}
 
 		// BITMAP_FORMATS is a comma-separated list of bitmap encodings Companion can stream (API v1.12+)
 		this._companionBitmapFormats =
@@ -715,11 +747,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		delta: number,
 	): void {
 		if (this._connected && this.socket) {
-			// DIRECTION carries the signed rotation amount; older Companion reads only its sign.
+			// DIRECTION carries the signed step count when Companion supports it (API v1.14+), otherwise a single step
+			const steps = this._supportsRotaryAmount
+				? Math.min(MAX_ROTATION_STEPS, Math.max(1, Math.trunc(Math.abs(delta))))
+				: 1
 			this.sendMessage('KEY-ROTATE', null, deviceId, {
 				CONTROLID: controlId,
 				KEY: `${controlDefinition.row}/${controlDefinition.column}`,
-				DIRECTION: delta,
+				DIRECTION: delta < 0 ? -steps : steps,
 			})
 		}
 	}
@@ -730,11 +765,14 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			})
 		}
 	}
-	public sendVariableValue(deviceId: string, variable: string, value: string): void {
+	public sendVariableValue(deviceId: string, variable: string, value: unknown): void {
 		if (this._connected && this.socket) {
+			// Send as JSON to preserve the type of the value (API v1.16+)
+			const encoding = this._supportsJsonVariableValues ? 'json' : 'string'
 			this.sendMessage('SET-VARIABLE-VALUE', null, deviceId, {
 				VARIABLE: variable,
-				VALUE: Buffer.from(value).toString('base64'),
+				VALUE: Buffer.from(encodeSatelliteVariableValue(value, encoding)).toString('base64'),
+				...(encoding === 'json' ? { ENCODING: encoding } : {}),
 			})
 		}
 	}
@@ -823,6 +861,11 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					supportsLeds: this._supportsLedsCapability,
 				})
 
+				// VARIABLE_ENCODING=json asks for output variable values as JSON, preserving their type (API v1.16+)
+				const variableEncodingArgs: SatelliteMessageArgs = this._supportsJsonVariableValues
+					? { VARIABLE_ENCODING: 'json' }
+					: {}
+
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(manifest)).toString('base64'),
 					...commonProps,
@@ -830,6 +873,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					...configFieldsArgs,
 					...canChangePageArgs,
 					...bitmapFormatArgs,
+					...variableEncodingArgs,
 				})
 			} else {
 				const needsText = Object.values(props.surfaceManifest.stylePresets).some((s) => !!s.text)

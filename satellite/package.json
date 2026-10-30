@@ -30,7 +30,7 @@
 		"node": "^24.13"
 	},
 	"dependencies": {
-		"@companion-app/satellite-protocol": "^0.1.0",
+		"@companion-app/satellite-protocol": "^0.2.1",
 		"@companion-surface/host": "^1.4.2",
 		"@julusian/bonjour-service": "^1.4.6",
 		"@julusian/image-rs": "^2.5.0",
