@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.7.0](https://github.com/bitfocus/companion-satellite/compare/v3.6.1...v3.7.0) (2026-10-30)
+
+
+### Features
+
+* support satellite api 1.16 (except bitmap caching) ([91d2478](https://github.com/bitfocus/companion-satellite/commit/91d247870a46ecb898749bdc5035e68b41d96b46))
+
+
+### Bug Fixes
+
+* sendVariableValue passed value of unkown type ([#388](https://github.com/bitfocus/companion-satellite/issues/388)) ([4a260e9](https://github.com/bitfocus/companion-satellite/commit/4a260e9c4cdb1d5407b4090af645f0dd4389fe15))
+* specify font family for lock screen text ([a156ca9](https://github.com/bitfocus/companion-satellite/commit/a156ca95447ee81f2d23fe8ba4cf783af11062ab))
+
 ## [3.6.1](https://github.com/bitfocus/companion-satellite/compare/v3.6.0...v3.6.1) (2026-10-22)
 
 
