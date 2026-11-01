@@ -6,7 +6,12 @@ import { asyncExitHook } from 'exit-hook'
 import { CompanionSatelliteClient } from './client/client.js'
 import { SurfaceManager } from './surface-manager.js'
 import { RestServer } from './rest.js'
-import { getConnectionDetailsFromConfig, listenToConnectionConfigChanges, openHeadlessConfig } from './config.js'
+import {
+	getConnectionDetailsFromConfig,
+	listenToConnectionConfigChanges,
+	listenToBitmapCacheConfigChanges,
+	openHeadlessConfig,
+} from './config.js'
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
@@ -65,6 +70,7 @@ const tryConnect = () => {
 }
 
 listenToConnectionConfigChanges(appConfig, tryConnect)
+listenToBitmapCacheConfigChanges(appConfig, client)
 appConfig.onDidChange(
 	'surfacePluginsEnabled',
 	debounceFn(() => surfaceManager.updatePluginsEnabled(appConfig.get('surfacePluginsEnabled')), {

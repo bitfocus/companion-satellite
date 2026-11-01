@@ -141,6 +141,11 @@ export interface components {
             installationName: string;
             /** @description Enable mDNS announcement to allow automatic discovery of the Companion Satellite */
             mdnsEnabled: boolean;
+            /**
+             * @description Size of the cache of button bitmaps, so that Companion only has to send each one once. The cache grows with the number and resolution of the buttons on the connected surfaces
+             * @enum {string}
+             */
+            bitmapCacheSize: "off" | "low" | "medium" | "high";
             /** @description Enable the HTTP api. This is readonly in the HTTP api */
             httpEnabled: boolean;
             /** @description Port number of the HTTP api. This is readonly in the HTTP api */
@@ -162,6 +167,11 @@ export interface components {
             installationName?: string;
             /** @description Enable mDNS announcement to allow automatic discovery of the Companion Satellite */
             mdnsEnabled?: boolean;
+            /**
+             * @description Size of the cache of button bitmaps, so that Companion only has to send each one once. The cache grows with the number and resolution of the buttons on the connected surfaces
+             * @enum {string}
+             */
+            bitmapCacheSize?: "off" | "low" | "medium" | "high";
         };
         SurfaceInfo: {
             /** @description ID of the surface */

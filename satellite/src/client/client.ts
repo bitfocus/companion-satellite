@@ -19,6 +19,7 @@ import {
 	SatelliteLineBuffer,
 	splitSatelliteCommand,
 	decodeSatelliteVariableValue,
+	isTruthy,
 	encodeSatelliteVariableValue,
 	parseSatelliteVariableEncoding,
 	type ParsedParams,
@@ -141,6 +142,17 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 	private _supportsLedsCapability = false
 	private _supportsRotaryAmount = false
 	private _supportsJsonVariableValues = false
+	private _supportsBitmapCache = false
+
+	/** The cache budget, as a number of full size bitmaps for each button of the connected surfaces. 0 disables it */
+	private _bitmapCacheBitmapsPerButton = 0
+	/** The bitmaps Companion has told us to cache for this connection, by id (API v1.16+) */
+	private readonly _bitmapCache = new Map<string, string>()
+	/** The budget last sent to Companion with BITMAP-CACHE */
+	private _bitmapCacheBudgetSent = 0
+	private _bitmapCacheUpdatePending = false
+	/** The size as RGBA of one bitmap for every button of each device, for scaling the cache budget */
+	private readonly _deviceBitmapBytes = new Map<string, number>()
 	private _companionBitmapFormats: string[] = []
 	private _pendingConnected = false
 	/** True once BEGIN (and CAPS, when expected) have been processed for the current socket */
@@ -249,6 +261,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 
 				this._supportsSubscriptions = false
 				this._companionBitmapFormats = []
+				this.resetBitmapCache()
 				this._pendingConnected = false
 				this._handshakeComplete = false
 				if (this._connected) {
@@ -432,6 +445,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			case 'DEVICE-CONFIG':
 				this.handleDeviceConfig(params)
 				break
+			case 'BITMAP-CACHE':
+				this.handleBitmapCache(params)
+				break
+			case 'BITMAP-EVICT':
+				this.handleBitmapEvict(params)
+				break
+			case 'BITMAP-COST':
+				// Only replied to on error
+				if (params.ERROR) this.emit('log', `Bitmap cost failed: ${JSON.stringify(params)}`)
+				break
 			case 'SUB-STATE':
 				// Subscription state updates - not currently used
 				break
@@ -491,6 +514,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this._supportsSubscriptions = false
 		this._supportsRotaryAmount = false
 		this._companionBitmapFormats = []
+		this.resetBitmapCache()
 
 		// Defer emitting connected until CAPS is received (added in API 1.10.0)
 		this._pendingConnected = true
@@ -526,7 +550,7 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			return
 		}
 
-		const image = typeof params.BITMAP === 'string' ? params.BITMAP : undefined
+		const image = this.resolveStateBitmap(params)
 		const text = typeof params.TEXT === 'string' ? Buffer.from(params.TEXT, 'base64').toString() : undefined
 		const color = typeof params.COLOR === 'string' ? params.COLOR : undefined
 		const textColor = typeof params.TEXTCOLOR === 'string' ? params.TEXTCOLOR : undefined
@@ -644,6 +668,8 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		if (!params.OK || params.ERROR) {
 			this.emit('log', `Add device failed: ${JSON.stringify(params)}`)
 			if (typeof params.DEVICEID === 'string') {
+				if (this._deviceBitmapBytes.delete(params.DEVICEID)) this.scheduleBitmapCacheUpdate()
+
 				this.emit('deviceErrored', {
 					deviceId: params.DEVICEID,
 					message: `${params.MESSAGE || 'Unknown Error'}`,
@@ -676,6 +702,10 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		this._supportsRotaryAmount = features.rotaryAmount
 		if (this._supportsRotaryAmount) {
 			this.emit('log', 'Companion supports rotation amounts')
+		}
+		this._supportsBitmapCache = features.bitmapCache
+		if (this._supportsBitmapCache) {
+			this.emit('log', 'Companion supports bitmap caching')
 		}
 
 		// BITMAP_FORMATS is a comma-separated list of bitmap encodings Companion can stream (API v1.12+)
@@ -866,6 +896,9 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 					? { VARIABLE_ENCODING: 'json' }
 					: {}
 
+				this._deviceBitmapBytes.set(deviceId, calculateBitmapBytesPerFrame(manifest))
+				this.scheduleBitmapCacheUpdate()
+
 				this.sendMessage('ADD-DEVICE', null, deviceId, {
 					LAYOUT_MANIFEST: Buffer.from(JSON.stringify(manifest)).toString('base64'),
 					...commonProps,
@@ -897,8 +930,104 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 			this._registeredDevices.delete(deviceId)
 			this._pendingDevices.delete(deviceId)
 
+			if (this._deviceBitmapBytes.delete(deviceId)) this.scheduleBitmapCacheUpdate()
+
 			this.sendMessage('REMOVE-DEVICE', null, deviceId, {})
 		}
+	}
+
+	/**
+	 * Set the size of the bitmap cache, as a number of full size bitmaps for each button of the connected surfaces.
+	 * 0 disables the cache
+	 */
+	public setBitmapCacheBitmapsPerButton(bitmapsPerButton: number): void {
+		this._bitmapCacheBitmapsPerButton = Math.max(0, bitmapsPerButton)
+		this.scheduleBitmapCacheUpdate()
+	}
+
+	/**
+	 * Forget the cache of a connection, as it only lasts as long as the connection does
+	 */
+	private resetBitmapCache(): void {
+		this._supportsBitmapCache = false
+		this._bitmapCache.clear()
+		this._bitmapCacheBudgetSent = 0
+		this._deviceBitmapBytes.clear()
+	}
+
+	/**
+	 * Send the budget to Companion once the current batch of changes is done, so that adding several devices
+	 * at once sends it only once
+	 */
+	private scheduleBitmapCacheUpdate(): void {
+		if (this._bitmapCacheUpdatePending) return
+		this._bitmapCacheUpdatePending = true
+
+		setImmediate(() => {
+			this._bitmapCacheUpdatePending = false
+			if (!this._handshakeComplete || !this.socket) return
+
+			let budget = 0
+			if (this._supportsBitmapCache) {
+				let bytesPerFrame = 0
+				for (const bytes of this._deviceBitmapBytes.values()) bytesPerFrame += bytes
+				budget = Math.floor(bytesPerFrame * this._bitmapCacheBitmapsPerButton)
+			}
+
+			// Caching is off until the first non-zero budget, so there is nothing to tell Companion until then
+			if (budget === this._bitmapCacheBudgetSent) return
+			this._bitmapCacheBudgetSent = budget
+
+			this.emit('log', `Setting bitmap cache budget to ${budget} bytes`)
+			this.sendMessage('BITMAP-CACHE', null, null, { BYTES: budget })
+		})
+	}
+
+	private handleBitmapCache(params: ParsedParams): void {
+		if (!params.OK || params.ERROR) {
+			this.emit('log', `Bitmap cache failed: ${JSON.stringify(params)}`)
+			return
+		}
+
+		// Companion evicts everything before confirming a budget of 0, but the cache may only be emptied once this arrives
+		if (params.BYTES === '0') this._bitmapCache.clear()
+	}
+
+	private handleBitmapEvict(params: ParsedParams): void {
+		if (params.ALL !== undefined && isTruthy(params.ALL)) {
+			this._bitmapCache.clear()
+			return
+		}
+
+		if (typeof params.BITMAP_IDS === 'string') {
+			for (const id of params.BITMAP_IDS.split(',')) {
+				this._bitmapCache.delete(id)
+			}
+		}
+	}
+
+	/**
+	 * Find the bitmap to draw for a KEY-STATE, storing it in the cache when Companion asks for that (API v1.16+)
+	 */
+	private resolveStateBitmap(params: ParsedParams): string | undefined {
+		const bitmap = typeof params.BITMAP === 'string' ? params.BITMAP : undefined
+		const bitmapId = typeof params.BITMAP_ID === 'string' && params.BITMAP_ID ? params.BITMAP_ID : undefined
+		if (!bitmapId) return bitmap
+
+		if (bitmap !== undefined) {
+			this._bitmapCache.set(bitmapId, bitmap)
+
+			// Companion counts each bitmap at its size as RGBA, which a raw rgb bitmap as base64 already matches.
+			// Compressed bitmaps are much smaller, so report what they really cost to let more of them fit
+			if (bitmap.startsWith('data:')) {
+				this.sendMessage('BITMAP-COST', null, null, { BITMAP_ID: bitmapId, BYTES: bitmap.length })
+			}
+			return bitmap
+		}
+
+		const cached = this._bitmapCache.get(bitmapId)
+		if (cached === undefined) this.emit('log', `KEY-STATE referenced unknown bitmap: ${bitmapId}`)
+		return cached
 	}
 
 	private sendMessage(
@@ -917,4 +1046,16 @@ export class CompanionSatelliteClient extends EventEmitter<CompanionSatelliteCli
 		}
 		this.socket?.write(message)
 	}
+}
+
+/**
+ * Calculate the size as RGBA of one bitmap for every control of a surface
+ */
+function calculateBitmapBytesPerFrame(manifest: SatelliteSurfaceLayout): number {
+	let bytes = 0
+	for (const control of Object.values(manifest.controls)) {
+		const bitmap = manifest.stylePresets[control.stylePreset ?? 'default']?.bitmap
+		if (bitmap) bytes += bitmap.w * bitmap.h * 4
+	}
+	return bytes
 }
