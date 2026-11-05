@@ -79,6 +79,12 @@ Promise.resolve()
 							}
 							break
 						}
+						case 'DETAILED_USAGE_STATISTICS':
+							appConfig.set(
+								'detailedUsageEnabled',
+								!['0', 'false', 'no', 'off'].includes(value.toLowerCase()),
+							)
+							break
 						default:
 							console.log(`Unknown value: ${key}=${value}`)
 							break

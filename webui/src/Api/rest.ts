@@ -6,6 +6,8 @@ import type {
 	ApiSurfaceInfo,
 	ApiSurfacePluginInfo,
 	ApiSurfacePluginsEnabled,
+	ApiUpdateInfo,
+	ApiUsageStatisticsPayload,
 } from './types'
 import type { paths } from '../../../satellite/src/generated/openapi'
 import createClient from 'openapi-fetch'
@@ -57,6 +59,20 @@ export const SatelliteRestApi: SatelliteUiApi = {
 		const { data, error } = await client.POST('/surfaces/plugins/enabled', {
 			body: newConfig,
 		})
+		if (error) throw new Error(error.error)
+		return data
+	},
+	getUpdateInfo: async function (): Promise<ApiUpdateInfo | null> {
+		const { data, error } = await client.GET('/update-info', {})
+		if (error) throw new Error(error.error)
+		return data.info
+	},
+	dismissUpdateInfo: async function (): Promise<void> {
+		const { error } = await client.POST('/update-info/dismiss', {})
+		if (error) throw new Error(error.error)
+	},
+	getUsageStatistics: async function (): Promise<ApiUsageStatisticsPayload> {
+		const { data, error } = await client.GET('/usage-statistics', {})
 		if (error) throw new Error(error.error)
 		return data
 	},

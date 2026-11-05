@@ -6,8 +6,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSatelliteApi } from '@/Api/Context.js'
 import { Button } from '@/components/ui/button.js'
 import { Switch } from '@/components/ui/switch.js'
-import React, { JSX } from 'react'
-import { CONNECTION_CONFIG_QUERY_KEY, CONNECTION_STATUS_QUERY_KEY } from './constants.js'
+import React, { JSX, useState } from 'react'
+import { CONNECTION_CONFIG_QUERY_KEY, CONNECTION_STATUS_QUERY_KEY, USAGE_STATISTICS_QUERY_KEY } from './constants.js'
 import { BarLoader } from 'react-spinners'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.js'
 import { cn } from '@/lib/utils.js'
@@ -199,6 +199,48 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 					)}
 				/>
 
+				<hr className="col-span-3 col-start-2" />
+
+				<legend className="col-span-3 col-start-2 px-1">Usage Statistics</legend>
+
+				<form.Field
+					name="detailedUsageEnabled"
+					children={(field) => (
+						<FormRow
+							label="Detailed Statistics"
+							htmlFor={field.name}
+							hint={
+								<>
+									Anonymous usage statistics help us improve Satellite. No personal data is collected.
+									<br />
+									Basic version information is always sent when checking for updates. Read the full privacy policy on
+									the{' '}
+									<a
+										href="https://bitfocus.io/legal/privacy/"
+										target="_blank"
+										rel="noreferrer"
+										className="underline underline-offset-3"
+									>
+										Bitfocus website
+									</a>
+									.
+								</>
+							}
+						>
+							<Switch
+								id={field.name}
+								name={field.name}
+								checked={field.state.value}
+								onBlur={field.handleBlur}
+								onCheckedChange={(checked) => field.handleChange(checked)}
+							/>
+						</FormRow>
+					)}
+				/>
+				<div className="col-span-3 col-start-2 -mt-2">
+					<UsageStatisticsPreview />
+				</div>
+
 				{api.includeApiEnable && (
 					<>
 						<hr className="col-span-3 col-start-2" />
@@ -252,6 +294,29 @@ function ConnectionConfigContent({ config }: { config: ApiConfigData }): JSX.Ele
 				/>
 			</div>
 		</form>
+	)
+}
+
+function UsageStatisticsPreview(): JSX.Element {
+	const api = useSatelliteApi()
+	const [open, setOpen] = useState(false)
+
+	const payload = useQuery({
+		queryKey: [USAGE_STATISTICS_QUERY_KEY],
+		queryFn: api.getUsageStatistics,
+		enabled: open,
+	})
+
+	return (
+		<details className="text-sm px-1" onToggle={(e) => setOpen(e.currentTarget.open)}>
+			<summary className="cursor-pointer text-gray-500">View the data being collected</summary>
+			{payload.error ? <p>Error: {payload.error.message.toString()}</p> : null}
+			{payload.data ? (
+				<pre className="mt-2 max-h-80 overflow-auto rounded-md bg-muted p-2 text-xs">
+					{JSON.stringify(payload.data, null, 2)}
+				</pre>
+			) : null}
+		</details>
 	)
 }
 

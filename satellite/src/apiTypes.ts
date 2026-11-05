@@ -9,6 +9,8 @@ export type ApiConfigDataUpdate = openapiComponents['schemas']['ConfigDataUpdate
 export type ApiSurfaceInfo = openapiComponents['schemas']['SurfaceInfo']
 export type ApiSurfacePluginInfo = openapiComponents['schemas']['SurfacePluginInfo']
 export type ApiSurfacePluginsEnabled = Record<string, boolean>
+export type ApiUpdateInfo = openapiComponents['schemas']['UpdateInfo']
+export type ApiUsageStatisticsPayload = Record<string, unknown>
 
 export type ApiConfigDataUpdateElectron = ApiConfigDataUpdate & Pick<Partial<ApiConfigData>, 'httpEnabled' | 'httpPort'>
 
@@ -22,6 +24,9 @@ export interface SatelliteUiApi {
 	surfacePlugins: () => Promise<ApiSurfacePluginInfo[]>
 	surfacePluginsEnabled: () => Promise<ApiSurfacePluginsEnabled>
 	surfacePluginsEnabledUpdate: (newConfig: ApiSurfacePluginsEnabled) => Promise<ApiSurfacePluginsEnabled>
+	getUpdateInfo: () => Promise<ApiUpdateInfo | null>
+	dismissUpdateInfo: () => Promise<void>
+	getUsageStatistics: () => Promise<ApiUsageStatisticsPayload>
 }
 
 export function compileStatus(client: CompanionSatelliteClient): ApiStatusResponse {
@@ -46,6 +51,8 @@ export function compileConfig(appConfig: Conf<SatelliteConfig>): ApiConfigData {
 		httpPort: appConfig.get('restPort'),
 
 		mdnsEnabled: appConfig.get('mdnsEnabled'),
+
+		detailedUsageEnabled: appConfig.get('detailedUsageEnabled'),
 	}
 }
 
@@ -60,6 +67,9 @@ export function updateConfig(appConfig: SatelliteConfigInstance, newConfig: ApiC
 
 	if (newConfig.mdnsEnabled !== undefined) appConfig.set('mdnsEnabled', newConfig.mdnsEnabled)
 	if (newConfig.installationName !== undefined) appConfig.set('installationName', newConfig.installationName)
+
+	if (newConfig.detailedUsageEnabled !== undefined)
+		appConfig.set('detailedUsageEnabled', newConfig.detailedUsageEnabled)
 }
 
 export function updateSurfacePluginsEnabledConfig(

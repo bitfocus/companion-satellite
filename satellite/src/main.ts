@@ -10,6 +10,9 @@ import { getConnectionDetailsFromConfig, listenToConnectionConfigChanges, openHe
 import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
+import { getAppInfo } from './appInfo.js'
+import { UpdateChecker } from './usage/updateChecker.js'
+import { UsageStatistics } from './usage/usageStatistics.js'
 
 const rawConfigPath = process.argv[2]
 if (!rawConfigPath) {
@@ -31,9 +34,14 @@ logger.info(`Starting with config: ${appConfig.path}`)
 
 const webRoot = fileURLToPath(new URL('../../webui/dist', import.meta.url))
 
+const appInfo = getAppInfo(false)
+logger.info(`Satellite version: ${appInfo.build}`)
+
 const client = new CompanionSatelliteClient({ debug: true })
 const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfacePluginsEnabled'), false)
-const server = new RestServer(webRoot, appConfig, client, surfaceManager)
+const updateChecker = new UpdateChecker(appInfo, appConfig)
+const usageStatistics = new UsageStatistics(appInfo, appConfig, client, surfaceManager)
+const server = new RestServer(webRoot, appConfig, client, surfaceManager, updateChecker, usageStatistics)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 const clientLogger = createLogger('SatelliteClient')
@@ -43,6 +51,8 @@ client.on('error', (e) => clientLogger.error(e))
 asyncExitHook(
 	async () => {
 		logger.info('Exiting')
+		updateChecker.stop()
+		usageStatistics.stop()
 		await Promise.allSettled([
 			(async () => client.disconnect())(),
 			surfaceManager.close(),
@@ -77,3 +87,10 @@ appConfig.onDidChange(
 tryConnect()
 server.open()
 mdnsAnnouncer.start()
+updateChecker.start()
+usageStatistics.startStop()
+
+updateChecker.on('info', (info) => {
+	if (info.dismissed) return
+	logger.info(`Update message: ${info.message}${info.link ? ` (${info.link})` : ''}`)
+})

@@ -7,6 +7,8 @@ import type Conf from 'conf'
 import type { CompanionSatelliteClient } from './client/client.js'
 import type { SurfaceManager } from './surface-manager.js'
 import type { SatelliteConfig } from './config.js'
+import type { UpdateChecker } from './usage/updateChecker.js'
+import type { UsageStatistics } from './usage/usageStatistics.js'
 import {
 	ApiConfigData,
 	ApiConfigDataUpdate,
@@ -28,6 +30,8 @@ export class RestServer {
 	private readonly appConfig: Conf<SatelliteConfig>
 	private readonly client: CompanionSatelliteClient
 	private readonly surfaceManager: SurfaceManager
+	private readonly updateChecker: UpdateChecker
+	private readonly usageStatistics: UsageStatistics
 	private readonly app: Koa
 	private readonly router: Router
 	private server: http.Server | undefined
@@ -37,10 +41,14 @@ export class RestServer {
 		appConfig: Conf<SatelliteConfig>,
 		client: CompanionSatelliteClient,
 		surfaceManager: SurfaceManager,
+		updateChecker: UpdateChecker,
+		usageStatistics: UsageStatistics,
 	) {
 		this.appConfig = appConfig
 		this.client = client
 		this.surfaceManager = surfaceManager
+		this.updateChecker = updateChecker
+		this.usageStatistics = usageStatistics
 
 		// Monitor for config changes
 		this.appConfig.onDidChange('restEnabled', this.open.bind(this))
@@ -167,6 +175,16 @@ export class RestServer {
 					}
 				}
 
+				const detailedUsageEnabled = body.detailedUsageEnabled
+				if (detailedUsageEnabled !== undefined) {
+					if (typeof detailedUsageEnabled === 'boolean') {
+						partialConfig.detailedUsageEnabled = detailedUsageEnabled
+					} else {
+						ctx.status = 400
+						ctx.body = 'Invalid detailedUsageEnabled'
+					}
+				}
+
 				// Ensure some fields cannot be changed
 				const tmpPartialConfig: ApiConfigDataUpdateElectron = partialConfig
 				delete tmpPartialConfig.httpEnabled
@@ -175,6 +193,19 @@ export class RestServer {
 				updateConfig(this.appConfig, partialConfig)
 				ctx.body = compileConfig(this.appConfig)
 			}
+		})
+
+		this.router.get('/api/update-info', async (ctx) => {
+			ctx.body = { info: this.updateChecker.getInfo() }
+		})
+		this.router.post('/api/update-info/dismiss', async (ctx) => {
+			this.updateChecker.dismiss()
+
+			ctx.body = 'OK'
+		})
+
+		this.router.get('/api/usage-statistics', async (ctx) => {
+			ctx.body = this.usageStatistics.buildPayload()
 		})
 
 		this.router.post('/api/surfaces/rescan', async (ctx) => {

@@ -22,12 +22,14 @@
     "webui"
   ],
   "scripts": {
-    "postinstall": "husky && tsx ./tools/dev_prepare.mts",
+    "postinstall": "husky && run build:openapi-updates && tsx ./tools/dev_prepare.mts",
     "dev": "tsx ./tools/dev_prepare.mts && yarn workspace satellite dev",
     "dev:seed-surface": "tsx ./tools/seed_builtin_module.mts",
     "dev:electron": "yarn workspace satellite dev:electron",
     "dev:webui": "yarn workspace webui dev",
     "build:openapi": "openapi-typescript ./openapi.yaml -o ./satellite/src/generated/openapi.ts",
+    "build:openapi-updates": "openapi-ts -f ./tools/openapi-ts.config.mts",
+    "openapi:update-specs": "tsx ./tools/update_openapi_specs.mts && run build:openapi-updates",
     "build:ts": "tsc --build --force",
     "build": "run build:ts && yarn workspace webui build",
     "lint:raw": "eslint",
@@ -40,6 +42,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@hey-api/openapi-ts": "^0.99.0",
     "@sofie-automation/eslint-plugin": "^0.2.1",
     "@tsconfig/node24": "^24.0.5",
     "@types/semver": "^7.8.0",

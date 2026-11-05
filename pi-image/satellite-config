@@ -17,3 +17,7 @@
 
 # Port for the REST server (0 to disable)
 # REST_PORT=9999
+
+# Anonymous usage statistics are reported to help improve Satellite. Set this to false to disable the detailed statistics.
+# The privacy policy can be found at https://bitfocus.io/legal/privacy/
+# DETAILED_USAGE_STATISTICS=true

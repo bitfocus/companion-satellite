@@ -6,6 +6,7 @@ import { SomeConnectionDetails } from './client/socketImplementations.js'
 import { assertNever, DEFAULT_TCP_PORT, DEFAULT_WS_PORT } from './lib.js'
 import debounceFn from 'debounce-fn'
 import { setMaxListeners } from 'events'
+import { randomUUID } from 'crypto'
 
 const nanoidHex = customAlphabet('0123456789abcdef')
 
@@ -25,6 +26,10 @@ export interface SatelliteConfig {
 	mdnsEnabled: boolean
 
 	surfacePluginsEnabled: Record<string, boolean>
+
+	machineId: string
+	detailedUsageEnabled: boolean
+	dismissedUpdateMessage: string
 }
 
 export const satelliteConfigSchema: Schema<SatelliteConfig> = {
@@ -90,6 +95,22 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 			'idisplay-infinitton': true,
 			'mirabox-stream-dock': true,
 		},
+	},
+
+	machineId: {
+		type: 'string',
+		description: 'Unique identifier for this installation, used for update checks and usage statistics',
+		default: randomUUID(),
+	},
+	detailedUsageEnabled: {
+		type: 'boolean',
+		description: 'Enable reporting of detailed usage statistics',
+		default: true,
+	},
+	dismissedUpdateMessage: {
+		type: 'string',
+		description: 'The last update message which was dismissed by the user',
+		default: '',
 	},
 }
 

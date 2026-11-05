@@ -108,6 +108,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/update-info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the latest update message */
+        get: operations["getUpdateInfo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/update-info/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dismiss the latest update message */
+        post: operations["dismissUpdateInfo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage-statistics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the detailed usage statistics that are reported when enabled */
+        get: operations["getUsageStatistics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -141,6 +192,8 @@ export interface components {
             installationName: string;
             /** @description Enable mDNS announcement to allow automatic discovery of the Companion Satellite */
             mdnsEnabled: boolean;
+            /** @description Enable reporting of detailed usage statistics */
+            detailedUsageEnabled: boolean;
             /** @description Enable the HTTP api. This is readonly in the HTTP api */
             httpEnabled: boolean;
             /** @description Port number of the HTTP api. This is readonly in the HTTP api */
@@ -162,6 +215,22 @@ export interface components {
             installationName?: string;
             /** @description Enable mDNS announcement to allow automatic discovery of the Companion Satellite */
             mdnsEnabled?: boolean;
+            /** @description Enable reporting of detailed usage statistics */
+            detailedUsageEnabled?: boolean;
+        };
+        UpdateInfo: {
+            /** @description Message to show to the user */
+            message: string;
+            /** @description Additional message to show to the user */
+            message2?: string;
+            /** @description Download URL */
+            link?: string;
+            /** @description Whether the user has dismissed this message */
+            dismissed: boolean;
+        };
+        UpdateInfoResponse: {
+            /** @description The latest update message, or null if there is nothing to show */
+            info: components["schemas"]["UpdateInfo"] | null;
         };
         SurfaceInfo: {
             /** @description ID of the surface */
@@ -423,6 +492,93 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConfigData"];
+                };
+            };
+            /** @description failed operation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getUpdateInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UpdateInfoResponse"];
+                };
+            };
+            /** @description failed operation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    dismissUpdateInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description failed operation */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getUsageStatistics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description failed operation */

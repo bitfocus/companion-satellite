@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ConnectionTab } from './ConnectionTab'
 import { ConnectedSurfacesTab } from './ConnectedSurfacesTab'
 import { SurfacePluginsTab } from './SurfacePluginsTab'
+import { UpdateNotice } from './UpdateNotice'
+import { MyErrorBoundary } from '@/Util/ErrorBoundary'
 import { JSX } from 'react'
 
 const queryClient = new QueryClient()
@@ -11,6 +13,9 @@ const queryClient = new QueryClient()
 export function AppContent(): JSX.Element {
 	return (
 		<QueryClientProvider client={queryClient}>
+			<MyErrorBoundary>
+				<UpdateNotice />
+			</MyErrorBoundary>
 			<Tabs defaultValue="connection">
 				<CardHeader className="text-center pb-3">
 					<TabsList className="flex-col sm:flex-row h-auto sm:h-9 w-full">

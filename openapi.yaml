@@ -160,6 +160,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /update-info:
+    get:
+      summary: Get the latest update message
+      operationId: getUpdateInfo
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateInfoResponse'
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /update-info/dismiss:
+    post:
+      summary: Dismiss the latest update message
+      operationId: dismissUpdateInfo
+      responses:
+        '200':
+          description: successful operation
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /usage-statistics:
+    get:
+      summary: Get the detailed usage statistics that are reported when enabled
+      operationId: getUsageStatistics
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: failed operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     ErrorResponse:
@@ -217,6 +268,10 @@ components:
           type: boolean
           description: Enable mDNS announcement to allow automatic discovery of the Companion Satellite
 
+        detailedUsageEnabled:
+          type: boolean
+          description: Enable reporting of detailed usage statistics
+
         httpEnabled:
           type: boolean
           description: Enable the HTTP api. This is readonly in the HTTP api
@@ -230,6 +285,7 @@ components:
         - wsAddress
         - installationName
         - mdnsEnabled
+        - detailedUsageEnabled
         - httpEnabled
         - httpPort
 
@@ -256,6 +312,40 @@ components:
         mdnsEnabled:
           type: boolean
           description: Enable mDNS announcement to allow automatic discovery of the Companion Satellite
+
+        detailedUsageEnabled:
+          type: boolean
+          description: Enable reporting of detailed usage statistics
+
+    UpdateInfo:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Message to show to the user
+        message2:
+          type: string
+          description: Additional message to show to the user
+        link:
+          type: string
+          description: Download URL
+        dismissed:
+          type: boolean
+          description: Whether the user has dismissed this message
+      required:
+        - message
+        - dismissed
+
+    UpdateInfoResponse:
+      type: object
+      properties:
+        info:
+          allOf:
+            - $ref: '#/components/schemas/UpdateInfo'
+          nullable: true
+          description: The latest update message, or null if there is nothing to show
+      required:
+        - info
 
     SurfaceInfo:
       type: object

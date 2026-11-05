@@ -1,6 +1,6 @@
 import '@julusian/segfault-raub'
 
-import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, Tray, Menu, MenuItem, dialog, nativeImage, BrowserWindow, ipcMain, shell, Notification } from 'electron'
 import * as path from 'path'
 import electronStore from 'electron-store'
 import { SurfaceManager } from './surface-manager.js'
@@ -20,6 +20,8 @@ import {
 	ApiSurfaceInfo,
 	ApiSurfacePluginInfo,
 	ApiSurfacePluginsEnabled,
+	ApiUpdateInfo,
+	ApiUsageStatisticsPayload,
 	compileConfig,
 	compileStatus,
 	updateConfig,
@@ -29,6 +31,9 @@ import { fileURLToPath } from 'url'
 import { MdnsAnnouncer } from './mdnsAnnouncer.js'
 import debounceFn from 'debounce-fn'
 import { setMaxListeners } from 'events'
+import { getAppInfo } from './appInfo.js'
+import { UpdateChecker } from './usage/updateChecker.js'
+import { UsageStatistics } from './usage/usageStatistics.js'
 
 // Ensure there isn't another instance of companion running already
 const lock = app.requestSingleInstanceLock()
@@ -63,9 +68,13 @@ console.log('Starting')
 
 const webRoot = fileURLToPath(new URL(app.isPackaged ? '../../webui' : '../../webui/dist', import.meta.url))
 
+const appInfo = getAppInfo(true)
+
 const client = new CompanionSatelliteClient({ debug: true })
 const surfaceManager = await SurfaceManager.create(client, appConfig.get('surfacePluginsEnabled'), app.isPackaged)
-const server = new RestServer(webRoot, appConfig, client, surfaceManager)
+const updateChecker = new UpdateChecker(appInfo, appConfig)
+const usageStatistics = new UsageStatistics(appInfo, appConfig, client, surfaceManager)
+const server = new RestServer(webRoot, appConfig, client, surfaceManager, updateChecker, usageStatistics)
 const mdnsAnnouncer = new MdnsAnnouncer(appConfig)
 
 listenToConnectionConfigChanges(appConfig, tryConnect)
@@ -121,6 +130,13 @@ trayMenu.append(
 			configWindow.on('close', () => {
 				configWindow = undefined
 			})
+			// Open links (eg update downloads) in the browser, rather than a new electron window
+			configWindow.webContents.setWindowOpenHandler(({ url }) => {
+				shell.openExternal(url).catch((e) => {
+					console.error('Failed to open shell', e)
+				})
+				return { action: 'deny' }
+			})
 			if (isProduction) {
 				configWindow.removeMenu()
 				configWindow
@@ -145,6 +161,12 @@ trayMenu.append(
 	}),
 )
 // trayMenu.append(electronUpdater.menuItem)
+const updateMenuItem = new MenuItem({
+	label: 'Update available',
+	visible: false,
+	click: () => showUpdateDialog(),
+})
+trayMenu.append(updateMenuItem)
 trayMenu.append(
 	new MenuItem({
 		label: 'About',
@@ -160,6 +182,8 @@ trayMenu.append(
 
 app.on('before-quit', (e) => {
 	e.preventDefault()
+	updateChecker.stop()
+	usageStatistics.stop()
 	Promise.allSettled([
 		// cleanup
 		(async () => client.disconnect())(),
@@ -212,6 +236,18 @@ app.whenReady()
 
 		console.log('set tray')
 		tray.setContextMenu(trayMenu)
+
+		updateChecker.on('info', (info, firstCheck) => {
+			updateMenuItem.label = `${info.message}…`
+			updateMenuItem.visible = true
+			// The menu needs to be set again for the changes to show on some platforms
+			tray?.setContextMenu(trayMenu)
+
+			// Notify about a new message found shortly after launch, unless the user has dismissed it before
+			if (firstCheck && !info.dismissed) showUpdateNotification(info)
+		})
+		updateChecker.start()
+		usageStatistics.startStop()
 	})
 	.catch((e) => {
 		dialog.showErrorBox(`Startup error`, `Failed to launch: ${e}`)
@@ -233,6 +269,46 @@ function trayQuit() {
 		})
 		.catch((e) => {
 			console.error('Failed to do quit', e)
+		})
+}
+
+function showUpdateNotification(info: ApiUpdateInfo) {
+	if (!Notification.isSupported()) return
+
+	const notification = new Notification({
+		title: 'Companion Satellite',
+		body: info.message,
+	})
+	notification.on('click', () => showUpdateDialog())
+	notification.show()
+}
+
+function showUpdateDialog() {
+	const info = updateChecker.getInfo()
+	if (!info) return
+
+	const buttons = info.link ? ['Download', 'Close'] : ['Close']
+	dialog
+		.showMessageBox({
+			title: 'Companion Satellite',
+			message: info.message,
+			detail: info.message2,
+			buttons,
+			defaultId: 0,
+			cancelId: buttons.length - 1,
+			checkboxLabel: "Don't remind me about this again",
+			checkboxChecked: info.dismissed,
+		})
+		.then((v) => {
+			if (v.checkboxChecked && !info.dismissed) updateChecker.dismiss()
+			if (info.link && v.response === 0) {
+				shell.openExternal(info.link).catch((e) => {
+					console.error('Failed to open shell', e)
+				})
+			}
+		})
+		.catch((e) => {
+			console.error('Failed to show update dialog', e)
 		})
 }
 
@@ -324,6 +400,16 @@ ipcMain.handle(
 		return appConfig.get('surfacePluginsEnabled')
 	},
 )
+
+ipcMain.handle('getUpdateInfo', async (): Promise<ApiUpdateInfo | null> => {
+	return updateChecker.getInfo()
+})
+ipcMain.handle('dismissUpdateInfo', async (): Promise<void> => {
+	updateChecker.dismiss()
+})
+ipcMain.handle('getUsageStatistics', async (): Promise<ApiUsageStatisticsPayload> => {
+	return { ...usageStatistics.buildPayload() }
+})
 
 // about window
 ipcMain.handle('openShell', async (_e, url: string): Promise<void> => {

@@ -7,6 +7,8 @@ import type {
 	ApiSurfaceInfo,
 	ApiSurfacePluginInfo,
 	ApiSurfacePluginsEnabled,
+	ApiUpdateInfo,
+	ApiUsageStatisticsPayload,
 	SatelliteUiApi,
 } from './apiTypes.js'
 
@@ -22,6 +24,9 @@ const electronApi: SatelliteUiApi = {
 	surfacePluginsEnabled: async (): Promise<ApiSurfacePluginsEnabled> => ipcRenderer.invoke('surfacePluginsEnabled'),
 	surfacePluginsEnabledUpdate: async (newConfig: ApiSurfacePluginsEnabled): Promise<ApiSurfacePluginsEnabled> =>
 		ipcRenderer.invoke('surfacePluginsEnabledUpdate', newConfig),
+	getUpdateInfo: async (): Promise<ApiUpdateInfo | null> => ipcRenderer.invoke('getUpdateInfo'),
+	dismissUpdateInfo: async (): Promise<void> => ipcRenderer.invoke('dismissUpdateInfo'),
+	getUsageStatistics: async (): Promise<ApiUsageStatisticsPayload> => ipcRenderer.invoke('getUsageStatistics'),
 }
 
 contextBridge.exposeInMainWorld('electronApi', electronApi)
