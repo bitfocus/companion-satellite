@@ -1,15 +1,15 @@
 import Conf from 'conf'
 import type { CompanionSatelliteClient } from './client/client.js'
 import type { SatelliteConfig, SatelliteConfigInstance } from './config.js'
-import type { components as openapiComponents } from './generated/openapi.js'
+import type * as SatelliteApi from './generated/SatelliteApi/index.js'
 
-export type ApiStatusResponse = openapiComponents['schemas']['StatusResponse']
-export type ApiConfigData = openapiComponents['schemas']['ConfigData']
-export type ApiConfigDataUpdate = openapiComponents['schemas']['ConfigDataUpdate']
-export type ApiSurfaceInfo = openapiComponents['schemas']['SurfaceInfo']
-export type ApiSurfacePluginInfo = openapiComponents['schemas']['SurfacePluginInfo']
+export type ApiStatusResponse = SatelliteApi.StatusResponse
+export type ApiConfigData = SatelliteApi.ConfigData
+export type ApiConfigDataUpdate = SatelliteApi.ConfigDataUpdate
+export type ApiSurfaceInfo = SatelliteApi.SurfaceInfo
+export type ApiSurfacePluginInfo = SatelliteApi.SurfacePluginInfo
 export type ApiSurfacePluginsEnabled = Record<string, boolean>
-export type ApiUpdateInfo = openapiComponents['schemas']['UpdateInfo']
+export type ApiUpdateInfo = SatelliteApi.UpdateInfo
 export type ApiUsageStatisticsPayload = Record<string, unknown>
 
 export type ApiConfigDataUpdateElectron = ApiConfigDataUpdate & Pick<Partial<ApiConfigData>, 'httpEnabled' | 'httpPort'>
