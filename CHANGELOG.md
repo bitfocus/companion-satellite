@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.8.0](https://github.com/bitfocus/companion-satellite/compare/v3.7.0...v3.8.0) (2026-11-06)
+
+
+### Features
+
+* announce mdns as comp-sat-app alongside legacy companion-satellite ([a189acb](https://github.com/bitfocus/companion-satellite/commit/a189acb4f343c23b1024704cc422239add17b430))
+* update notifications and anonymous usage statistics ([1fb55f6](https://github.com/bitfocus/companion-satellite/commit/1fb55f6c888417bcdf1a964a1600a7ddd410e7a1))
+
 ## [3.7.0](https://github.com/bitfocus/companion-satellite/compare/v3.6.1...v3.7.0) (2026-10-30)
 
 
