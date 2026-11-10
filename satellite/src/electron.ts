@@ -161,12 +161,15 @@ trayMenu.append(
 	}),
 )
 // trayMenu.append(electronUpdater.menuItem)
+const updateMenuSeparator = new MenuItem({ type: 'separator', visible: false })
 const updateMenuItem = new MenuItem({
 	label: 'Update available',
 	visible: false,
 	click: () => showUpdateDialog(),
 })
+trayMenu.append(updateMenuSeparator)
 trayMenu.append(updateMenuItem)
+trayMenu.append(new MenuItem({ type: 'separator' }))
 trayMenu.append(
 	new MenuItem({
 		label: 'About',
@@ -238,8 +241,9 @@ app.whenReady()
 		tray.setContextMenu(trayMenu)
 
 		updateChecker.on('info', (info, firstCheck) => {
-			updateMenuItem.label = `${info.message}…`
+			updateMenuItem.label = info.message
 			updateMenuItem.visible = true
+			updateMenuSeparator.visible = true
 			// The menu needs to be set again for the changes to show on some platforms
 			tray?.setContextMenu(trayMenu)
 
@@ -290,10 +294,13 @@ function showUpdateDialog() {
 	const buttons = info.link ? ['Download', 'Close'] : ['Close']
 	dialog
 		.showMessageBox({
+			type: 'info',
+			icon: nativeImage.createFromPath(fileURLToPath(new URL('../assets/icon.png', import.meta.url))),
 			title: 'Companion Satellite',
 			message: info.message,
 			detail: info.message2,
 			buttons,
+			noLink: true,
 			defaultId: 0,
 			cancelId: buttons.length - 1,
 			checkboxLabel: "Don't remind me about this again",

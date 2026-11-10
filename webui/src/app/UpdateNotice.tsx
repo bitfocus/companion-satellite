@@ -1,8 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSatelliteApi } from '@/Api/Context'
-import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Info, X } from 'lucide-react'
+import { Button, buttonVariants } from '@/components/ui/button'
+import { Download, Info, X } from 'lucide-react'
 import { JSX } from 'react'
 import { UPDATE_INFO_QUERY_KEY } from './constants'
 
@@ -19,44 +18,56 @@ export function UpdateNotice(): JSX.Element | null {
 	const info = updateInfo.data
 	if (!info) return null
 
-	const downloadLink = info.link ? (
-		<a href={info.link} target="_blank" rel="noreferrer">
-			Download
-		</a>
-	) : null
-
 	if (info.dismissed) {
 		// Keep it visible, but out of the way
 		return (
-			<p className="text-sm text-muted-foreground text-center px-6 pt-4 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground">
-				{info.message} {downloadLink}
+			<p className="text-xs text-muted-foreground text-center mb-2">
+				{info.message}
+				{info.link ? (
+					<>
+						{' '}
+						<a
+							href={info.link}
+							target="_blank"
+							rel="noreferrer"
+							className="underline underline-offset-3 hover:text-foreground"
+						>
+							Download
+						</a>
+					</>
+				) : null}
 			</p>
 		)
 	}
 
 	return (
-		<div className="px-6 pt-4">
-			<Alert>
-				<Info />
-				<AlertTitle>{info.message}</AlertTitle>
-				{info.message2 || downloadLink ? (
-					<AlertDescription>
-						{info.message2 ? <p>{info.message2}</p> : null}
-						{downloadLink ? <p>{downloadLink}</p> : null}
-					</AlertDescription>
-				) : null}
-				<AlertAction>
-					<Button
-						variant="ghost"
-						size="icon-sm"
-						aria-label="Dismiss"
-						disabled={dismiss.isPending}
-						onClick={() => dismiss.mutate()}
-					>
-						<X />
-					</Button>
-				</AlertAction>
-			</Alert>
+		<div role="status" className="flex items-center gap-3 rounded-lg border bg-muted/40 py-2 pl-3 pr-2 mb-2 text-left">
+			<Info className="size-4 shrink-0 text-muted-foreground" />
+			<div className="grow min-w-0">
+				<div className="font-medium">{info.message}</div>
+				{info.message2 ? <div className="text-muted-foreground">{info.message2}</div> : null}
+			</div>
+			{info.link ? (
+				<a
+					href={info.link}
+					target="_blank"
+					rel="noreferrer"
+					className={buttonVariants({ variant: 'outline', size: 'sm' })}
+				>
+					<Download data-icon="inline-start" />
+					Download
+				</a>
+			) : null}
+			<Button
+				variant="ghost"
+				size="icon-sm"
+				aria-label="Dismiss"
+				title="Don't show this again"
+				disabled={dismiss.isPending}
+				onClick={() => dismiss.mutate()}
+			>
+				<X />
+			</Button>
 		</div>
 	)
 }

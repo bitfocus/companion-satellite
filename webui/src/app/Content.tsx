@@ -13,11 +13,11 @@ const queryClient = new QueryClient()
 export function AppContent(): JSX.Element {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<MyErrorBoundary>
-				<UpdateNotice />
-			</MyErrorBoundary>
 			<Tabs defaultValue="connection">
 				<CardHeader className="text-center pb-3">
+					<MyErrorBoundary>
+						<UpdateNotice />
+					</MyErrorBoundary>
 					<TabsList className="flex-col sm:flex-row h-auto sm:h-9 w-full">
 						<TabsTrigger className="w-full sm:w-auto" value="connection">
 							Connection
