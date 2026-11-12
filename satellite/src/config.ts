@@ -29,7 +29,8 @@ export interface SatelliteConfig {
 
 	machineId: string
 	detailedUsageEnabled: boolean
-	dismissedUpdateMessage: string
+	dismissedUpdateVersion: string
+	notifiedUpdateVersion: string
 }
 
 export const satelliteConfigSchema: Schema<SatelliteConfig> = {
@@ -107,9 +108,14 @@ export const satelliteConfigSchema: Schema<SatelliteConfig> = {
 		description: 'Enable reporting of detailed usage statistics',
 		default: true,
 	},
-	dismissedUpdateMessage: {
+	dismissedUpdateVersion: {
 		type: 'string',
-		description: 'The last update message which was dismissed by the user',
+		description: 'The available update version whose notice was dismissed by the user',
+		default: '',
+	},
+	notifiedUpdateVersion: {
+		type: 'string',
+		description: 'The available update version which the desktop app last showed a notification for',
 		default: '',
 	},
 }

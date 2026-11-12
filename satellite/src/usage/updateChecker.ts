@@ -5,15 +5,18 @@ import type { ApiUpdateInfo } from '../apiTypes.js'
 import { createLogger } from '../logging.js'
 import { compileUpdatesApiBody, createUpdatesApiClient, runWithRetry } from './api.js'
 import type { Client } from '../generated/CompanionUpdates/client/index.js'
-import { updatesPost } from '../generated/CompanionUpdates/index.js'
+import { updatesPost, type UpdatesPostResponse } from '../generated/CompanionUpdates/index.js'
 
 const REQUEST_TIMEOUT_MS = 10_000
 const CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000
 
 export type UpdateCheckerEvents = {
-	/** The update info has changed. firstCheck is true for the first successful check since launch */
-	info: [info: ApiUpdateInfo, firstCheck: boolean]
+	/** The update info has changed */
+	info: [info: ApiUpdateInfo | null]
 }
+
+type LatestInfo =
+	Omit<Extract<ApiUpdateInfo, { type: 'update' }>, 'dismissed'> | Extract<ApiUpdateInfo, { type: 'beta' | 'info' }>
 
 export class UpdateChecker extends EventEmitter<UpdateCheckerEvents> {
 	readonly #logger = createLogger('UpdateChecker')
@@ -22,7 +25,7 @@ export class UpdateChecker extends EventEmitter<UpdateCheckerEvents> {
 	readonly #appConfig: SatelliteConfigInstance
 	readonly #apiClient: Client
 
-	#latest: Omit<ApiUpdateInfo, 'dismissed'> | null = null
+	#latest: LatestInfo | null = null
 	#interval: NodeJS.Timeout | undefined
 	#abortRetry: (() => void) | undefined
 
@@ -55,25 +58,25 @@ export class UpdateChecker extends EventEmitter<UpdateCheckerEvents> {
 	 * The latest update info, or null if there is no message to show
 	 */
 	getInfo(): ApiUpdateInfo | null {
-		if (!this.#latest?.message) return null
+		if (!this.#latest) return null
+		if (this.#latest.type !== 'update') return this.#latest
 
 		return {
 			...this.#latest,
-			dismissed: this.#appConfig.get('dismissedUpdateMessage') === this.#latest.message,
+			dismissed: this.#appConfig.get('dismissedUpdateVersion') === this.#latest.version,
 		}
 	}
 
 	/**
-	 * Dismiss the current message, so that it doesn't get shown prominently again.
-	 * A different message will be shown as normal
+	 * Dismiss the notice for the available update, so that it doesn't get shown prominently again.
+	 * A newer version will be shown as normal
 	 */
 	dismiss(): void {
-		if (!this.#latest?.message) return
+		if (this.#latest?.type !== 'update') return
 
-		this.#appConfig.set('dismissedUpdateMessage', this.#latest.message)
+		this.#appConfig.set('dismissedUpdateVersion', this.#latest.version)
 
-		const info = this.getInfo()
-		if (info) this.emit('info', info, false)
+		this.emit('info', this.getInfo())
 	}
 
 	#check(): void {
@@ -92,15 +95,26 @@ export class UpdateChecker extends EventEmitter<UpdateCheckerEvents> {
 
 			this.#logger.debug(`Update check result: ${JSON.stringify(res)}`)
 
-			const firstCheck = this.#latest === null
-			this.#latest = {
-				message: res.message,
-				message2: res.message2,
-				link: res.link,
-			}
+			this.#latest = parseResponse(res)
 
-			const info = this.getInfo()
-			if (info) this.emit('info', info, firstCheck)
+			this.emit('info', this.getInfo())
 		})
+	}
+}
+
+function parseResponse(res: UpdatesPostResponse): LatestInfo | null {
+	const common = { message: res.message, message2: res.message2, link: res.link }
+
+	switch (res.type) {
+		case 'update':
+			return { ...common, type: 'update', version: res.version }
+		case 'beta':
+		case 'info':
+			return res.message ? { ...common, type: res.type } : null
+		case 'none':
+			return null
+		default:
+			// A type added to the server since this was built, which we can't present sensibly
+			return null
 	}
 }

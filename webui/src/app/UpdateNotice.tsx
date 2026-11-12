@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useSatelliteApi } from '@/Api/Context'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { Download, Info, X } from 'lucide-react'
-import { JSX } from 'react'
+import React, { JSX } from 'react'
 import { UPDATE_INFO_QUERY_KEY } from './constants'
 
 export function UpdateNotice(): JSX.Element | null {
@@ -18,56 +18,88 @@ export function UpdateNotice(): JSX.Element | null {
 	const info = updateInfo.data
 	if (!info) return null
 
-	if (info.dismissed) {
-		// Keep it visible, but out of the way
-		return (
-			<p className="text-xs text-muted-foreground text-center mb-2">
-				{info.message}
-				{info.link ? (
-					<>
-						{' '}
+	switch (info.type) {
+		case 'update':
+			if (info.dismissed) {
+				// Keep it visible, but out of the way
+				return (
+					<SubtleNotice link={info.link} linkLabel={`Download v${info.version}`}>
+						Companion Satellite v{info.version} is available
+					</SubtleNotice>
+				)
+			}
+
+			return (
+				<div
+					role="status"
+					className="flex items-center gap-3 rounded-lg border bg-muted/40 py-2 pl-3 pr-2 mb-2 text-left"
+				>
+					<Info className="size-4 shrink-0 text-muted-foreground" />
+					<div className="grow min-w-0">
+						<div className="font-medium">{info.message}</div>
+						{info.message2 ? <div className="text-muted-foreground">{info.message2}</div> : null}
+					</div>
+					{info.link ? (
 						<a
 							href={info.link}
 							target="_blank"
 							rel="noreferrer"
-							className="underline underline-offset-3 hover:text-foreground"
+							className={buttonVariants({ variant: 'outline', size: 'sm' })}
 						>
-							Download
+							<Download data-icon="inline-start" />
+							Download v{info.version}
 						</a>
-					</>
-				) : null}
-			</p>
-		)
+					) : null}
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						aria-label="Dismiss"
+						title={`Hide until a version newer than v${info.version} is available`}
+						disabled={dismiss.isPending}
+						onClick={() => dismiss.mutate()}
+					>
+						<X />
+					</Button>
+				</div>
+			)
+		case 'beta':
+			return (
+				<SubtleNotice link={info.link} linkLabel="Downloads">
+					This is a beta build of Companion Satellite
+				</SubtleNotice>
+			)
+		case 'info':
+			return <SubtleNotice>{info.message}</SubtleNotice>
+		default:
+			return null
 	}
+}
 
+function SubtleNotice({
+	link,
+	linkLabel,
+	children,
+}: {
+	link?: string
+	linkLabel?: string
+	children: React.ReactNode
+}): JSX.Element {
 	return (
-		<div role="status" className="flex items-center gap-3 rounded-lg border bg-muted/40 py-2 pl-3 pr-2 mb-2 text-left">
-			<Info className="size-4 shrink-0 text-muted-foreground" />
-			<div className="grow min-w-0">
-				<div className="font-medium">{info.message}</div>
-				{info.message2 ? <div className="text-muted-foreground">{info.message2}</div> : null}
-			</div>
-			{info.link ? (
-				<a
-					href={info.link}
-					target="_blank"
-					rel="noreferrer"
-					className={buttonVariants({ variant: 'outline', size: 'sm' })}
-				>
-					<Download data-icon="inline-start" />
-					Download
-				</a>
+		<p className="text-xs text-muted-foreground text-center mb-2">
+			{children}
+			{link && linkLabel ? (
+				<>
+					{' · '}
+					<a
+						href={link}
+						target="_blank"
+						rel="noreferrer"
+						className="underline underline-offset-3 hover:text-foreground"
+					>
+						{linkLabel}
+					</a>
+				</>
 			) : null}
-			<Button
-				variant="ghost"
-				size="icon-sm"
-				aria-label="Dismiss"
-				title="Don't show this again"
-				disabled={dismiss.isPending}
-				onClick={() => dismiss.mutate()}
-			>
-				<X />
-			</Button>
-		</div>
+		</p>
 	)
 }

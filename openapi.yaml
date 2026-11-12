@@ -180,7 +180,7 @@ paths:
 
   /update-info/dismiss:
     post:
-      summary: Dismiss the latest update message
+      summary: Dismiss the notice for the available update version
       operationId: dismissUpdateInfo
       responses:
         '200':
@@ -318,8 +318,26 @@ components:
           description: Enable reporting of detailed usage statistics
 
     UpdateInfo:
+      oneOf:
+        - $ref: '#/components/schemas/UpdateInfoUpdate'
+        - $ref: '#/components/schemas/UpdateInfoNotice'
+      discriminator:
+        propertyName: type
+        mapping:
+          update: '#/components/schemas/UpdateInfoUpdate'
+          beta: '#/components/schemas/UpdateInfoNotice'
+          info: '#/components/schemas/UpdateInfoNotice'
+
+    UpdateInfoUpdate:
       type: object
+      description: A newer version is available
       properties:
+        type:
+          type: string
+          enum: [update]
+        version:
+          type: string
+          description: The version which is available
         message:
           type: string
           description: Message to show to the user
@@ -331,10 +349,32 @@ components:
           description: Download URL
         dismissed:
           type: boolean
-          description: Whether the user has dismissed this message
+          description: Whether the user has dismissed the notice for this version
       required:
+        - type
+        - version
         - message
         - dismissed
+
+    UpdateInfoNotice:
+      type: object
+      description: 'A notice which is not about an available update. beta: this is a beta build. info: anything else, eg the version could not be checked'
+      properties:
+        type:
+          type: string
+          enum: [beta, info]
+        message:
+          type: string
+          description: Message to show to the user
+        message2:
+          type: string
+          description: Additional message to show to the user
+        link:
+          type: string
+          description: Download URL
+      required:
+        - type
+        - message
 
     UpdateInfoResponse:
       type: object

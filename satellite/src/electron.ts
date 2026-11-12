@@ -163,9 +163,9 @@ trayMenu.append(
 // trayMenu.append(electronUpdater.menuItem)
 const updateMenuSeparator = new MenuItem({ type: 'separator', visible: false })
 const updateMenuItem = new MenuItem({
-	label: 'Update available',
+	label: 'Download update',
 	visible: false,
-	click: () => showUpdateDialog(),
+	click: () => openUpdateLink(),
 })
 trayMenu.append(updateMenuSeparator)
 trayMenu.append(updateMenuItem)
@@ -240,15 +240,20 @@ app.whenReady()
 		console.log('set tray')
 		tray.setContextMenu(trayMenu)
 
-		updateChecker.on('info', (info, firstCheck) => {
-			updateMenuItem.label = info.message
-			updateMenuItem.visible = true
-			updateMenuSeparator.visible = true
+		updateChecker.on('info', (info) => {
+			// Only available updates are shown in the tray, anything else is left for the web UI
+			const update = info?.type === 'update' && info.link ? info : null
+
+			updateMenuItem.label = update ? `Download v${update.version}…` : 'Download update'
+			updateMenuItem.visible = !!update
+			updateMenuSeparator.visible = !!update
 			// The menu needs to be set again for the changes to show on some platforms
 			tray?.setContextMenu(trayMenu)
 
-			// Notify about a new message found shortly after launch, unless the user has dismissed it before
-			if (firstCheck && !info.dismissed) showUpdateNotification(info)
+			// Notify once about each new version, unless the user has dismissed it in the web UI
+			if (update && !update.dismissed && appConfig.get('notifiedUpdateVersion') !== update.version) {
+				showUpdateNotification(update.version)
+			}
 		})
 		updateChecker.start()
 		usageStatistics.startStop()
@@ -276,47 +281,28 @@ function trayQuit() {
 		})
 }
 
-function showUpdateNotification(info: ApiUpdateInfo) {
+// Keep a reference, or the notification can be garbage collected and lose its click handler
+let updateNotification: Notification | undefined
+function showUpdateNotification(version: string) {
 	if (!Notification.isSupported()) return
 
-	const notification = new Notification({
-		title: 'Companion Satellite',
-		body: info.message,
+	updateNotification = new Notification({
+		title: `Companion Satellite v${version} is available`,
+		body: 'Click to download',
 	})
-	notification.on('click', () => showUpdateDialog())
-	notification.show()
+	updateNotification.on('click', () => openUpdateLink())
+	updateNotification.show()
+
+	appConfig.set('notifiedUpdateVersion', version)
 }
 
-function showUpdateDialog() {
+function openUpdateLink() {
 	const info = updateChecker.getInfo()
-	if (!info) return
+	if (info?.type !== 'update' || !info.link) return
 
-	const buttons = info.link ? ['Download', 'Close'] : ['Close']
-	dialog
-		.showMessageBox({
-			type: 'info',
-			icon: nativeImage.createFromPath(fileURLToPath(new URL('../assets/icon.png', import.meta.url))),
-			title: 'Companion Satellite',
-			message: info.message,
-			detail: info.message2,
-			buttons,
-			noLink: true,
-			defaultId: 0,
-			cancelId: buttons.length - 1,
-			checkboxLabel: "Don't remind me about this again",
-			checkboxChecked: info.dismissed,
-		})
-		.then((v) => {
-			if (v.checkboxChecked && !info.dismissed) updateChecker.dismiss()
-			if (info.link && v.response === 0) {
-				shell.openExternal(info.link).catch((e) => {
-					console.error('Failed to open shell', e)
-				})
-			}
-		})
-		.catch((e) => {
-			console.error('Failed to show update dialog', e)
-		})
+	shell.openExternal(info.link).catch((e) => {
+		console.error('Failed to open shell', e)
+	})
 }
 
 function trayScanDevices() {

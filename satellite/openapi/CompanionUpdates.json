@@ -66,21 +66,64 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"type": "object",
-									"properties": {
-										"ok": {
-											"type": "boolean",
-											"description": "Indicates if the check was successful, or should be retried later"
+									"oneOf": [
+										{
+											"type": "object",
+											"properties": {
+												"ok": {
+													"type": "boolean",
+													"description": "Indicates if the check was successful, or should be retried later"
+												},
+												"message": { "type": "string", "description": "Update message" },
+												"message2": {
+													"description": "Additional message (Supported since Companion 4.2)",
+													"type": "string"
+												},
+												"link": {
+													"description": "Download URL",
+													"type": "string",
+													"format": "uri"
+												},
+												"type": {
+													"type": "string",
+													"description": "A newer version is available",
+													"enum": ["update"]
+												},
+												"version": {
+													"type": "string",
+													"description": "The version which is available"
+												}
+											},
+											"required": ["ok", "message", "type", "version"],
+											"additionalProperties": false
 										},
-										"message": { "type": "string", "description": "Update message" },
-										"message2": {
-											"description": "Additional message (Supported since Companion 4.2)",
-											"type": "string"
-										},
-										"link": { "description": "Download URL", "type": "string", "format": "uri" }
-									},
-									"required": ["ok", "message"],
-									"additionalProperties": false
+										{
+											"type": "object",
+											"properties": {
+												"ok": {
+													"type": "boolean",
+													"description": "Indicates if the check was successful, or should be retried later"
+												},
+												"message": { "type": "string", "description": "Update message" },
+												"message2": {
+													"description": "Additional message (Supported since Companion 4.2)",
+													"type": "string"
+												},
+												"link": {
+													"description": "Download URL",
+													"type": "string",
+													"format": "uri"
+												},
+												"type": {
+													"type": "string",
+													"enum": ["none", "beta", "info"],
+													"description": "none: nothing to show. beta: this is a beta or experimental build. info: anything else, eg the version could not be checked"
+												}
+											},
+											"required": ["ok", "message", "type"],
+											"additionalProperties": false
+										}
+									]
 								}
 							}
 						}
@@ -100,7 +143,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -124,7 +186,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -212,7 +293,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -236,7 +336,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -608,7 +727,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -632,7 +770,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -684,7 +841,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -708,7 +884,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -874,7 +1069,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,
@@ -898,7 +1112,26 @@
 										},
 										"code": { "description": "Error code", "type": "string" },
 										"error": { "type": "string", "description": "Error name" },
-										"message": { "type": "string", "description": "Error message" }
+										"message": { "type": "string", "description": "Error message" },
+										"details": {
+											"description": "Per-field validation errors",
+											"type": "array",
+											"items": {
+												"type": "object",
+												"properties": {
+													"field": {
+														"type": "string",
+														"description": "Location of the invalid value, e.g. body.email"
+													},
+													"message": {
+														"type": "string",
+														"description": "What is wrong with the value"
+													}
+												},
+												"required": ["field", "message"],
+												"additionalProperties": false
+											}
+										}
 									},
 									"required": ["statusCode", "error", "message"],
 									"additionalProperties": false,

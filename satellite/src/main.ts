@@ -91,6 +91,6 @@ updateChecker.start()
 usageStatistics.startStop()
 
 updateChecker.on('info', (info) => {
-	if (info.dismissed) return
+	if (!info || (info.type === 'update' && info.dismissed)) return
 	logger.info(`Update message: ${info.message}${info.link ? ` (${info.link})` : ''}`)
 })
