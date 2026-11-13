@@ -194,20 +194,32 @@ run_as_root() {
 # needs root; if the user declines the sudo prompt we carry on without it.
 install_udev_rules() {
 	local rules_src="$SOURCE_DIR/$UDEV_RULES"
+	local rules_dest="/etc/udev/rules.d/$UDEV_RULES"
 	if [ ! -f "$rules_src" ]; then
 		echo "Note: $UDEV_RULES not found next to the installer; skipping udev setup."
 		return
 	fi
 
+	# The rules rarely change, so skip the root prompt when they're already current.
+	if cmp -s "$rules_src" "$rules_dest"; then
+		echo "udev rules are already up to date."
+		return
+	fi
+
 	echo
-	echo "Companion Satellite needs udev rules so it can access USB surfaces"
-	echo "(Stream Deck, Loupedeck, X-keys and similar). Installing these needs"
-	echo "administrator rights."
+	if [ -e "$rules_dest" ]; then
+		echo "The udev rules for USB surfaces have changed in this version, and need"
+		echo "updating. This needs administrator rights."
+	else
+		echo "Companion Satellite needs udev rules so it can access USB surfaces"
+		echo "(Stream Deck, Loupedeck, X-keys and similar). Installing these needs"
+		echo "administrator rights."
+	fi
 
 	if run_as_root <<EOF
 set -e
 # Install the rules and ask udev to pick them up.
-install -D -m 0644 "$rules_src" "/etc/udev/rules.d/$UDEV_RULES"
+install -D -m 0644 "$rules_src" "$rules_dest"
 udevadm control --reload-rules || true
 udevadm trigger || true
 EOF
