@@ -14,7 +14,7 @@ export function App(): JSX.Element {
 					</span>
 				</a>
 				<Card className="grow">
-					<AppContent />
+					<AppContent hasPageHeader={true} />
 				</Card>
 			</div>
 		</div>

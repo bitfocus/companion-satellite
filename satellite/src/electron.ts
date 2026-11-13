@@ -58,7 +58,6 @@ ensureFieldsPopulated(appConfig)
 
 let tray: Tray | undefined
 let configWindow: BrowserWindow | undefined
-let aboutWindow: BrowserWindow | undefined
 
 app.on('window-all-closed', () => {
 	// Block default behaviour of exit on close
@@ -109,55 +108,7 @@ trayMenu.append(
 trayMenu.append(
 	new MenuItem({
 		label: 'Configure',
-		click: () => {
-			if (configWindow?.isVisible()) return
-
-			const isProduction = app.isPackaged
-
-			configWindow = new BrowserWindow({
-				show: false,
-				width: 720,
-				minWidth: 500,
-				maxWidth: isProduction ? 720 : undefined,
-				height: 960,
-				minHeight: 500,
-				autoHideMenuBar: isProduction,
-				webPreferences: {
-					preload: fileURLToPath(new URL('../dist/electronPreload.cjs', import.meta.url)),
-				},
-				// resizable: !isProduction,
-			})
-			configWindow.on('close', () => {
-				configWindow = undefined
-			})
-			// Open links (eg update downloads) in the browser, rather than a new electron window
-			configWindow.webContents.setWindowOpenHandler(({ url }) => {
-				shell.openExternal(url).catch((e) => {
-					console.error('Failed to open shell', e)
-				})
-				return { action: 'deny' }
-			})
-			if (isProduction) {
-				configWindow.removeMenu()
-				configWindow
-					.loadFile(path.join(webRoot, 'electron.html'))
-					.then(() => {
-						configWindow?.show()
-					})
-					.catch((e) => {
-						console.error('Failed to load file', e)
-					})
-			} else {
-				configWindow
-					.loadURL('http://localhost:5173/electron.html')
-					.then(() => {
-						configWindow?.show()
-					})
-					.catch((e) => {
-						console.error('Failed to load file', e)
-					})
-			}
-		},
+		click: () => openConfigWindow(),
 	}),
 )
 // trayMenu.append(electronUpdater.menuItem)
@@ -173,7 +124,7 @@ trayMenu.append(new MenuItem({ type: 'separator' }))
 trayMenu.append(
 	new MenuItem({
 		label: 'About',
-		click: trayAbout,
+		click: () => openConfigWindow('about'),
 	}),
 )
 trayMenu.append(
@@ -319,55 +270,66 @@ function trayScanDevices() {
 	surfaceManager.scanForSurfaces()
 }
 
-function trayAbout() {
-	if (aboutWindow?.isVisible()) return
-	console.log('about click')
-
+/**
+ * Open the configuration window, or bring it to the front if it is already open
+ * @param tab Tab of the ui to show, eg 'about'. Leave undefined to show the default tab
+ */
+function openConfigWindow(tab?: string) {
 	const isProduction = app.isPackaged
 
-	aboutWindow = new BrowserWindow({
-		show: false,
-		width: 400,
-		height: 400,
-		autoHideMenuBar: isProduction,
-		resizable: !isProduction,
-		webPreferences: {
-			preload: fileURLToPath(new URL('../dist/aboutPreload.cjs', import.meta.url)),
-		},
-	})
-	aboutWindow.on('close', () => {
-		aboutWindow = undefined
-	})
-	if (isProduction) {
-		aboutWindow.removeMenu()
-		aboutWindow
-			.loadFile(path.join(webRoot, 'about.html'))
-			.then(() => {
-				if (!aboutWindow) return
-
-				aboutWindow.show()
-				aboutWindow.focus()
-
-				aboutWindow.webContents.send('about-version', app.getVersion())
-			})
-			.catch((e) => {
-				console.error('Failed to load file', e)
-			})
-	} else {
-		aboutWindow
-			.loadURL('http://localhost:5173/about.html')
-			.then(() => {
-				if (!aboutWindow) return
-
-				aboutWindow.show()
-				aboutWindow.focus()
-
-				aboutWindow.webContents.send('about-version', app.getVersion())
-			})
-			.catch((e) => {
-				console.error('Failed to load file', e)
-			})
+	// Loading the page again with only a different hash just switches the tab, without reloading the page
+	const loadPage = async (win: BrowserWindow) => {
+		if (isProduction) {
+			await win.loadFile(path.join(webRoot, 'electron.html'), { hash: tab })
+		} else {
+			await win.loadURL(`http://localhost:5173/electron.html${tab ? `#${tab}` : ''}`)
+		}
 	}
+
+	if (configWindow) {
+		if (tab) {
+			loadPage(configWindow).catch((e) => {
+				console.error('Failed to load file', e)
+			})
+		}
+		configWindow.show()
+		configWindow.focus()
+		return
+	}
+
+	const win = new BrowserWindow({
+		show: false,
+		width: 720,
+		minWidth: 500,
+		maxWidth: isProduction ? 720 : undefined,
+		height: 960,
+		minHeight: 500,
+		autoHideMenuBar: isProduction,
+		webPreferences: {
+			preload: fileURLToPath(new URL('../dist/electronPreload.cjs', import.meta.url)),
+		},
+		// resizable: !isProduction,
+	})
+	configWindow = win
+	win.on('close', () => {
+		configWindow = undefined
+	})
+	// Open links (eg update downloads) in the browser, rather than a new electron win
+	win.webContents.setWindowOpenHandler(({ url }) => {
+		shell.openExternal(url).catch((e) => {
+			console.error('Failed to open shell', e)
+		})
+		return { action: 'deny' }
+	})
+	if (isProduction) win.removeMenu()
+
+	loadPage(win)
+		.then(() => {
+			win.show()
+		})
+		.catch((e) => {
+			console.error('Failed to load file', e)
+		})
 }
 
 ipcMain.on('rescan', () => {
@@ -411,15 +373,4 @@ ipcMain.handle('dismissUpdateInfo', async (): Promise<void> => {
 })
 ipcMain.handle('getUsageStatistics', async (): Promise<ApiUsageStatisticsPayload> => {
 	return { ...usageStatistics.buildPayload() }
-})
-
-// about window
-ipcMain.handle('openShell', async (_e, url: string): Promise<void> => {
-	console.log('openShell', url)
-	shell.openExternal(url).catch((e) => {
-		console.error('Failed to open shell', e)
-	})
-})
-ipcMain.handle('getVersion', async (): Promise<string> => {
-	return app.getVersion()
 })

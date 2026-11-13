@@ -7,7 +7,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
 		<SatelliteApiProvider api={electronApi}>
 			<div className="mt-4">
-				<AppContent />
+				<AppContent hasPageHeader={false} />
 			</div>
 		</SatelliteApiProvider>
 	</React.StrictMode>,
