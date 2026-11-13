@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [Convential Commits](https://www.conventionalcommits.org/en/v1.0.0/#specification) for commit guidelines.
 
+## [3.8.0](https://github.com/bitfocus/companion-satellite/compare/v3.7.0...v3.8.0) (2026-11-13)
+
+
+### Features
+
+* add midi surface as builtin module ([#395](https://github.com/bitfocus/companion-satellite/issues/395)) ([457b218](https://github.com/bitfocus/companion-satellite/commit/457b218a0ea26473f56f9ad1441340c857d334bd))
+* announce mdns as comp-sat-app alongside legacy companion-satellite ([a189acb](https://github.com/bitfocus/companion-satellite/commit/a189acb4f343c23b1024704cc422239add17b430))
+* replace the about window with an about tab ([3284bbf](https://github.com/bitfocus/companion-satellite/commit/3284bbfa7415f2b6ece1d0a64ea342429fb89003))
+* update notifications and anonymous usage statistics ([1fb55f6](https://github.com/bitfocus/companion-satellite/commit/1fb55f6c888417bcdf1a964a1600a7ddd410e7a1))
+
+
+### Bug Fixes
+
+* present update notices based on their type ([33fe5c9](https://github.com/bitfocus/companion-satellite/commit/33fe5c95ef6c6f579820dabcdde979dbeae7d0e2))
+* tidy up update notice presentation ([d4d51cd](https://github.com/bitfocus/companion-satellite/commit/d4d51cd6de51f40ed255ad7dc3266d9bb8975dc6))
+* tray icon sometimes missing on linux after launch ([2e430d2](https://github.com/bitfocus/companion-satellite/commit/2e430d2e5a3f2188319fe9476f2852b0f7a66385))
+* update elgato-stream-deck ([e00c189](https://github.com/bitfocus/companion-satellite/commit/e00c189ca9ffec675af7b5fc4f92302c37fbb06c))
+
 ## [3.7.0](https://github.com/bitfocus/companion-satellite/compare/v3.6.1...v3.7.0) (2026-10-30)
 
 
