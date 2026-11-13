@@ -20,15 +20,15 @@ export default defineConfig({
 	build: {
 		rollupOptions: {
 			input: {
-				main: resolve(__dirname, 'index.html'),
-				electron: resolve(__dirname, 'electron.html'),
-				// preload: resolve(__dirname, 'preload.ts'),
+				main: resolve(import.meta.dirname, 'index.html'),
+				electron: resolve(import.meta.dirname, 'electron.html'),
+				// preload: resolve(import.meta.dirname, 'preload.ts'),
 			},
 		},
 	},
 	resolve: {
 		alias: {
-			'@': resolve(__dirname, './src'),
+			'@': resolve(import.meta.dirname, './src'),
 		},
 	},
 })
