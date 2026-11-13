@@ -24,6 +24,11 @@
 		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/loupedeck/v1.1.1-f93dd8b847388d37aaa0576743260b6f729262fb/loupedeck-v1.1.1.tgz",
 		"tarSha": "d9b5b23cc6528d661242accb1a4a5e18d7f9b840453ef1cf6e15ce916b0f4ebd"
 	},
+	"midi": {
+		"version": "v1.1.1",
+		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/midi/v1.1.1-516587c2c64f-a7f2d5d6eb8a/midi-v1.1.1.tgz",
+		"tarSha": "a7f2d5d6eb8a3556775f3baf2bd34cbd24d0ac879b55f4793980958fca5fe6d6"
+	},
 	"mirabox-stream-dock": {
 		"version": "v1.3.0",
 		"tarUrl": "https://developer-module-builds.s4.bitfocus.io/surface/mirabox-stream-dock/v1.3.0-fbb174f49016-3e03352b8d3d/mirabox-stream-dock-v1.3.0.tgz",
