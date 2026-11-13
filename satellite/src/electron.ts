@@ -237,6 +237,15 @@ app.whenReady()
 			tray?.setImage(trayImageOffline)
 		})
 
+		if (process.platform === 'linux') {
+			// Electron hands the tray icon to the desktop as a temporary file, which is replaced each time the image
+			// changes. If it changes shortly after launch (eg connecting), the desktop can still be loading the old
+			// file and show a missing icon. Setting it again once things have settled makes the desktop reload it
+			setTimeout(() => {
+				tray?.setImage(client.connected ? trayImage : trayImageOffline)
+			}, 3000)
+		}
+
 		console.log('set tray')
 		tray.setContextMenu(trayMenu)
 
