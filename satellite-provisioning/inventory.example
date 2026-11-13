@@ -1,0 +1,21 @@
+# Companion Satellite inventory file
+#
+# Copy this file and edit it with your satellites:
+#   cp inventory.example inventory
+#
+# Common host vars:
+#   ansible_host                   IP or hostname to connect to
+#   ansible_user                   SSH user (default: current user)
+#   ansible_ssh_private_key_file   Path to SSH private key
+#   ansible_port                   SSH port (default: 22)
+
+[satellites]
+# satellite1 ansible_host=10.0.0.101
+# satellite2 ansible_host=10.0.0.102
+# satellite3 ansible_host=10.0.0.103
+# satellite4 ansible_host=10.0.0.104
+# satellite5 ansible_host=10.0.0.105
+
+# [satellites:vars]
+# ansible_user=pi
+# ansible_ssh_private_key_file=~/.ssh/id_satellite
