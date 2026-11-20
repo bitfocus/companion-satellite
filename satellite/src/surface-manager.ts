@@ -16,7 +16,7 @@ import { nanoid } from 'nanoid'
 import { createHash } from 'node:crypto'
 import { ImageTransformer, PixelFormat } from '@julusian/image-rs'
 import { ChildHandler, type ChildHandlerDependencies } from './surface-thread/child-handler.js'
-import { RespawnMonitor } from './lib/respawn.js'
+import { RespawnMonitor } from 'thread-tools'
 import { getNodeJsPath, getSurfaceEntrypointPath, getChildNodePath } from './node-path.js'
 import { IpcDrawProps, type CheckDeviceInfo } from './surface-thread/ipc-types.js'
 

@@ -1,6 +1,5 @@
 import { createLogger } from '../logging.js'
-import type { RespawnMonitor } from '../lib/respawn.js'
-import { IpcWrapper, type IpcEventHandlers } from '../lib/ipc-wrapper.js'
+import { IpcWrapper, type IpcEventHandlers, type RespawnMonitor } from 'thread-tools'
 import type {
 	CheckDeviceInfo,
 	DisconnectMessage,
@@ -173,8 +172,16 @@ export class ChildHandler {
 		const messageHandler = (msg: any) => {
 			this.#ipcWrapper.receivedMessage(msg)
 		}
+		// Fail any in-flight calls as soon as the child goes away, rather than waiting for them to time out
+		const exitHandler = () => {
+			this.#ipcWrapper.rejectAllPending(new Error('Surface process exited'))
+		}
 		monitor.on('message', messageHandler)
-		this.#unsubListeners = () => monitor.off('message', messageHandler)
+		monitor.on('exit', exitHandler)
+		this.#unsubListeners = () => {
+			monitor.off('message', messageHandler)
+			monitor.off('exit', exitHandler)
+		}
 	}
 
 	#onRegister(msg: RegisterMessage): void {

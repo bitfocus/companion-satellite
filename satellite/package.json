@@ -48,6 +48,7 @@
 		"node-hid": "^3.4.0",
 		"pino": "^10.4.0",
 		"pino-pretty": "^13.2.0",
+		"thread-tools": "^0.2.0",
 		"tslib": "^2.9.1",
 		"type-fest": "^5.10.0",
 		"usb": "^3.2.1",

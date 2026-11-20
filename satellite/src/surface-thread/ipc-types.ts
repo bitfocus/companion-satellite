@@ -1,4 +1,4 @@
-import type { IpcWrapper } from '../lib/ipc-wrapper.js'
+import type { IpcWrapper } from 'thread-tools'
 import type {
 	HIDDevice,
 	LogLevel,

@@ -1,5 +1,5 @@
 /* eslint-disable n/no-process-exit */
-import { IpcWrapper, type IpcCallMessagePacket, type IpcResponseMessagePacket } from '../lib/ipc-wrapper.js'
+import { IpcWrapper, type IpcMessagePacket } from 'thread-tools'
 import type { SurfaceModuleToHostEvents, HostToSurfaceModuleEvents, CheckDeviceInfo, InitMessage } from './ipc-types.js'
 import {
 	type SurfaceModuleManifest,
@@ -205,7 +205,7 @@ async function main() {
 		},
 		5000,
 	)
-	process.on('message', (msg) => ipcWrapper.receivedMessage(msg as IpcCallMessagePacket | IpcResponseMessagePacket))
+	process.on('message', (msg) => ipcWrapper.receivedMessage(msg as IpcMessagePacket))
 
 	// Safety net: if the parent dies/crashes without sending 'destroy', the IPC channel
 	// closes. Since we now ignore signals, this is the only thing that reaps us — attempt a
